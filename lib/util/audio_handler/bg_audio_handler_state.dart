@@ -2,21 +2,6 @@ part of 'bg_audio_handler.dart';
 
 const Duration _subtitlePositionUpdateInterval = Duration(milliseconds: 50);
 
-final Expando<_ChapterSleepCompletionGate> _chapterSleepCompletionGates = Expando<_ChapterSleepCompletionGate>(
-  'chapterSleepCompletionGate',
-);
-
-class _ChapterSleepCompletionGate {
-  const _ChapterSleepCompletionGate({required this.itemId, required this.episodeId});
-
-  final String itemId;
-  final String? episodeId;
-
-  bool matches({required String itemId, required String? episodeId}) {
-    return this.itemId == itemId && this.episodeId == episodeId;
-  }
-}
-
 extension _BGAudioHandlerState on BGAudioHandler {
   Stream<Duration> _durationStreamInternal() {
     return _player.durationStream.map((duration) {
@@ -346,24 +331,4 @@ extension _BGAudioHandlerState on BGAudioHandler {
 
 extension BGAudioHandlerSeekState on BGAudioHandler {
   bool get hasGuardedInternalSeek => _internalSeekGuardDepth > 0;
-}
-
-extension BGAudioHandlerSleepTimerCompletion on BGAudioHandler {
-  void armChapterSleepCompletion({required String itemId, required String? episodeId}) {
-    _chapterSleepCompletionGates[this] = _ChapterSleepCompletionGate(itemId: itemId, episodeId: episodeId);
-  }
-
-  void clearChapterSleepCompletion() {
-    _chapterSleepCompletionGates[this] = null;
-  }
-
-  bool consumeChapterSleepCompletion({required String itemId, required String? episodeId}) {
-    final gate = _chapterSleepCompletionGates[this];
-    if (gate == null || !gate.matches(itemId: itemId, episodeId: episodeId)) {
-      return false;
-    }
-
-    _chapterSleepCompletionGates[this] = null;
-    return true;
-  }
 }
