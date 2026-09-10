@@ -16,7 +16,10 @@ runs:
 
     - name: Check formatting
       shell: bash
-      run: dart format --set-exit-if-changed lib
+      run: |
+        dart format lib
+        git diff -- lib/util/handler/sleep_timer_handler.dart lib/util/handler/sleep_timer_target.dart
+        exit 1
 
     - name: Check generated files
       shell: bash
