@@ -328,3 +328,7 @@ extension _BGAudioHandlerState on BGAudioHandler {
     });
   }
 }
+
+extension BGAudioHandlerSeekState on BGAudioHandler {
+  bool get hasGuardedInternalSeek => _internalSeekGuardDepth > 0;
+}
