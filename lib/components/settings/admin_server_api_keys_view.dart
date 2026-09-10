@@ -16,12 +16,10 @@ class AdminServerApiKeysView extends ConsumerStatefulWidget {
   const AdminServerApiKeysView({super.key});
 
   @override
-  ConsumerState<AdminServerApiKeysView> createState() =>
-      _AdminServerApiKeysViewState();
+  ConsumerState<AdminServerApiKeysView> createState() => _AdminServerApiKeysViewState();
 }
 
-class _AdminServerApiKeysViewState
-    extends ConsumerState<AdminServerApiKeysView> {
+class _AdminServerApiKeysViewState extends ConsumerState<AdminServerApiKeysView> {
   String? _activeUserId;
   bool _isLoading = true;
   bool _isCreating = false;
@@ -56,9 +54,7 @@ class _AdminServerApiKeysViewState
         }
       }
 
-      final byName = left.name.toLowerCase().compareTo(
-        right.name.toLowerCase(),
-      );
+      final byName = left.name.toLowerCase().compareTo(right.name.toLowerCase());
       if (byName != 0) {
         return byName;
       }
@@ -71,9 +67,7 @@ class _AdminServerApiKeysViewState
   List<SessionUserSummary> _sortedUsers(List<SessionUserSummary> values) {
     final sorted = List<SessionUserSummary>.from(values);
     sorted.sort((left, right) {
-      final byName = left.username.toLowerCase().compareTo(
-        right.username.toLowerCase(),
-      );
+      final byName = left.username.toLowerCase().compareTo(right.username.toLowerCase());
       if (byName != 0) {
         return byName;
       }
@@ -87,9 +81,7 @@ class _AdminServerApiKeysViewState
       return _users;
     }
 
-    return _users
-        .where((user) => (user.type ?? '').trim().toLowerCase() != 'root')
-        .toList(growable: false);
+    return _users.where((user) => (user.type ?? '').trim().toLowerCase() != 'root').toList(growable: false);
   }
 
   void _showMessage(String message) {
@@ -117,9 +109,7 @@ class _AdminServerApiKeysViewState
 
   void _removeApiKey(String id) {
     setState(() {
-      _apiKeys = _apiKeys
-          .where((entry) => entry.id != id)
-          .toList(growable: false);
+      _apiKeys = _apiKeys.where((entry) => entry.id != id).toList(growable: false);
     });
   }
 
@@ -143,9 +133,7 @@ class _AdminServerApiKeysViewState
         .where((apiKey) {
           final ownerUsername = apiKey.user?.username ?? '';
           final ownerType = apiKey.user?.type ?? '';
-          final searchable =
-              '${apiKey.name} ${apiKey.description ?? ''} $ownerUsername $ownerType'
-                  .toLowerCase();
+          final searchable = '${apiKey.name} ${apiKey.description ?? ''} $ownerUsername $ownerType'.toLowerCase();
           return searchable.contains(normalizedQuery);
         })
         .toList(growable: false);
@@ -177,16 +165,10 @@ class _AdminServerApiKeysViewState
       }
 
       setState(() {
-        _apiKeys = _sortedApiKeys(
-          apiKeysResponse.data?.apiKeys ?? const <AdminApiKey>[],
-        );
-        _users = _sortedUsers(
-          usersResponse.data?.users ?? const <SessionUserSummary>[],
-        );
+        _apiKeys = _sortedApiKeys(apiKeysResponse.data?.apiKeys ?? const <AdminApiKey>[]);
+        _users = _sortedUsers(usersResponse.data?.users ?? const <SessionUserSummary>[]);
         _errorMessage = null;
-        _selectedApiKeyIds.removeWhere(
-          (id) => !_apiKeys.any((key) => key.id == id),
-        );
+        _selectedApiKeyIds.removeWhere((id) => !_apiKeys.any((key) => key.id == id));
       });
     } catch (error) {
       if (!mounted) {
@@ -222,46 +204,32 @@ class _AdminServerApiKeysViewState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Copy this API key now. For security reasons it is only shown once.',
-                ),
+                const Text('Copy this API key now. For security reasons it is only shown once.'),
                 const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant
-                          .withValues(alpha: 0.34),
-                    ),
+                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.34)),
                   ),
                   child: SelectableText(
                     createdToken,
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(fontFamily: 'monospace'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
                   ),
                 ),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close')),
             FilledButton.icon(
               onPressed: () async {
                 await Clipboard.setData(ClipboardData(text: createdToken));
                 if (!context.mounted) {
                   return;
                 }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('API key copied.')),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('API key copied.')));
               },
               icon: const Icon(Icons.copy_rounded),
               label: const Text('Copy'),
@@ -272,10 +240,7 @@ class _AdminServerApiKeysViewState
     );
   }
 
-  Future<void> _createApiKey({
-    required String currentUserId,
-    required bool isRootUser,
-  }) async {
+  Future<void> _createApiKey({required String currentUserId, required bool isRootUser}) async {
     if (_isCreating) {
       return;
     }
@@ -289,11 +254,7 @@ class _AdminServerApiKeysViewState
     final hasCurrentUser = owners.any((user) => user.id == currentUserId);
     final initialOwnerId = hasCurrentUser ? currentUserId : owners.first.id;
 
-    final payload = await showCreateAdminApiKeyDialog(
-      context,
-      users: owners,
-      initialUserId: initialOwnerId,
-    );
+    final payload = await showCreateAdminApiKeyDialog(context, users: owners, initialUserId: initialOwnerId);
     if (payload == null) {
       return;
     }
@@ -323,10 +284,7 @@ class _AdminServerApiKeysViewState
         await _showCreatedKeyDialog(createdApiKey);
       }
     } catch (error) {
-      final message = listManagementErrorMessage(
-        error,
-        fallback: 'Failed to create API key.',
-      );
+      final message = listManagementErrorMessage(error, fallback: 'Failed to create API key.');
       _showMessage(message);
     } finally {
       if (mounted) {
@@ -337,10 +295,7 @@ class _AdminServerApiKeysViewState
     }
   }
 
-  Future<void> _editApiKey(
-    AdminApiKey apiKey, {
-    required bool isRootUser,
-  }) async {
+  Future<void> _editApiKey(AdminApiKey apiKey, {required bool isRootUser}) async {
     final api = ref.read(absApiProvider);
     if (api == null) {
       _showMessage('No active API client.');
@@ -353,8 +308,7 @@ class _AdminServerApiKeysViewState
       return;
     }
 
-    final isRootOwnedKey =
-        (apiKey.user?.type ?? '').trim().toLowerCase() == 'root';
+    final isRootOwnedKey = (apiKey.user?.type ?? '').trim().toLowerCase() == 'root';
     if (!isRootUser && isRootOwnedKey) {
       _showMessage('Root-owned API keys can only be edited by root users.');
       return;
@@ -362,19 +316,12 @@ class _AdminServerApiKeysViewState
 
     _setBusyRow(apiKey.id, true);
     try {
-      final payload = await showUpdateAdminApiKeyDialog(
-        context,
-        apiKey: apiKey,
-        users: owners,
-      );
+      final payload = await showUpdateAdminApiKeyDialog(context, apiKey: apiKey, users: owners);
       if (payload == null) {
         return;
       }
 
-      final response = await api.getAdminApi().updateApiKey(
-        apiKeyId: apiKey.id,
-        payload: payload,
-      );
+      final response = await api.getAdminApi().updateApiKey(apiKeyId: apiKey.id, payload: payload);
       final updatedApiKey = response.data?.apiKey;
       if (updatedApiKey == null) {
         await _loadApiKeysData(showLoading: false);
@@ -384,10 +331,7 @@ class _AdminServerApiKeysViewState
 
       _showMessage('API key updated successfully.');
     } catch (error) {
-      final message = listManagementErrorMessage(
-        error,
-        fallback: 'Failed to update API key.',
-      );
+      final message = listManagementErrorMessage(error, fallback: 'Failed to update API key.');
       _showMessage(message);
     } finally {
       _setBusyRow(apiKey.id, false);
@@ -422,10 +366,7 @@ class _AdminServerApiKeysViewState
       _removeApiKey(apiKey.id);
       _showMessage('API key deleted.');
     } catch (error) {
-      final message = listManagementErrorMessage(
-        error,
-        fallback: 'Failed to delete API key.',
-      );
+      final message = listManagementErrorMessage(error, fallback: 'Failed to delete API key.');
       _showMessage(message);
     } finally {
       _setBusyRow(apiKey.id, false);
@@ -448,9 +389,7 @@ class _AdminServerApiKeysViewState
       return;
     }
 
-    final selectedKeys = _apiKeys
-        .where((key) => _selectedApiKeyIds.contains(key.id))
-        .toList(growable: false);
+    final selectedKeys = _apiKeys.where((key) => _selectedApiKeyIds.contains(key.id)).toList(growable: false);
     if (selectedKeys.isEmpty) {
       return;
     }
@@ -460,18 +399,10 @@ class _AdminServerApiKeysViewState
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Selected API Keys'),
-          content: Text(
-            'Delete ${selectedKeys.length} selected API key(s)? This action cannot be undone.',
-          ),
+          content: Text('Delete ${selectedKeys.length} selected API key(s)? This action cannot be undone.'),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
           ],
         );
       },
@@ -519,17 +450,11 @@ class _AdminServerApiKeysViewState
 
     final messenger = ScaffoldMessenger.of(context);
     if (deletedCount > 0) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Deleted $deletedCount API key(s).')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text('Deleted $deletedCount API key(s).')));
     }
     if (failedIds.isNotEmpty) {
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to delete ${failedIds.length} API key(s). Check logs for details.',
-          ),
-        ),
+        SnackBar(content: Text('Failed to delete ${failedIds.length} API key(s). Check logs for details.')),
       );
     }
   }
@@ -563,26 +488,17 @@ class _AdminServerApiKeysViewState
             children: [
               IconButton.filledTonal(
                 tooltip: 'Refresh',
-                onPressed: _isLoading
-                    ? null
-                    : () => unawaited(_loadApiKeysData(showLoading: true)),
+                onPressed: _isLoading ? null : () => unawaited(_loadApiKeysData(showLoading: true)),
                 icon: const Icon(Icons.refresh_rounded),
               ),
               const SizedBox(width: 6),
               IconButton.filled(
                 tooltip: 'Add API key',
                 onPressed: addButtonEnabled
-                    ? () => _createApiKey(
-                        currentUserId: currentUserId,
-                        isRootUser: isRootUser,
-                      )
+                    ? () => _createApiKey(currentUserId: currentUserId, isRootUser: isRootUser)
                     : null,
                 icon: _isCreating
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.vpn_key_rounded),
               ),
             ],
@@ -608,26 +524,17 @@ class _AdminServerApiKeysViewState
         ),
         const SizedBox(width: 10),
         OutlinedButton.icon(
-          onPressed: _isLoading
-              ? null
-              : () => unawaited(_loadApiKeysData(showLoading: true)),
+          onPressed: _isLoading ? null : () => unawaited(_loadApiKeysData(showLoading: true)),
           icon: const Icon(Icons.refresh_rounded),
           label: const Text('Refresh'),
         ),
         const SizedBox(width: 10),
         FilledButton.icon(
           onPressed: addButtonEnabled
-              ? () => _createApiKey(
-                  currentUserId: currentUserId,
-                  isRootUser: isRootUser,
-                )
+              ? () => _createApiKey(currentUserId: currentUserId, isRootUser: isRootUser)
               : null,
           icon: _isCreating
-              ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.add_rounded),
           label: const Text('Add API Key'),
         ),
@@ -642,24 +549,17 @@ class _AdminServerApiKeysViewState
     }
 
     return Card(
-      color: Theme.of(context).colorScheme.errorContainer
-          .withValues(alpha: 0.45),
+      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Row(
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              color: Theme.of(context).colorScheme.error,
-            ),
+            Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error),
             const SizedBox(width: 10),
             Expanded(child: Text(message)),
             const SizedBox(width: 10),
-            TextButton(
-              onPressed: () => unawaited(_loadApiKeysData(showLoading: true)),
-              child: const Text('Retry'),
-            ),
+            TextButton(onPressed: () => unawaited(_loadApiKeysData(showLoading: true)), child: const Text('Retry')),
           ],
         ),
       ),
@@ -717,12 +617,11 @@ class _AdminServerApiKeysViewState
                 Card(
                   margin: const EdgeInsets.only(bottom: 10),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                     child: Text(
-                      isRootUser ? 'No server users are available yet.' : 'No eligible non-root users available to assign API keys.',
+                      isRootUser
+                          ? 'No server users are available yet.'
+                          : 'No eligible non-root users available to assign API keys.',
                     ),
                   ),
                 ),
@@ -740,13 +639,7 @@ class _AdminServerApiKeysViewState
                                 unawaited(_bulkDeleteSelectedApiKeys());
                               },
                         icon: _isBulkDeleting
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.delete_outline_rounded),
                         label: const Text('Delete Selected'),
                       ),
@@ -762,8 +655,7 @@ class _AdminServerApiKeysViewState
                     showSelection: true,
                     selectedApiKeyIds: _selectedApiKeyIds,
                     onSelectionChanged: _onSelectionChanged,
-                    onEdit: (apiKey) =>
-                        _editApiKey(apiKey, isRootUser: isRootUser),
+                    onEdit: (apiKey) => _editApiKey(apiKey, isRootUser: isRootUser),
                     onDelete: _deleteApiKey,
                     loading: _isLoading,
                     topActions: _buildToolbar(
@@ -785,10 +677,7 @@ class _AdminServerApiKeysViewState
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text(
-          'Failed to load user data: $error',
-          style: TextStyle(color: Theme.of(context).colorScheme.error),
-        ),
+        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
       ),
     );
   }

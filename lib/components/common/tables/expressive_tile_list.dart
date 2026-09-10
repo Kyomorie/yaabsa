@@ -83,19 +83,13 @@ class ExpressiveTileList<T> extends StatelessWidget {
     await callback.call(item);
   }
 
-  Widget _buildTileBody(
-    BuildContext context,
-    T item, {
-    required int? index,
-    required bool showBottomDivider,
-  }) {
+  Widget _buildTileBody(BuildContext context, T item, {required int? index, required bool showBottomDivider}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final selected = isSelected?.call(item) ?? false;
     final subtitle = subtitleBuilder?.call(item)?.trim();
     final leadingIcon = leadingIconBuilder?.call(item);
-    final customTrailing =
-        trailingBuilder?.call(context, item) ?? const <Widget>[];
+    final customTrailing = trailingBuilder?.call(context, item) ?? const <Widget>[];
 
     final rowActions = <Widget>[];
 
@@ -110,11 +104,7 @@ class ExpressiveTileList<T> extends StatelessWidget {
                 tooltip: action.tooltip,
                 visualDensity: VisualDensity.compact,
                 onPressed: () => _handleAction(action, item),
-                icon: Icon(
-                  action.icon,
-                  size: 19,
-                  color: _actionColor(context, action.tone),
-                ),
+                icon: Icon(action.icon, size: 19, color: _actionColor(context, action.tone)),
               ),
           ],
         ),
@@ -129,10 +119,7 @@ class ExpressiveTileList<T> extends StatelessWidget {
           message: dragHandleTooltip,
           child: ReorderableDragStartListener(
             index: index,
-            child: Icon(
-              Icons.drag_indicator_rounded,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            child: Icon(Icons.drag_indicator_rounded, color: colorScheme.onSurfaceVariant),
           ),
         ),
       );
@@ -140,22 +127,15 @@ class ExpressiveTileList<T> extends StatelessWidget {
 
     return Material(
       key: _isReorderable ? ValueKey(itemId(item)) : null,
-      color: selected
-          ? colorScheme.surfaceContainerHigh
-          : colorScheme.surfaceContainerLow,
+      color: selected ? colorScheme.surfaceContainerHigh : colorScheme.surfaceContainerLow,
       child: InkWell(
         onTap: onItemTap == null ? null : () => _handleTap(item),
         child: Container(
           decoration: BoxDecoration(
             border: Border(
-              left: BorderSide(
-                color: selected ? colorScheme.primary : Colors.transparent,
-                width: 3,
-              ),
+              left: BorderSide(color: selected ? colorScheme.primary : Colors.transparent, width: 3),
               bottom: BorderSide(
-                color: showBottomDivider
-                    ? colorScheme.outlineVariant.withValues(alpha: 0.34)
-                    : Colors.transparent,
+                color: showBottomDivider ? colorScheme.outlineVariant.withValues(alpha: 0.34) : Colors.transparent,
                 width: 1,
               ),
             ),
@@ -183,20 +163,14 @@ class ExpressiveTileList<T> extends StatelessWidget {
                         subtitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                   ],
                 ),
               ),
               if (rowActions.isNotEmpty) ...[
                 const SizedBox(width: 8),
-                Wrap(
-                  spacing: 6,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: rowActions,
-                ),
+                Wrap(spacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: rowActions),
               ],
             ],
           ),
@@ -215,27 +189,15 @@ class ExpressiveTileList<T> extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            emptyTitle,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(emptyTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
           if (emptySubtitle != null && emptySubtitle!.trim().isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              emptySubtitle!,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
+            Text(emptySubtitle!, style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
           ],
         ],
       ),
@@ -257,26 +219,16 @@ class ExpressiveTileList<T> extends StatelessWidget {
   }
 
   Widget _buildEmptyList(BuildContext context) {
-    return ListView(
-      physics: physics,
-      shrinkWrap: shrinkWrap,
-      padding: padding,
-      children: [_buildEmptyState(context)],
-    );
+    return ListView(physics: physics, shrinkWrap: shrinkWrap, padding: padding, children: [_buildEmptyState(context)]);
   }
 
-  Widget _buildDecoratedList({
-    required Widget child,
-    required BuildContext context,
-  }) {
+  Widget _buildDecoratedList({required Widget child, required BuildContext context}) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.34),
-        ),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.34)),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,
@@ -292,12 +244,7 @@ class ExpressiveTileList<T> extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = items[index];
         final isLast = index == items.length - 1;
-        return _buildTileBody(
-          context,
-          item,
-          index: null,
-          showBottomDivider: !isLast,
-        );
+        return _buildTileBody(context, item, index: null, showBottomDivider: !isLast);
       },
     );
 
@@ -323,12 +270,7 @@ class ExpressiveTileList<T> extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = items[index];
         final isLast = index == items.length - 1;
-        return _buildTileBody(
-          context,
-          item,
-          index: index,
-          showBottomDivider: !isLast,
-        );
+        return _buildTileBody(context, item, index: index, showBottomDivider: !isLast);
       },
     );
 
@@ -348,8 +290,6 @@ class ExpressiveTileList<T> extends StatelessWidget {
       return _buildEmptyList(context);
     }
 
-    return _isReorderable
-        ? _buildReorderableList(context)
-        : _buildStandardList(context);
+    return _isReorderable ? _buildReorderableList(context) : _buildStandardList(context);
   }
 }

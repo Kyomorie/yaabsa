@@ -6,16 +6,12 @@ part of 'admin_backup_list_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_AdminBackupListResponse _$AdminBackupListResponseFromJson(
-  Map<String, dynamic> json,
-) => _AdminBackupListResponse(
+_AdminBackupListResponse _$AdminBackupListResponseFromJson(Map<String, dynamic> json) => _AdminBackupListResponse(
   backups:
-      (json['backups'] as List<dynamic>?)
-          ?.map((e) => AdminBackup.fromJson(e as Map<String, dynamic>))
-          .toList() ??
+      (json['backups'] as List<dynamic>?)?.map((e) => AdminBackup.fromJson(e as Map<String, dynamic>)).toList() ??
       const <AdminBackup>[],
 );
 
-Map<String, dynamic> _$AdminBackupListResponseToJson(
-  _AdminBackupListResponse instance,
-) => <String, dynamic>{'backups': instance.backups};
+Map<String, dynamic> _$AdminBackupListResponseToJson(_AdminBackupListResponse instance) => <String, dynamic>{
+  'backups': instance.backups,
+};

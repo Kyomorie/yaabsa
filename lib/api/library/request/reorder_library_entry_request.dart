@@ -10,6 +10,5 @@ abstract class ReorderLibraryEntryRequest with _$ReorderLibraryEntryRequest {
     @JsonKey(name: 'newOrder') required int newOrder,
   }) = _ReorderLibraryEntryRequest;
 
-  factory ReorderLibraryEntryRequest.fromJson(Map<String, dynamic> json) =>
-      _$ReorderLibraryEntryRequestFromJson(json);
+  factory ReorderLibraryEntryRequest.fromJson(Map<String, dynamic> json) => _$ReorderLibraryEntryRequestFromJson(json);
 }

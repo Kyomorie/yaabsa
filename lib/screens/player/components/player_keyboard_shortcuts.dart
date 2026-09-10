@@ -10,8 +10,7 @@ class PlayerKeyboardShortcuts extends StatefulWidget {
   final Widget child;
 
   @override
-  State<PlayerKeyboardShortcuts> createState() =>
-      _PlayerKeyboardShortcutsState();
+  State<PlayerKeyboardShortcuts> createState() => _PlayerKeyboardShortcutsState();
 }
 
 class _PlayerKeyboardShortcutsState extends State<PlayerKeyboardShortcuts> {
@@ -66,9 +65,7 @@ class _PlayerKeyboardShortcutsState extends State<PlayerKeyboardShortcuts> {
 
   bool get _hasModifierPressed {
     final keyboard = HardwareKeyboard.instance;
-    return keyboard.isAltPressed ||
-        keyboard.isControlPressed ||
-        keyboard.isMetaPressed;
+    return keyboard.isAltPressed || keyboard.isControlPressed || keyboard.isMetaPressed;
   }
 
   bool _isTextInputFocused() {
@@ -96,9 +93,7 @@ class _PlayerKeyboardShortcutsState extends State<PlayerKeyboardShortcuts> {
 
   void _adjustVolumeBy(double delta) {
     final currentVolume = audioHandler.volume;
-    final nextVolume = (currentVolume + delta)
-        .clamp(0.0, audioHandler.maxVolume)
-        .toDouble();
+    final nextVolume = (currentVolume + delta).clamp(0.0, audioHandler.maxVolume).toDouble();
     if ((nextVolume - currentVolume).abs() <= _volumeEpsilon) {
       return;
     }
@@ -108,11 +103,6 @@ class _PlayerKeyboardShortcutsState extends State<PlayerKeyboardShortcuts> {
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      focusNode: _focusNode,
-      autofocus: true,
-      onKeyEvent: _handleKeyEvent,
-      child: widget.child,
-    );
+    return Focus(focusNode: _focusNode, autofocus: true, onKeyEvent: _handleKeyEvent, child: widget.child);
   }
 }

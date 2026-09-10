@@ -51,8 +51,7 @@ class ConnectionIssueView extends StatelessWidget {
     String backActionLabel = 'Back',
     Future<void> Function()? onBackAction,
   }) {
-    final resolvedShowBackAction =
-        showBackAction ?? _looksLikeNotFoundError(error);
+    final resolvedShowBackAction = showBackAction ?? _looksLikeNotFoundError(error);
 
     return ConnectionIssueView(
       key: key,
@@ -109,9 +108,7 @@ class ConnectionIssueView extends StatelessWidget {
                 context.go('/?tab=downloads&intent=downloads');
               }
             : null);
-    final effectiveSecondaryLabel =
-        secondaryActionLabel ??
-        (showDownloadsShortcut ? 'Open Downloads' : null);
+    final effectiveSecondaryLabel = secondaryActionLabel ?? (showDownloadsShortcut ? 'Open Downloads' : null);
 
     return Center(
       child: Padding(
@@ -123,17 +120,12 @@ class ConnectionIssueView extends StatelessWidget {
             children: [
               Icon(icon, size: 36, color: colorScheme.primary),
               const SizedBox(height: 12),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: colorScheme.onSurfaceVariant),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
               if (details != null && details!.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -142,8 +134,7 @@ class ConnectionIssueView extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
               ],
               if (onRetry != null || effectiveSecondaryAction != null) ...[

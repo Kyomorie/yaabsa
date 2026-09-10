@@ -11,6 +11,5 @@ abstract class FilesystemDirectory with _$FilesystemDirectory {
     @JsonKey(name: 'level') @Default(0) int level,
   }) = _FilesystemDirectory;
 
-  factory FilesystemDirectory.fromJson(Map<String, dynamic> json) =>
-      _$FilesystemDirectoryFromJson(json);
+  factory FilesystemDirectory.fromJson(Map<String, dynamic> json) => _$FilesystemDirectoryFromJson(json);
 }

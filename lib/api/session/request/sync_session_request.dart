@@ -11,6 +11,5 @@ abstract class SyncSessionRequest with _$SyncSessionRequest {
     @JsonKey(name: "duration") required double duration,
   }) = _SyncSessionRequest;
 
-  factory SyncSessionRequest.fromJson(Map<String, dynamic> json) =>
-      _$SyncSessionRequestFromJson(json);
+  factory SyncSessionRequest.fromJson(Map<String, dynamic> json) => _$SyncSessionRequestFromJson(json);
 }

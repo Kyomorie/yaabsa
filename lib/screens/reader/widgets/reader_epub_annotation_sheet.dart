@@ -4,15 +4,10 @@ import 'package:foliate_reader/foliate_reader.dart';
 enum ReaderAnnotationSheetActionType { update, delete }
 
 class ReaderAnnotationSheetAction {
-  const ReaderAnnotationSheetAction.update({
-    required this.note,
-    required this.color,
-  }) : type = ReaderAnnotationSheetActionType.update;
+  const ReaderAnnotationSheetAction.update({required this.note, required this.color})
+    : type = ReaderAnnotationSheetActionType.update;
 
-  const ReaderAnnotationSheetAction.delete()
-    : type = ReaderAnnotationSheetActionType.delete,
-      note = null,
-      color = null;
+  const ReaderAnnotationSheetAction.delete() : type = ReaderAnnotationSheetActionType.delete, note = null, color = null;
 
   final ReaderAnnotationSheetActionType type;
   final String? note;
@@ -75,15 +70,9 @@ class _AnnotationDetailsSheet extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      'Note',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
+                  Expanded(child: Text('Note', style: Theme.of(context).textTheme.titleMedium)),
                   IconButton.filledTonal(
-                    onPressed: () =>
-                        Navigator.pop(context, _AnnotationDetailsAction.edit),
+                    onPressed: () => Navigator.pop(context, _AnnotationDetailsAction.edit),
                     tooltip: 'Edit annotation',
                     visualDensity: VisualDensity.compact,
                     iconSize: 20,
@@ -103,12 +92,8 @@ class _AnnotationDetailsSheet extends StatelessWidget {
                 child: SelectableText(
                   note.isEmpty ? 'No note added' : note,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: note.isEmpty
-                        ? colorScheme.onSurfaceVariant
-                        : colorScheme.onSurface,
-                    fontStyle: note.isEmpty
-                        ? FontStyle.italic
-                        : FontStyle.normal,
+                    color: note.isEmpty ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+                    fontStyle: note.isEmpty ? FontStyle.italic : FontStyle.normal,
                   ),
                 ),
               ),
@@ -116,19 +101,13 @@ class _AnnotationDetailsSheet extends StatelessWidget {
               Row(
                 children: [
                   TextButton.icon(
-                    onPressed: () =>
-                        Navigator.pop(context, _AnnotationDetailsAction.delete),
-                    style: TextButton.styleFrom(
-                      foregroundColor: colorScheme.error,
-                    ),
+                    onPressed: () => Navigator.pop(context, _AnnotationDetailsAction.delete),
+                    style: TextButton.styleFrom(foregroundColor: colorScheme.error),
                     icon: const Icon(Icons.delete_outline),
                     label: const Text('Delete'),
                   ),
                   const Spacer(),
-                  FilledButton.tonal(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
-                  ),
+                  FilledButton.tonal(onPressed: () => Navigator.pop(context), child: const Text('Close')),
                 ],
               ),
             ],
@@ -168,12 +147,7 @@ class _AnnotationEditorSheetState extends State<_AnnotationEditorSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        0,
-        20,
-        20 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
+      padding: EdgeInsets.fromLTRB(20, 0, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
       child: Center(
         heightFactor: 1,
         child: ConstrainedBox(
@@ -184,17 +158,8 @@ class _AnnotationEditorSheetState extends State<_AnnotationEditorSheet> {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      'Edit annotation',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    tooltip: 'Close',
-                    icon: const Icon(Icons.close),
-                  ),
+                  Expanded(child: Text('Edit annotation', style: Theme.of(context).textTheme.headlineSmall)),
+                  IconButton(onPressed: () => Navigator.pop(context), tooltip: 'Close', icon: const Icon(Icons.close)),
                 ],
               ),
               const SizedBox(height: 16),
@@ -218,8 +183,7 @@ class _AnnotationEditorSheetState extends State<_AnnotationEditorSheet> {
                 runSpacing: 10,
                 children: _annotationColors.map((entry) {
                   final (hex, color) = entry;
-                  final selected =
-                      hex.toUpperCase() == _selectedColor.toUpperCase();
+                  final selected = hex.toUpperCase() == _selectedColor.toUpperCase();
                   return Semantics(
                     button: true,
                     selected: selected,
@@ -235,15 +199,11 @@ class _AnnotationEditorSheetState extends State<_AnnotationEditorSheet> {
                           color: color,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: selected
-                                ? Theme.of(context).colorScheme.onSurface
-                                : Colors.transparent,
+                            color: selected ? Theme.of(context).colorScheme.onSurface : Colors.transparent,
                             width: 3,
                           ),
                         ),
-                        child: selected
-                            ? const Icon(Icons.check, color: Colors.black87)
-                            : null,
+                        child: selected ? const Icon(Icons.check, color: Colors.black87) : null,
                       ),
                     ),
                   );
@@ -253,18 +213,12 @@ class _AnnotationEditorSheetState extends State<_AnnotationEditorSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
+                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
                   const SizedBox(width: 8),
                   FilledButton.icon(
                     onPressed: () => Navigator.pop(
                       context,
-                      ReaderAnnotationSheetAction.update(
-                        note: _noteController.text.trim(),
-                        color: _selectedColor,
-                      ),
+                      ReaderAnnotationSheetAction.update(note: _noteController.text.trim(), color: _selectedColor),
                     ),
                     icon: const Icon(Icons.save_outlined),
                     label: const Text('Save'),

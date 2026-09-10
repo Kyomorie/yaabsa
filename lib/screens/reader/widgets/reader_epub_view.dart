@@ -32,12 +32,7 @@ class ReaderEpubView extends StatelessWidget {
     this.bookFetcher,
   });
 
-  final Future<void> Function(
-    String url,
-    Map<String, String>? headers,
-    HttpRequest request,
-  )?
-  bookFetcher;
+  final Future<void> Function(String url, Map<String, String>? headers, HttpRequest request)? bookFetcher;
 
   final FoliateViewerController controller;
   final String bookUrl;

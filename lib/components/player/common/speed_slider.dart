@@ -2,19 +2,14 @@ import 'package:yaabsa/util/globals.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
-Future<void> showPlaybackSpeedSheet(
-  BuildContext context, {
-  double? currentSpeed,
-}) {
+Future<void> showPlaybackSpeedSheet(BuildContext context, {double? currentSpeed}) {
   return showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
     isScrollControlled: true,
     showDragHandle: true,
     builder: (sheetContext) {
-      return _SpeedSheet(
-        initialSpeed: currentSpeed ?? audioHandler.player.speed,
-      );
+      return _SpeedSheet(initialSpeed: currentSpeed ?? audioHandler.player.speed);
     },
   );
 }
@@ -39,16 +34,14 @@ class SpeedSlider extends StatelessWidget {
           width: 48,
 
           child: IconButton(
-            onPressed: () =>
-                showPlaybackSpeedSheet(context, currentSpeed: speed),
+            onPressed: () => showPlaybackSpeedSheet(context, currentSpeed: speed),
 
             icon: Text(
               '${speed.toStringAsFixed(1)}x',
               style: TextStyle(
                 letterSpacing: -1.25,
                 fontFeatures: [const FontFeature.tabularFigures()],
-                color: Theme.of(context).colorScheme.onSurface
-                    .withValues(alpha: 0.7),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                 fontSize: 16,
               ),
             ),
@@ -95,10 +88,7 @@ class _SpeedSheetState extends State<_SpeedSheet> {
         children: [
           Text('Playback speed', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
-          Text(
-            '${_formatSheetSpeed(_value)}x',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('${_formatSheetSpeed(_value)}x', style: Theme.of(context).textTheme.titleMedium),
           Slider(
             value: _value,
             min: SpeedSlider.minSpeed,
@@ -127,9 +117,7 @@ class _SpeedSheetState extends State<_SpeedSheet> {
           TextField(
             controller: _customController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
-            ],
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$'))],
             decoration: const InputDecoration(
               labelText: 'Custom value',
               hintText: '0.5 - 3.0',
@@ -142,10 +130,7 @@ class _SpeedSheetState extends State<_SpeedSheet> {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
+                child: OutlinedButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -217,9 +202,6 @@ class _PresetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      label: Text('${value.toStringAsFixed(1)}x'),
-      onPressed: () => onTap(value),
-    );
+    return ActionChip(label: Text('${value.toStringAsFixed(1)}x'), onPressed: () => onTap(value));
   }
 }

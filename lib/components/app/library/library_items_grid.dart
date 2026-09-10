@@ -61,12 +61,7 @@ class LibraryItemsGrid extends StatelessWidget {
         return AlignedGridView.count(
           controller: scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(
-            gridLayout.horizontalPadding,
-            8,
-            gridLayout.horizontalPadding,
-            16,
-          ),
+          padding: EdgeInsets.fromLTRB(gridLayout.horizontalPadding, 8, gridLayout.horizontalPadding, 16),
           crossAxisCount: gridLayout.crossAxisCount,
           mainAxisSpacing: appGridSpacing,
           crossAxisSpacing: appGridSpacing,
@@ -91,21 +86,13 @@ class LibraryItemsGrid extends StatelessWidget {
               squareCover: true,
               subtitle: subtitleBuilder?.call(item),
               enableHoverSelection: true,
-              onPlay: onPlayItem == null
-                  ? null
-                  : () => onPlayItem!(item, index),
+              onPlay: onPlayItem == null ? null : () => onPlayItem!(item, index),
               canEdit: canEditItems,
-              onEdit: onEditItem == null
-                  ? null
-                  : () => onEditItem!(item, index),
+              onEdit: onEditItem == null ? null : () => onEditItem!(item, index),
               selectionMode: selectionMode,
               isSelected: selectedItemIds.contains(item.id),
-              onToggleSelection: onToggleSelection == null
-                  ? null
-                  : () => onToggleSelection!(item.id, index),
-              onEnterSelectionMode: onEnterSelectionMode == null
-                  ? null
-                  : () => onEnterSelectionMode!(item.id, index),
+              onToggleSelection: onToggleSelection == null ? null : () => onToggleSelection!(item.id, index),
+              onEnterSelectionMode: onEnterSelectionMode == null ? null : () => onEnterSelectionMode!(item.id, index),
             );
           },
         );
@@ -114,11 +101,7 @@ class LibraryItemsGrid extends StatelessWidget {
   }
 }
 
-int estimateLibraryItemCount({
-  required int loadedCount,
-  required int totalItems,
-  required bool hasNextPage,
-}) {
+int estimateLibraryItemCount({required int loadedCount, required int totalItems, required bool hasNextPage}) {
   if (totalItems > loadedCount) {
     return totalItems;
   }
@@ -142,10 +125,7 @@ class _LibraryGridPlaceholderTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AspectRatio(
-            aspectRatio: 1,
-            child: CoverLoadingPlaceholder(borderRadius: 16),
-          ),
+          const AspectRatio(aspectRatio: 1, child: CoverLoadingPlaceholder(borderRadius: 16)),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,

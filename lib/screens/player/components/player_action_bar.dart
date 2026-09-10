@@ -34,9 +34,7 @@ class PlayerActionBar extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: spacing,
       runSpacing: 4,
-      children: actions
-          .map((action) => _buildAction(context, action))
-          .toList(growable: false),
+      children: actions.map((action) => _buildAction(context, action)).toList(growable: false),
     );
     if (!grouped || showLabels) {
       return controls;
@@ -44,8 +42,7 @@ class PlayerActionBar extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh
-            .withValues(alpha: 0.58),
+        color: Theme.of(context).colorScheme.surfaceContainerHigh.withValues(alpha: 0.58),
         borderRadius: BorderRadius.circular(28),
       ),
       child: Padding(padding: const EdgeInsets.all(4), child: controls),
@@ -58,27 +55,20 @@ class PlayerActionBar extends StatelessWidget {
         ? switch (action) {
             PlayerActionType.speed => const SpeedSlider(),
             PlayerActionType.bookmarks => const BookmarksButton(),
-            PlayerActionType.chapter => ChapterQuickPicker(
-              enabled: hasChapters,
-            ),
+            PlayerActionType.chapter => ChapterQuickPicker(enabled: hasChapters),
             PlayerActionType.volume => const VolumeSlider(),
             PlayerActionType.sleepTimer => const SleepTimerButton(),
             PlayerActionType.queue => const QueueQuickPicker(),
           }
         : SizedBox.square(
             dimension: 48,
-            child: IconButton(
-              tooltip: action.label,
-              onPressed: override,
-              icon: Icon(action.icon),
-            ),
+            child: IconButton(tooltip: action.label, onPressed: override, icon: Icon(action.icon)),
           );
 
     if (!showLabels && !grouped) {
       return DecoratedBox(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest
-              .withValues(alpha: 0.72),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(18),
         ),
         child: control,
@@ -96,8 +86,7 @@ class PlayerActionBar extends StatelessWidget {
         children: <Widget>[
           DecoratedBox(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.72),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.72),
               borderRadius: BorderRadius.circular(18),
             ),
             child: control,
@@ -107,9 +96,8 @@ class PlayerActionBar extends StatelessWidget {
             action.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.labelSmall
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),

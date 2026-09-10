@@ -18,12 +18,7 @@ class LatestEpisodesState {
   final bool hasNextPage;
   final bool isLoadingNextPage;
 
-  LatestEpisodesState copyWith({
-    List<Episode>? episodes,
-    int? page,
-    bool? hasNextPage,
-    bool? isLoadingNextPage,
-  }) {
+  LatestEpisodesState copyWith({List<Episode>? episodes, int? page, bool? hasNextPage, bool? isLoadingNextPage}) {
     return LatestEpisodesState(
       episodes: episodes ?? this.episodes,
       page: page ?? this.page,
@@ -39,12 +34,8 @@ class LatestEpisodes extends _$LatestEpisodes {
 
   @override
   Future<LatestEpisodesState> build(String libraryId) async {
-    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (
-      previous,
-      next,
-    ) {
-      if (next != null &&
-          (next.libraryId == null || next.libraryId == libraryId)) {
+    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (previous, next) {
+      if (next != null && (next.libraryId == null || next.libraryId == libraryId)) {
         ref.invalidateSelf();
       }
     });

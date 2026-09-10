@@ -30,10 +30,7 @@ List<ItemMetadataRowData> buildItemMetadataRows(
             .map(
               (series) => ItemLinkValue(
                 label: seriesLabel(series.name, series.sequence),
-                onTap: () => context.push(
-                  '/series/${series.id}',
-                  extra: MultiBookEntryData.fromSeries(series),
-                ),
+                onTap: () => context.push('/series/${series.id}', extra: MultiBookEntryData.fromSeries(series)),
               ),
             )
             .toList(),
@@ -42,12 +39,7 @@ List<ItemMetadataRowData> buildItemMetadataRows(
       ItemMetadataRowData(
         label: 'Authors',
         values: metadata.authors!
-            .map(
-              (author) => ItemLinkValue(
-                label: author.name,
-                onTap: () => context.push('/author/${author.id}'),
-              ),
-            )
+            .map((author) => ItemLinkValue(label: author.name, onTap: () => context.push('/author/${author.id}')))
             .toList(),
       ),
     if (metadata?.narrators != null && metadata!.narrators!.isNotEmpty)
@@ -57,25 +49,19 @@ List<ItemMetadataRowData> buildItemMetadataRows(
             .map(
               (narrator) => ItemLinkValue(
                 label: narrator,
-                onTap: () =>
-                    context.push('/narrator/${Uri.encodeComponent(narrator)}'),
+                onTap: () => context.push('/narrator/${Uri.encodeComponent(narrator)}'),
               ),
             )
             .toList(),
       ),
-    if (hasText(metadata?.publishedYear))
-      ItemMetadataRowData(
-        label: 'Published year',
-        value: metadata!.publishedYear!,
-      ),
+    if (hasText(metadata?.publishedYear)) ItemMetadataRowData(label: 'Published year', value: metadata!.publishedYear!),
     if (hasText(metadata?.publisher))
       ItemMetadataRowData(
         label: 'Publisher',
         values: [
           ItemLinkValue(
             label: metadata!.publisher!,
-            onTap: () =>
-                onFilterTap(_publisherFilterQuery(metadata.publisher!)),
+            onTap: () => onFilterTap(_publisherFilterQuery(metadata.publisher!)),
           ),
         ],
       ),
@@ -86,12 +72,7 @@ List<ItemMetadataRowData> buildItemMetadataRows(
             .map(
               (genre) => ItemLinkValue(
                 label: genre,
-                onTap: () => onFilterTap(
-                  LibraryFilter.grouped(
-                    LibraryFilterGroup.genres,
-                    genre,
-                  ).queryValue,
-                ),
+                onTap: () => onFilterTap(LibraryFilter.grouped(LibraryFilterGroup.genres, genre).queryValue),
               ),
             )
             .toList(),
@@ -103,12 +84,7 @@ List<ItemMetadataRowData> buildItemMetadataRows(
             .map(
               (tag) => ItemLinkValue(
                 label: tag,
-                onTap: () => onFilterTap(
-                  LibraryFilter.grouped(
-                    LibraryFilterGroup.tags,
-                    tag,
-                  ).queryValue,
-                ),
+                onTap: () => onFilterTap(LibraryFilter.grouped(LibraryFilterGroup.tags, tag).queryValue),
               ),
             )
             .toList(),
@@ -119,22 +95,13 @@ List<ItemMetadataRowData> buildItemMetadataRows(
         values: [
           ItemLinkValue(
             label: metadata!.language!,
-            onTap: () => onFilterTap(
-              LibraryFilter.grouped(
-                LibraryFilterGroup.languages,
-                metadata.language!,
-              ).queryValue,
-            ),
+            onTap: () =>
+                onFilterTap(LibraryFilter.grouped(LibraryFilterGroup.languages, metadata.language!).queryValue),
           ),
         ],
       ),
-    if (duration != null)
-      ItemMetadataRowData(
-        label: 'Duration',
-        value: formatDurationLong(duration),
-      ),
-    if (sizeBytes != null && sizeBytes > 0)
-      ItemMetadataRowData(label: 'Size', value: formatBytes(sizeBytes)),
+    if (duration != null) ItemMetadataRowData(label: 'Duration', value: formatDurationLong(duration)),
+    if (sizeBytes != null && sizeBytes > 0) ItemMetadataRowData(label: 'Size', value: formatBytes(sizeBytes)),
   ];
 }
 
@@ -168,45 +135,27 @@ Widget buildItemActionButtons({
   return LayoutBuilder(
     builder: (context, constraints) {
       final hasPrimaryActions = hasBook || hasAudio;
-      final hasSmallActions =
-          canDownload || hasAudio || onMoreActionSelected != null;
+      final hasSmallActions = canDownload || hasAudio || onMoreActionSelected != null;
       final playLabel = isLoadingCurrentItem
           ? 'Loading'
-          : (isPlayingCurrentItem
-                ? 'Pause'
-                : (isCurrentItem ? 'Resume' : 'Play'));
+          : (isPlayingCurrentItem ? 'Pause' : (isCurrentItem ? 'Resume' : 'Play'));
       final primaryActions = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (hasBook)
             OutlinedButton.icon(
               onPressed: onRead,
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-              ),
+              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12)),
               icon: const Icon(Icons.menu_book_rounded),
               label: const Text('Read'),
             ),
           if (hasBook && hasAudio) const SizedBox(height: 8),
           if (hasAudio)
             FilledButton.icon(
-              onPressed: isLoadingCurrentItem
-                  ? null
-                  : (isPlayingCurrentItem ? onPause : onPlay),
+              onPressed: isLoadingCurrentItem ? null : (isPlayingCurrentItem ? onPause : onPlay),
               icon: isLoadingCurrentItem
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2.2),
-                    )
-                  : Icon(
-                      isPlayingCurrentItem
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
-                    ),
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
+                  : Icon(isPlayingCurrentItem ? Icons.pause_rounded : Icons.play_arrow_rounded),
               label: Text(playLabel),
             ),
         ],
@@ -239,8 +188,7 @@ Widget buildItemActionButtons({
         showDeleteItem: showDeleteItem,
       );
 
-      final placeSmallBelowPrimary =
-          constraints.maxWidth < 360 || !hasPrimaryActions;
+      final placeSmallBelowPrimary = constraints.maxWidth < 360 || !hasPrimaryActions;
 
       if (placeSmallBelowPrimary) {
         return Column(
@@ -261,11 +209,7 @@ Widget buildItemActionButtons({
           const SizedBox(width: 10),
           SizedBox(
             height: 36,
-            child: VerticalDivider(
-              color: Theme.of(context).colorScheme.outlineVariant,
-              width: 1,
-              thickness: 1,
-            ),
+            child: VerticalDivider(color: Theme.of(context).colorScheme.outlineVariant, width: 1, thickness: 1),
           ),
           const SizedBox(width: 8),
           smallActions,
@@ -300,34 +244,18 @@ Widget _buildSmallActionButtons(
   final children = <Widget>[
     if (showDownload)
       IconButton.filledTonal(
-        onPressed: isDownloadInProgress
-            ? null
-            : (isDownloaded ? onDeleteDownload : onDownload),
-        tooltip: isDownloadInProgress
-            ? 'Downloading'
-            : (isDownloaded ? 'Delete download' : 'Download'),
+        onPressed: isDownloadInProgress ? null : (isDownloaded ? onDeleteDownload : onDownload),
+        tooltip: isDownloadInProgress ? 'Downloading' : (isDownloaded ? 'Delete download' : 'Download'),
         icon: isDownloadInProgress
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2.2),
-              )
-            : Icon(
-                isDownloaded
-                    ? Icons.delete_outline_rounded
-                    : Icons.download_rounded,
-              ),
+            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
+            : Icon(isDownloaded ? Icons.delete_outline_rounded : Icons.download_rounded),
         visualDensity: VisualDensity.compact,
       ),
     if (showQueue)
       IconButton.filledTonal(
         onPressed: queueEnabled ? onQueueToggle : null,
-        tooltip: queueEnabled
-            ? (isQueued ? 'Remove from queue' : 'Add to queue')
-            : 'Currently playing',
-        icon: Icon(
-          isQueued ? Icons.playlist_remove_rounded : Icons.queue_music_rounded,
-        ),
+        tooltip: queueEnabled ? (isQueued ? 'Remove from queue' : 'Add to queue') : 'Currently playing',
+        icon: Icon(isQueued ? Icons.playlist_remove_rounded : Icons.queue_music_rounded),
         visualDensity: VisualDensity.compact,
       ),
     if (showMoreActions && onMoreActionSelected != null)
@@ -373,24 +301,10 @@ class ItemChapterRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
-            Expanded(
-              child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-            SizedBox(
-              width: 74,
-              child: Text(
-                formatDurationShort(start),
-                textAlign: TextAlign.right,
-              ),
-            ),
+            Expanded(child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis)),
+            SizedBox(width: 74, child: Text(formatDurationShort(start), textAlign: TextAlign.right)),
             const SizedBox(width: 10),
-            SizedBox(
-              width: 74,
-              child: Text(
-                formatDurationShort(duration),
-                textAlign: TextAlign.right,
-              ),
-            ),
+            SizedBox(width: 74, child: Text(formatDurationShort(duration), textAlign: TextAlign.right)),
           ],
         ),
       ),
@@ -403,10 +317,8 @@ class _ChapterTableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.labelSmall?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-      letterSpacing: 0.4,
-    );
+    final style = Theme.of(context).textTheme.labelSmall
+        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 0.4);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 2),
@@ -474,10 +386,7 @@ class LibraryItemTopContent extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Expanded(
-            flex: 2,
-            child: ItemMetadataCard(rows: metadataRows, inlineValues: true),
-          ),
+          Expanded(flex: 2, child: ItemMetadataCard(rows: metadataRows, inlineValues: true)),
         ],
       );
     }
@@ -496,11 +405,7 @@ class LibraryItemTopContent extends StatelessWidget {
         const SizedBox(height: 4),
         ItemDescription(item: item, useCard: false),
         const SizedBox(height: 4),
-        ItemMetadataCard(
-          rows: metadataRows,
-          inlineValues: true,
-          useCard: false,
-        ),
+        ItemMetadataCard(rows: metadataRows, inlineValues: true, useCard: false),
       ],
     );
   }
@@ -523,8 +428,7 @@ class LibraryItemMediaSections extends StatefulWidget {
   final void Function(Chapter chapter) onChapterTap;
 
   @override
-  State<LibraryItemMediaSections> createState() =>
-      _LibraryItemMediaSectionsState();
+  State<LibraryItemMediaSections> createState() => _LibraryItemMediaSectionsState();
 }
 
 class _LibraryItemMediaSectionsState extends State<LibraryItemMediaSections> {
@@ -545,10 +449,7 @@ class _LibraryItemMediaSectionsState extends State<LibraryItemMediaSections> {
           children: [
             TextSpan(
               text: rootPath,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant
-                    .withValues(alpha: 0.7),
-              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
             ),
             TextSpan(text: relPath),
           ],
@@ -588,14 +489,8 @@ class _LibraryItemMediaSectionsState extends State<LibraryItemMediaSections> {
             initiallyExpanded: false,
             actions: [
               TextButton.icon(
-                onPressed: () =>
-                    setState(() => _showAbsolutePaths = !_showAbsolutePaths),
-                icon: Icon(
-                  _showAbsolutePaths
-                      ? Icons.folder_open_rounded
-                      : Icons.insert_drive_file_rounded,
-                  size: 16,
-                ),
+                onPressed: () => setState(() => _showAbsolutePaths = !_showAbsolutePaths),
+                icon: Icon(_showAbsolutePaths ? Icons.folder_open_rounded : Icons.insert_drive_file_rounded, size: 16),
                 label: Text(_showAbsolutePaths ? 'Absolute' : 'Filenames'),
               ),
             ],
@@ -607,11 +502,7 @@ class _LibraryItemMediaSectionsState extends State<LibraryItemMediaSections> {
                     title: _buildPathTitle(context, audioFile.metadata),
                     subtitle: audioFile.duration == null
                         ? null
-                        : Text(
-                            formatDurationShort(
-                              Duration(seconds: audioFile.duration!.round()),
-                            ),
-                          ),
+                        : Text(formatDurationShort(Duration(seconds: audioFile.duration!.round()))),
                   ),
                 )
                 .toList(),
@@ -624,17 +515,9 @@ class _LibraryItemMediaSectionsState extends State<LibraryItemMediaSections> {
             initiallyExpanded: false,
             actions: [
               TextButton.icon(
-                onPressed: () =>
-                    setState(() => _showAbsolutePaths = !_showAbsolutePaths),
-                icon: Icon(
-                  _showAbsolutePaths
-                      ? Icons.folder_open_rounded
-                      : Icons.insert_drive_file_rounded,
-                  size: 16,
-                ),
-                label: Text(
-                  _showAbsolutePaths ? 'Absolute paths' : 'Filenames',
-                ),
+                onPressed: () => setState(() => _showAbsolutePaths = !_showAbsolutePaths),
+                icon: Icon(_showAbsolutePaths ? Icons.folder_open_rounded : Icons.insert_drive_file_rounded, size: 16),
+                label: Text(_showAbsolutePaths ? 'Absolute paths' : 'Filenames'),
               ),
             ],
             children: [

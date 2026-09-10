@@ -35,18 +35,11 @@ bool _isBackgroundLifecycleState(AppLifecycleState state) {
 }
 
 bool _isKeepSocketConnectedInBackground(String? settingValue) {
-  final defaultEnabled =
-      defaultSettings[SettingKeys.keepWebsocketConnectionInBackground]
-          as bool? ??
-      false;
+  final defaultEnabled = defaultSettings[SettingKeys.keepWebsocketConnectionInBackground] as bool? ?? false;
   return SettingsParser.decodeValue<bool>(settingValue, defaultEnabled);
 }
 
-String _socketConnectionFingerprint({
-  required String serverUrl,
-  required String token,
-  Map<String, String>? headers,
-}) {
+String _socketConnectionFingerprint({required String serverUrl, required String token, Map<String, String>? headers}) {
   final normalizedHeaders = headers == null
       ? ''
       : (headers.entries.toList()..sort((a, b) => a.key.compareTo(b.key)))
@@ -70,21 +63,15 @@ class SocketBatchQuickMatchComplete {
 }
 
 final socketBatchQuickMatchCompleteProvider =
-    NotifierProvider<
-      SocketBatchQuickMatchCompleteNotifier,
-      SocketBatchQuickMatchComplete?
-    >(SocketBatchQuickMatchCompleteNotifier.new);
+    NotifierProvider<SocketBatchQuickMatchCompleteNotifier, SocketBatchQuickMatchComplete?>(
+      SocketBatchQuickMatchCompleteNotifier.new,
+    );
 
-class SocketBatchQuickMatchCompleteNotifier
-    extends Notifier<SocketBatchQuickMatchComplete?> {
+class SocketBatchQuickMatchCompleteNotifier extends Notifier<SocketBatchQuickMatchComplete?> {
   @override
   SocketBatchQuickMatchComplete? build() => null;
 
-  void setEvent({
-    required bool success,
-    required int updates,
-    required int unmatched,
-  }) {
+  void setEvent({required bool success, required int updates, required int unmatched}) {
     state = SocketBatchQuickMatchComplete(
       success: success,
       updates: updates,
@@ -96,10 +83,9 @@ class SocketBatchQuickMatchCompleteNotifier
 
 /// Latest media progress pushed by the server for this user (i.e. another
 /// client synced). Driven by the `user_item_progress_updated` socket event.
-final remoteMediaProgressUpdateProvider =
-    NotifierProvider<RemoteMediaProgressUpdateNotifier, MediaProgress?>(
-      RemoteMediaProgressUpdateNotifier.new,
-    );
+final remoteMediaProgressUpdateProvider = NotifierProvider<RemoteMediaProgressUpdateNotifier, MediaProgress?>(
+  RemoteMediaProgressUpdateNotifier.new,
+);
 
 class RemoteMediaProgressUpdateNotifier extends Notifier<MediaProgress?> {
   @override
@@ -121,20 +107,13 @@ ABSSocketClient absSocketClient(Ref ref) {
       final progress = event.data;
       final key = mediaProgressKey(progress.libraryItemId, progress.episodeId);
       final existingProgress = ref.read(mediaProgressProvider).value?[key];
-      final becameFinished =
-          progress.isFinished && existingProgress?.isFinished != true;
+      final becameFinished = progress.isFinished && existingProgress?.isFinished != true;
 
-      ref
-          .read(mediaProgressProvider.notifier)
-          .applyRemoteProgressUpdate(progress);
-      ref
-          .read(remoteMediaProgressUpdateProvider.notifier)
-          .setProgress(progress);
+      ref.read(mediaProgressProvider.notifier).applyRemoteProgressUpdate(progress);
+      ref.read(remoteMediaProgressUpdateProvider.notifier).setProgress(progress);
 
       if (becameFinished) {
-        smartDownloadNotifier.requestReconcile(
-          reason: 'remote progress completed',
-        );
+        smartDownloadNotifier.requestReconcile(reason: 'remote progress completed');
         unawaited(
           refreshPersonalizedShelfForCompletedItem(
             container: container,
@@ -147,23 +126,11 @@ ABSSocketClient absSocketClient(Ref ref) {
     },
     onItemUpdated: (item) {
       smartDownloadNotifier.requestReconcile(reason: 'library item updated');
-      unawaited(
-        processLibraryItemUpdate(
-          container: ref.container,
-          item: item,
-          source: 'socket.item_updated',
-        ),
-      );
+      unawaited(processLibraryItemUpdate(container: ref.container, item: item, source: 'socket.item_updated'));
     },
     onItemAdded: (item) {
       smartDownloadNotifier.requestReconcile(reason: 'library item added');
-      unawaited(
-        processLibraryItemAdded(
-          container: ref.container,
-          item: item,
-          source: 'socket.item_added',
-        ),
-      );
+      unawaited(processLibraryItemAdded(container: ref.container, item: item, source: 'socket.item_added'));
     },
     onItemRemoved: ({required itemId, libraryId, item}) {
       smartDownloadNotifier.requestReconcile(reason: 'library item removed');
@@ -179,34 +146,17 @@ ABSSocketClient absSocketClient(Ref ref) {
     },
     onItemsAdded: (items) {
       smartDownloadNotifier.requestReconcile(reason: 'library items added');
-      unawaited(
-        processLibraryItemsAdded(
-          container: ref.container,
-          items: items,
-          source: 'socket.items_added',
-        ),
-      );
+      unawaited(processLibraryItemsAdded(container: ref.container, items: items, source: 'socket.items_added'));
     },
     onItemsUpdated: (items) {
       smartDownloadNotifier.requestReconcile(reason: 'library items updated');
-      unawaited(
-        processLibraryItemsUpdated(
-          container: ref.container,
-          items: items,
-          source: 'socket.items_updated',
-        ),
-      );
+      unawaited(processLibraryItemsUpdated(container: ref.container, items: items, source: 'socket.items_updated'));
     },
-    onBatchQuickMatchComplete:
-        ({required success, required updates, required unmatched}) {
-          ref
-              .read(socketBatchQuickMatchCompleteProvider.notifier)
-              .setEvent(
-                success: success,
-                updates: updates,
-                unmatched: unmatched,
-              );
-        },
+    onBatchQuickMatchComplete: ({required success, required updates, required unmatched}) {
+      ref
+          .read(socketBatchQuickMatchCompleteProvider.notifier)
+          .setEvent(success: success, updates: updates, unmatched: unmatched);
+    },
     onTaskStarted: (task) {
       serverTasksNotifier.addOrUpdateTask(task);
     },
@@ -217,83 +167,54 @@ ABSSocketClient absSocketClient(Ref ref) {
       serverTasksNotifier.addOrUpdateTask(task);
     },
     onMetadataEmbedQueueUpdate: ({required libraryItemId, required queued}) {
-      serverTasksNotifier.setEmbedMetadataQueued(
-        libraryItemId: libraryItemId,
-        queued: queued,
-      );
+      serverTasksNotifier.setEmbedMetadataQueued(libraryItemId: libraryItemId, queued: queued);
     },
     onTrackStarted: ({required libraryItemId, required ino}) {
-      serverTasksNotifier.updateTrackStarted(
-        libraryItemId: libraryItemId,
-        ino: ino,
-      );
+      serverTasksNotifier.updateTrackStarted(libraryItemId: libraryItemId, ino: ino);
     },
-    onTrackProgress:
-        ({required libraryItemId, required ino, required progress}) {
-          serverTasksNotifier.updateTrackProgress(
-            libraryItemId: libraryItemId,
-            ino: ino,
-            progress: progress,
-          );
-        },
+    onTrackProgress: ({required libraryItemId, required ino, required progress}) {
+      serverTasksNotifier.updateTrackProgress(libraryItemId: libraryItemId, ino: ino, progress: progress);
+    },
     onTrackFinished: ({required libraryItemId, required ino}) {
-      serverTasksNotifier.updateTrackFinished(
-        libraryItemId: libraryItemId,
-        ino: ino,
-      );
+      serverTasksNotifier.updateTrackFinished(libraryItemId: libraryItemId, ino: ino);
     },
     onTaskProgress: ({required libraryItemId, required progress}) {
-      serverTasksNotifier.updateTaskProgress(
-        libraryItemId: libraryItemId,
-        progress: progress,
-      );
+      serverTasksNotifier.updateTaskProgress(libraryItemId: libraryItemId, progress: progress);
     },
     onCollectionAdded: (collection) {
       smartDownloadNotifier.requestReconcile(reason: 'collection added');
       unawaited(
-        ref
-            .read(collectionsProvider(collection.libraryId).notifier)
-            .refresh(withLoading: false, forceServer: true),
+        ref.read(collectionsProvider(collection.libraryId).notifier).refresh(withLoading: false, forceServer: true),
       );
     },
     onCollectionUpdated: (collection) {
       smartDownloadNotifier.requestReconcile(reason: 'collection updated');
       unawaited(
-        ref
-            .read(collectionsProvider(collection.libraryId).notifier)
-            .refresh(withLoading: false, forceServer: true),
+        ref.read(collectionsProvider(collection.libraryId).notifier).refresh(withLoading: false, forceServer: true),
       );
     },
     onCollectionRemoved: (collection) {
       smartDownloadNotifier.requestReconcile(reason: 'collection removed');
       unawaited(
-        ref
-            .read(collectionsProvider(collection.libraryId).notifier)
-            .refresh(withLoading: false, forceServer: true),
+        ref.read(collectionsProvider(collection.libraryId).notifier).refresh(withLoading: false, forceServer: true),
       );
     },
     onPlaylistAdded: (playlist) {
       smartDownloadNotifier.requestReconcile(reason: 'playlist added');
       unawaited(
-        ref
-            .read(playlistsProvider(playlist.libraryId).notifier)
-            .refresh(withLoading: false, forceServer: true),
+        ref.read(playlistsProvider(playlist.libraryId).notifier).refresh(withLoading: false, forceServer: true),
       );
     },
     onPlaylistUpdated: (playlist) {
       smartDownloadNotifier.requestReconcile(reason: 'playlist updated');
       unawaited(
-        ref
-            .read(playlistsProvider(playlist.libraryId).notifier)
-            .refresh(withLoading: false, forceServer: true),
+        ref.read(playlistsProvider(playlist.libraryId).notifier).refresh(withLoading: false, forceServer: true),
       );
     },
     onPlaylistRemoved: (playlist) {
       smartDownloadNotifier.requestReconcile(reason: 'playlist removed');
       unawaited(
-        ref
-            .read(playlistsProvider(playlist.libraryId).notifier)
-            .refresh(withLoading: false, forceServer: true),
+        ref.read(playlistsProvider(playlist.libraryId).notifier).refresh(withLoading: false, forceServer: true),
       );
     },
   );
@@ -301,24 +222,14 @@ ABSSocketClient absSocketClient(Ref ref) {
   User? currentUser = ref.read(currentUserProvider).value;
   bool canReachServer = ref.read(serverStatusProvider).value ?? false;
   final initialKeepSocketSetting = ref
-      .read(
-        globalSettingByKeyProvider(
-          SettingKeys.keepWebsocketConnectionInBackground,
-        ),
-      )
+      .read(globalSettingByKeyProvider(SettingKeys.keepWebsocketConnectionInBackground))
       .value;
-  bool keepSocketConnectedInBackground = _isKeepSocketConnectedInBackground(
-    initialKeepSocketSetting,
-  );
+  bool keepSocketConnectedInBackground = _isKeepSocketConnectedInBackground(initialKeepSocketSetting);
   bool socketSuppressedForBackground = false;
   String? activeSocketFingerprint;
-  AppLifecycleState appLifecycleState =
-      WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
+  AppLifecycleState appLifecycleState = WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
 
-  Future<void> hydrateServerTasksForUser(
-    User? user, {
-    required bool serverReachable,
-  }) async {
+  Future<void> hydrateServerTasksForUser(User? user, {required bool serverReachable}) async {
     if (user == null) {
       serverTasksNotifier.reset();
       return;
@@ -334,9 +245,7 @@ ABSSocketClient absSocketClient(Ref ref) {
     }
 
     try {
-      final tasksResponse = await api.getAdminApi().getTasks(
-        includeQueue: true,
-      );
+      final tasksResponse = await api.getAdminApi().getTasks(includeQueue: true);
       final payload = tasksResponse.data;
       if (payload == null) {
         return;
@@ -359,11 +268,7 @@ ABSSocketClient absSocketClient(Ref ref) {
         return;
       }
 
-      logger(
-        'Failed to hydrate server tasks: $error\n$stackTrace',
-        tag: 'SocketProvider',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to hydrate server tasks: $error\n$stackTrace', tag: 'SocketProvider', level: InfoLevel.warning);
     }
   }
 
@@ -372,10 +277,7 @@ ABSSocketClient absSocketClient(Ref ref) {
     final token = user?.preferredAuthToken;
     final serverHeaders = user?.server?.headers;
 
-    if (serverUrl == null ||
-        serverUrl.isEmpty ||
-        token == null ||
-        token.isEmpty) {
+    if (serverUrl == null || serverUrl.isEmpty || token == null || token.isEmpty) {
       socketClient.disconnect();
       activeSocketFingerprint = null;
       return;
@@ -398,8 +300,7 @@ ABSSocketClient absSocketClient(Ref ref) {
       headers: serverHeaders,
     );
 
-    if (socketClient.isConnected &&
-        activeSocketFingerprint == nextSocketFingerprint) {
+    if (socketClient.isConnected && activeSocketFingerprint == nextSocketFingerprint) {
       return;
     }
 
@@ -408,18 +309,13 @@ ABSSocketClient absSocketClient(Ref ref) {
       tag: 'SocketProvider',
       level: InfoLevel.debug,
     );
-    socketClient.connect(
-      serverUrl: serverUrl,
-      apiToken: token,
-      headers: serverHeaders,
-    );
+    socketClient.connect(serverUrl: serverUrl, apiToken: token, headers: serverHeaders);
     activeSocketFingerprint = nextSocketFingerprint;
   }
 
   void syncSocketConnection() {
     final shouldSuppressForBackground =
-        !keepSocketConnectedInBackground &&
-        _isBackgroundLifecycleState(appLifecycleState);
+        !keepSocketConnectedInBackground && _isBackgroundLifecycleState(appLifecycleState);
 
     if (shouldSuppressForBackground) {
       if (!socketSuppressedForBackground) {
@@ -447,9 +343,7 @@ ABSSocketClient absSocketClient(Ref ref) {
     currentUser = next.value;
     syncSocketConnection();
     smartDownloadNotifier.requestReconcile(reason: 'user changed');
-    unawaited(
-      hydrateServerTasksForUser(currentUser, serverReachable: canReachServer),
-    );
+    unawaited(hydrateServerTasksForUser(currentUser, serverReachable: canReachServer));
   });
 
   ref.listen<AsyncValue<bool>>(serverStatusProvider, (previous, next) {
@@ -458,20 +352,16 @@ ABSSocketClient absSocketClient(Ref ref) {
     if (canReachServer) {
       smartDownloadNotifier.requestReconcile(reason: 'server reconnected');
     }
-    unawaited(
-      hydrateServerTasksForUser(currentUser, serverReachable: canReachServer),
-    );
+    unawaited(hydrateServerTasksForUser(currentUser, serverReachable: canReachServer));
   });
 
-  ref.listen<AsyncValue<String?>>(
-    globalSettingByKeyProvider(SettingKeys.keepWebsocketConnectionInBackground),
-    (previous, next) {
-      keepSocketConnectedInBackground = _isKeepSocketConnectedInBackground(
-        next.value,
-      );
-      syncSocketConnection();
-    },
-  );
+  ref.listen<AsyncValue<String?>>(globalSettingByKeyProvider(SettingKeys.keepWebsocketConnectionInBackground), (
+    previous,
+    next,
+  ) {
+    keepSocketConnectedInBackground = _isKeepSocketConnectedInBackground(next.value);
+    syncSocketConnection();
+  });
 
   final lifecycleListener = AppLifecycleListener(
     onStateChange: (state) {
@@ -484,14 +374,7 @@ ABSSocketClient absSocketClient(Ref ref) {
   );
 
   syncSocketConnection();
-  unawaited(
-    Future<void>(
-      () => hydrateServerTasksForUser(
-        currentUser,
-        serverReachable: canReachServer,
-      ),
-    ),
-  );
+  unawaited(Future<void>(() => hydrateServerTasksForUser(currentUser, serverReachable: canReachServer)));
 
   ref.onDispose(lifecycleListener.dispose);
   ref.onDispose(socketClient.dispose);

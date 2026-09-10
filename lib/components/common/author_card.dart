@@ -27,62 +27,38 @@ class AuthorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageSize = compact
-        ? (context.isMobile ? 54.0 : 58.0)
-        : (context.isMobile ? 64.0 : 72.0);
-    final titleStyle = compact
-        ? Theme.of(context).textTheme.bodyLarge
-        : Theme.of(context).textTheme.titleMedium;
+    final imageSize = compact ? (context.isMobile ? 54.0 : 58.0) : (context.isMobile ? 64.0 : 72.0);
+    final titleStyle = compact ? Theme.of(context).textTheme.bodyLarge : Theme.of(context).textTheme.titleMedium;
     final subtitleStyle = Theme.of(context).textTheme.bodySmall;
 
     final cardChild = Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 12,
-        vertical: compact ? 8 : 10,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12, vertical: compact ? 8 : 10),
       child: Row(
         children: [
-          AuthorImage(
-            authorId: authorId,
-            imagePath: imagePath,
-            width: imageSize,
-            height: imageSize,
-            borderRadius: 12,
-          ),
+          AuthorImage(authorId: authorId, imagePath: imagePath, width: imageSize, height: imageSize, borderRadius: 12),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: titleStyle,
-                ),
+                Text(name, maxLines: 2, overflow: TextOverflow.ellipsis, style: titleStyle),
                 if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
                     subtitle!.trim(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: subtitleStyle?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: subtitleStyle?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
-                if (description != null &&
-                    description!.trim().isNotEmpty &&
-                    !compact) ...[
+                if (description != null && description!.trim().isNotEmpty && !compact) ...[
                   const SizedBox(height: 4),
                   Text(
                     description!.trim(),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: subtitleStyle?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: subtitleStyle?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ],
@@ -90,10 +66,7 @@ class AuthorCard extends StatelessWidget {
           ),
           if (onTap != null) ...[
             const SizedBox(width: 6),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ],
         ],
       ),
@@ -102,9 +75,7 @@ class AuthorCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: onTap == null
-          ? cardChild
-          : InkWell(onTap: onTap, child: cardChild),
+      child: onTap == null ? cardChild : InkWell(onTap: onTap, child: cardChild),
     );
   }
 }
@@ -128,27 +99,15 @@ class AuthorImage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (authorId.trim().isEmpty || imagePath?.trim().isNotEmpty != true) {
-      return _AuthorImagePlaceholder(
-        width: width,
-        height: height,
-        borderRadius: borderRadius,
-      );
+      return _AuthorImagePlaceholder(width: width, height: height, borderRadius: borderRadius);
     }
 
     final api = ref.watch(absApiProvider);
     if (api == null) {
-      return _AuthorImagePlaceholder(
-        width: width,
-        height: height,
-        borderRadius: borderRadius,
-      );
+      return _AuthorImagePlaceholder(width: width, height: height, borderRadius: borderRadius);
     }
 
-    final imageUri = _buildAuthorImageUri(
-      basePath: api.basePathOverride,
-      authorId: authorId,
-      width: width,
-    );
+    final imageUri = _buildAuthorImageUri(basePath: api.basePathOverride, authorId: authorId, width: width);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
@@ -160,38 +119,21 @@ class AuthorImage extends ConsumerWidget {
         fit: BoxFit.cover,
         fadeInDuration: const Duration(milliseconds: 120),
         fadeOutDuration: const Duration(milliseconds: 70),
-        placeholder: (context, url) =>
-            const CoverLoadingPlaceholder(borderRadius: 0),
-        errorBuilder: (context, url, error) => _AuthorImagePlaceholder(
-          width: width,
-          height: height,
-          borderRadius: 0,
-        ),
+        placeholder: (context, url) => const CoverLoadingPlaceholder(borderRadius: 0),
+        errorBuilder: (context, url, error) => _AuthorImagePlaceholder(width: width, height: height, borderRadius: 0),
       ),
     );
   }
 }
 
-Uri _buildAuthorImageUri({
-  required String basePath,
-  required String authorId,
-  required double width,
-}) {
-  final queryParams = <String, String>{
-    if (width > 0) 'width': width.round().toString(),
-  };
+Uri _buildAuthorImageUri({required String basePath, required String authorId, required double width}) {
+  final queryParams = <String, String>{if (width > 0) 'width': width.round().toString()};
   final base = Uri.parse('$basePath/api/authors/$authorId/image');
-  return queryParams.isEmpty
-      ? base
-      : base.replace(queryParameters: queryParams);
+  return queryParams.isEmpty ? base : base.replace(queryParameters: queryParams);
 }
 
 class _AuthorImagePlaceholder extends StatelessWidget {
-  const _AuthorImagePlaceholder({
-    required this.width,
-    required this.height,
-    required this.borderRadius,
-  });
+  const _AuthorImagePlaceholder({required this.width, required this.height, required this.borderRadius});
 
   final double width;
   final double height;
@@ -208,19 +150,12 @@ class _AuthorImagePlaceholder extends StatelessWidget {
         height: height,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              colorScheme.surfaceContainerHighest,
-              colorScheme.surfaceContainer,
-            ],
+            colors: [colorScheme.surfaceContainerHighest, colorScheme.surfaceContainer],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
         ),
-        child: Icon(
-          Icons.person_outline_rounded,
-          size: width * 0.45,
-          color: colorScheme.onSurfaceVariant,
-        ),
+        child: Icon(Icons.person_outline_rounded, size: width * 0.45, color: colorScheme.onSurfaceVariant),
       ),
     );
   }

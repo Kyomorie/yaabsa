@@ -12,8 +12,7 @@ part of 'oidc_provider.dart';
 @ProviderFor(OidcState)
 final oidcStateProvider = OidcStateProvider._();
 
-final class OidcStateProvider
-    extends $NotifierProvider<OidcState, AsyncValue<void>> {
+final class OidcStateProvider extends $NotifierProvider<OidcState, AsyncValue<void>> {
   OidcStateProvider._()
     : super(
         from: null,
@@ -34,10 +33,7 @@ final class OidcStateProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(AsyncValue<void> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AsyncValue<void>>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<AsyncValue<void>>(value));
   }
 }
 

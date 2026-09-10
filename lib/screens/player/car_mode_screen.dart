@@ -16,10 +16,7 @@ import 'package:yaabsa/util/setting_key.dart';
 class CarModeScreen extends ConsumerWidget {
   const CarModeScreen({super.key});
 
-  double _resolveCoverSize({
-    required BoxConstraints constraints,
-    required double reservedHeight,
-  }) {
+  double _resolveCoverSize({required BoxConstraints constraints, required double reservedHeight}) {
     final sideMargin = constraints.maxWidth >= 1200
         ? 44.0
         : constraints.maxWidth >= 900
@@ -39,25 +36,13 @@ class CarModeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final api = ref.watch(absApiProvider);
-    final fastForwardVal = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.fastForwardInterval))
-        .asData
-        ?.value;
-    final rewindVal = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.rewindInterval))
-        .asData
-        ?.value;
-    final fastForwardSeconds = SettingsParser.decodeValue<int>(
-      fastForwardVal,
-      10,
-    );
+    final fastForwardVal = ref.watch(globalSettingByKeyProvider(SettingKeys.fastForwardInterval)).asData?.value;
+    final rewindVal = ref.watch(globalSettingByKeyProvider(SettingKeys.rewindInterval)).asData?.value;
+    final fastForwardSeconds = SettingsParser.decodeValue<int>(fastForwardVal, 10);
     final rewindSeconds = SettingsParser.decodeValue<int>(rewindVal, 10);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Car Mode'),
-        actions: const [StopButton()],
-      ),
+      appBar: AppBar(title: const Text('Car Mode'), actions: const [StopButton()]),
       body: StreamBuilder<InternalMedia?>(
         stream: audioHandler.mediaItemStream.stream,
         builder: (context, snapshot) {
@@ -74,15 +59,10 @@ class CarModeScreen extends ConsumerWidget {
                   : viewportConstraints.maxWidth >= 900
                   ? 12.0
                   : 8.0;
-              final verticalPadding = viewportConstraints.maxHeight < 430
-                  ? 10.0
-                  : 16.0;
+              final verticalPadding = viewportConstraints.maxHeight < 430 ? 10.0 : 16.0;
 
               return Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                  vertical: verticalPadding,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final compactLayout = constraints.maxHeight < 430;
@@ -104,17 +84,9 @@ class CarModeScreen extends ConsumerWidget {
                               final compactTop = topHeight < 220;
                               final ultraCompactTop = topHeight < 130;
                               final showAuthor = !ultraCompactTop;
-                              final titleStyle = Theme.of(context)
-                                  .textTheme
-                                  .headlineMedium;
-                              final authorStyle = Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  );
+                              final titleStyle = Theme.of(context).textTheme.headlineMedium;
+                              final authorStyle = Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant);
                               final coverToTitleGap = ultraCompactTop
                                   ? 6.0
                                   : compactTop
@@ -144,14 +116,8 @@ class CarModeScreen extends ConsumerWidget {
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        if (coverSize > 0.0)
-                                          _CarModeCoverArt(
-                                            api: api,
-                                            media: media,
-                                            size: coverSize,
-                                          ),
-                                        if (coverSize > 0.0)
-                                          SizedBox(height: coverToTitleGap),
+                                        if (coverSize > 0.0) _CarModeCoverArt(api: api, media: media, size: coverSize),
+                                        if (coverSize > 0.0) SizedBox(height: coverToTitleGap),
                                         Text(
                                           media.title,
                                           maxLines: ultraCompactTop ? 1 : 2,
@@ -159,8 +125,7 @@ class CarModeScreen extends ConsumerWidget {
                                           textAlign: TextAlign.center,
                                           style: titleStyle,
                                         ),
-                                        if (showAuthor)
-                                          SizedBox(height: titleToAuthorGap),
+                                        if (showAuthor) SizedBox(height: titleToAuthorGap),
                                         if (showAuthor)
                                           Text(
                                             media.author ?? 'Unknown Author',
@@ -192,19 +157,12 @@ class CarModeScreen extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _CarControl(
-                              icon: JumpIcon(
-                                rewind: true,
-                                durationSeconds: rewindSeconds,
-                                size: sideControlIconSize,
-                              ),
+                              icon: JumpIcon(rewind: true, durationSeconds: rewindSeconds, size: sideControlIconSize),
                               onPressed: () => audioHandler.rewind(),
                               iconSize: sideControlIconSize,
                               minimumSize: sideControlSize,
                             ),
-                            _CarPlayPauseControl(
-                              iconSize: playControlIconSize,
-                              minimumSize: playControlSize,
-                            ),
+                            _CarPlayPauseControl(iconSize: playControlIconSize, minimumSize: playControlSize),
                             _CarControl(
                               icon: JumpIcon(
                                 rewind: false,
@@ -232,11 +190,7 @@ class CarModeScreen extends ConsumerWidget {
 }
 
 class _CarModeCoverArt extends StatelessWidget {
-  const _CarModeCoverArt({
-    required this.api,
-    required this.media,
-    required this.size,
-  });
+  const _CarModeCoverArt({required this.api, required this.media, required this.size});
 
   final ABSApi? api;
   final InternalMedia media;
@@ -249,10 +203,7 @@ class _CarModeCoverArt extends StatelessWidget {
     final requestHeaders = currentApi == null
         ? const <String, String>{}
         : normalizeImageRequestHeaders(currentApi.dio.options.headers);
-    final imageProvider = coverImageProviderFromUri(
-      media.cover,
-      requestHeaders: requestHeaders,
-    );
+    final imageProvider = coverImageProviderFromUri(media.cover, requestHeaders: requestHeaders);
 
     return SizedBox(
       width: size,
@@ -286,12 +237,7 @@ class _CarModeCoverArt extends StatelessWidget {
 }
 
 class _CarControl extends StatelessWidget {
-  const _CarControl({
-    required this.icon,
-    required this.onPressed,
-    required this.iconSize,
-    required this.minimumSize,
-  });
+  const _CarControl({required this.icon, required this.onPressed, required this.iconSize, required this.minimumSize});
 
   final Widget icon;
   final VoidCallback onPressed;
@@ -310,10 +256,7 @@ class _CarControl extends StatelessWidget {
 }
 
 class _CarPlayPauseControl extends StatelessWidget {
-  const _CarPlayPauseControl({
-    required this.iconSize,
-    required this.minimumSize,
-  });
+  const _CarPlayPauseControl({required this.iconSize, required this.minimumSize});
 
   final double iconSize;
   final double minimumSize;

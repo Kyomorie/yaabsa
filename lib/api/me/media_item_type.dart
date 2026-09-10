@@ -11,7 +11,4 @@ enum MediaItemType {
   PODCAST_EPISODE,
 }
 
-final mediaItemTypeValues = EnumValues({
-  "book": MediaItemType.BOOK,
-  "podcastEpisode": MediaItemType.PODCAST_EPISODE,
-});
+final mediaItemTypeValues = EnumValues({"book": MediaItemType.BOOK, "podcastEpisode": MediaItemType.PODCAST_EPISODE});

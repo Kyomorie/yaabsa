@@ -31,10 +31,7 @@ class AdminEmailSettingsValidation {
     return null;
   }
 
-  static String? validateOptionalEmail(
-    String value, {
-    required String fieldLabel,
-  }) {
+  static String? validateOptionalEmail(String value, {required String fieldLabel}) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
       return null;

@@ -5,12 +5,7 @@ import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/setting_key.dart';
 
 class JumpButton extends ConsumerWidget {
-  const JumpButton({
-    super.key,
-    required this.rewind,
-    this.iconSize,
-    this.buttonSize = 48,
-  });
+  const JumpButton({super.key, required this.rewind, this.iconSize, this.buttonSize = 48});
 
   final bool rewind;
   final double? iconSize;
@@ -18,26 +13,15 @@ class JumpButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final intervalKey = rewind
-        ? SettingKeys.rewindInterval
-        : SettingKeys.fastForwardInterval;
-    final intervalVal = ref
-        .watch(globalSettingByKeyProvider(intervalKey))
-        .asData
-        ?.value;
+    final intervalKey = rewind ? SettingKeys.rewindInterval : SettingKeys.fastForwardInterval;
+    final intervalVal = ref.watch(globalSettingByKeyProvider(intervalKey)).asData?.value;
     final durationSeconds = SettingsParser.decodeValue<int>(intervalVal, 10);
 
     return IconButton(
       style: IconButton.styleFrom(minimumSize: Size.square(buttonSize)),
       iconSize: iconSize,
-      tooltip: rewind
-          ? 'Rewind $durationSeconds seconds'
-          : 'Forward $durationSeconds seconds',
-      icon: JumpIcon(
-        rewind: rewind,
-        durationSeconds: durationSeconds,
-        size: iconSize,
-      ),
+      tooltip: rewind ? 'Rewind $durationSeconds seconds' : 'Forward $durationSeconds seconds',
+      icon: JumpIcon(rewind: rewind, durationSeconds: durationSeconds, size: iconSize),
       onPressed: () {
         rewind ? audioHandler.rewind() : audioHandler.fastForward();
       },
@@ -46,13 +30,7 @@ class JumpButton extends ConsumerWidget {
 }
 
 class JumpIcon extends StatelessWidget {
-  const JumpIcon({
-    super.key,
-    required this.rewind,
-    required this.durationSeconds,
-    this.size,
-    this.color,
-  });
+  const JumpIcon({super.key, required this.rewind, required this.durationSeconds, this.size, this.color});
 
   final bool rewind;
   final int durationSeconds;
@@ -62,10 +40,7 @@ class JumpIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double iconSize = size ?? IconTheme.of(context).size ?? 24.0;
-    final Color iconColor =
-        color ??
-        IconTheme.of(context).color ??
-        Theme.of(context).colorScheme.onSurface;
+    final Color iconColor = color ?? IconTheme.of(context).color ?? Theme.of(context).colorScheme.onSurface;
 
     final standardIcon = switch ((rewind, durationSeconds)) {
       (true, 5) => Icons.replay_5_rounded,
@@ -83,11 +58,7 @@ class JumpIcon extends StatelessWidget {
     final text = durationSeconds.toString();
     final double fontSize = iconSize * (text.length > 1 ? 0.24 : 0.28);
 
-    final Widget baseIcon = Icon(
-      Icons.replay_rounded,
-      size: iconSize,
-      color: iconColor,
-    );
+    final Widget baseIcon = Icon(Icons.replay_rounded, size: iconSize, color: iconColor);
 
     return SizedBox(
       width: iconSize,
@@ -95,10 +66,7 @@ class JumpIcon extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          if (rewind)
-            baseIcon
-          else
-            Transform.scale(scaleX: -1, child: baseIcon),
+          if (rewind) baseIcon else Transform.scale(scaleX: -1, child: baseIcon),
           Transform.translate(
             offset: const Offset(0, 2),
             child: Text(

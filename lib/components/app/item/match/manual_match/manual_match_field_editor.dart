@@ -34,19 +34,15 @@ class ManualMatchFieldEditor extends StatelessWidget {
   final ValueChanged<ManualListApplyMode> onListModeChanged;
   final Widget Function() buildCurrentCoverPreview;
 
-  bool get _isBooleanField =>
-      field == ManualMatchField.explicit || field == ManualMatchField.abridged;
+  bool get _isBooleanField => field == ManualMatchField.explicit || field == ManualMatchField.abridged;
 
   bool get _isMultilineField => field == ManualMatchField.description;
 
-  bool get _usesChipsEditor =>
-      field == ManualMatchField.tags || field == ManualMatchField.genres;
+  bool get _usesChipsEditor => field == ManualMatchField.tags || field == ManualMatchField.genres;
 
   @override
   Widget build(BuildContext context) {
-    final currentLabel = (currentValue?.trim().isNotEmpty ?? false)
-        ? currentValue!.trim()
-        : 'Not set';
+    final currentLabel = (currentValue?.trim().isNotEmpty ?? false) ? currentValue!.trim() : 'Not set';
     final showHeadingInRow = !_usesChipsEditor && !_isMultilineField;
 
     return Padding(
@@ -59,9 +55,7 @@ class ManualMatchFieldEditor extends StatelessWidget {
             child: Checkbox(
               value: enabled,
               visualDensity: VisualDensity.compact,
-              onChanged: saving
-                  ? null
-                  : (value) => onToggleField(value ?? false),
+              onChanged: saving ? null : (value) => onToggleField(value ?? false),
             ),
           ),
           Expanded(
@@ -73,8 +67,7 @@ class ManualMatchFieldEditor extends StatelessWidget {
                   if (showHeadingInRow)
                     Text(
                       field.label,
-                      style: Theme.of(context).textTheme.labelLarge
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   if (showHeadingInRow) const SizedBox(height: 4),
                   _buildValueEditor(context),
@@ -84,15 +77,11 @@ class ManualMatchFieldEditor extends StatelessWidget {
                       'Current: $currentLabel',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
-                  if (field == ManualMatchField.cover) ...[
-                    const SizedBox(height: 6),
-                    _buildCoverComparison(context),
-                  ],
+                  if (field == ManualMatchField.cover) ...[const SizedBox(height: 6), _buildCoverComparison(context)],
                   if (manualListFields.contains(field) && enabled) ...[
                     const SizedBox(height: 4),
                     _buildListModeSelector(context),
@@ -194,12 +183,7 @@ class ManualMatchFieldEditor extends StatelessWidget {
             value: listMode,
             enabled: !saving,
             options: ManualListApplyMode.values
-                .map(
-                  (mode) => YaabsaDropdownOption<ManualListApplyMode>(
-                    value: mode,
-                    label: mode.label,
-                  ),
-                )
+                .map((mode) => YaabsaDropdownOption<ManualListApplyMode>(value: mode, label: mode.label))
                 .toList(growable: false),
             onChanged: (value) {
               if (value == null) {
@@ -220,14 +204,8 @@ class ManualMatchFieldEditor extends StatelessWidget {
       spacing: 12,
       runSpacing: 8,
       children: [
-        _CoverPreviewCard(
-          label: 'Current cover',
-          child: buildCurrentCoverPreview(),
-        ),
-        _CoverPreviewCard(
-          label: 'Selected cover',
-          child: _buildNewCoverPreview(context, newCoverUrl),
-        ),
+        _CoverPreviewCard(label: 'Current cover', child: buildCurrentCoverPreview()),
+        _CoverPreviewCard(label: 'Selected cover', child: _buildNewCoverPreview(context, newCoverUrl)),
       ],
     );
   }
@@ -245,8 +223,7 @@ class ManualMatchFieldEditor extends StatelessWidget {
         child: Image.network(
           coverUrl,
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) =>
-              _coverFallback(context, icon: Icons.broken_image_rounded),
+          errorBuilder: (_, _, _) => _coverFallback(context, icon: Icons.broken_image_rounded),
         ),
       ),
     );
@@ -261,11 +238,7 @@ class ManualMatchFieldEditor extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
-      child: Icon(
-        icon,
-        size: 22,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      child: Icon(icon, size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 }

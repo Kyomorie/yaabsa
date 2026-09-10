@@ -8,13 +8,10 @@ part 'admin_rss_feed.g.dart';
 abstract class AdminRssFeedsResponse with _$AdminRssFeedsResponse {
   const factory AdminRssFeedsResponse({
     @JsonKey(name: 'feeds') @Default(<AdminRssFeed>[]) List<AdminRssFeed> feeds,
-    @JsonKey(name: 'minified')
-    @Default(<AdminRssFeedMinified>[])
-    List<AdminRssFeedMinified> minified,
+    @JsonKey(name: 'minified') @Default(<AdminRssFeedMinified>[]) List<AdminRssFeedMinified> minified,
   }) = _AdminRssFeedsResponse;
 
-  factory AdminRssFeedsResponse.fromJson(Map<String, dynamic> json) =>
-      _$AdminRssFeedsResponseFromJson(json);
+  factory AdminRssFeedsResponse.fromJson(Map<String, dynamic> json) => _$AdminRssFeedsResponseFromJson(json);
 }
 
 @freezed
@@ -32,15 +29,12 @@ abstract class AdminRssFeed with _$AdminRssFeed {
     @JsonKey(name: 'meta') AdminRssFeedMeta? meta,
     @JsonKey(name: 'serverAddress') String? serverAddress,
     @JsonKey(name: 'feedUrl') String? feedUrl,
-    @JsonKey(name: 'episodes')
-    @Default(<AdminRssFeedEpisode>[])
-    List<AdminRssFeedEpisode> episodes,
+    @JsonKey(name: 'episodes') @Default(<AdminRssFeedEpisode>[]) List<AdminRssFeedEpisode> episodes,
     @JsonKey(name: 'createdAt') int? createdAt,
     @JsonKey(name: 'updatedAt') int? updatedAt,
   }) = _AdminRssFeed;
 
-  factory AdminRssFeed.fromJson(Map<String, dynamic> json) =>
-      _$AdminRssFeedFromJson(json);
+  factory AdminRssFeed.fromJson(Map<String, dynamic> json) => _$AdminRssFeedFromJson(json);
 
   DateTime? get updatedDateTime {
     final value = updatedAt;
@@ -83,8 +77,7 @@ abstract class AdminRssFeedMinified with _$AdminRssFeedMinified {
     @JsonKey(name: 'meta') AdminRssFeedMeta? meta,
   }) = _AdminRssFeedMinified;
 
-  factory AdminRssFeedMinified.fromJson(Map<String, dynamic> json) =>
-      _$AdminRssFeedMinifiedFromJson(json);
+  factory AdminRssFeedMinified.fromJson(Map<String, dynamic> json) => _$AdminRssFeedMinifiedFromJson(json);
 }
 
 @freezed
@@ -104,8 +97,7 @@ abstract class AdminRssFeedMeta with _$AdminRssFeedMeta {
     @JsonKey(name: 'ownerEmail') String? ownerEmail,
   }) = _AdminRssFeedMeta;
 
-  factory AdminRssFeedMeta.fromJson(Map<String, dynamic> json) =>
-      _$AdminRssFeedMetaFromJson(json);
+  factory AdminRssFeedMeta.fromJson(Map<String, dynamic> json) => _$AdminRssFeedMetaFromJson(json);
 }
 
 @freezed
@@ -126,13 +118,11 @@ abstract class AdminRssFeedEpisode with _$AdminRssFeedEpisode {
     @JsonKey(name: 'fullPath') String? fullPath,
   }) = _AdminRssFeedEpisode;
 
-  factory AdminRssFeedEpisode.fromJson(Map<String, dynamic> json) =>
-      _$AdminRssFeedEpisodeFromJson(json);
+  factory AdminRssFeedEpisode.fromJson(Map<String, dynamic> json) => _$AdminRssFeedEpisodeFromJson(json);
 }
 
 @freezed
-abstract class AdminRssFeedEpisodeEnclosure
-    with _$AdminRssFeedEpisodeEnclosure {
+abstract class AdminRssFeedEpisodeEnclosure with _$AdminRssFeedEpisodeEnclosure {
   const factory AdminRssFeedEpisodeEnclosure({
     @JsonKey(name: 'url') String? url,
     @JsonKey(name: 'size', fromJson: jsonIntFromDynamic) int? size,

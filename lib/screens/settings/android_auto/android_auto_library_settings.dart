@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yaabsa/components/settings/settings_dropdown.dart';
@@ -21,18 +20,13 @@ class AndroidAutoLibrarySettings extends ConsumerStatefulWidget {
   static const String routeName = '/settings/android-auto/library';
 
   @override
-  ConsumerState<AndroidAutoLibrarySettings> createState() =>
-      _AndroidAutoLibrarySettingsState();
+  ConsumerState<AndroidAutoLibrarySettings> createState() => _AndroidAutoLibrarySettingsState();
 }
 
-class _AndroidAutoLibrarySettingsState
-    extends ConsumerState<AndroidAutoLibrarySettings> {
+class _AndroidAutoLibrarySettingsState extends ConsumerState<AndroidAutoLibrarySettings> {
   bool _isUpdatingSortField = false;
 
-  Future<void> _setSortField({
-    required String userId,
-    required String sortField,
-  }) async {
+  Future<void> _setSortField({required String userId, required String sortField}) async {
     if (_isUpdatingSortField) {
       return;
     }
@@ -44,19 +38,13 @@ class _AndroidAutoLibrarySettingsState
     try {
       await ref
           .read(settingsManagerProvider.notifier)
-          .setUserSetting<String>(
-            userId,
-            SettingKeys.androidAutoLibrarySortField,
-            sortField,
-          );
+          .setUserSetting<String>(userId, SettingKeys.androidAutoLibrarySortField, sortField);
     } catch (e) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update sort field: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update sort field: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -84,9 +72,7 @@ class _AndroidAutoLibrarySettingsState
             if (user == null) {
               return const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                child: Text(
-                  'No active user. Sign in to configure car library settings',
-                ),
+                child: Text('No active user. Sign in to configure car library settings'),
               );
             }
 
@@ -102,10 +88,7 @@ class _AndroidAutoLibrarySettingsState
                   defaultValue: false,
                 ),
                 StreamBuilder<UserSettingEntry?>(
-                  stream: appDatabase.watchUserSetting(
-                    user.id,
-                    SettingKeys.androidAutoLibrarySortField,
-                  ),
+                  stream: appDatabase.watchUserSetting(user.id, SettingKeys.androidAutoLibrarySortField),
                   builder: (context, snapshot) {
                     final fallbackValue = ref
                         .read(settingsManagerProvider.notifier)
@@ -114,26 +97,15 @@ class _AndroidAutoLibrarySettingsState
                           SettingKeys.androidAutoLibrarySortField,
                           defaultValue: _sortFieldTitle,
                         );
-                    final sortField = SettingsParser.decodeValue<String>(
-                      snapshot.data?.value,
-                      fallbackValue,
-                    );
+                    final sortField = SettingsParser.decodeValue<String>(snapshot.data?.value, fallbackValue);
                     final safeSortField =
-                        <String>{
-                          _sortFieldTitle,
-                          _sortFieldAuthor,
-                          _sortFieldAdded,
-                        }.contains(sortField)
+                        <String>{_sortFieldTitle, _sortFieldAuthor, _sortFieldAdded}.contains(sortField)
                         ? sortField
                         : _sortFieldTitle;
 
                     return SettingDropdown<String>.remote(
                       label: 'Sort By',
-                      values: const [
-                        _sortFieldTitle,
-                        _sortFieldAuthor,
-                        _sortFieldAdded,
-                      ],
+                      values: const [_sortFieldTitle, _sortFieldAuthor, _sortFieldAdded],
                       valueLabels: const ['Title', 'Author', 'Date Added'],
                       value: safeSortField,
                       enabled: !_isUpdatingSortField,
@@ -150,10 +122,8 @@ class _AndroidAutoLibrarySettingsState
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) => Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text('Failed to load user settings: $error'),
-          ),
+          error: (error, _) =>
+              Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load user settings: $error')),
         ),
       ],
     );

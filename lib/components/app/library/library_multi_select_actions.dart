@@ -20,9 +20,7 @@ Future<void> addSelectedBooksToPlaylist({
   required List<String> selectedBookIds,
   required VoidCallback onSuccess,
 }) async {
-  if (selectedBookIds.isEmpty ||
-      currentUserId == null ||
-      currentUserId.isEmpty) {
+  if (selectedBookIds.isEmpty || currentUserId == null || currentUserId.isEmpty) {
     return;
   }
 
@@ -33,31 +31,21 @@ Future<void> addSelectedBooksToPlaylist({
     loadErrorMessage: 'Could not load playlists.',
     loadOptions: () async {
       final playlistsNotifier = ref.read(playlistsProvider(libraryId).notifier);
-      var playlists =
-          ref.read(playlistsProvider(libraryId)).value?.items ??
-          const <Playlist>[];
+      var playlists = ref.read(playlistsProvider(libraryId)).value?.items ?? const <Playlist>[];
 
       if (playlists.isEmpty) {
         await playlistsNotifier.refresh(withLoading: false, forceServer: true);
-        playlists =
-            ref.read(playlistsProvider(libraryId)).value?.items ??
-            const <Playlist>[];
+        playlists = ref.read(playlistsProvider(libraryId)).value?.items ?? const <Playlist>[];
       }
 
       final editablePlaylists = playlists
-          .where(
-            (playlist) =>
-                playlist.userId == null || playlist.userId == currentUserId,
-          )
+          .where((playlist) => playlist.userId == null || playlist.userId == currentUserId)
           .toList(growable: false);
 
       return editablePlaylists
           .map(
-            (playlist) => LibraryTargetPickerOption(
-              id: playlist.id,
-              title: playlist.name,
-              subtitle: playlist.description,
-            ),
+            (playlist) =>
+                LibraryTargetPickerOption(id: playlist.id, title: playlist.name, subtitle: playlist.description),
           )
           .toList(growable: false);
     },
@@ -69,9 +57,8 @@ Future<void> addSelectedBooksToPlaylist({
 
   await runManagedListMutation(
     context: context,
-    action: () => ref
-        .read(playlistsProvider(libraryId).notifier)
-        .addBooksToPlaylist(targetOption.id, bookIds: selectedBookIds),
+    action: () =>
+        ref.read(playlistsProvider(libraryId).notifier).addBooksToPlaylist(targetOption.id, bookIds: selectedBookIds),
     successMessage: selectedBookIds.length == 1
         ? 'Added 1 book to "${targetOption.title}".'
         : 'Added ${selectedBookIds.length} books to "${targetOption.title}".',
@@ -97,30 +84,18 @@ Future<void> addSelectedBooksToCollection({
     emptyMessage: 'No collections found.',
     loadErrorMessage: 'Could not load collections.',
     loadOptions: () async {
-      final collectionsNotifier = ref.read(
-        collectionsProvider(libraryId).notifier,
-      );
-      var collections =
-          ref.read(collectionsProvider(libraryId)).value?.items ??
-          const <Collection>[];
+      final collectionsNotifier = ref.read(collectionsProvider(libraryId).notifier);
+      var collections = ref.read(collectionsProvider(libraryId)).value?.items ?? const <Collection>[];
 
       if (collections.isEmpty) {
-        await collectionsNotifier.refresh(
-          withLoading: false,
-          forceServer: true,
-        );
-        collections =
-            ref.read(collectionsProvider(libraryId)).value?.items ??
-            const <Collection>[];
+        await collectionsNotifier.refresh(withLoading: false, forceServer: true);
+        collections = ref.read(collectionsProvider(libraryId)).value?.items ?? const <Collection>[];
       }
 
       return collections
           .map(
-            (collection) => LibraryTargetPickerOption(
-              id: collection.id,
-              title: collection.name,
-              subtitle: collection.description,
-            ),
+            (collection) =>
+                LibraryTargetPickerOption(id: collection.id, title: collection.name, subtitle: collection.description),
           )
           .toList(growable: false);
     },
@@ -154,14 +129,9 @@ Future<void> quickMatchSelectedBooks({
     return;
   }
 
-  final selectedBookIds = selectedItems
-      .map((item) => item.id)
-      .toList(growable: false);
+  final selectedBookIds = selectedItems.map((item) => item.id).toList(growable: false);
 
-  final defaultProvider = _resolveLibraryDefaultProvider(
-    ref: ref,
-    libraryId: libraryId,
-  );
+  final defaultProvider = _resolveLibraryDefaultProvider(ref: ref, libraryId: libraryId);
 
   final options = await showQuickMatchOptionsDialog(
     context: context,
@@ -179,19 +149,14 @@ Future<void> quickMatchSelectedBooks({
   final api = ref.read(absApiProvider);
   if (api == null) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No API session available.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No API session available.')));
     }
     return;
   }
 
   try {
     final started = await api.getLibraryItemApi().batchQuickMatchLibraryItems(
-      request: BatchQuickMatchLibraryItemsRequest(
-        libraryItemIds: selectedBookIds,
-        options: options,
-      ),
+      request: BatchQuickMatchLibraryItemsRequest(libraryItemIds: selectedBookIds, options: options),
     );
 
     if (!context.mounted) {
@@ -199,38 +164,25 @@ Future<void> quickMatchSelectedBooks({
     }
 
     if (started) {
-      final label = selectedBookIds.length == 1
-          ? '1 book'
-          : '${selectedBookIds.length} books';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Metadata change request sent for $label.')),
-      );
+      final label = selectedBookIds.length == 1 ? '1 book' : '${selectedBookIds.length} books';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Metadata change request sent for $label.')));
       onSuccess();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not start metadata change request.'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Could not start metadata change request.')));
     }
   } catch (error) {
     if (!context.mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Could not quick match selected books: $error')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not quick match selected books: $error')));
   }
 }
 
-String? _resolveLibraryDefaultProvider({
-  required WidgetRef ref,
-  required String libraryId,
-}) {
+String? _resolveLibraryDefaultProvider({required WidgetRef ref, required String libraryId}) {
   final selectedLibrary = ref.read(selectedLibraryProvider);
-  if (selectedLibrary?.id == libraryId &&
-      selectedLibrary?.provider.trim().isNotEmpty == true) {
+  if (selectedLibrary?.id == libraryId && selectedLibrary?.provider.trim().isNotEmpty == true) {
     return selectedLibrary?.provider;
   }
 

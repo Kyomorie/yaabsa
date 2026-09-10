@@ -4,8 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:yaabsa/api/library_items/device_info.dart';
-import 'package:yaabsa/database/settings_manager.dart'
-    show settingsManagerProvider;
+import 'package:yaabsa/database/settings_manager.dart' show settingsManagerProvider;
 import 'package:yaabsa/util/globals.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:yaabsa/util/logger.dart';
@@ -25,11 +24,7 @@ class PlayerUtils {
 
     if (wasEmpty) {
       WakelockPlus.enable();
-      logger(
-        'Wakelock enabled ($reason)',
-        tag: 'PlayerUtils',
-        level: InfoLevel.debug,
-      );
+      logger('Wakelock enabled ($reason)', tag: 'PlayerUtils', level: InfoLevel.debug);
     }
   }
 
@@ -40,18 +35,12 @@ class PlayerUtils {
 
     if (_wakelockReasons.isEmpty) {
       WakelockPlus.disable();
-      logger(
-        'Wakelock disabled ($reason)',
-        tag: 'PlayerUtils',
-        level: InfoLevel.debug,
-      );
+      logger('Wakelock disabled ($reason)', tag: 'PlayerUtils', level: InfoLevel.debug);
     }
   }
 
   static void enableWakelock(ProviderContainer ref) {
-    final keepScreenOn = ref
-        .read(settingsManagerProvider.notifier)
-        .getGlobalSetting<bool>(SettingKeys.keepScreenOn);
+    final keepScreenOn = ref.read(settingsManagerProvider.notifier).getGlobalSetting<bool>(SettingKeys.keepScreenOn);
     if (keepScreenOn == true) {
       _enableWakelockReason(_playbackWakelockReason);
     }
@@ -105,9 +94,7 @@ class PlayerUtils {
       manufacturer = 'Linux';
       model = linuxInfo.name;
     } else {
-      throw UnsupportedError(
-        'Unsupported platform: ${Platform.operatingSystem}',
-      );
+      throw UnsupportedError('Unsupported platform: ${Platform.operatingSystem}');
     }
 
     return DeviceInfo(

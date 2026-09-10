@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/screens/settings/player/player_settings_equalizer.dart';
 import 'package:flutter/services.dart';
@@ -39,15 +38,7 @@ import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
 import 'package:yaabsa/util/setting_key.dart';
 
-enum _PlayerAppBarMenuAction {
-  queue,
-  stop,
-  addBookmark,
-  carMode,
-  playHistory,
-  cast,
-  equalizer,
-}
+enum _PlayerAppBarMenuAction { queue, stop, addBookmark, carMode, playHistory, cast, equalizer }
 
 class Player extends ConsumerStatefulWidget {
   const Player({super.key});
@@ -72,9 +63,7 @@ class _PlayerState extends ConsumerState<Player> {
   @override
   void initState() {
     super.initState();
-    _aaosAutoOpenSubscription = AaosService.instance.stream.listen(
-      _maybeAutoOpenCarMode,
-    );
+    _aaosAutoOpenSubscription = AaosService.instance.stream.listen(_maybeAutoOpenCarMode);
     _maybeAutoOpenCarMode(AaosService.instance.currentState);
   }
 
@@ -122,8 +111,7 @@ class _PlayerState extends ConsumerState<Player> {
   }
 
   void _openCarMode(BuildContext context) {
-    Navigator.of(context)
-        .push(MaterialPageRoute<void>(builder: (_) => const CarModeScreen()));
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const CarModeScreen()));
   }
 
   void _openPlayHistory(BuildContext context) {
@@ -175,8 +163,7 @@ class _PlayerState extends ConsumerState<Player> {
 
   void _handleVerticalDragEnd(DragEndDetails details) {
     final velocity = details.primaryVelocity ?? 0;
-    final draggedDownEnough =
-        _verticalDragDelta >= _minimizeDragDistanceThreshold;
+    final draggedDownEnough = _verticalDragDelta >= _minimizeDragDistanceThreshold;
     final flungDown = velocity >= _minimizeDragVelocityThreshold;
     _verticalDragDelta = 0;
 
@@ -199,9 +186,7 @@ class _PlayerState extends ConsumerState<Player> {
     final messenger = ScaffoldMessenger.of(context);
     final media = audioHandler.currentMediaItem;
     if (media == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('No active media to bookmark.')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('No active media to bookmark.')));
       return;
     }
 
@@ -210,15 +195,11 @@ class _PlayerState extends ConsumerState<Player> {
       useSafeArea: true,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (BuildContext context) =>
-          PlayerBookmarksSheet(itemId: media.itemId, itemTitle: media.title),
+      builder: (BuildContext context) => PlayerBookmarksSheet(itemId: media.itemId, itemTitle: media.title),
     );
   }
 
-  Future<void> _handleAppBarMenuAction(
-    BuildContext context,
-    _PlayerAppBarMenuAction action,
-  ) async {
+  Future<void> _handleAppBarMenuAction(BuildContext context, _PlayerAppBarMenuAction action) async {
     switch (action) {
       case _PlayerAppBarMenuAction.queue:
         _showQueueSheet(context);
@@ -246,47 +227,32 @@ class _PlayerState extends ConsumerState<Player> {
     items.add(
       const PopupMenuItem<_PlayerAppBarMenuAction>(
         value: _PlayerAppBarMenuAction.queue,
-        child: _PlayerAppBarMenuItem(
-          icon: Icons.queue_music_rounded,
-          label: 'Queue',
-        ),
+        child: _PlayerAppBarMenuItem(icon: Icons.queue_music_rounded, label: 'Queue'),
       ),
     );
 
     items.add(
       const PopupMenuItem<_PlayerAppBarMenuAction>(
         value: _PlayerAppBarMenuAction.stop,
-        child: _PlayerAppBarMenuItem(
-          icon: Icons.stop_circle_outlined,
-          label: 'Stop playback',
-        ),
+        child: _PlayerAppBarMenuItem(icon: Icons.stop_circle_outlined, label: 'Stop playback'),
       ),
     );
 
     items.add(
       const PopupMenuItem<_PlayerAppBarMenuAction>(
         value: _PlayerAppBarMenuAction.addBookmark,
-        child: _PlayerAppBarMenuItem(
-          icon: Icons.bookmarks_outlined,
-          label: 'Bookmarks',
-        ),
+        child: _PlayerAppBarMenuItem(icon: Icons.bookmarks_outlined, label: 'Bookmarks'),
       ),
     );
 
     items.addAll(<PopupMenuEntry<_PlayerAppBarMenuAction>>[
       const PopupMenuItem<_PlayerAppBarMenuAction>(
         value: _PlayerAppBarMenuAction.carMode,
-        child: _PlayerAppBarMenuItem(
-          icon: Icons.directions_car_filled_outlined,
-          label: 'Car Mode',
-        ),
+        child: _PlayerAppBarMenuItem(icon: Icons.directions_car_filled_outlined, label: 'Car Mode'),
       ),
       const PopupMenuItem<_PlayerAppBarMenuAction>(
         value: _PlayerAppBarMenuAction.playHistory,
-        child: _PlayerAppBarMenuItem(
-          icon: Icons.history,
-          label: 'Play History',
-        ),
+        child: _PlayerAppBarMenuItem(icon: Icons.history, label: 'Play History'),
       ),
     ]);
 
@@ -303,10 +269,7 @@ class _PlayerState extends ConsumerState<Player> {
       items.add(
         const PopupMenuItem<_PlayerAppBarMenuAction>(
           value: _PlayerAppBarMenuAction.equalizer,
-          child: _PlayerAppBarMenuItem(
-            icon: Icons.equalizer_rounded,
-            label: 'Equalizer',
-          ),
+          child: _PlayerAppBarMenuItem(icon: Icons.equalizer_rounded, label: 'Equalizer'),
         ),
       );
     }
@@ -316,10 +279,7 @@ class _PlayerState extends ConsumerState<Player> {
 
   PlayerLayoutConfig _readLayoutConfigFromSettings() {
     final settingsManager = ref.read(settingsManagerProvider.notifier);
-    final rawLayoutConfig = settingsManager.getGlobalSetting<String>(
-      SettingKeys.playerLayoutConfig,
-      defaultValue: '',
-    );
+    final rawLayoutConfig = settingsManager.getGlobalSetting<String>(SettingKeys.playerLayoutConfig, defaultValue: '');
 
     return PlayerLayoutConfig.fromSettingValue(rawLayoutConfig);
   }
@@ -328,15 +288,9 @@ class _PlayerState extends ConsumerState<Player> {
     return _layoutDraft ?? _readLayoutConfigFromSettings();
   }
 
-  PlayerLayoutProfile _activeProfileForScreen(
-    PlayerLayoutScreenSize screenSize,
-  ) {
+  PlayerLayoutProfile _activeProfileForScreen(PlayerLayoutScreenSize screenSize) {
     final layoutConfig = _currentLayoutConfig();
-    return normalizePlayerLayoutProfile(
-      layoutConfig.profileFor(screenSize),
-      screenSize,
-      allowOverlap: true,
-    );
+    return normalizePlayerLayoutProfile(layoutConfig.profileFor(screenSize), screenSize, allowOverlap: true);
   }
 
   Future<void> _persistLayoutConfig(PlayerLayoutConfig layoutConfig) async {
@@ -344,10 +298,8 @@ class _PlayerState extends ConsumerState<Player> {
     _persistSequence = _persistSequence
         .catchError((_) {})
         .then(
-          (_) => settingsManager.setGlobalSetting<String>(
-            SettingKeys.playerLayoutConfig,
-            layoutConfig.toSettingValue(),
-          ),
+          (_) =>
+              settingsManager.setGlobalSetting<String>(SettingKeys.playerLayoutConfig, layoutConfig.toSettingValue()),
         );
 
     await _persistSequence;
@@ -365,31 +317,15 @@ class _PlayerState extends ConsumerState<Player> {
     final otherRight = other.x + other.width;
     final otherBottom = other.y + other.height;
 
-    return !(right <= other.x ||
-        otherRight <= x ||
-        bottom <= other.y ||
-        otherBottom <= y);
+    return !(right <= other.x || otherRight <= x || bottom <= other.y || otherBottom <= y);
   }
 
-  bool _wouldOverlap(
-    PlayerLayoutProfile profile,
-    PlayerComponentType type,
-    int x,
-    int y,
-    int width,
-    int height,
-  ) {
+  bool _wouldOverlap(PlayerLayoutProfile profile, PlayerComponentType type, int x, int y, int width, int height) {
     for (final other in profile.placements) {
       if (!other.visible || other.type == type) {
         continue;
       }
-      if (_rectanglesOverlap(
-        x: x,
-        y: y,
-        width: width,
-        height: height,
-        other: other,
-      )) {
+      if (_rectanglesOverlap(x: x, y: y, width: width, height: height, other: other)) {
         return true;
       }
     }
@@ -417,32 +353,15 @@ class _PlayerState extends ConsumerState<Player> {
     return null;
   }
 
-  void _updateActiveProfile(
-    PlayerLayoutScreenSize screenSize,
-    PlayerLayoutProfile profile,
-  ) {
+  void _updateActiveProfile(PlayerLayoutScreenSize screenSize, PlayerLayoutProfile profile) {
     final currentLayout = _currentLayoutConfig();
-    final normalized = normalizePlayerLayoutProfile(
-      profile,
-      screenSize,
-      allowOverlap: true,
-    );
+    final normalized = normalizePlayerLayoutProfile(profile, screenSize, allowOverlap: true);
     final nextLayout = currentLayout.copyWithProfile(screenSize, normalized);
 
     _layoutDraft = nextLayout;
     final settingsManager = ref.read(settingsManagerProvider.notifier);
-    unawaited(
-      settingsManager.setGlobalSetting<bool>(
-        SettingKeys.playerLayoutModeExplicit,
-        true,
-      ),
-    );
-    unawaited(
-      settingsManager.setGlobalSetting<String>(
-        SettingKeys.playerLayoutMode,
-        PlayerLayoutMode.custom.name,
-      ),
-    );
+    unawaited(settingsManager.setGlobalSetting<bool>(SettingKeys.playerLayoutModeExplicit, true));
+    unawaited(settingsManager.setGlobalSetting<String>(SettingKeys.playerLayoutMode, PlayerLayoutMode.custom.name));
     unawaited(_persistLayoutConfig(nextLayout));
     if (mounted) {
       setState(() {});
@@ -460,19 +379,10 @@ class _PlayerState extends ConsumerState<Player> {
 
     var updated = current.copyWith(visible: visible);
     if (visible && !current.visible) {
-      final free = _findFirstFreePosition(
-        profile,
-        updated.width,
-        updated.height,
-        type,
-        screenSize,
-      );
+      final free = _findFirstFreePosition(profile, updated.width, updated.height, type, screenSize);
       if (free == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No free grid space available for ${type.label}.'),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No free grid space available for ${type.label}.')));
         return;
       }
       updated = updated.copyWith(x: free.x, y: free.y);
@@ -481,56 +391,33 @@ class _PlayerState extends ConsumerState<Player> {
     _updateActiveProfile(screenSize, profile.upsertPlacement(updated));
   }
 
-  void _movePlacement(
-    PlayerLayoutScreenSize screenSize,
-    PlayerComponentType type,
-    int deltaX,
-    int deltaY,
-  ) {
+  void _movePlacement(PlayerLayoutScreenSize screenSize, PlayerComponentType type, int deltaX, int deltaY) {
     final rows = playerGridRowsForSize(screenSize);
     final profile = _activeProfileForScreen(screenSize);
     final placement = profile.placementFor(type);
     final columns = playerGridColumnsForSize(screenSize);
     final constraints = playerComponentConstraintsFor(type);
 
-    final width = placement.width.clamp(
-      constraints.minWidth,
-      constraints.resolvedMaxWidth(columns),
-    );
-    final height = placement.height.clamp(
-      constraints.minHeight,
-      constraints.resolvedMaxHeight(rows),
-    );
+    final width = placement.width.clamp(constraints.minWidth, constraints.resolvedMaxWidth(columns));
+    final height = placement.height.clamp(constraints.minHeight, constraints.resolvedMaxHeight(rows));
     final nextX = (placement.x + deltaX).clamp(0, columns - width);
     final nextY = (placement.y + deltaY).clamp(0, rows - height);
 
-    if (!_allowOverlapUnlocked &&
-        _wouldOverlap(profile, type, nextX, nextY, width, height)) {
+    if (!_allowOverlapUnlocked && _wouldOverlap(profile, type, nextX, nextY, width, height)) {
       return;
     }
 
-    _updateActiveProfile(
-      screenSize,
-      profile.upsertPlacement(placement.copyWith(x: nextX, y: nextY)),
-    );
+    _updateActiveProfile(screenSize, profile.upsertPlacement(placement.copyWith(x: nextX, y: nextY)));
   }
 
-  void _resizePlacement(
-    PlayerLayoutScreenSize screenSize,
-    PlayerComponentType type,
-    int deltaWidth,
-    int deltaHeight,
-  ) {
+  void _resizePlacement(PlayerLayoutScreenSize screenSize, PlayerComponentType type, int deltaWidth, int deltaHeight) {
     final rows = playerGridRowsForSize(screenSize);
     final profile = _activeProfileForScreen(screenSize);
     final placement = profile.placementFor(type);
     final columns = playerGridColumnsForSize(screenSize);
     final constraints = playerComponentConstraintsFor(type);
 
-    final nextWidth = (placement.width + deltaWidth).clamp(
-      constraints.minWidth,
-      constraints.resolvedMaxWidth(columns),
-    );
+    final nextWidth = (placement.width + deltaWidth).clamp(constraints.minWidth, constraints.resolvedMaxWidth(columns));
     final nextHeight = (placement.height + deltaHeight).clamp(
       constraints.minHeight,
       constraints.resolvedMaxHeight(rows),
@@ -539,21 +426,13 @@ class _PlayerState extends ConsumerState<Player> {
     final nextX = placement.x.clamp(0, columns - nextWidth);
     final nextY = placement.y.clamp(0, rows - nextHeight);
 
-    if (!_allowOverlapUnlocked &&
-        _wouldOverlap(profile, type, nextX, nextY, nextWidth, nextHeight)) {
+    if (!_allowOverlapUnlocked && _wouldOverlap(profile, type, nextX, nextY, nextWidth, nextHeight)) {
       return;
     }
 
     _updateActiveProfile(
       screenSize,
-      profile.upsertPlacement(
-        placement.copyWith(
-          x: nextX,
-          y: nextY,
-          width: nextWidth,
-          height: nextHeight,
-        ),
-      ),
+      profile.upsertPlacement(placement.copyWith(x: nextX, y: nextY, width: nextWidth, height: nextHeight)),
     );
   }
 
@@ -567,16 +446,10 @@ class _PlayerState extends ConsumerState<Player> {
     if (!context.mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Layout config copied to clipboard.')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Layout config copied to clipboard.')));
   }
 
-  void _showComponentSettings(
-    BuildContext context,
-    PlayerLayoutScreenSize screenSize,
-    PlayerComponentType type,
-  ) {
+  void _showComponentSettings(BuildContext context, PlayerLayoutScreenSize screenSize, PlayerComponentType type) {
     showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
@@ -643,8 +516,7 @@ class _PlayerState extends ConsumerState<Player> {
     final maxScale = placement.type == PlayerComponentType.controls ? 1.0 : 1.8;
     final scale = placement.scale.clamp(0.6, maxScale);
 
-    if (placement.type == PlayerComponentType.seekBar &&
-        (scale - 1.0).abs() < 0.0001) {
+    if (placement.type == PlayerComponentType.seekBar && (scale - 1.0).abs() < 0.0001) {
       return Align(alignment: Alignment.center, child: child);
     }
 
@@ -659,12 +531,7 @@ class _PlayerState extends ConsumerState<Player> {
     final scaledChild = ClipRect(
       child: Align(
         alignment: alignment,
-        child: Transform.scale(
-          scaleX: scaleX,
-          scaleY: scaleY,
-          alignment: alignment,
-          child: child,
-        ),
+        child: Transform.scale(scaleX: scaleX, scaleY: scaleY, alignment: alignment, child: child),
       ),
     );
 
@@ -695,11 +562,7 @@ class _PlayerState extends ConsumerState<Player> {
     Widget content;
     switch (placement.type) {
       case PlayerComponentType.cover:
-        content = PlayerCoverComponent(
-          api: api,
-          media: media,
-          fitMode: placement.coverFitMode,
-        );
+        content = PlayerCoverComponent(api: api, media: media, fitMode: placement.coverFitMode);
       case PlayerComponentType.mediaInfo:
         content = PlayerMediaInfoComponent(
           media: media,
@@ -752,14 +615,8 @@ class _PlayerState extends ConsumerState<Player> {
     ref.watch(globalSettingByKeyProvider(SettingKeys.playerLayoutMode));
     ref.watch(globalSettingByKeyProvider(SettingKeys.playerLayoutModeExplicit));
     ref.watch(globalSettingByKeyProvider(SettingKeys.playerAdaptivePreset));
-    final rawCoverSize = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerCoverSize))
-        .asData
-        ?.value;
-    final rawImmersiveColors = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerImmersiveColors))
-        .asData
-        ?.value;
+    final rawCoverSize = ref.watch(globalSettingByKeyProvider(SettingKeys.playerCoverSize)).asData?.value;
+    final rawImmersiveColors = ref.watch(globalSettingByKeyProvider(SettingKeys.playerImmersiveColors)).asData?.value;
     final rawFullTransportMode = ref
         .watch(globalSettingByKeyProvider(SettingKeys.fullPlayerTransportMode))
         .asData
@@ -771,14 +628,8 @@ class _PlayerState extends ConsumerState<Player> {
     _layoutDraft ??= _readLayoutConfigFromSettings();
 
     final settingsManager = ref.read(settingsManagerProvider.notifier);
-    final rawLayoutConfig = settingsManager.getGlobalSetting<String>(
-      SettingKeys.playerLayoutConfig,
-      defaultValue: '',
-    );
-    final rawLayoutMode = settingsManager.getGlobalSetting<String>(
-      SettingKeys.playerLayoutMode,
-      defaultValue: '',
-    );
+    final rawLayoutConfig = settingsManager.getGlobalSetting<String>(SettingKeys.playerLayoutConfig, defaultValue: '');
+    final rawLayoutMode = settingsManager.getGlobalSetting<String>(SettingKeys.playerLayoutMode, defaultValue: '');
     final hasExplicitLayoutMode = settingsManager.getGlobalSetting<bool>(
       SettingKeys.playerLayoutModeExplicit,
       defaultValue: false,
@@ -789,55 +640,40 @@ class _PlayerState extends ConsumerState<Player> {
       hasExplicitSelection: hasExplicitLayoutMode,
     );
     final adaptivePreset = PlayerAdaptivePreset.fromSettingValue(
-      settingsManager.getGlobalSetting<String>(
-        SettingKeys.playerAdaptivePreset,
-      ),
+      settingsManager.getGlobalSetting<String>(SettingKeys.playerAdaptivePreset),
     );
     final coverSize = PlayerCoverSize.fromSettingValue(rawCoverSize);
     final immersiveColors = SettingsParser.decodeValue<bool>(
       rawImmersiveColors,
       defaultSettings[SettingKeys.playerImmersiveColors] as bool,
     );
-    final transportMode = PlayerTransportMode.fromSettingValue(
-      rawFullTransportMode,
-    );
+    final transportMode = PlayerTransportMode.fromSettingValue(rawFullTransportMode);
     final adaptiveActions = decodePlayerActions(
       settingsManager.getGlobalSetting<String>(SettingKeys.fullPlayerActions),
       fallback: defaultFullPlayerActions,
     );
     final mobileLeftAction = decodeOptionalPlayerAction(
-      settingsManager.getGlobalSetting<String>(
-        SettingKeys.mobilePlayerLeftAction,
-      ),
+      settingsManager.getGlobalSetting<String>(SettingKeys.mobilePlayerLeftAction),
       fallback: defaultMobilePlayerLeftAction,
     );
     final mobileRightAction = decodeOptionalPlayerAction(
-      settingsManager.getGlobalSetting<String>(
-        SettingKeys.mobilePlayerRightAction,
-      ),
+      settingsManager.getGlobalSetting<String>(SettingKeys.mobilePlayerRightAction),
       fallback: defaultMobilePlayerRightAction,
     );
     final isCustomMode = layoutMode == PlayerLayoutMode.custom;
-    final canEditCustomMode =
-        isCustomMode ||
-        rawLayoutMode.trim().toLowerCase() == PlayerLayoutMode.custom.name;
+    final canEditCustomMode = isCustomMode || rawLayoutMode.trim().toLowerCase() == PlayerLayoutMode.custom.name;
     final isEditMode = canEditCustomMode && _isEditMode;
     final usesCustomLayout = isCustomMode || isEditMode;
     final castSupported = ChromeCastService.isSupportedPlatform;
     final isMobile = context.isMobile;
-    final activeScreenSize = PlayerLayoutScreenSize.fromBreakpoint(
-      context.breakpoint,
-    );
+    final activeScreenSize = PlayerLayoutScreenSize.fromBreakpoint(context.breakpoint);
     final activeProfile = _activeProfileForScreen(activeScreenSize);
-    final activeSeekBarPlacement = activeProfile.placementFor(
-      PlayerComponentType.seekBar,
-    );
+    final activeSeekBarPlacement = activeProfile.placementFor(PlayerComponentType.seekBar);
     final showTimesUnderAppBar =
         isCustomMode &&
         !isEditMode &&
         activeSeekBarPlacement.visible &&
-        activeSeekBarPlacement.seekTimePlacement ==
-            PlayerSeekTimePlacement.underAppBar;
+        activeSeekBarPlacement.seekTimePlacement == PlayerSeekTimePlacement.underAppBar;
     final hiddenComponents = activeProfile.placements
         .where((placement) => !placement.visible)
         .map((placement) => placement.type)
@@ -871,12 +707,7 @@ class _PlayerState extends ConsumerState<Player> {
                 tooltip: 'Add component',
                 icon: const Icon(Icons.add_box_rounded),
                 onSelected: (PlayerComponentType type) {
-                  _setComponentVisibility(
-                    context,
-                    activeScreenSize,
-                    type,
-                    true,
-                  );
+                  _setComponentVisibility(context, activeScreenSize, type, true);
                 },
                 itemBuilder: (BuildContext context) {
                   if (hiddenComponents.isEmpty) {
@@ -900,14 +731,8 @@ class _PlayerState extends ConsumerState<Player> {
                 },
               ),
               IconButton(
-                icon: Icon(
-                  _allowOverlapUnlocked
-                      ? Icons.lock_open_rounded
-                      : Icons.lock_rounded,
-                ),
-                tooltip: _allowOverlapUnlocked
-                    ? 'Unlocked overlap mode'
-                    : 'Locked mode (prevent overlap)',
+                icon: Icon(_allowOverlapUnlocked ? Icons.lock_open_rounded : Icons.lock_rounded),
+                tooltip: _allowOverlapUnlocked ? 'Unlocked overlap mode' : 'Locked mode (prevent overlap)',
                 onPressed: () {
                   setState(() {
                     _allowOverlapUnlocked = !_allowOverlapUnlocked;
@@ -953,10 +778,7 @@ class _PlayerState extends ConsumerState<Player> {
             surfaceTintColor: Colors.transparent,
             scrolledUnderElevation: 0,
             bottom: showTimesUnderAppBar
-                ? const PreferredSize(
-                    preferredSize: Size.fromHeight(26),
-                    child: _AppBarSeekTimesStrip(),
-                  )
+                ? const PreferredSize(preferredSize: Size.fromHeight(26), child: _AppBarSeekTimesStrip())
                 : null,
             actions: <Widget>[
               if (canEditCustomMode)
@@ -983,35 +805,24 @@ class _PlayerState extends ConsumerState<Player> {
                   await _handleAppBarMenuAction(context, action);
                 },
                 itemBuilder: (BuildContext context) {
-                  return _buildOverflowMenuItems(
-                    isMobile: isMobile,
-                    castSupported: castSupported,
-                  );
+                  return _buildOverflowMenuItems(isMobile: isMobile, castSupported: castSupported);
                 },
               ),
             ],
           );
 
     final ABSApi? api = ref.watch(absApiProvider);
-    final systemNavigationColor =
-        !usesCustomLayout && _adaptiveNavigationBarColor != null
+    final systemNavigationColor = !usesCustomLayout && _adaptiveNavigationBarColor != null
         ? _adaptiveNavigationBarColor!
         : Theme.of(context).colorScheme.surfaceContainer;
-    final navigationBarBrightness = ThemeData.estimateBrightnessForColor(
-      systemNavigationColor,
-    );
+    final navigationBarBrightness = ThemeData.estimateBrightnessForColor(systemNavigationColor);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: navigationBarBrightness == Brightness.dark
-            ? Brightness.light
-            : Brightness.dark,
-        systemNavigationBarColor: usesCustomLayout
-            ? systemNavigationColor
-            : Colors.transparent,
+        statusBarIconBrightness: navigationBarBrightness == Brightness.dark ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor: usesCustomLayout ? systemNavigationColor : Colors.transparent,
         systemNavigationBarDividerColor: Colors.transparent,
-        systemNavigationBarIconBrightness:
-            navigationBarBrightness == Brightness.dark
+        systemNavigationBarIconBrightness: navigationBarBrightness == Brightness.dark
             ? Brightness.light
             : Brightness.dark,
         systemNavigationBarContrastEnforced: false,
@@ -1024,167 +835,106 @@ class _PlayerState extends ConsumerState<Player> {
           child: StreamBuilder<bool>(
             stream: audioHandler.queueTransitionLoadingStream,
             initialData: audioHandler.queueTransitionLoading,
-            builder:
-                (BuildContext context, AsyncSnapshot<bool> transitionSnapshot) {
-                  final isTransitionLoading = transitionSnapshot.data == true;
+            builder: (BuildContext context, AsyncSnapshot<bool> transitionSnapshot) {
+              final isTransitionLoading = transitionSnapshot.data == true;
 
-                  return StreamBuilder<InternalMedia?>(
-                    stream: audioHandler.mediaItemStream.stream,
-                    initialData: audioHandler.currentMediaItem,
-                    builder:
-                        (
-                          BuildContext context,
-                          AsyncSnapshot<InternalMedia?> mediaSnapshot,
-                        ) {
-                          if (mediaSnapshot.connectionState ==
-                                  ConnectionState.waiting &&
-                              mediaSnapshot.data == null) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
+              return StreamBuilder<InternalMedia?>(
+                stream: audioHandler.mediaItemStream.stream,
+                initialData: audioHandler.currentMediaItem,
+                builder: (BuildContext context, AsyncSnapshot<InternalMedia?> mediaSnapshot) {
+                  if (mediaSnapshot.connectionState == ConnectionState.waiting && mediaSnapshot.data == null) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                          final media = mediaSnapshot.data;
-                          if (media == null) {
-                            if (isTransitionLoading) {
-                              return const _PlayerTransitionLoadingView();
-                            }
+                  final media = mediaSnapshot.data;
+                  if (media == null) {
+                    if (isTransitionLoading) {
+                      return const _PlayerTransitionLoadingView();
+                    }
 
-                            _scheduleClosePlayerIfOpen();
-                            return const SizedBox.shrink();
-                          }
+                    _scheduleClosePlayerIfOpen();
+                    return const SizedBox.shrink();
+                  }
 
-                          return StreamBuilder<PlayerQueueSnapshot>(
-                            stream: audioHandler.queueSnapshotStream,
-                            initialData: audioHandler.queueSnapshot,
-                            builder:
-                                (
-                                  BuildContext context,
-                                  AsyncSnapshot<PlayerQueueSnapshot>
-                                  queueSnapshot,
-                                ) {
-                                  final queueState =
-                                      queueSnapshot.data ??
-                                      const PlayerQueueSnapshot();
-                                  final screenSize =
-                                      PlayerLayoutScreenSize.fromBreakpoint(
-                                        context.breakpoint,
-                                      );
-                                  final profile = _activeProfileForScreen(
-                                    screenSize,
-                                  );
-                                  final hasChapters =
-                                      media.chapters?.isNotEmpty == true;
-                                  final hasQueue =
-                                      queueState.entries.isNotEmpty;
+                  return StreamBuilder<PlayerQueueSnapshot>(
+                    stream: audioHandler.queueSnapshotStream,
+                    initialData: audioHandler.queueSnapshot,
+                    builder: (BuildContext context, AsyncSnapshot<PlayerQueueSnapshot> queueSnapshot) {
+                      final queueState = queueSnapshot.data ?? const PlayerQueueSnapshot();
+                      final screenSize = PlayerLayoutScreenSize.fromBreakpoint(context.breakpoint);
+                      final profile = _activeProfileForScreen(screenSize);
+                      final hasChapters = media.chapters?.isNotEmpty == true;
+                      final hasQueue = queueState.entries.isNotEmpty;
 
-                                  if (!usesCustomLayout) {
-                                    return PlayerAdaptiveView(
-                                      api: api,
-                                      media: media,
-                                      hasChapters: hasChapters,
-                                      preset: adaptivePreset,
-                                      transportMode: transportMode,
-                                      actions: adaptiveActions,
-                                      mobileLeftAction: mobileLeftAction,
-                                      mobileRightAction: mobileRightAction,
-                                      coverSize: coverSize,
-                                      immersiveColors: immersiveColors,
-                                      onNavigationBarColorChanged:
-                                          _updateAdaptiveNavigationBarColor,
-                                    );
+                      if (!usesCustomLayout) {
+                        return PlayerAdaptiveView(
+                          api: api,
+                          media: media,
+                          hasChapters: hasChapters,
+                          preset: adaptivePreset,
+                          transportMode: transportMode,
+                          actions: adaptiveActions,
+                          mobileLeftAction: mobileLeftAction,
+                          mobileRightAction: mobileRightAction,
+                          coverSize: coverSize,
+                          immersiveColors: immersiveColors,
+                          onNavigationBarColorChanged: _updateAdaptiveNavigationBarColor,
+                        );
+                      }
+
+                      return SafeArea(
+                        top: false,
+                        child: Padding(
+                          padding: EdgeInsets.all(context.isMobile ? 2 : 4),
+                          child: PlayerGridCanvas(
+                            screenSize: screenSize,
+                            profile: profile,
+                            editMode: isEditMode,
+                            isPlacementVisible: (PlayerComponentPlacement placement) {
+                              return _shouldRenderPlacement(
+                                placement: placement,
+                                hasChapters: hasChapters,
+                                hasQueue: hasQueue,
+                              );
+                            },
+                            componentBuilder: (PlayerComponentPlacement placement) {
+                              return _buildComponent(
+                                placement: placement,
+                                profile: profile,
+                                api: api,
+                                media: media,
+                                hasChapters: hasChapters,
+                                transportMode: transportMode,
+                              );
+                            },
+                            onMovePlacement: isEditMode
+                                ? (PlayerComponentType type, int deltaX, int deltaY) {
+                                    _movePlacement(screenSize, type, deltaX, deltaY);
                                   }
-
-                                  return SafeArea(
-                                    top: false,
-                                    child: Padding(
-                                      padding: EdgeInsets.all(
-                                        context.isMobile ? 2 : 4,
-                                      ),
-                                      child: PlayerGridCanvas(
-                                        screenSize: screenSize,
-                                        profile: profile,
-                                        editMode: isEditMode,
-                                        isPlacementVisible:
-                                            (
-                                              PlayerComponentPlacement
-                                              placement,
-                                            ) {
-                                              return _shouldRenderPlacement(
-                                                placement: placement,
-                                                hasChapters: hasChapters,
-                                                hasQueue: hasQueue,
-                                              );
-                                            },
-                                        componentBuilder:
-                                            (
-                                              PlayerComponentPlacement
-                                              placement,
-                                            ) {
-                                              return _buildComponent(
-                                                placement: placement,
-                                                profile: profile,
-                                                api: api,
-                                                media: media,
-                                                hasChapters: hasChapters,
-                                                transportMode: transportMode,
-                                              );
-                                            },
-                                        onMovePlacement: isEditMode
-                                            ? (
-                                                PlayerComponentType type,
-                                                int deltaX,
-                                                int deltaY,
-                                              ) {
-                                                _movePlacement(
-                                                  screenSize,
-                                                  type,
-                                                  deltaX,
-                                                  deltaY,
-                                                );
-                                              }
-                                            : null,
-                                        onResizePlacement: isEditMode
-                                            ? (
-                                                PlayerComponentType type,
-                                                int deltaWidth,
-                                                int deltaHeight,
-                                              ) {
-                                                _resizePlacement(
-                                                  screenSize,
-                                                  type,
-                                                  deltaWidth,
-                                                  deltaHeight,
-                                                );
-                                              }
-                                            : null,
-                                        onOpenSettings: isEditMode
-                                            ? (PlayerComponentType type) {
-                                                _showComponentSettings(
-                                                  context,
-                                                  screenSize,
-                                                  type,
-                                                );
-                                              }
-                                            : null,
-                                        onHidePlacement: isEditMode
-                                            ? (PlayerComponentType type) {
-                                                _setComponentVisibility(
-                                                  context,
-                                                  screenSize,
-                                                  type,
-                                                  false,
-                                                );
-                                              }
-                                            : null,
-                                      ),
-                                    ),
-                                  );
-                                },
-                          );
-                        },
+                                : null,
+                            onResizePlacement: isEditMode
+                                ? (PlayerComponentType type, int deltaWidth, int deltaHeight) {
+                                    _resizePlacement(screenSize, type, deltaWidth, deltaHeight);
+                                  }
+                                : null,
+                            onOpenSettings: isEditMode
+                                ? (PlayerComponentType type) {
+                                    _showComponentSettings(context, screenSize, type);
+                                  }
+                                : null,
+                            onHidePlacement: isEditMode
+                                ? (PlayerComponentType type) {
+                                    _setComponentVisibility(context, screenSize, type, false);
+                                  }
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
+              );
+            },
           ),
         ),
       ),
@@ -1202,17 +952,10 @@ class _PlayerTransitionLoadingView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           const RepaintBoundary(
-            child: SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(strokeWidth: 2.6),
-            ),
+            child: SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.6)),
           ),
           const SizedBox(height: 10),
-          Text(
-            'Loading next item...',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text('Loading next item...', style: Theme.of(context).textTheme.bodyMedium),
         ],
       ),
     );
@@ -1232,9 +975,7 @@ class _AppBarSeekTimesStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final showRemainingSetting = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.playerShowRemainingTime),
-    );
+    final showRemainingSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.playerShowRemainingTime));
     final showRemaining = showRemainingSetting.asData?.value == 'true';
 
     return SizedBox(
@@ -1248,47 +989,35 @@ class _AppBarSeekTimesStrip extends ConsumerWidget {
           return StreamBuilder<Duration>(
             stream: audioHandler.positionStream,
             initialData: audioHandler.position,
-            builder:
-                (
-                  BuildContext context,
-                  AsyncSnapshot<Duration> positionSnapshot,
-                ) {
-                  final position = positionSnapshot.data ?? Duration.zero;
-                  final clampedPosition = position > total ? total : position;
+            builder: (BuildContext context, AsyncSnapshot<Duration> positionSnapshot) {
+              final position = positionSnapshot.data ?? Duration.zero;
+              final clampedPosition = position > total ? total : position;
 
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          _formatDuration(clampedPosition),
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text(_formatDuration(clampedPosition), style: theme.textTheme.labelSmall),
+                    GestureDetector(
+                      onTap: () {
+                        ref
+                            .read(settingsManagerProvider.notifier)
+                            .setGlobalSetting<bool>(SettingKeys.playerShowRemainingTime, !showRemaining);
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
+                        child: Text(
+                          showRemaining ? '-${_formatDuration(total - clampedPosition)}' : _formatDuration(total),
                           style: theme.textTheme.labelSmall,
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            ref
-                                .read(settingsManagerProvider.notifier)
-                                .setGlobalSetting<bool>(
-                                  SettingKeys.playerShowRemainingTime,
-                                  !showRemaining,
-                                );
-                          },
-                          behavior: HitTestBehavior.opaque,
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(8, 4, 4, 4),
-                            child: Text(
-                              showRemaining
-                                  ? '-${_formatDuration(total - clampedPosition)}'
-                                  : _formatDuration(total),
-                              style: theme.textTheme.labelSmall,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  );
-                },
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
@@ -1313,12 +1042,7 @@ class _QueueBottomSheet extends StatelessWidget {
             children: <Widget>[
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      'Queue',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
+                  Expanded(child: Text('Queue', style: Theme.of(context).textTheme.titleLarge)),
                   IconButton(
                     tooltip: 'Clear queue',
                     onPressed: () async {
@@ -1326,18 +1050,10 @@ class _QueueBottomSheet extends StatelessWidget {
                         context: context,
                         builder: (dialogContext) => AlertDialog(
                           title: const Text('Clear queue?'),
-                          content: const Text(
-                            'Remove all queued, auto-queued, and scheduled items?',
-                          ),
+                          content: const Text('Remove all queued, auto-queued, and scheduled items?'),
                           actions: [
-                            TextButton(
-                              onPressed: () => dialogContext.pop(false),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: () => dialogContext.pop(true),
-                              child: const Text('Clear queue'),
-                            ),
+                            TextButton(onPressed: () => dialogContext.pop(false), child: const Text('Cancel')),
+                            FilledButton(onPressed: () => dialogContext.pop(true), child: const Text('Clear queue')),
                           ],
                         ),
                       );
@@ -1369,12 +1085,7 @@ class _PlayerAppBarMenuItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        Icon(
-          icon,
-          color:
-              Theme.of(context).iconTheme.color ??
-              Theme.of(context).colorScheme.onSurface,
-        ),
+        Icon(icon, color: Theme.of(context).iconTheme.color ?? Theme.of(context).colorScheme.onSurface),
         const SizedBox(width: 12),
         Text(label),
       ],
@@ -1387,34 +1098,16 @@ class _PlayerQuickSettingsSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final rawSeekBarMode = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerSeekBarMode))
-        .asData
-        ?.value;
-    final rawLayoutMode = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerLayoutMode))
-        .asData
-        ?.value;
+    final rawSeekBarMode = ref.watch(globalSettingByKeyProvider(SettingKeys.playerSeekBarMode)).asData?.value;
+    final rawLayoutMode = ref.watch(globalSettingByKeyProvider(SettingKeys.playerLayoutMode)).asData?.value;
     final rawLayoutModeExplicit = ref
         .watch(globalSettingByKeyProvider(SettingKeys.playerLayoutModeExplicit))
         .asData
         ?.value;
-    final rawAdaptivePreset = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerAdaptivePreset))
-        .asData
-        ?.value;
-    final rawCoverSize = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerCoverSize))
-        .asData
-        ?.value;
-    final rawImmersiveColors = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerImmersiveColors))
-        .asData
-        ?.value;
-    final rawLayoutConfig = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerLayoutConfig))
-        .asData
-        ?.value;
+    final rawAdaptivePreset = ref.watch(globalSettingByKeyProvider(SettingKeys.playerAdaptivePreset)).asData?.value;
+    final rawCoverSize = ref.watch(globalSettingByKeyProvider(SettingKeys.playerCoverSize)).asData?.value;
+    final rawImmersiveColors = ref.watch(globalSettingByKeyProvider(SettingKeys.playerImmersiveColors)).asData?.value;
+    final rawLayoutConfig = ref.watch(globalSettingByKeyProvider(SettingKeys.playerLayoutConfig)).asData?.value;
     final settingsManager = ref.read(settingsManagerProvider.notifier);
     final selectedMode = PlayerSeekBarMode.fromSettingValue(rawSeekBarMode);
     final layoutMode = PlayerLayoutMode.fromSettingValue(
@@ -1431,19 +1124,14 @@ class _PlayerQuickSettingsSheet extends ConsumerWidget {
 
     return SafeArea(
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.88,
-        ),
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.88),
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(12, 2, 12, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
-                'Quick Player Settings',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text('Quick Player Settings', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 12),
               Text('Layout', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
@@ -1462,14 +1150,8 @@ class _PlayerQuickSettingsSheet extends ConsumerWidget {
                 ],
                 selected: <PlayerLayoutMode>{layoutMode},
                 onSelectionChanged: (selection) {
-                  settingsManager.setGlobalSetting<bool>(
-                    SettingKeys.playerLayoutModeExplicit,
-                    true,
-                  );
-                  settingsManager.setGlobalSetting<String>(
-                    SettingKeys.playerLayoutMode,
-                    selection.first.name,
-                  );
+                  settingsManager.setGlobalSetting<bool>(SettingKeys.playerLayoutModeExplicit, true);
+                  settingsManager.setGlobalSetting<String>(SettingKeys.playerLayoutMode, selection.first.name);
                 },
               ),
               if (layoutMode == PlayerLayoutMode.adaptive) ...<Widget>[
@@ -1496,9 +1178,8 @@ class _PlayerQuickSettingsSheet extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Cover size',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -1511,10 +1192,7 @@ class _PlayerQuickSettingsSheet extends ConsumerWidget {
                           label: Text(candidate.label),
                           onSelected: (selected) {
                             if (selected) {
-                              settingsManager.setGlobalSetting<String>(
-                                SettingKeys.playerCoverSize,
-                                candidate.name,
-                              );
+                              settingsManager.setGlobalSetting<String>(SettingKeys.playerCoverSize, candidate.name);
                             }
                           },
                         );
@@ -1528,17 +1206,13 @@ class _PlayerQuickSettingsSheet extends ConsumerWidget {
                 title: const Text('Immersive player colors'),
                 value: immersiveColors,
                 onChanged: (value) {
-                  settingsManager.setGlobalSetting<bool>(
-                    SettingKeys.playerImmersiveColors,
-                    value,
-                  );
+                  settingsManager.setGlobalSetting<bool>(SettingKeys.playerImmersiveColors, value);
                 },
               ),
               Text(
                 'Timeline mode',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -1556,10 +1230,7 @@ class _PlayerQuickSettingsSheet extends ConsumerWidget {
                           }
                           ref
                               .read(settingsManagerProvider.notifier)
-                              .setGlobalSetting<String>(
-                                SettingKeys.playerSeekBarMode,
-                                mode.name,
-                              );
+                              .setGlobalSetting<String>(SettingKeys.playerSeekBarMode, mode.name);
                         },
                       );
                     })

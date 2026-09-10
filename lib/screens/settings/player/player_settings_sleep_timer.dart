@@ -14,10 +14,7 @@ class PlayerSettingsSleepTimer extends ConsumerWidget {
 
   static const String routeName = '/settings/player/sleep-timer';
 
-  static final List<int> _timeRangeValues = List<int>.generate(
-    48,
-    (index) => index * 30,
-  );
+  static final List<int> _timeRangeValues = List<int>.generate(48, (index) => index * 30);
   static final List<String> _timeRangeLabels = _timeRangeValues
       .map((minutes) => _formatMinutesOfDay(minutes))
       .toList(growable: false);
@@ -35,35 +32,18 @@ class PlayerSettingsSleepTimer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final autoRestartEnabledSetting = ref
-        .watch(
-          globalSettingByKeyProvider(SettingKeys.sleepTimerAutoRestartEnabled),
-        )
+        .watch(globalSettingByKeyProvider(SettingKeys.sleepTimerAutoRestartEnabled))
         .asData
         ?.value;
-    final autoRestartEnabledDefault =
-        defaultSettings[SettingKeys.sleepTimerAutoRestartEnabled] as bool? ??
-        false;
-    final autoRestartEnabled = SettingsParser.decodeValue<bool>(
-      autoRestartEnabledSetting,
-      autoRestartEnabledDefault,
-    );
+    final autoRestartEnabledDefault = defaultSettings[SettingKeys.sleepTimerAutoRestartEnabled] as bool? ?? false;
+    final autoRestartEnabled = SettingsParser.decodeValue<bool>(autoRestartEnabledSetting, autoRestartEnabledDefault);
 
     final useTimeRangeSetting = ref
-        .watch(
-          globalSettingByKeyProvider(
-            SettingKeys.sleepTimerAutoRestartUseTimeRange,
-          ),
-        )
+        .watch(globalSettingByKeyProvider(SettingKeys.sleepTimerAutoRestartUseTimeRange))
         .asData
         ?.value;
-    final useTimeRangeDefault =
-        defaultSettings[SettingKeys.sleepTimerAutoRestartUseTimeRange]
-            as bool? ??
-        false;
-    final useTimeRange = SettingsParser.decodeValue<bool>(
-      useTimeRangeSetting,
-      useTimeRangeDefault,
-    );
+    final useTimeRangeDefault = defaultSettings[SettingKeys.sleepTimerAutoRestartUseTimeRange] as bool? ?? false;
+    final useTimeRange = SettingsParser.decodeValue<bool>(useTimeRangeSetting, useTimeRangeDefault);
 
     final timeRangeEnabled = autoRestartEnabled && useTimeRange;
 
@@ -80,16 +60,9 @@ class PlayerSettingsSleepTimer extends ConsumerWidget {
             SettingDropdown<String>(
               label: 'Sleep timer end action',
               description: 'Choose whether playback is stopped or paused when the sleep timer expires',
-              values: SleepTimerExpireAction.values
-                  .map((action) => action.name)
-                  .toList(),
-              valueLabels: SleepTimerExpireAction.values
-                  .map((action) => action.label)
-                  .toList(),
-              valueDescriptions: const [
-                'Stop playback completely',
-                'Pause playback only',
-              ],
+              values: SleepTimerExpireAction.values.map((action) => action.name).toList(),
+              valueLabels: SleepTimerExpireAction.values.map((action) => action.label).toList(),
+              valueDescriptions: const ['Stop playback completely', 'Pause playback only'],
               settingKey: SettingKeys.sleepTimerExpireAction,
             ),
             const SettingSlider<int>(
@@ -101,8 +74,7 @@ class PlayerSettingsSleepTimer extends ConsumerWidget {
             ),
             const SettingSwitchTile(
               label: 'Fade audio',
-              subtitle:
-                  'Gradually lower playback volume before the sleep timer ends',
+              subtitle: 'Gradually lower playback volume before the sleep timer ends',
               settingKey: SettingKeys.sleepTimerFadeOutEnabled,
             ),
             const SettingSwitchTile(
@@ -129,10 +101,8 @@ class PlayerSettingsSleepTimer extends ConsumerWidget {
             ),
             SettingSlider<int>(
               label: 'Auto-restart range start',
-              description:
-                  'Sleep timer auto-restart becomes active at this time',
-              disabledReason:
-                  'Enable auto-restart and time range to configure this option',
+              description: 'Sleep timer auto-restart becomes active at this time',
+              disabledReason: 'Enable auto-restart and time range to configure this option',
               values: _timeRangeValues,
               valueLabels: _timeRangeLabels,
               settingKey: SettingKeys.sleepTimerAutoRestartRangeStartMinutes,
@@ -140,10 +110,8 @@ class PlayerSettingsSleepTimer extends ConsumerWidget {
             ),
             SettingSlider<int>(
               label: 'Auto-restart range end',
-              description:
-                  'Sleep timer auto-restart remains active until this time',
-              disabledReason:
-                  'Enable auto-restart and time range to configure this option',
+              description: 'Sleep timer auto-restart remains active until this time',
+              disabledReason: 'Enable auto-restart and time range to configure this option',
               values: _timeRangeValues,
               valueLabels: _timeRangeLabels,
               settingKey: SettingKeys.sleepTimerAutoRestartRangeEndMinutes,

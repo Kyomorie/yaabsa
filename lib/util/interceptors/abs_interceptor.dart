@@ -26,9 +26,7 @@ class ABSInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    if (response.statusCode != null &&
-        response.statusCode! >= 200 &&
-        response.statusCode! < 300) {
+    if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
       if (!container.read(serverReachabilityProvider)) {
         logger(
           'Marking server reachable from interceptor due to ${response.requestOptions.uri}.',
@@ -43,11 +41,7 @@ class ABSInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    logger(
-      'Request: ${options.uri.toString()}',
-      tag: 'ABSInterceptor',
-      level: InfoLevel.debug,
-    );
+    logger('Request: ${options.uri.toString()}', tag: 'ABSInterceptor', level: InfoLevel.debug);
     return handler.next(options);
   }
 
@@ -56,11 +50,7 @@ class ABSInterceptor extends Interceptor {
         err.type == DioExceptionType.sendTimeout ||
         err.type == DioExceptionType.receiveTimeout ||
         err.type == DioExceptionType.connectionError) {
-      logger(
-        '${err.requestOptions.uri} failed with ${err.type}',
-        tag: 'ABSInterceptor',
-        level: InfoLevel.info,
-      );
+      logger('${err.requestOptions.uri} failed with ${err.type}', tag: 'ABSInterceptor', level: InfoLevel.info);
       return true;
     }
 

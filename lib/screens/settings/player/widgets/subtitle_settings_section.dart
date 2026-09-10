@@ -17,9 +17,7 @@ class SubtitleSettingsSection extends ConsumerWidget {
         if (user == null) {
           return const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Text(
-              'No active user. Sign in to configure subtitle settings.',
-            ),
+            child: Text('No active user. Sign in to configure subtitle settings.'),
           );
         }
 

@@ -39,36 +39,25 @@ class SeriesView extends HookConsumerWidget {
     ref.watch(userSettingsWatcherProvider);
 
     if (selectedLibrary == null) {
-      return const Center(
-        child: Text(
-          'No library selected. Please select a library via the switcher.',
-        ),
-      );
+      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
     }
 
     if (selectedLibrary.mediaType != 'book') {
-      return const Center(
-        child: Text('Series are available only for book libraries.'),
-      );
+      return const Center(child: Text('Series are available only for book libraries.'));
     }
 
     final libraryId = selectedLibrary.id;
     final api = ref.watch(absApiProvider);
     final filterDataAsync = ref.watch(libraryFilterDataProvider(libraryId));
     final subtitlePreferences = currentUser == null
-        ? LibraryViewSubtitlePreferencesCodec.defaultsFor(
-            LibraryViewSubtitleView.series,
-          )
+        ? LibraryViewSubtitlePreferencesCodec.defaultsFor(LibraryViewSubtitleView.series)
         : LibraryViewSubtitlePreferencesCodec.decode(
             ref
                 .read(settingsManagerProvider.notifier)
                 .getUserSetting<String>(
                   currentUser.id,
                   LibraryViewSubtitleView.series.settingKey,
-                  defaultValue:
-                      LibraryViewSubtitlePreferencesCodec.defaultEncodedFor(
-                        LibraryViewSubtitleView.series,
-                      ),
+                  defaultValue: LibraryViewSubtitlePreferencesCodec.defaultEncodedFor(LibraryViewSubtitleView.series),
                 ),
             LibraryViewSubtitleView.series,
           );
@@ -118,27 +107,19 @@ class SeriesView extends HookConsumerWidget {
           final result = await showModalBottomSheet<LibrarySeriesSortSelection>(
             context: context,
             showDragHandle: true,
-            builder: (context) => LibrarySeriesSortSheet(
-              activeSort: state.sort,
-              activeSortDesc: state.desc,
-            ),
+            builder: (context) => LibrarySeriesSortSheet(activeSort: state.sort, activeSortDesc: state.desc),
           );
 
           if (!context.mounted || result == null) {
             return;
           }
 
-          await ref
-              .read(currentSeriesProvider.notifier)
-              .setSort(result.sort, newDesc: result.desc);
+          await ref.read(currentSeriesProvider.notifier).setSort(result.sort, newDesc: result.desc);
         }
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            final gridLayout = appCenteredGridLayout(
-              constraints.maxWidth,
-              tileWidth: appGridTileWidth * 1.5,
-            );
+            final gridLayout = appCenteredGridLayout(constraints.maxWidth, tileWidth: appGridTileWidth * 1.5);
             final loadedCount = seriesItems.length;
             final estimatedItemCount = _estimatedItemCount(
               loadedCount: loadedCount,
@@ -152,57 +133,34 @@ class SeriesView extends HookConsumerWidget {
                   child: Column(
                     children: [
                       _SeriesToolbar(
-                        filterLabel:
-                            LibraryFilterToolbar.resolveActiveFilterLabel(
-                              state.filter,
-                              filterDataAsync.value,
-                            ),
-                        sortLabel: buildLibrarySeriesSortLabel(
-                          activeSort: state.sort,
-                          activeDesc: state.desc,
-                        ),
+                        filterLabel: LibraryFilterToolbar.resolveActiveFilterLabel(state.filter, filterDataAsync.value),
+                        sortLabel: buildLibrarySeriesSortLabel(activeSort: state.sort, activeDesc: state.desc),
                         isFilterLoading: filterDataAsync.isLoading,
                         isBusy: state.isLoadingNextPage,
                         onFilterPressed: openFilterSheet,
                         onSortPressed: openSortSheet,
                       ),
                       Expanded(
-                        child:
-                            seriesItems.isEmpty &&
-                                !state.hasNextPage &&
-                                !state.isLoadingNextPage
+                        child: seriesItems.isEmpty && !state.hasNextPage && !state.isLoadingNextPage
                             ? RefreshIndicator(
-                                onRefresh: () => ref
-                                    .read(seriesProvider(libraryId).notifier)
-                                    .refresh(withLoading: false),
+                                onRefresh: () =>
+                                    ref.read(seriesProvider(libraryId).notifier).refresh(withLoading: false),
                                 child: ListView(
                                   controller: scrollController,
-                                  physics:
-                                      const AlwaysScrollableScrollPhysics(),
-                                  padding: const EdgeInsets.fromLTRB(
-                                    16,
-                                    12,
-                                    16,
-                                    16,
-                                  ),
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                                   children: const [
                                     SizedBox(height: 80),
-                                    Center(
-                                      child: Text(
-                                        'No series found in this library.',
-                                      ),
-                                    ),
+                                    Center(child: Text('No series found in this library.')),
                                   ],
                                 ),
                               )
                             : RefreshIndicator(
-                                onRefresh: () => ref
-                                    .read(seriesProvider(libraryId).notifier)
-                                    .refresh(withLoading: false),
+                                onRefresh: () =>
+                                    ref.read(seriesProvider(libraryId).notifier).refresh(withLoading: false),
                                 child: AlignedGridView.count(
                                   controller: scrollController,
-                                  physics:
-                                      const AlwaysScrollableScrollPhysics(),
+                                  physics: const AlwaysScrollableScrollPhysics(),
                                   padding: EdgeInsets.fromLTRB(
                                     gridLayout.horizontalPadding,
                                     8,
@@ -214,56 +172,37 @@ class SeriesView extends HookConsumerWidget {
                                   crossAxisSpacing: appGridSpacing,
                                   itemCount: estimatedItemCount,
                                   itemBuilder: (context, index) {
-                                    if (index >=
-                                        loadedCount -
-                                            _seriesPrefetchThreshold) {
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                            ref
-                                                .read(
-                                                  currentSeriesProvider
-                                                      .notifier,
-                                                )
-                                                .ensureLoadedForIndex(index);
-                                          });
+                                    if (index >= loadedCount - _seriesPrefetchThreshold) {
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        ref.read(currentSeriesProvider.notifier).ensureLoadedForIndex(index);
+                                      });
                                     }
 
-                                    if (index >= loadedCount)
-                                      return const _SeriesGridPlaceholderTile();
+                                    if (index >= loadedCount) return const _SeriesGridPlaceholderTile();
 
                                     final series = seriesItems[index];
-                                    final baseEntry =
-                                        MultiBookEntryData.fromSeries(series);
+                                    final baseEntry = MultiBookEntryData.fromSeries(series);
                                     final seriesEntry = MultiBookEntryData(
                                       id: baseEntry.id,
                                       title: baseEntry.title,
-                                      subtitle:
-                                          subtitleResolver.forSeries(series) ??
-                                          const LibraryViewSubtitle.empty(),
+                                      subtitle: subtitleResolver.forSeries(series) ?? const LibraryViewSubtitle.empty(),
                                       bookItemIds: baseEntry.bookItemIds,
                                       totalBooks: baseEntry.totalBooks,
                                     );
 
                                     double totalProgress = 0.0;
                                     int booksWithProgress = 0;
-                                    for (final bookId
-                                        in baseEntry.bookItemIds) {
+                                    for (final bookId in baseEntry.bookItemIds) {
                                       final p = progressMap[bookId];
                                       if (p != null) {
-                                        totalProgress += p.isFinished
-                                            ? 1.0
-                                            : p.progress;
+                                        totalProgress += p.isFinished ? 1.0 : p.progress;
                                         booksWithProgress++;
                                       }
                                     }
 
                                     double? seriesProgress;
-                                    if (booksWithProgress > 0 &&
-                                        baseEntry.totalBookCount > 0) {
-                                      seriesProgress =
-                                          (totalProgress /
-                                                  baseEntry.totalBookCount)
-                                              .clamp(0.0, 1.0);
+                                    if (booksWithProgress > 0 && baseEntry.totalBookCount > 0) {
+                                      seriesProgress = (totalProgress / baseEntry.totalBookCount).clamp(0.0, 1.0);
                                     }
 
                                     return MultiBookEntryWidget(
@@ -274,13 +213,9 @@ class SeriesView extends HookConsumerWidget {
                                       coverHeight: appGridTileWidth,
                                       showSubtitle: true,
                                       progress: seriesProgress,
-                                      maxBooksToShow:
-                                          defaultMultiBookPreviewLimit,
+                                      maxBooksToShow: defaultMultiBookPreviewLimit,
                                       onTap: () {
-                                        context.push(
-                                          '/series/${series.id}',
-                                          extra: seriesEntry,
-                                        );
+                                        context.push('/series/${series.id}', extra: seriesEntry);
                                       },
                                     );
                                   },
@@ -320,11 +255,7 @@ class SeriesView extends HookConsumerWidget {
   }
 }
 
-int _estimatedItemCount({
-  required int loadedCount,
-  required int totalItems,
-  required bool hasNextPage,
-}) {
+int _estimatedItemCount({required int loadedCount, required int totalItems, required bool hasNextPage}) {
   if (totalItems > loadedCount) return totalItems;
   if (hasNextPage) return loadedCount + _seriesApproxScrollPastCount;
   return loadedCount;
@@ -349,9 +280,7 @@ class _SeriesToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final filterButtonLabel = filterLabel == null
-        ? 'Filter'
-        : _truncateLabel(filterLabel!);
+    final filterButtonLabel = filterLabel == null ? 'Filter' : _truncateLabel(filterLabel!);
     final sortButtonLabel = _truncateLabel(sortLabel);
 
     return Padding(
@@ -366,11 +295,7 @@ class _SeriesToolbar extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: isBusy ? null : onFilterPressed,
               icon: isFilterLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.filter_alt_rounded),
               label: Text(filterButtonLabel, overflow: TextOverflow.ellipsis),
             ),

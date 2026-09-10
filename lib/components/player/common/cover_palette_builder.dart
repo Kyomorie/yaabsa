@@ -12,18 +12,10 @@ class CoverPalette {
   final Color secondary;
 }
 
-typedef CoverPaletteWidgetBuilder = Widget Function(
-  BuildContext context,
-  CoverPalette? palette,
-);
+typedef CoverPaletteWidgetBuilder = Widget Function(BuildContext context, CoverPalette? palette);
 
 class CoverPaletteBuilder extends StatefulWidget {
-  const CoverPaletteBuilder({
-    super.key,
-    required this.coverUri,
-    required this.requestHeaders,
-    required this.builder,
-  });
+  const CoverPaletteBuilder({super.key, required this.coverUri, required this.requestHeaders, required this.builder});
 
   final Uri? coverUri;
   final Map<String, String> requestHeaders;
@@ -55,8 +47,7 @@ class _CoverPaletteBuilderState extends State<CoverPaletteBuilder> {
   @override
   void didUpdateWidget(CoverPaletteBuilder oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.coverUri != widget.coverUri ||
-        !mapEquals(oldWidget.requestHeaders, widget.requestHeaders)) {
+    if (oldWidget.coverUri != widget.coverUri || !mapEquals(oldWidget.requestHeaders, widget.requestHeaders)) {
       _resolvePalette();
     }
   }
@@ -83,19 +74,14 @@ class _CoverPaletteBuilderState extends State<CoverPaletteBuilder> {
       return;
     }
 
-    final provider = coverImageProviderFromUri(
-      coverUri,
-      requestHeaders: widget.requestHeaders,
-    );
+    final provider = coverImageProviderFromUri(coverUri, requestHeaders: widget.requestHeaders);
     if (provider == null) {
       setStateIfMounted(null);
       return;
     }
 
     final resized = ResizeImage.resizeIfNeeded(56, 56, provider);
-    final stream = resized.resolve(
-      const ImageConfiguration(size: Size.square(56)),
-    );
+    final stream = resized.resolve(const ImageConfiguration(size: Size.square(56)));
     late final ImageStreamListener listener;
     listener = ImageStreamListener(
       (info, synchronousCall) async {
@@ -125,8 +111,7 @@ class _CoverPaletteBuilderState extends State<CoverPaletteBuilder> {
     final currentListener = _listener;
     if (stream != null &&
         listener != null &&
-        (!identical(currentStream, stream) ||
-            !identical(currentListener, listener))) {
+        (!identical(currentStream, stream) || !identical(currentListener, listener))) {
       return;
     }
     _stream = null;
@@ -169,9 +154,7 @@ class _CoverPaletteBuilderState extends State<CoverPaletteBuilder> {
         fallbackBlue += blue;
         fallbackCount += 1;
       }
-      if (hsl.lightness < 0.09 ||
-          hsl.lightness > 0.93 ||
-          hsl.saturation < 0.1) {
+      if (hsl.lightness < 0.09 || hsl.lightness > 0.93 || hsl.saturation < 0.1) {
         continue;
       }
 
@@ -194,8 +177,7 @@ class _CoverPaletteBuilderState extends State<CoverPaletteBuilder> {
       return CoverPalette(primary: fallback, secondary: fallback);
     }
 
-    final ranked = bins.values.toList(growable: false)
-      ..sort((a, b) => b.score.compareTo(a.score));
+    final ranked = bins.values.toList(growable: false)..sort((a, b) => b.score.compareTo(a.score));
     final primary = ranked.first.color;
     var secondary = primary;
     final primaryHue = HSLColor.fromColor(primary).hue;
@@ -211,9 +193,7 @@ class _CoverPaletteBuilderState extends State<CoverPaletteBuilder> {
     if (secondary == primary) {
       secondary = HSLColor.fromColor(primary)
           .withHue((primaryHue + 34) % 360)
-          .withLightness(
-            (HSLColor.fromColor(primary).lightness + 0.08).clamp(0.0, 1.0),
-          )
+          .withLightness((HSLColor.fromColor(primary).lightness + 0.08).clamp(0.0, 1.0))
           .toColor();
     }
     return CoverPalette(primary: primary, secondary: secondary);

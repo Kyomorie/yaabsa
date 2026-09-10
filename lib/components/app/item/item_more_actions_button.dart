@@ -56,87 +56,56 @@ class ItemMoreActionsButton extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.check_box_outlined),
                   title: const Text('Select'),
-                  onTap: () =>
-                      Navigator.of(dialogContext).pop(ItemMoreAction.select),
+                  onTap: () => Navigator.of(dialogContext).pop(ItemMoreAction.select),
                 ),
               if (showEditItem)
                 ListTile(
                   leading: const Icon(Icons.edit_rounded),
                   title: const Text('Edit item'),
-                  onTap: () =>
-                      Navigator.of(dialogContext).pop(ItemMoreAction.editItem),
+                  onTap: () => Navigator.of(dialogContext).pop(ItemMoreAction.editItem),
                 ),
               if (showQuickMatch)
                 ListTile(
                   leading: const Icon(Icons.auto_fix_high_rounded),
                   title: const Text('Quick Match'),
-                  onTap: () =>
-                      Navigator.of(dialogContext)
-                          .pop(ItemMoreAction.quickMatch),
+                  onTap: () => Navigator.of(dialogContext).pop(ItemMoreAction.quickMatch),
                 ),
               if (showManualMatch)
                 ListTile(
                   leading: const Icon(Icons.manage_search_rounded),
                   title: const Text('Manual Match'),
-                  onTap: () =>
-                      Navigator.of(dialogContext)
-                          .pop(ItemMoreAction.manualMatch),
+                  onTap: () => Navigator.of(dialogContext).pop(ItemMoreAction.manualMatch),
                 ),
               if (showMarkAction)
                 ListTile(
-                  leading: Icon(
-                    showMarkAsUnfinished
-                        ? Icons.remove_done_rounded
-                        : Icons.task_alt_rounded,
-                  ),
-                  title: Text(
-                    showMarkAsUnfinished
-                        ? 'Mark As Unfinished'
-                        : 'Mark As Finished',
-                  ),
-                  onTap: () => Navigator.of(dialogContext).pop(
-                    showMarkAsUnfinished
-                        ? ItemMoreAction.markAsUnfinished
-                        : ItemMoreAction.markAsFinished,
-                  ),
+                  leading: Icon(showMarkAsUnfinished ? Icons.remove_done_rounded : Icons.task_alt_rounded),
+                  title: Text(showMarkAsUnfinished ? 'Mark As Unfinished' : 'Mark As Finished'),
+                  onTap: () =>
+                      Navigator.of(dialogContext)
+                          .pop(showMarkAsUnfinished ? ItemMoreAction.markAsUnfinished : ItemMoreAction.markAsFinished),
                 ),
               if (showAddToPlaylist)
                 ListTile(
                   leading: const Icon(Icons.playlist_add_rounded),
                   title: const Text('Add To Playlist'),
-                  onTap: () =>
-                      Navigator.of(dialogContext)
-                          .pop(ItemMoreAction.addToPlaylist),
+                  onTap: () => Navigator.of(dialogContext).pop(ItemMoreAction.addToPlaylist),
                 ),
               if (showAddToCollection)
                 ListTile(
                   leading: const Icon(Icons.collections_bookmark_outlined),
                   title: const Text('Add To Collection'),
-                  onTap: () =>
-                      Navigator.of(dialogContext)
-                          .pop(ItemMoreAction.addToCollection),
+                  onTap: () => Navigator.of(dialogContext).pop(ItemMoreAction.addToCollection),
                 ),
               if (showDeleteItem)
                 ListTile(
-                  leading: Icon(
-                    Icons.delete_outline_rounded,
-                    color: Theme.of(dialogContext).colorScheme.error,
-                  ),
-                  title: Text(
-                    'Delete Audiobook',
-                    style: TextStyle(
-                      color: Theme.of(dialogContext).colorScheme.error,
-                    ),
-                  ),
-                  onTap: () =>
-                      Navigator.of(dialogContext)
-                          .pop(ItemMoreAction.deleteItem),
+                  leading: Icon(Icons.delete_outline_rounded, color: Theme.of(dialogContext).colorScheme.error),
+                  title: Text('Delete Audiobook', style: TextStyle(color: Theme.of(dialogContext).colorScheme.error)),
+                  onTap: () => Navigator.of(dialogContext).pop(ItemMoreAction.deleteItem),
                 ),
               ListTile(
                 leading: const Icon(Icons.history_rounded),
                 title: const Text('Play History'),
-                onTap: () =>
-                    Navigator.of(dialogContext).pop(ItemMoreAction.playHistory),
+                onTap: () => Navigator.of(dialogContext).pop(ItemMoreAction.playHistory),
               ),
             ],
           ),

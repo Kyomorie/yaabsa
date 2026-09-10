@@ -43,8 +43,7 @@ class PodcastApi {
 
     return ABSApi.makeApiPostRequest(
       route: '/api/podcasts/feed',
-      fromJson: (data) =>
-          PodcastFeedResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) => PodcastFeedResponse.fromJson(data as Map<String, dynamic>),
       bodyData: request.toJson(),
       dio: _dio,
       headers: headers,
@@ -67,8 +66,7 @@ class PodcastApi {
 
     final query = <String, dynamic>{
       'term': normalizedTerm,
-      if (country != null && country.trim().isNotEmpty)
-        'country': country.trim(),
+      if (country != null && country.trim().isNotEmpty) 'country': country.trim(),
     };
 
     final response = await ABSApi.makeApiGetRequest<List<PodcastSearchResult>>(
@@ -77,11 +75,7 @@ class PodcastApi {
         final list = data is List ? data : const <dynamic>[];
         return list
             .whereType<Map>()
-            .map(
-              (entry) => PodcastSearchResult.fromJson(
-                Map<String, dynamic>.from(entry),
-              ),
-            )
+            .map((entry) => PodcastSearchResult.fromJson(Map<String, dynamic>.from(entry)))
             .toList(growable: false);
       },
       queryParams: query,
@@ -106,11 +100,7 @@ class PodcastApi {
         final list = data is List ? data : const <dynamic>[];
         return list
             .whereType<Map>()
-            .map(
-              (entry) => LibraryPodcastTitle.fromJson(
-                Map<String, dynamic>.from(entry),
-              ),
-            )
+            .map((entry) => LibraryPodcastTitle.fromJson(Map<String, dynamic>.from(entry)))
             .toList(growable: false);
       },
       queryParams: <String, dynamic>{},
@@ -150,9 +140,7 @@ class PodcastApi {
       return true;
     }
 
-    final payload = episodes
-        .map((episode) => episode.toJson())
-        .toList(growable: false);
+    final payload = episodes.map((episode) => episode.toJson()).toList(growable: false);
     return _postStatusOnly(
       route: '/api/podcasts/$libraryItemId/download-episodes',
       bodyData: payload,

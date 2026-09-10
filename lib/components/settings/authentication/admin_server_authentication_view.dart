@@ -16,28 +16,23 @@ class AdminServerAuthenticationView extends ConsumerStatefulWidget {
   const AdminServerAuthenticationView({super.key});
 
   @override
-  ConsumerState<AdminServerAuthenticationView> createState() =>
-      _AdminServerAuthenticationViewState();
+  ConsumerState<AdminServerAuthenticationView> createState() => _AdminServerAuthenticationViewState();
 }
 
-class _AdminServerAuthenticationViewState
-    extends ConsumerState<AdminServerAuthenticationView> {
+class _AdminServerAuthenticationViewState extends ConsumerState<AdminServerAuthenticationView> {
   late QuillController _customLoginMessageController;
   final TextEditingController _issuerUrlController = TextEditingController();
-  final TextEditingController _authorizationUrlController =
-      TextEditingController();
+  final TextEditingController _authorizationUrlController = TextEditingController();
   final TextEditingController _tokenUrlController = TextEditingController();
   final TextEditingController _userInfoUrlController = TextEditingController();
   final TextEditingController _jwksUrlController = TextEditingController();
   final TextEditingController _logoutUrlController = TextEditingController();
   final TextEditingController _clientIdController = TextEditingController();
   final TextEditingController _clientSecretController = TextEditingController();
-  final TextEditingController _signingAlgorithmController =
-      TextEditingController();
+  final TextEditingController _signingAlgorithmController = TextEditingController();
   final TextEditingController _buttonTextController = TextEditingController();
   final TextEditingController _groupClaimController = TextEditingController();
-  final TextEditingController _advancedPermsClaimController =
-      TextEditingController();
+  final TextEditingController _advancedPermsClaimController = TextEditingController();
 
   String? _activeUserId;
 
@@ -77,66 +72,35 @@ class _AdminServerAuthenticationViewState
   String? _advancedPermsClaimError;
   String? _subfolderError;
 
-  bool get _canSaveSettings =>
-      !_isLoading && !_isSavingSettings && !_isAutoPopulatingOpenId;
+  bool get _canSaveSettings => !_isLoading && !_isSavingSettings && !_isAutoPopulatingOpenId;
 
   bool get _canDisableLocalAuth {
     if (!_enableOpenIdAuth) {
       return false;
     }
 
-    final normalizedRedirectUris =
-        AdminAuthenticationSettingsValidation.normalizeRedirectUris(
-          _mobileRedirectUris,
-        );
-    return AdminAuthenticationSettingsValidation.validateRequired(
-              _issuerUrlController.text,
-              label: 'Issuer URL',
-            ) ==
+    final normalizedRedirectUris = AdminAuthenticationSettingsValidation.normalizeRedirectUris(_mobileRedirectUris);
+    return AdminAuthenticationSettingsValidation.validateRequired(_issuerUrlController.text, label: 'Issuer URL') ==
             null &&
         AdminAuthenticationSettingsValidation.validateRequired(
               _authorizationUrlController.text,
               label: 'Authorize URL',
             ) ==
             null &&
-        AdminAuthenticationSettingsValidation.validateRequired(
-              _tokenUrlController.text,
-              label: 'Token URL',
-            ) ==
+        AdminAuthenticationSettingsValidation.validateRequired(_tokenUrlController.text, label: 'Token URL') == null &&
+        AdminAuthenticationSettingsValidation.validateRequired(_userInfoUrlController.text, label: 'Userinfo URL') ==
             null &&
-        AdminAuthenticationSettingsValidation.validateRequired(
-              _userInfoUrlController.text,
-              label: 'Userinfo URL',
-            ) ==
-            null &&
-        AdminAuthenticationSettingsValidation.validateRequired(
-              _jwksUrlController.text,
-              label: 'JWKS URL',
-            ) ==
-            null &&
-        AdminAuthenticationSettingsValidation.validateRequired(
-              _clientIdController.text,
-              label: 'Client ID',
-            ) ==
-            null &&
-        AdminAuthenticationSettingsValidation.validateRequired(
-              _clientSecretController.text,
-              label: 'Client Secret',
-            ) ==
+        AdminAuthenticationSettingsValidation.validateRequired(_jwksUrlController.text, label: 'JWKS URL') == null &&
+        AdminAuthenticationSettingsValidation.validateRequired(_clientIdController.text, label: 'Client ID') == null &&
+        AdminAuthenticationSettingsValidation.validateRequired(_clientSecretController.text, label: 'Client Secret') ==
             null &&
         AdminAuthenticationSettingsValidation.validateRequired(
               _resolveSigningAlgorithmValue(),
               label: 'Signing algorithm',
             ) ==
             null &&
-        AdminAuthenticationSettingsValidation.validateRedirectUris(
-              normalizedRedirectUris,
-            ) ==
-            null &&
-        AdminAuthenticationSettingsValidation.validateSubfolder(
-              _resolveSubfolderPayloadValue(),
-            ) ==
-            null;
+        AdminAuthenticationSettingsValidation.validateRedirectUris(normalizedRedirectUris) == null &&
+        AdminAuthenticationSettingsValidation.validateSubfolder(_resolveSubfolderPayloadValue()) == null;
   }
 
   bool _isAdminType(String? userType) {
@@ -188,9 +152,7 @@ class _AdminServerAuthenticationViewState
   }
 
   String _resolveSubfolderPayloadValue() {
-    return _selectedWebRedirectSubfolder == '/'
-        ? ''
-        : _selectedWebRedirectSubfolder;
+    return _selectedWebRedirectSubfolder == '/' ? '' : _selectedWebRedirectSubfolder;
   }
 
   String _resolveSubfolderSegment() {
@@ -221,8 +183,7 @@ class _AdminServerAuthenticationViewState
   void _refreshCallbackPreviews() {
     final segment = _resolveSubfolderSegment();
     _webCallbackUrl = '$_callbackUrlBase$segment/auth/openid/callback';
-    _mobileCallbackUrl =
-        '$_callbackUrlBase$segment/auth/openid/mobile-redirect';
+    _mobileCallbackUrl = '$_callbackUrlBase$segment/auth/openid/mobile-redirect';
   }
 
   void _clearValidationErrors() {
@@ -262,8 +223,7 @@ class _AdminServerAuthenticationViewState
 
   void _onMobileRedirectUrisChanged(List<String> values) {
     setState(() {
-      _mobileRedirectUris =
-          AdminAuthenticationSettingsValidation.normalizeRedirectUris(values);
+      _mobileRedirectUris = AdminAuthenticationSettingsValidation.normalizeRedirectUris(values);
       _redirectUrisError = null;
       _errorMessage = null;
     });
@@ -319,9 +279,7 @@ class _AdminServerAuthenticationViewState
     }
 
     if (!_canDisableLocalAuth) {
-      _showMessage(
-        'Configure OpenID first before disabling local authentication.',
-      );
+      _showMessage('Configure OpenID first before disabling local authentication.');
       return;
     }
 
@@ -336,14 +294,8 @@ class _AdminServerAuthenticationViewState
             'authentication enabled.',
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Disable Local Auth'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Disable Local Auth')),
           ],
         );
       },
@@ -385,12 +337,11 @@ class _AdminServerAuthenticationViewState
     try {
       final response = await api.getAdminApi().getAuthenticationSettings();
       final nextSettings = response.data ?? const AdminAuthenticationSettings();
-      final nextRedirectUris =
-          AdminAuthenticationSettingsValidation.normalizeRedirectUris(
-            nextSettings.authOpenIdMobileRedirectUris.isEmpty
-                ? const <String>['audiobookshelf://oauth']
-                : nextSettings.authOpenIdMobileRedirectUris,
-          );
+      final nextRedirectUris = AdminAuthenticationSettingsValidation.normalizeRedirectUris(
+        nextSettings.authOpenIdMobileRedirectUris.isEmpty
+            ? const <String>['audiobookshelf://oauth']
+            : nextSettings.authOpenIdMobileRedirectUris,
+      );
 
       if (!mounted) {
         return;
@@ -399,9 +350,7 @@ class _AdminServerAuthenticationViewState
       _magicConfigKeyMarker =
           MagicConfigKeyMarker.extract(nextSettings.authLoginCustomMessage) ??
           MagicConfigKeyMarker.fromSerializedName(
-            MagicConfigKeyMarker.extractFromSanitizedHtml(
-              nextSettings.authLoginCustomMessage,
-            ),
+            MagicConfigKeyMarker.extractFromSanitizedHtml(nextSettings.authLoginCustomMessage),
           );
       final customMessageDocument = quillDocumentFromHtml(
         MagicConfigKeyMarker.visibleHtml(nextSettings.authLoginCustomMessage),
@@ -412,40 +361,31 @@ class _AdminServerAuthenticationViewState
         selection: const TextSelection.collapsed(offset: 0),
       );
       _issuerUrlController.text = nextSettings.authOpenIdIssuerUrl ?? '';
-      _authorizationUrlController.text =
-          nextSettings.authOpenIdAuthorizationUrl ?? '';
+      _authorizationUrlController.text = nextSettings.authOpenIdAuthorizationUrl ?? '';
       _tokenUrlController.text = nextSettings.authOpenIdTokenUrl ?? '';
       _userInfoUrlController.text = nextSettings.authOpenIdUserInfoUrl ?? '';
       _jwksUrlController.text = nextSettings.authOpenIdJwksUrl ?? '';
       _logoutUrlController.text = nextSettings.authOpenIdLogoutUrl ?? '';
       _clientIdController.text = nextSettings.authOpenIdClientId ?? '';
       _clientSecretController.text = nextSettings.authOpenIdClientSecret ?? '';
-      _signingAlgorithmController.text =
-          nextSettings.authOpenIdTokenSigningAlgorithm ?? '';
+      _signingAlgorithmController.text = nextSettings.authOpenIdTokenSigningAlgorithm ?? '';
       _buttonTextController.text = nextSettings.authOpenIdButtonText ?? '';
       _groupClaimController.text = nextSettings.authOpenIdGroupClaim ?? '';
-      _advancedPermsClaimController.text =
-          nextSettings.authOpenIdAdvancedPermsClaim ?? '';
-      _selectedWebRedirectSubfolder = _normalizeWebRedirectSubfolder(
-        nextSettings.authOpenIdSubfolderForRedirectUrls,
-      );
+      _advancedPermsClaimController.text = nextSettings.authOpenIdAdvancedPermsClaim ?? '';
+      _selectedWebRedirectSubfolder = _normalizeWebRedirectSubfolder(nextSettings.authOpenIdSubfolderForRedirectUrls);
 
       _refreshCallbackPreviews();
 
       setState(() {
         _showCustomLoginMessage =
-            MagicConfigKeyMarker.visibleHtml(
-              nextSettings.authLoginCustomMessage,
-            )?.trim().isNotEmpty ??
-            false;
+            MagicConfigKeyMarker.visibleHtml(nextSettings.authLoginCustomMessage)?.trim().isNotEmpty ?? false;
         _enableLocalAuth = nextSettings.localAuthEnabled;
         _enableOpenIdAuth = nextSettings.openIdAuthEnabled;
         _authOpenIdAutoLaunch = nextSettings.authOpenIdAutoLaunch;
         _authOpenIdAutoRegister = nextSettings.authOpenIdAutoRegister;
         _mobileRedirectUris = nextRedirectUris;
         _matchExistingBy = nextSettings.authOpenIdMatchExistingBy ?? '';
-        _selectedSigningAlgorithm =
-            nextSettings.authOpenIdTokenSigningAlgorithm ?? '';
+        _selectedSigningAlgorithm = nextSettings.authOpenIdTokenSigningAlgorithm ?? '';
         _signingAlgorithmOptions = const <String>[];
         _errorMessage = null;
         _clearValidationErrors();
@@ -460,10 +400,7 @@ class _AdminServerAuthenticationViewState
       setState(() {
         _isLoading = false;
         _hasLoadedSettings = true;
-        _errorMessage = listManagementErrorMessage(
-          error,
-          fallback: 'Failed to load authentication settings.',
-        );
+        _errorMessage = listManagementErrorMessage(error, fallback: 'Failed to load authentication settings.');
       });
     }
   }
@@ -481,14 +418,8 @@ class _AdminServerAuthenticationViewState
           'Authentication Codes created with the previous key will stop working. Existing signed-in accounts are not affected.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Rotate key'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Rotate key')),
         ],
       ),
     );
@@ -508,59 +439,41 @@ class _AdminServerAuthenticationViewState
     });
 
     try {
-      final settings =
-          (await api.getAdminApi().getAuthenticationSettings()).data;
+      final settings = (await api.getAdminApi().getAuthenticationSettings()).data;
       final currentMarker =
           MagicConfigKeyMarker.extract(settings?.authLoginCustomMessage) ??
           MagicConfigKeyMarker.fromSerializedName(
-            MagicConfigKeyMarker.extractFromSanitizedHtml(
-              settings?.authLoginCustomMessage,
-            ),
+            MagicConfigKeyMarker.extractFromSanitizedHtml(settings?.authLoginCustomMessage),
           );
       if (currentMarker == null) {
-        _showMessage(
-          'Authentication Code key is no longer available. Refresh the settings and try again.',
-        );
+        _showMessage('Authentication Code key is no longer available. Refresh the settings and try again.');
         return;
       }
 
       final marker = MagicConfigKeyMarker.generate();
       await api.getAdminApi().updateAuthenticationSettings(
         payload: UpdateAdminAuthenticationSettingsRequest(
-          authLoginCustomMessage: MagicConfigKeyMarker.appendToHtml(
-            settings?.authLoginCustomMessage,
-            marker,
-          ),
+          authLoginCustomMessage: MagicConfigKeyMarker.appendToHtml(settings?.authLoginCustomMessage, marker),
         ),
       );
-      final savedSettings =
-          (await api.getAdminApi().getAuthenticationSettings()).data;
+      final savedSettings = (await api.getAdminApi().getAuthenticationSettings()).data;
       final savedMarker =
           MagicConfigKeyMarker.extract(savedSettings?.authLoginCustomMessage) ??
           MagicConfigKeyMarker.fromSerializedName(
-            MagicConfigKeyMarker.extractFromSanitizedHtml(
-              savedSettings?.authLoginCustomMessage,
-            ),
+            MagicConfigKeyMarker.extractFromSanitizedHtml(savedSettings?.authLoginCustomMessage),
           );
       if (savedMarker == null || savedMarker.encodedKey != marker.encodedKey) {
-        throw const FormatException(
-          'Audiobookshelf did not preserve the new Authentication Code key.',
-        );
+        throw const FormatException('Audiobookshelf did not preserve the new Authentication Code key.');
       }
       if (!mounted) {
         return;
       }
-      _showMessage(
-        'Authentication Code key rotated. Codes created with the previous key are invalid now.',
-      );
+      _showMessage('Authentication Code key rotated. Codes created with the previous key are invalid now.');
       await _loadAuthenticationSettings(showLoading: false);
     } catch (error) {
       if (mounted) {
         setState(() {
-          _errorMessage = listManagementErrorMessage(
-            error,
-            fallback: 'Failed to rotate Authentication Code key.',
-          );
+          _errorMessage = listManagementErrorMessage(error, fallback: 'Failed to rotate Authentication Code key.');
         });
       }
     } finally {
@@ -599,8 +512,7 @@ class _AdminServerAuthenticationViewState
     String? subfolderError;
 
     if (!_enableLocalAuth && !_enableOpenIdAuth) {
-      authMethodsError =
-          'Must have at least one authentication method enabled.';
+      authMethodsError = 'Must have at least one authentication method enabled.';
     }
 
     if (_enableOpenIdAuth) {
@@ -608,11 +520,10 @@ class _AdminServerAuthenticationViewState
         _issuerUrlController.text,
         label: 'Issuer URL',
       );
-      authorizationUrlError =
-          AdminAuthenticationSettingsValidation.validateRequired(
-            _authorizationUrlController.text,
-            label: 'Authorize URL',
-          );
+      authorizationUrlError = AdminAuthenticationSettingsValidation.validateRequired(
+        _authorizationUrlController.text,
+        label: 'Authorize URL',
+      );
       tokenUrlError = AdminAuthenticationSettingsValidation.validateRequired(
         _tokenUrlController.text,
         label: 'Token URL',
@@ -621,40 +532,29 @@ class _AdminServerAuthenticationViewState
         _userInfoUrlController.text,
         label: 'Userinfo URL',
       );
-      jwksUrlError = AdminAuthenticationSettingsValidation.validateRequired(
-        _jwksUrlController.text,
-        label: 'JWKS URL',
-      );
+      jwksUrlError = AdminAuthenticationSettingsValidation.validateRequired(_jwksUrlController.text, label: 'JWKS URL');
       clientIdError = AdminAuthenticationSettingsValidation.validateRequired(
         _clientIdController.text,
         label: 'Client ID',
       );
-      clientSecretError =
-          AdminAuthenticationSettingsValidation.validateRequired(
-            _clientSecretController.text,
-            label: 'Client Secret',
-          );
-      signingAlgorithmError =
-          AdminAuthenticationSettingsValidation.validateRequired(
-            _resolveSigningAlgorithmValue(),
-            label: 'Signing algorithm',
-          );
-      redirectUrisError =
-          AdminAuthenticationSettingsValidation.validateRedirectUris(
-            _mobileRedirectUris,
-          );
+      clientSecretError = AdminAuthenticationSettingsValidation.validateRequired(
+        _clientSecretController.text,
+        label: 'Client Secret',
+      );
+      signingAlgorithmError = AdminAuthenticationSettingsValidation.validateRequired(
+        _resolveSigningAlgorithmValue(),
+        label: 'Signing algorithm',
+      );
+      redirectUrisError = AdminAuthenticationSettingsValidation.validateRedirectUris(_mobileRedirectUris);
       groupClaimError = AdminAuthenticationSettingsValidation.validateClaim(
         _groupClaimController.text,
         label: 'Group Claim',
       );
-      advancedPermsClaimError =
-          AdminAuthenticationSettingsValidation.validateClaim(
-            _advancedPermsClaimController.text,
-            label: 'Advanced Permission Claim',
-          );
-      subfolderError = AdminAuthenticationSettingsValidation.validateSubfolder(
-        _resolveSubfolderPayloadValue(),
+      advancedPermsClaimError = AdminAuthenticationSettingsValidation.validateClaim(
+        _advancedPermsClaimController.text,
+        label: 'Advanced Permission Claim',
       );
+      subfolderError = AdminAuthenticationSettingsValidation.validateSubfolder(_resolveSubfolderPayloadValue());
     }
 
     if (showErrors) {
@@ -692,88 +592,43 @@ class _AdminServerAuthenticationViewState
 
   UpdateAdminAuthenticationSettingsRequest _buildUpdateRequest() {
     final subfolder = _resolveSubfolderPayloadValue();
-    final normalizedRedirectUris =
-        AdminAuthenticationSettingsValidation.normalizeRedirectUris(
-          _mobileRedirectUris,
-        );
-    final visibleCustomLoginMessageHtml = _showCustomLoginMessage
-        ? _currentCustomLoginMessageHtml()
-        : null;
+    final normalizedRedirectUris = AdminAuthenticationSettingsValidation.normalizeRedirectUris(_mobileRedirectUris);
+    final visibleCustomLoginMessageHtml = _showCustomLoginMessage ? _currentCustomLoginMessageHtml() : null;
     final customLoginMessageHtml = _magicConfigKeyMarker == null
         ? visibleCustomLoginMessageHtml
-        : MagicConfigKeyMarker.appendToHtml(
-            visibleCustomLoginMessageHtml,
-            _magicConfigKeyMarker!,
-          );
+        : MagicConfigKeyMarker.appendToHtml(visibleCustomLoginMessageHtml, _magicConfigKeyMarker!);
 
     return UpdateAdminAuthenticationSettingsRequest(
       authLoginCustomMessage: customLoginMessageHtml,
-      authActiveAuthMethods: <String>[
-        if (_enableLocalAuth) 'local',
-        if (_enableOpenIdAuth) 'openid',
-      ],
-      authOpenIdIssuerUrl:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _issuerUrlController.text,
-          ),
-      authOpenIdAuthorizationUrl:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _authorizationUrlController.text,
-          ),
-      authOpenIdTokenUrl:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _tokenUrlController.text,
-          ),
-      authOpenIdUserInfoUrl:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _userInfoUrlController.text,
-          ),
-      authOpenIdJwksUrl:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _jwksUrlController.text,
-          ),
-      authOpenIdLogoutUrl:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _logoutUrlController.text,
-          ),
-      authOpenIdClientId:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _clientIdController.text,
-          ),
-      authOpenIdClientSecret:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _clientSecretController.text,
-          ),
-      authOpenIdTokenSigningAlgorithm:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _resolveSigningAlgorithmValue(),
-          ),
-      authOpenIdButtonText:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _buttonTextController.text,
-          ),
+      authActiveAuthMethods: <String>[if (_enableLocalAuth) 'local', if (_enableOpenIdAuth) 'openid'],
+      authOpenIdIssuerUrl: AdminAuthenticationSettingsValidation.normalizeNullable(_issuerUrlController.text),
+      authOpenIdAuthorizationUrl: AdminAuthenticationSettingsValidation.normalizeNullable(
+        _authorizationUrlController.text,
+      ),
+      authOpenIdTokenUrl: AdminAuthenticationSettingsValidation.normalizeNullable(_tokenUrlController.text),
+      authOpenIdUserInfoUrl: AdminAuthenticationSettingsValidation.normalizeNullable(_userInfoUrlController.text),
+      authOpenIdJwksUrl: AdminAuthenticationSettingsValidation.normalizeNullable(_jwksUrlController.text),
+      authOpenIdLogoutUrl: AdminAuthenticationSettingsValidation.normalizeNullable(_logoutUrlController.text),
+      authOpenIdClientId: AdminAuthenticationSettingsValidation.normalizeNullable(_clientIdController.text),
+      authOpenIdClientSecret: AdminAuthenticationSettingsValidation.normalizeNullable(_clientSecretController.text),
+      authOpenIdTokenSigningAlgorithm: AdminAuthenticationSettingsValidation.normalizeNullable(
+        _resolveSigningAlgorithmValue(),
+      ),
+      authOpenIdButtonText: AdminAuthenticationSettingsValidation.normalizeNullable(_buttonTextController.text),
       authOpenIdAutoLaunch: _authOpenIdAutoLaunch,
       authOpenIdAutoRegister: _authOpenIdAutoRegister,
-      authOpenIdMatchExistingBy: _matchExistingBy.trim().isEmpty
-          ? null
-          : _matchExistingBy.trim(),
+      authOpenIdMatchExistingBy: _matchExistingBy.trim().isEmpty ? null : _matchExistingBy.trim(),
       authOpenIdMobileRedirectUris: normalizedRedirectUris,
-      authOpenIdGroupClaim:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _groupClaimController.text,
-          ),
-      authOpenIdAdvancedPermsClaim:
-          AdminAuthenticationSettingsValidation.normalizeNullable(
-            _advancedPermsClaimController.text,
-          ),
+      authOpenIdGroupClaim: AdminAuthenticationSettingsValidation.normalizeNullable(_groupClaimController.text),
+      authOpenIdAdvancedPermsClaim: AdminAuthenticationSettingsValidation.normalizeNullable(
+        _advancedPermsClaimController.text,
+      ),
       authOpenIdSubfolderForRedirectUrls: subfolder,
     );
   }
 
   String? _currentCustomLoginMessageHtml() {
-    final plainText = _customLoginMessageController.document
-        .toPlainText()
-        .trim();
+    final plainText = _customLoginMessageController.document.toPlainText().trim();
     if (plainText.isEmpty) {
       return null;
     }
@@ -805,9 +660,7 @@ class _AdminServerAuthenticationViewState
     });
 
     try {
-      final response = await api.getAdminApi().updateAuthenticationSettings(
-        payload: _buildUpdateRequest(),
-      );
+      final response = await api.getAdminApi().updateAuthenticationSettings(payload: _buildUpdateRequest());
 
       if (!mounted) {
         return;
@@ -826,10 +679,7 @@ class _AdminServerAuthenticationViewState
       }
 
       setState(() {
-        _errorMessage = listManagementErrorMessage(
-          error,
-          fallback: 'Failed to save authentication settings.',
-        );
+        _errorMessage = listManagementErrorMessage(error, fallback: 'Failed to save authentication settings.');
       });
     } finally {
       if (mounted) {
@@ -845,10 +695,9 @@ class _AdminServerAuthenticationViewState
       return;
     }
 
-    final normalizedIssuer =
-        AdminAuthenticationSettingsValidation.normalizeIssuerUrlForLookup(
-          _issuerUrlController.text,
-        );
+    final normalizedIssuer = AdminAuthenticationSettingsValidation.normalizeIssuerUrlForLookup(
+      _issuerUrlController.text,
+    );
     if (normalizedIssuer.isEmpty) {
       setState(() {
         _issuerUrlError = 'Issuer URL is required.';
@@ -872,9 +721,7 @@ class _AdminServerAuthenticationViewState
     });
 
     try {
-      final response = await api.getAdminApi().getOpenIdIssuerConfiguration(
-        issuer: normalizedIssuer,
-      );
+      final response = await api.getAdminApi().getOpenIdIssuerConfiguration(issuer: normalizedIssuer);
       final config = response.data;
 
       if (!mounted || config == null) {
@@ -891,8 +738,7 @@ class _AdminServerAuthenticationViewState
           _issuerUrlController.text = config.issuer!.trim();
         }
         if ((config.authorizationEndpoint ?? '').trim().isNotEmpty) {
-          _authorizationUrlController.text = config.authorizationEndpoint!
-              .trim();
+          _authorizationUrlController.text = config.authorizationEndpoint!.trim();
         }
         if ((config.tokenEndpoint ?? '').trim().isNotEmpty) {
           _tokenUrlController.text = config.tokenEndpoint!.trim();
@@ -932,10 +778,7 @@ class _AdminServerAuthenticationViewState
       }
 
       setState(() {
-        _errorMessage = listManagementErrorMessage(
-          error,
-          fallback: 'Failed to auto-populate OpenID configuration.',
-        );
+        _errorMessage = listManagementErrorMessage(error, fallback: 'Failed to auto-populate OpenID configuration.');
       });
     } finally {
       if (mounted) {
@@ -955,9 +798,7 @@ class _AdminServerAuthenticationViewState
         if (currentUser == null) {
           return const Padding(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Text(
-              'No active user. Sign in to manage authentication settings.',
-            ),
+            child: Text('No active user. Sign in to manage authentication settings.'),
           );
         }
 
@@ -1009,19 +850,13 @@ class _AdminServerAuthenticationViewState
                         OutlinedButton.icon(
                           onPressed: _isLoading
                               ? null
-                              : () => unawaited(
-                                  _loadAuthenticationSettings(
-                                    showLoading: true,
-                                  ),
-                                ),
+                              : () => unawaited(_loadAuthenticationSettings(showLoading: true)),
                           icon: const Icon(Icons.refresh_rounded),
                           label: const Text('Refresh'),
                         ),
                         if (_magicConfigKeyMarker != null)
                           OutlinedButton.icon(
-                            onPressed: _isLoading || _isSavingSettings
-                                ? null
-                                : _rotateMagicKey,
+                            onPressed: _isLoading || _isSavingSettings ? null : _rotateMagicKey,
                             icon: const Icon(Icons.key_outlined),
                             label: const Text('Rotate Authentication Code key'),
                           ),
@@ -1034,27 +869,17 @@ class _AdminServerAuthenticationViewState
                       child: Card(
                         margin: EdgeInsets.zero,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: Theme.of(context).colorScheme.error,
-                              ),
+                              Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   _errorMessage!,
                                   style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .error,
-                                      ),
+                                      ?.copyWith(color: Theme.of(context).colorScheme.error),
                                 ),
                               ),
                             ],
@@ -1066,8 +891,7 @@ class _AdminServerAuthenticationViewState
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: AdminAuthenticationSettingsPanel(
-                      customLoginMessageController:
-                          _customLoginMessageController,
+                      customLoginMessageController: _customLoginMessageController,
                       issuerUrlController: _issuerUrlController,
                       authorizationUrlController: _authorizationUrlController,
                       tokenUrlController: _tokenUrlController,
@@ -1079,12 +903,10 @@ class _AdminServerAuthenticationViewState
                       signingAlgorithmController: _signingAlgorithmController,
                       buttonTextController: _buttonTextController,
                       groupClaimController: _groupClaimController,
-                      advancedPermsClaimController:
-                          _advancedPermsClaimController,
+                      advancedPermsClaimController: _advancedPermsClaimController,
                       webCallbackUrl: _webCallbackUrl,
                       mobileCallbackUrl: _mobileCallbackUrl,
-                      selectedWebRedirectSubfolder:
-                          _selectedWebRedirectSubfolder,
+                      selectedWebRedirectSubfolder: _selectedWebRedirectSubfolder,
                       showCustomLoginMessage: _showCustomLoginMessage,
                       enableLocalAuth: _enableLocalAuth,
                       enableOpenIdAuth: _enableOpenIdAuth,
@@ -1135,10 +957,8 @@ class _AdminServerAuthenticationViewState
                       },
                       onMobileRedirectUrisChanged: _onMobileRedirectUrisChanged,
                       onMatchExistingByChanged: _onMatchExistingByChanged,
-                      onSelectedSigningAlgorithmChanged:
-                          _onSelectedSigningAlgorithmChanged,
-                      onSelectedWebRedirectSubfolderChanged:
-                          _onSelectedWebRedirectSubfolderChanged,
+                      onSelectedSigningAlgorithmChanged: _onSelectedSigningAlgorithmChanged,
+                      onSelectedWebRedirectSubfolderChanged: _onSelectedWebRedirectSubfolderChanged,
                       onAutoPopulateOpenId: _autoPopulateOpenId,
                       authMethodsError: _authMethodsError,
                       issuerUrlError: _issuerUrlError,
@@ -1164,10 +984,7 @@ class _AdminServerAuthenticationViewState
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   border: Border(
-                    top: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant
-                          .withValues(alpha: 0.7),
-                    ),
+                    top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.7)),
                   ),
                 ),
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
@@ -1177,11 +994,7 @@ class _AdminServerAuthenticationViewState
                     final saveButton = FilledButton.icon(
                       onPressed: _canSaveSettings ? _saveSettings : null,
                       icon: _isSavingSettings
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
+                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.save_outlined),
                       label: const Text('Save Authentication Settings'),
                     );
@@ -1194,11 +1007,7 @@ class _AdminServerAuthenticationViewState
                             Text(
                               'OpenID changes may require a server restart to fully apply.',
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           if (_enableOpenIdAuth) const SizedBox(height: 8),
                           SizedBox(width: double.infinity, child: saveButton),
@@ -1213,11 +1022,7 @@ class _AdminServerAuthenticationViewState
                             child: Text(
                               'OpenID changes may require a server restart to fully apply.',
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ),
                         if (_enableOpenIdAuth) const SizedBox(width: 12),

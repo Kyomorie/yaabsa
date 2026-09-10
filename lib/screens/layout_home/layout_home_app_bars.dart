@@ -33,13 +33,9 @@ class LayoutHomeMultiSelectAppBar extends StatelessWidget {
           children: [
             if (showSidebarToggle)
               IconButton(
-                tooltip: isSidebarCollapsed
-                    ? 'Expand sidebar'
-                    : 'Collapse sidebar',
+                tooltip: isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
                 onPressed: onSidebarToggle,
-                icon: Icon(
-                  isSidebarCollapsed ? Icons.arrow_right : Icons.arrow_left,
-                ),
+                icon: Icon(isSidebarCollapsed ? Icons.arrow_right : Icons.arrow_left),
               ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -48,13 +44,9 @@ class LayoutHomeMultiSelectAppBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                state.selectedCount == 1
-                    ? '1 selected'
-                    : '${state.selectedCount} selected',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w700,
-                ),
+                state.selectedCount == 1 ? '1 selected' : '${state.selectedCount} selected',
+                style: Theme.of(context).textTheme.labelMedium
+                    ?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer, fontWeight: FontWeight.w700),
               ),
             ),
             const Spacer(),
@@ -64,19 +56,14 @@ class LayoutHomeMultiSelectAppBar extends StatelessWidget {
                 child: SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Theme.of(context).colorScheme.primary),
                 ),
               ),
             for (var index = 0; index < state.actions.length; index++) ...[
               if (index > 0) const SizedBox(width: 4),
               IconButton(
                 tooltip: state.actions[index].tooltip,
-                onPressed: (!state.isBusy && state.actions[index].enabled)
-                    ? state.actions[index].onPressed
-                    : null,
+                onPressed: (!state.isBusy && state.actions[index].enabled) ? state.actions[index].onPressed : null,
                 icon: Icon(state.actions[index].icon, size: 20),
               ),
             ],
@@ -137,10 +124,7 @@ class LayoutHomeMobileAppBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
           child: Row(
             children: [
-              _IconContainerButton(
-                icon: Icons.arrow_back_rounded,
-                onTap: onCollapseSearch,
-              ),
+              _IconContainerButton(icon: Icons.arrow_back_rounded, onTap: onCollapseSearch),
               const SizedBox(width: 6),
               Expanded(
                 child: _LayoutHomeSearchField(
@@ -179,10 +163,7 @@ class LayoutHomeMobileAppBar extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _IconContainerButton(
-                        icon: Icons.search_rounded,
-                        onTap: onExpandSearch,
-                      ),
+                      _IconContainerButton(icon: Icons.search_rounded, onTap: onExpandSearch),
                       const SizedBox(width: 6),
                       const TaskNotificationWidget(),
                       const SizedBox(width: 6),
@@ -226,9 +207,7 @@ class LayoutHomeMobileAppBar extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.cloud_upload_outlined,
-                    color:
-                        Theme.of(context).iconTheme.color ??
-                        Theme.of(context).colorScheme.onSurface,
+                    color: Theme.of(context).iconTheme.color ?? Theme.of(context).colorScheme.onSurface,
                   ),
                   const SizedBox(width: 12),
                   const Text('Upload'),
@@ -243,12 +222,7 @@ class LayoutHomeMobileAppBar extends StatelessWidget {
               value: '$itemIndex',
               child: Row(
                 children: [
-                  Icon(
-                    item.icon,
-                    color:
-                        Theme.of(context).iconTheme.color ??
-                        Theme.of(context).colorScheme.onSurface,
-                  ),
+                  Icon(item.icon, color: Theme.of(context).iconTheme.color ?? Theme.of(context).colorScheme.onSurface),
                   const SizedBox(width: 12),
                   Text(item.label),
                 ],
@@ -301,13 +275,9 @@ class LayoutHomeNonMobileAppBar extends StatelessWidget {
         child: Row(
           children: [
             IconButton(
-              tooltip: isSidebarCollapsed
-                  ? 'Expand sidebar'
-                  : 'Collapse sidebar',
+              tooltip: isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
               onPressed: onSidebarToggle,
-              icon: Icon(
-                isSidebarCollapsed ? Icons.arrow_right : Icons.arrow_left,
-              ),
+              icon: Icon(isSidebarCollapsed ? Icons.arrow_right : Icons.arrow_left),
             ),
             const SizedBox(width: 4),
             const UserSwitcher(),
@@ -397,20 +367,10 @@ class _LayoutHomeSearchField extends StatelessWidget {
           isDense: true,
           prefixIcon: const Icon(Icons.search_rounded),
           suffixIcon: searchQuery.isNotEmpty
-              ? IconButton(
-                  tooltip: 'Clear search',
-                  onPressed: onClear,
-                  icon: const Icon(Icons.close_rounded),
-                )
+              ? IconButton(tooltip: 'Clear search', onPressed: onClear, icon: const Icon(Icons.close_rounded))
               : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 10,
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           filled: true,
         ),
         style: TextStyle(fontSize: isMobile ? 14 : 15),
@@ -437,14 +397,9 @@ class _IconContainerButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         ),
-        child: Icon(
-          icon,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+        child: Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
 

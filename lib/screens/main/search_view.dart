@@ -23,16 +23,10 @@ class SearchView extends HookConsumerWidget {
     final scrollController = useScrollController();
     final selectedLibrary = ref.watch(selectedLibraryProvider);
     if (selectedLibrary == null) {
-      return const Center(
-        child: Text(
-          'No library selected. Please select a library via the switcher.',
-        ),
-      );
+      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
     }
 
-    final searchAsync = ref.watch(
-      librarySearchProvider((query: query, limit: limit, libraryId: null)),
-    );
+    final searchAsync = ref.watch(librarySearchProvider((query: query, limit: limit, libraryId: null)));
 
     return searchAsync.when(
       skipLoadingOnRefresh: true,
@@ -62,13 +56,9 @@ class SearchView extends HookConsumerWidget {
                 controller: scrollController,
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                 children: [
-                  Text(
-                    'Search results for "$query"',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
+                  Text('Search results for "$query"', style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 12),
-                  if (resultItems.isNotEmpty)
-                    _SearchResultItems(items: resultItems),
+                  if (resultItems.isNotEmpty) _SearchResultItems(items: resultItems),
                   if (searchResult.series?.isNotEmpty ?? false) ...[
                     const SizedBox(height: 20),
                     _TokenSection(
@@ -76,13 +66,10 @@ class SearchView extends HookConsumerWidget {
                       tokens: searchResult.series!
                           .map(
                             (series) => _SearchToken(
-                              label:
-                                  '${series.series.name} (${series.books.length})',
+                              label: '${series.series.name} (${series.books.length})',
                               onTap: () => context.push(
                                 '/series/${series.series.id}',
-                                extra: MultiBookEntryData.fromSeries(
-                                  series.series,
-                                ),
+                                extra: MultiBookEntryData.fromSeries(series.series),
                               ),
                             ),
                           )
@@ -111,9 +98,7 @@ class SearchView extends HookConsumerWidget {
                           .map(
                             (narrator) => _SearchToken(
                               label: '${narrator.name} (${narrator.numBooks})',
-                              onTap: () => context.push(
-                                '/narrator/${Uri.encodeComponent(narrator.name)}',
-                              ),
+                              onTap: () => context.push('/narrator/${Uri.encodeComponent(narrator.name)}'),
                             ),
                           )
                           .toList(),
@@ -131,10 +116,7 @@ class SearchView extends HookConsumerWidget {
                                 openLibraryWithFilter(
                                   context,
                                   ref,
-                                  filter: LibraryFilter.grouped(
-                                    LibraryFilterGroup.tags,
-                                    tag.name,
-                                  ).queryValue,
+                                  filter: LibraryFilter.grouped(LibraryFilterGroup.tags, tag.name).queryValue,
                                 );
                               },
                             ),
@@ -154,10 +136,7 @@ class SearchView extends HookConsumerWidget {
                                 openLibraryWithFilter(
                                   context,
                                   ref,
-                                  filter: LibraryFilter.grouped(
-                                    LibraryFilterGroup.genres,
-                                    genre.name,
-                                  ).queryValue,
+                                  filter: LibraryFilter.grouped(LibraryFilterGroup.genres, genre.name).queryValue,
                                 );
                               },
                             ),
@@ -176,10 +155,7 @@ class SearchView extends HookConsumerWidget {
       error: (err, stack) => Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Text(
-            'Error loading search results: $err',
-            textAlign: TextAlign.center,
-          ),
+          child: Text('Error loading search results: $err', textAlign: TextAlign.center),
         ),
       ),
     );
@@ -236,10 +212,7 @@ class _SearchResultItems extends ConsumerWidget {
                         child: SizedBox(
                           width: 56,
                           height: 56,
-                          child: api.getLibraryItemApi().getLibraryItemCover(
-                            item.id,
-                            item: item,
-                          ),
+                          child: api.getLibraryItemApi().getLibraryItemCover(item.id, item: item),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -257,11 +230,7 @@ class _SearchResultItems extends ConsumerWidget {
                             Text(
                               item.mediaType ?? 'Unknown media',
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -298,10 +267,7 @@ class _TokenSection extends StatelessWidget {
           children: tokens
               .map(
                 (token) => token.onTap == null
-                    ? Chip(
-                        label: Text(token.label),
-                        visualDensity: VisualDensity.compact,
-                      )
+                    ? Chip(label: Text(token.label), visualDensity: VisualDensity.compact)
                     : ActionChip(
                         label: Text(token.label),
                         visualDensity: VisualDensity.compact,

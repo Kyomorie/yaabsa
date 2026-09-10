@@ -53,9 +53,7 @@ class SettingButton extends ConsumerWidget {
                           fontWeight: FontWeight.w500,
                           color: isEnabled
                               ? colorScheme.onSurface
-                              : colorScheme.onSurfaceVariant.withValues(
-                                  alpha: 0.6,
-                                ),
+                              : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                         ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
@@ -66,11 +64,7 @@ class SettingButton extends ConsumerWidget {
                         padding: const EdgeInsets.only(left: 6.0),
                         child: Tooltip(
                           message: tooltip!,
-                          child: Icon(
-                            icon,
-                            size: 20,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                          child: Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
                         ),
                       ),
                   ],
@@ -82,9 +76,7 @@ class SettingButton extends ConsumerWidget {
                     style: textTheme.bodySmall?.copyWith(
                       color: isEnabled
                           ? colorScheme.onSurfaceVariant
-                          : colorScheme.onSurfaceVariant.withValues(
-                              alpha: 0.38,
-                            ),
+                          : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
                     ),
                   ),
                 ],
@@ -93,45 +85,24 @@ class SettingButton extends ConsumerWidget {
           ),
           const SizedBox(width: 16),
           isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2.5),
-                )
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5))
               : FilledButton.icon(
                   onPressed: onPressed,
                   icon: buttonIcon != null
-                      ? Icon(
-                          buttonIcon,
-                          size: 16,
-                          color: isDestructive
-                              ? colorScheme.onError
-                              : colorScheme.onPrimary,
-                        )
+                      ? Icon(buttonIcon, size: 16, color: isDestructive ? colorScheme.onError : colorScheme.onPrimary)
                       : const SizedBox.shrink(),
                   label: Text(
                     buttonText,
                     style: textTheme.labelMedium?.copyWith(
-                      color: isDestructive
-                          ? colorScheme.onError
-                          : colorScheme.onPrimary,
+                      color: isDestructive ? colorScheme.onError : colorScheme.onPrimary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: isDestructive
-                        ? colorScheme.error
-                        : colorScheme.primary,
-                    foregroundColor: isDestructive
-                        ? colorScheme.onError
-                        : colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    backgroundColor: isDestructive ? colorScheme.error : colorScheme.primary,
+                    foregroundColor: isDestructive ? colorScheme.onError : colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
         ],

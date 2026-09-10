@@ -13,12 +13,7 @@ part of 'queue_source_provider.dart';
 final queueSourceRepositoryProvider = QueueSourceRepositoryProvider._();
 
 final class QueueSourceRepositoryProvider
-    extends
-        $FunctionalProvider<
-          QueueSourceRepository,
-          QueueSourceRepository,
-          QueueSourceRepository
-        >
+    extends $FunctionalProvider<QueueSourceRepository, QueueSourceRepository, QueueSourceRepository>
     with $Provider<QueueSourceRepository> {
   QueueSourceRepositoryProvider._()
     : super(
@@ -36,9 +31,7 @@ final class QueueSourceRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<QueueSourceRepository> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
+  $ProviderElement<QueueSourceRepository> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   QueueSourceRepository create(Ref ref) {
@@ -47,12 +40,8 @@ final class QueueSourceRepositoryProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(QueueSourceRepository value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<QueueSourceRepository>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<QueueSourceRepository>(value));
   }
 }
 
-String _$queueSourceRepositoryHash() =>
-    r'170f6aac0c16f91f572330f5fdd1faac3331fef5';
+String _$queueSourceRepositoryHash() => r'170f6aac0c16f91f572330f5fdd1faac3331fef5';

@@ -14,6 +14,5 @@ abstract class LibraryFolderPayload with _$LibraryFolderPayload {
     @JsonKey(name: 'addedAt') int? addedAt,
   }) = _LibraryFolderPayload;
 
-  factory LibraryFolderPayload.fromJson(Map<String, dynamic> json) =>
-      _$LibraryFolderPayloadFromJson(json);
+  factory LibraryFolderPayload.fromJson(Map<String, dynamic> json) => _$LibraryFolderPayloadFromJson(json);
 }

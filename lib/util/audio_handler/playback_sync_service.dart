@@ -30,23 +30,13 @@ class PlaybackSyncService {
   DateTime? _currentSegmentStartTime;
   bool _hasPlaybackSinceLastFlush = false;
 
-  PlaybackSyncService(
-    this._ref, {
-    required Stream<PlayerState> playerStateStream,
-    required this._position,
-  }) {
+  PlaybackSyncService(this._ref, {required Stream<PlayerState> playerStateStream, required this._position}) {
     _currentSegmentStartTime = null;
 
-    logger(
-      'PlaybackSyncService initialized',
-      tag: 'PlaybackSyncService',
-      level: InfoLevel.debug,
-    );
+    logger('PlaybackSyncService initialized', tag: 'PlaybackSyncService', level: InfoLevel.debug);
 
     _playerStateSubscription = playerStateStream.listen((playerState) {
-      final bool isEffectivelyPlaying =
-          playerState.playing &&
-          playerState.processingState == ProcessingState.ready;
+      final bool isEffectivelyPlaying = playerState.playing && playerState.processingState == ProcessingState.ready;
 
       if (isEffectivelyPlaying) {
         if (_ref.read(sessionRepositoryProvider).currentSession != null) {
@@ -74,9 +64,7 @@ class PlaybackSyncService {
         ? _minimumSyncIntervalSeconds
         : configuredInterval;
 
-    if (!kIsWeb &&
-        Platform.isIOS &&
-        normalizedInterval < _minimumIosSyncIntervalSeconds) {
+    if (!kIsWeb && Platform.isIOS && normalizedInterval < _minimumIosSyncIntervalSeconds) {
       return _minimumIosSyncIntervalSeconds;
     }
 
@@ -85,8 +73,7 @@ class PlaybackSyncService {
 
   Future<void> _startSync() async {
     final intervalSeconds = _resolvedSyncIntervalSeconds();
-    if ((_syncTimer?.isActive ?? false) &&
-        _effectiveSyncIntervalSeconds == intervalSeconds) {
+    if ((_syncTimer?.isActive ?? false) && _effectiveSyncIntervalSeconds == intervalSeconds) {
       return;
     }
 
@@ -96,17 +83,10 @@ class PlaybackSyncService {
       unawaited(_enqueueSync());
     });
 
-    logger(
-      'Playback sync timer running every ${intervalSeconds}s',
-      tag: 'PlaybackSyncService',
-      level: InfoLevel.debug,
-    );
+    logger('Playback sync timer running every ${intervalSeconds}s', tag: 'PlaybackSyncService', level: InfoLevel.debug);
   }
 
-  Future<bool> _enqueueSync({
-    Duration? positionOverride,
-    bool force = false,
-  }) async {
+  Future<bool> _enqueueSync({Duration? positionOverride, bool force = false}) async {
     var result = false;
 
     _syncQueue = _syncQueue.catchError((_) {}).then((_) async {
@@ -117,10 +97,7 @@ class PlaybackSyncService {
     return result;
   }
 
-  Future<bool> _stopSync({
-    Duration? positionOverride,
-    bool sessionClosing = false,
-  }) async {
+  Future<bool> _stopSync({Duration? positionOverride, bool sessionClosing = false}) async {
     _syncTimer?.cancel();
     _syncTimer = null;
 
@@ -131,10 +108,7 @@ class PlaybackSyncService {
       }
     }
 
-    final synced = await _enqueueSync(
-      positionOverride: positionOverride,
-      force: true,
-    );
+    final synced = await _enqueueSync(positionOverride: positionOverride, force: true);
     if (synced) {
       _hasPlaybackSinceLastFlush = false;
     }
@@ -150,17 +124,13 @@ class PlaybackSyncService {
     }
 
     final Duration currentPositionDuration = positionOverride ?? _position();
-    final double currentPositionSeconds =
-        currentPositionDuration.inMicroseconds / Duration.microsecondsPerSecond;
+    final double currentPositionSeconds = currentPositionDuration.inMicroseconds / Duration.microsecondsPerSecond;
     double listenedTime = 0;
 
     if (_currentSegmentStartTime != null) {
       final DateTime now = DateTime.now();
-      final Duration elapsedSinceLastMark = now.difference(
-        _currentSegmentStartTime!,
-      );
-      listenedTime =
-          elapsedSinceLastMark.inMicroseconds / Duration.microsecondsPerSecond;
+      final Duration elapsedSinceLastMark = now.difference(_currentSegmentStartTime!);
+      listenedTime = elapsedSinceLastMark.inMicroseconds / Duration.microsecondsPerSecond;
 
       if (_syncTimer?.isActive ?? false) {
         _currentSegmentStartTime = now;
@@ -188,21 +158,11 @@ class PlaybackSyncService {
 
     return await _ref
         .read(sessionRepositoryProvider)
-        .syncOpenSession(
-          currentPositionSeconds,
-          listenedTime,
-          canReachServer: canReachServer,
-        );
+        .syncOpenSession(currentPositionSeconds, listenedTime, canReachServer: canReachServer);
   }
 
-  Future<bool> flush({
-    Duration? positionOverride,
-    bool sessionClosing = false,
-  }) async {
-    final synced = await _stopSync(
-      positionOverride: positionOverride,
-      sessionClosing: sessionClosing,
-    );
+  Future<bool> flush({Duration? positionOverride, bool sessionClosing = false}) async {
+    final synced = await _stopSync(positionOverride: positionOverride, sessionClosing: sessionClosing);
     if (sessionClosing) {
       _hasPlaybackSinceLastFlush = false;
     }

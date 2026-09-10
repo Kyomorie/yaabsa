@@ -17,12 +17,10 @@ class LibraryGridLayoutBuilder extends ConsumerStatefulWidget {
   final LibraryGridLayoutWidgetBuilder builder;
 
   @override
-  ConsumerState<LibraryGridLayoutBuilder> createState() =>
-      _LibraryGridLayoutBuilderState();
+  ConsumerState<LibraryGridLayoutBuilder> createState() => _LibraryGridLayoutBuilderState();
 }
 
-class _LibraryGridLayoutBuilderState
-    extends ConsumerState<LibraryGridLayoutBuilder> {
+class _LibraryGridLayoutBuilderState extends ConsumerState<LibraryGridLayoutBuilder> {
   bool _queuedInitialScalePersist = false;
 
   void _persistInitialScale(double scale) {
@@ -36,17 +34,13 @@ class _LibraryGridLayoutBuilderState
         return;
       }
 
-      ref
-          .read(settingsManagerProvider.notifier)
-          .setGlobalSetting<double>(SettingKeys.libraryGridScale, scale);
+      ref.read(settingsManagerProvider.notifier).setGlobalSetting<double>(SettingKeys.libraryGridScale, scale);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final scaleSettingAsync = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.libraryGridScale),
-    );
+    final scaleSettingAsync = ref.watch(globalSettingByKeyProvider(SettingKeys.libraryGridScale));
     final hasResolvedSetting = scaleSettingAsync is AsyncData<String?>;
     final rawScaleValue = scaleSettingAsync.asData?.value;
 
@@ -56,10 +50,7 @@ class _LibraryGridLayoutBuilderState
         final effectiveScale = rawScaleValue == null
             ? autoScale
             : appNormalizedLibraryGridScale(
-                SettingsParser.decodeValue<double>(
-                  rawScaleValue,
-                  appDefaultLibraryGridScale,
-                ),
+                SettingsParser.decodeValue<double>(rawScaleValue, appDefaultLibraryGridScale),
               );
 
         if (hasResolvedSetting && rawScaleValue == null) {
@@ -67,10 +58,7 @@ class _LibraryGridLayoutBuilderState
         }
 
         final tileWidth = appLibraryGridTileWidthForScale(effectiveScale);
-        final gridLayout = appCenteredGridLayout(
-          constraints.maxWidth,
-          tileWidth: tileWidth,
-        );
+        final gridLayout = appCenteredGridLayout(constraints.maxWidth, tileWidth: tileWidth);
 
         return widget.builder(context, gridLayout, tileWidth, effectiveScale);
       },

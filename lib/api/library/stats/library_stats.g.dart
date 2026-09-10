@@ -6,18 +6,14 @@ part of 'library_stats.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_LibraryStats _$LibraryStatsFromJson(
-  Map<String, dynamic> json,
-) => _LibraryStats(
+_LibraryStats _$LibraryStatsFromJson(Map<String, dynamic> json) => _LibraryStats(
   totalItems: jsonIntFromDynamic(json['totalItems']),
   totalAuthors: jsonIntFromDynamic(json['totalAuthors']),
   totalGenres: jsonIntFromDynamic(json['totalGenres']),
   totalDuration: jsonDoubleFromDynamic(json['totalDuration']),
   longestItems:
       (json['longestItems'] as List<dynamic>?)
-          ?.map(
-            (e) => LibraryItemDurationStats.fromJson(e as Map<String, dynamic>),
-          )
+          ?.map((e) => LibraryItemDurationStats.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const <LibraryItemDurationStats>[],
   numAudioTracks: jsonIntFromDynamic(json['numAudioTracks']),
@@ -40,17 +36,16 @@ _LibraryStats _$LibraryStatsFromJson(
       const <GenreStats>[],
 );
 
-Map<String, dynamic> _$LibraryStatsToJson(_LibraryStats instance) =>
-    <String, dynamic>{
-      'totalItems': instance.totalItems,
-      'totalAuthors': instance.totalAuthors,
-      'totalGenres': instance.totalGenres,
-      'totalDuration': instance.totalDuration,
-      'longestItems': instance.longestItems,
-      'numAudioTracks': instance.numAudioTracks,
-      'numAudioFiles': instance.numAudioFiles,
-      'totalSize': instance.totalSize,
-      'largestItems': instance.largestItems,
-      'authorsWithCount': instance.authorsWithCount,
-      'genresWithCount': instance.genresWithCount,
-    };
+Map<String, dynamic> _$LibraryStatsToJson(_LibraryStats instance) => <String, dynamic>{
+  'totalItems': instance.totalItems,
+  'totalAuthors': instance.totalAuthors,
+  'totalGenres': instance.totalGenres,
+  'totalDuration': instance.totalDuration,
+  'longestItems': instance.longestItems,
+  'numAudioTracks': instance.numAudioTracks,
+  'numAudioFiles': instance.numAudioFiles,
+  'totalSize': instance.totalSize,
+  'largestItems': instance.largestItems,
+  'authorsWithCount': instance.authorsWithCount,
+  'genresWithCount': instance.genresWithCount,
+};

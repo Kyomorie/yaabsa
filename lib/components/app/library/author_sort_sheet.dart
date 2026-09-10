@@ -2,27 +2,16 @@ import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/api/library/request/library_author_sort.dart';
 
 class LibraryAuthorSortSheet extends StatelessWidget {
-  const LibraryAuthorSortSheet({
-    super.key,
-    required this.activeSort,
-    required this.activeSortDesc,
-  });
+  const LibraryAuthorSortSheet({super.key, required this.activeSort, required this.activeSortDesc});
 
   final String? activeSort;
   final int? activeSortDesc;
 
   @override
   Widget build(BuildContext context) {
-    final currentSelection = resolveLibraryAuthorSortSelection(
-      activeSort: activeSort,
-      activeDesc: activeSortDesc,
-    );
-    final selectedSort = LibraryAuthorSortValueX.tryParse(
-      currentSelection.sort,
-    );
-    final double listHeight = (libraryAuthorSortOptions.length * 48.0)
-        .clamp(180.0, 360.0)
-        .toDouble();
+    final currentSelection = resolveLibraryAuthorSortSelection(activeSort: activeSort, activeDesc: activeSortDesc);
+    final selectedSort = LibraryAuthorSortValueX.tryParse(currentSelection.sort);
+    final double listHeight = (libraryAuthorSortOptions.length * 48.0).clamp(180.0, 360.0).toDouble();
     final colorScheme = Theme.of(context).colorScheme;
 
     return SafeArea(
@@ -36,13 +25,7 @@ class LibraryAuthorSortSheet extends StatelessWidget {
               child: Row(
                 children: [
                   const Expanded(
-                    child: Text(
-                      'Sort Authors',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: Text('Sort Authors', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
                   ),
                   IconButton(
                     tooltip: 'Close',
@@ -61,13 +44,9 @@ class LibraryAuthorSortSheet extends StatelessWidget {
                   final option = libraryAuthorSortOptions[index];
                   final isSelected = option == selectedSort;
                   final isDescending = currentSelection.desc == 1;
-                  final trailingText = isSelected
-                      ? (isDescending ? 'DESC' : 'ASC')
-                      : null;
+                  final trailingText = isSelected ? (isDescending ? 'DESC' : 'ASC') : null;
                   final trailingIcon = isSelected
-                      ? (isDescending
-                            ? Icons.arrow_downward_rounded
-                            : Icons.arrow_upward_rounded)
+                      ? (isDescending ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded)
                       : null;
 
                   return ListTile(
@@ -86,19 +65,11 @@ class LibraryAuthorSortSheet extends StatelessWidget {
                           ),
                         if (trailingIcon != null) ...[
                           const SizedBox(width: 4),
-                          Icon(
-                            trailingIcon,
-                            size: 16,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                          Icon(trailingIcon, size: 16, color: colorScheme.onSurfaceVariant),
                         ],
                         if (isSelected) ...[
                           const SizedBox(width: 6),
-                          Icon(
-                            Icons.check_rounded,
-                            size: 18,
-                            color: colorScheme.primary,
-                          ),
+                          Icon(Icons.check_rounded, size: 18, color: colorScheme.primary),
                         ],
                       ],
                     ),
@@ -126,10 +97,7 @@ class LibraryAuthorSortSheet extends StatelessWidget {
     required bool isSelected,
   }) {
     if (!isSelected) {
-      return LibraryAuthorSortSelection(
-        sort: option.wireValue,
-        desc: option.defaultsToAscending ? 0 : 1,
-      );
+      return LibraryAuthorSortSelection(sort: option.wireValue, desc: option.defaultsToAscending ? 0 : 1);
     }
 
     final nextDesc = currentSelection.desc == 1 ? 0 : 1;

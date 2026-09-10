@@ -56,11 +56,7 @@ class PlayBarIdleContent extends StatelessWidget {
         SizedBox(
           width: desktopCoverWidth,
           height: desktopCoverWidth,
-          child: _PlayBarIdleCover(
-            coverUri: coverUri,
-            borderRadius: coverRadius,
-            requestHeaders: requestHeaders,
-          ),
+          child: _PlayBarIdleCover(coverUri: coverUri, borderRadius: coverRadius, requestHeaders: requestHeaders),
         ),
         const SizedBox(width: 10),
         Expanded(child: _PlayBarIdleInfo(snapshot: snapshot)),
@@ -78,10 +74,8 @@ class _PlayBarIdleInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final subtitleParts = <String>[
-      if (snapshot.subtitle != null && snapshot.subtitle!.trim().isNotEmpty)
-        snapshot.subtitle!.trim(),
-      if (snapshot.author != null && snapshot.author!.trim().isNotEmpty)
-        snapshot.author!.trim(),
+      if (snapshot.subtitle != null && snapshot.subtitle!.trim().isNotEmpty) snapshot.subtitle!.trim(),
+      if (snapshot.author != null && snapshot.author!.trim().isNotEmpty) snapshot.author!.trim(),
     ];
 
     final subtitle = subtitleParts.join(' - ');
@@ -97,23 +91,14 @@ class _PlayBarIdleInfo extends StatelessWidget {
           style: const TextStyle(fontSize: 15.0, fontWeight: FontWeight.w600),
         ),
         if (subtitle.isNotEmpty)
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
 }
 
 class _PlayBarIdleCover extends StatelessWidget {
-  const _PlayBarIdleCover({
-    required this.coverUri,
-    required this.borderRadius,
-    required this.requestHeaders,
-  });
+  const _PlayBarIdleCover({required this.coverUri, required this.borderRadius, required this.requestHeaders});
 
   final Uri? coverUri;
   final double borderRadius;
@@ -136,8 +121,7 @@ class _PlayBarIdleCover extends StatelessWidget {
         image: imageProvider,
         fit: BoxFit.cover,
         filterQuality: FilterQuality.low,
-        errorBuilder: (context, error, stackTrace) =>
-            CoverPlaceholder(borderRadius: borderRadius),
+        errorBuilder: (context, error, stackTrace) => CoverPlaceholder(borderRadius: borderRadius),
       ),
     );
   }

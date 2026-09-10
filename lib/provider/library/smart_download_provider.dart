@@ -19,8 +19,7 @@ import 'package:yaabsa/provider/common/media_progress_provider.dart';
 import 'package:yaabsa/provider/common/library_provider.dart';
 import 'package:yaabsa/provider/library/personalized_library_provider.dart';
 import 'package:yaabsa/provider/player/queue_source_provider.dart';
-import 'package:yaabsa/util/globals.dart'
-    show audioHandler, downloadHandler, isAudioHandlerInitialized;
+import 'package:yaabsa/util/globals.dart' show audioHandler, downloadHandler, isAudioHandlerInitialized;
 import 'package:yaabsa/util/logger.dart';
 import 'package:yaabsa/util/setting_key.dart';
 
@@ -122,39 +121,24 @@ class SmartDownloadManager extends _$SmartDownloadManager {
   Future<List<SmartDownloadProfile>> loadProfiles() async {
     final user = ref.read(currentUserProvider).value;
     if (user == null) {
-      state = state.copyWith(
-        profiles: const <SmartDownloadProfile>[],
-        clearError: true,
-      );
+      state = state.copyWith(profiles: const <SmartDownloadProfile>[], clearError: true);
       return const <SmartDownloadProfile>[];
     }
 
-    final dbProfiles = await ref
-        .read(appDatabaseProvider)
-        .getSmartDownloadProfiles(user.id);
+    final dbProfiles = await ref.read(appDatabaseProvider).getSmartDownloadProfiles(user.id);
     final profiles = <SmartDownloadProfile>[];
     for (final row in dbProfiles) {
       SmartDownloadPolicy policy;
       try {
         final decoded = jsonDecode(row.policy);
-        policy = SmartDownloadPolicy.fromJson(
-          Map<String, dynamic>.from(decoded as Map),
-        );
+        policy = SmartDownloadPolicy.fromJson(Map<String, dynamic>.from(decoded as Map));
       } catch (e) {
-        logger(
-          'Ignoring invalid smart-download policy ${row.id}: $e',
-          tag: 'SmartDownloadManager',
-        );
+        logger('Ignoring invalid smart-download policy ${row.id}: $e', tag: 'SmartDownloadManager');
         policy = const SmartDownloadPolicy();
       }
 
-      final sourceRows = await ref
-          .read(appDatabaseProvider)
-          .getSmartDownloadSources(row.id);
-      final sources = sourceRows
-          .map(_sourceFromRow)
-          .whereType<MediaSourceDescriptor>()
-          .toList(growable: false);
+      final sourceRows = await ref.read(appDatabaseProvider).getSmartDownloadSources(row.id);
+      final sources = sourceRows.map(_sourceFromRow).whereType<MediaSourceDescriptor>().toList(growable: false);
       profiles.add(
         SmartDownloadProfile(
           id: row.id,
@@ -182,13 +166,8 @@ class SmartDownloadManager extends _$SmartDownloadManager {
 
   Future<void> deleteProfile(String profileId, String userId) async {
     _generation++;
-    await _deleteManagedDownloadsForProfile(
-      profileId: profileId,
-      userId: userId,
-    );
-    await ref
-        .read(appDatabaseProvider)
-        .deleteSmartDownloadProfile(profileId, userId);
+    await _deleteManagedDownloadsForProfile(profileId: profileId, userId: userId);
+    await ref.read(appDatabaseProvider).deleteSmartDownloadProfile(profileId, userId);
     await loadProfiles();
     requestReconcile(reason: 'profile removed');
   }
@@ -206,11 +185,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
       for (final entry in cachedEntries) {
         final decoded = _decodeProgressOrNull(entry.mediaProgress);
         if (decoded == null) continue;
-        cachedProgress[mediaProgressKey(
-              decoded.libraryItemId,
-              decoded.episodeId,
-            )] =
-            decoded;
+        cachedProgress[mediaProgressKey(decoded.libraryItemId, decoded.episodeId)] = decoded;
       }
       progress = cachedProgress;
     }
@@ -220,24 +195,17 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     final entries = await db.getStoredDownloadEntriesByUser(userId);
     final downloads = await db.getAllStoredDownloadsByUser(userId);
     var deleted = 0;
-    for (final entry in entries.where(
-      (entry) => entry.downloadOrigin == 'smart',
-    )) {
+    for (final entry in entries.where((entry) => entry.downloadOrigin == 'smart')) {
       final key = mediaProgressKey(entry.itemId, entry.episodeId);
-      if (progress[key]?.isFinished != true ||
-          _isProtected(entry.itemId, entry.episodeId)) {
+      if (progress[key]?.isFinished != true || _isProtected(entry.itemId, entry.episodeId)) {
         continue;
       }
-      if (await downloadHandler.hasActiveTask(
-        entry.itemId,
-        episodeId: entry.episodeId,
-      )) {
+      if (await downloadHandler.hasActiveTask(entry.itemId, episodeId: entry.episodeId)) {
         continue;
       }
       final download = downloads.where((candidate) {
         final itemId = candidate.item?.id ?? candidate.episode?.libraryItemId;
-        return itemId == entry.itemId &&
-            candidate.episode?.id == entry.episodeId;
+        return itemId == entry.itemId && candidate.episode?.id == entry.episodeId;
       }).firstOrNull;
       if (download == null) {
         continue;
@@ -257,25 +225,18 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     }
 
     final db = ref.read(appDatabaseProvider);
-    await downloadHandler.cancelSmartTasksForProfile(
-      _continueShelfProfileId,
-      userId: userId,
-    );
+    await downloadHandler.cancelSmartTasksForProfile(_continueShelfProfileId, userId: userId);
     final entries = await db.getStoredDownloadEntriesByUser(userId);
     final downloads = await db.getAllStoredDownloadsByUser(userId);
     var deleted = 0;
 
-    for (final entry in entries.where(
-      (entry) => entry.downloadOrigin == 'smart',
-    )) {
+    for (final entry in entries.where((entry) => entry.downloadOrigin == 'smart')) {
       final profileIds = _decodeProfileIds(entry.smartProfileIds);
       if (!profileIds.contains(_continueShelfProfileId)) {
         continue;
       }
 
-      final remainingProfileIds = profileIds
-          .where((id) => id != _continueShelfProfileId)
-          .toList(growable: false);
+      final remainingProfileIds = profileIds.where((id) => id != _continueShelfProfileId).toList(growable: false);
       if (remainingProfileIds.isNotEmpty) {
         await db.updateStoredDownloadSmartProfileIds(
           entry.itemId,
@@ -287,16 +248,12 @@ class SmartDownloadManager extends _$SmartDownloadManager {
       }
 
       if (_isProtected(entry.itemId, entry.episodeId) ||
-          await downloadHandler.hasActiveTask(
-            entry.itemId,
-            episodeId: entry.episodeId,
-          )) {
+          await downloadHandler.hasActiveTask(entry.itemId, episodeId: entry.episodeId)) {
         continue;
       }
       final download = downloads.where((candidate) {
         final itemId = candidate.item?.id ?? candidate.episode?.libraryItemId;
-        return itemId == entry.itemId &&
-            candidate.episode?.id == entry.episodeId;
+        return itemId == entry.itemId && candidate.episode?.id == entry.episodeId;
       }).firstOrNull;
       if (download == null) {
         continue;
@@ -312,10 +269,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     return deleted;
   }
 
-  Future<bool> deleteFinishedContinueDownload({
-    required String itemId,
-    String? episodeId,
-  }) async {
+  Future<bool> deleteFinishedContinueDownload({required String itemId, String? episodeId}) async {
     if (!isAudioHandlerInitialized) {
       return false;
     }
@@ -329,9 +283,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     final entry = (await db.getStoredDownloadEntriesByUser(userId))
         .where(
           (candidate) =>
-              candidate.itemId == itemId &&
-              candidate.episodeId == episodeId &&
-              candidate.downloadOrigin == 'smart',
+              candidate.itemId == itemId && candidate.episodeId == episodeId && candidate.downloadOrigin == 'smart',
         )
         .firstOrNull;
     if (entry == null) {
@@ -347,11 +299,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
       return false;
     }
 
-    final download = await db.getStoredDownload(
-      itemId,
-      userId,
-      episodeId: episodeId,
-    );
+    final download = await db.getStoredDownload(itemId, userId, episodeId: episodeId);
     if (download == null) {
       return false;
     }
@@ -366,9 +314,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
       );
       return false;
     }
-    _recentlyCompletedContinueReferences.add(
-      _key(PlayableRef(itemId: itemId, episodeId: episodeId)),
-    );
+    _recentlyCompletedContinueReferences.add(_key(PlayableRef(itemId: itemId, episodeId: episodeId)));
     requestReconcile(reason: 'continue download completed');
     return true;
   }
@@ -383,10 +329,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     return null;
   }
 
-  Future<void> _deleteManagedDownloadsForProfile({
-    required String profileId,
-    required String userId,
-  }) async {
+  Future<void> _deleteManagedDownloadsForProfile({required String profileId, required String userId}) async {
     if (!isAudioHandlerInitialized) {
       return;
     }
@@ -399,18 +342,15 @@ class SmartDownloadManager extends _$SmartDownloadManager {
         .where((profile) => profile.enabled && profile.id != profileId)
         .map((profile) => profile.id)
         .toSet();
-    for (final entry in entries.where(
-      (entry) => entry.downloadOrigin == 'smart',
-    )) {
+    for (final entry in entries.where((entry) => entry.downloadOrigin == 'smart')) {
       final profileIds = _decodeProfileIds(entry.smartProfileIds);
       if (!profileIds.contains(profileId)) {
         continue;
       }
-      final otherClaimingProfileIds =
-          (await db.getSmartDownloadClaimsForReference(
-            entry.itemId,
-            entry.episodeId,
-          )).map((claim) => claim.profileId).where(enabledProfileIds.contains);
+      final otherClaimingProfileIds = (await db.getSmartDownloadClaimsForReference(
+        entry.itemId,
+        entry.episodeId,
+      )).map((claim) => claim.profileId).where(enabledProfileIds.contains);
       final remainingProfileIds = <String>{
         ...profileIds.where((id) => id != profileId),
         ...otherClaimingProfileIds,
@@ -425,16 +365,12 @@ class SmartDownloadManager extends _$SmartDownloadManager {
         continue;
       }
       if (_isProtected(entry.itemId, entry.episodeId) ||
-          await downloadHandler.hasActiveTask(
-            entry.itemId,
-            episodeId: entry.episodeId,
-          )) {
+          await downloadHandler.hasActiveTask(entry.itemId, episodeId: entry.episodeId)) {
         continue;
       }
       final download = downloads.where((candidate) {
         final itemId = candidate.item?.id ?? candidate.episode?.libraryItemId;
-        return itemId == entry.itemId &&
-            candidate.episode?.id == entry.episodeId;
+        return itemId == entry.itemId && candidate.episode?.id == entry.episodeId;
       }).firstOrNull;
       if (download != null) {
         await downloadHandler.deleteDownloadedItem(download, userId: userId);
@@ -442,10 +378,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     }
   }
 
-  void requestReconcile({
-    required String reason,
-    Duration delay = const Duration(milliseconds: 350),
-  }) {
+  void requestReconcile({required String reason, Duration delay = const Duration(milliseconds: 350)}) {
     if (!_appReady) {
       _pendingReconcileReason = reason;
       return;
@@ -526,25 +459,16 @@ class SmartDownloadManager extends _$SmartDownloadManager {
           int? sourceRevision;
           final compactSnapshot = <QueueCandidate>[];
           while (selectedForSource < targetCount && page < 20) {
-            final result = await sourceRepository.page(
-              source,
-              page: page,
-              pageSize: queueSourcePageSize,
-            );
+            final result = await sourceRepository.page(source, page: page, pageSize: queueSourcePageSize);
             _throwIfReconcileStale(generation, userId);
             sourceRevision ??= result.revision;
             if (compactSnapshot.length < queueSourcePageSize) {
-              compactSnapshot.addAll(
-                result.candidates.take(
-                  queueSourcePageSize - compactSnapshot.length,
-                ),
-              );
+              compactSnapshot.addAll(result.candidates.take(queueSourcePageSize - compactSnapshot.length));
             }
             final candidates = result.candidates;
             if (candidates.isEmpty) break;
             for (final candidate in candidates) {
-              if (selectedForSource >= targetCount || candidate.isFinished)
-                continue;
+              if (selectedForSource >= targetCount || candidate.isFinished) continue;
               if (!_withinAge(candidate, profile.policy.maxAgeDays)) continue;
               final key = _key(candidate.ref);
               if (!desired.add(key)) continue;
@@ -568,9 +492,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
             source,
             revision: sourceRevision,
             candidateSnapshot: jsonEncode(
-              compactSnapshot
-                  .map((candidate) => candidate.toJson())
-                  .toList(growable: false),
+              compactSnapshot.map((candidate) => candidate.toJson()).toList(growable: false),
             ),
           );
           _throwIfReconcileStale(generation, userId);
@@ -580,11 +502,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
         for (final claim in existingClaims) {
           final key = '${claim.itemId}::${claim.episodeId ?? ''}';
           if (!desired.contains(key)) {
-            await db.deleteSmartDownloadClaim(
-              profile.id,
-              claim.itemId,
-              episodeId: claim.episodeId,
-            );
+            await db.deleteSmartDownloadClaim(profile.id, claim.itemId, episodeId: claim.episodeId);
             _throwIfReconcileStale(generation, userId);
           }
         }
@@ -600,11 +518,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
         generation: generation,
       );
       _throwIfReconcileStale(generation, userId);
-      await _enqueueContinueReferences(
-        userId: userId,
-        references: continueReferences,
-        generation: generation,
-      );
+      await _enqueueContinueReferences(userId: userId, references: continueReferences, generation: generation);
       _throwIfReconcileStale(generation, userId);
       await _cleanupUnclaimed(
         userId: userId,
@@ -613,16 +527,8 @@ class SmartDownloadManager extends _$SmartDownloadManager {
         generation: generation,
       );
       _throwIfReconcileStale(generation, userId);
-      state = state.copyWith(
-        isReconciling: false,
-        lastReconciled: DateTime.now(),
-        clearError: true,
-      );
-      logger(
-        'Smart-download reconciliation completed ($reason).',
-        tag: 'SmartDownloadManager',
-        level: InfoLevel.debug,
-      );
+      state = state.copyWith(isReconciling: false, lastReconciled: DateTime.now(), clearError: true);
+      logger('Smart-download reconciliation completed ($reason).', tag: 'SmartDownloadManager', level: InfoLevel.debug);
     } catch (e, s) {
       if (e is _StaleSmartDownloadReconcile || generation != _generation) {
         state = state.copyWith(isReconciling: false);
@@ -653,8 +559,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
         .map(_downloadKey)
         .whereType<String>()
         .toSet();
-    final activeReservations = await downloadHandler
-        .activeSmartDownloadReservations(userId);
+    final activeReservations = await downloadHandler.activeSmartDownloadReservations(userId);
     _throwIfReconcileStale(generation, userId);
     final plannedKeys = <String>{};
     final profileIdsByKey = <String, Set<String>>{};
@@ -664,29 +569,21 @@ class SmartDownloadManager extends _$SmartDownloadManager {
         profileIdsByKey.putIfAbsent(key, () => <String>{}).add(profile.id);
         downloadTypeByKey.update(
           key,
-          (existing) =>
-              _mergeDownloadTypes(existing, profile.policy.downloadType),
+          (existing) => _mergeDownloadTypes(existing, profile.policy.downloadType),
           ifAbsent: () => profile.policy.downloadType,
         );
       }
     }
 
-    for (final entry in stored.where(
-      (entry) => entry.downloadOrigin == 'smart',
-    )) {
+    for (final entry in stored.where((entry) => entry.downloadOrigin == 'smart')) {
       final key = '${entry.itemId}::${entry.episodeId ?? ''}';
       final claimingProfiles = profileIdsByKey[key];
       if (claimingProfiles == null || claimingProfiles.isEmpty) {
         continue;
       }
-      final existingProfileIds = _decodeProfileIds(entry.smartProfileIds)
-          .toSet();
-      final mergedProfileIds = <String>{
-        ...existingProfileIds,
-        ...claimingProfiles,
-      }.toList()..sort();
-      if (existingProfileIds.length == mergedProfileIds.length &&
-          existingProfileIds.containsAll(mergedProfileIds)) {
+      final existingProfileIds = _decodeProfileIds(entry.smartProfileIds).toSet();
+      final mergedProfileIds = <String>{...existingProfileIds, ...claimingProfiles}.toList()..sort();
+      if (existingProfileIds.length == mergedProfileIds.length && existingProfileIds.containsAll(mergedProfileIds)) {
         continue;
       }
       await db.updateStoredDownloadSmartProfileIds(
@@ -704,8 +601,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
       final selected = desiredByProfile[profile.id] ?? const <String>{};
       final claimRows = await db.getSmartDownloadClaims(profile.id);
       final claims = <String, SmartDownloadClaimEntry>{
-        for (final claim in claimRows)
-          '${claim.itemId}::${claim.episodeId ?? ''}': claim,
+        for (final claim in claimRows) '${claim.itemId}::${claim.episodeId ?? ''}': claim,
       };
       if (cap != null && cap > 0) {
         for (final key in selected.where(activeReservations.containsKey)) {
@@ -714,9 +610,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
           }
           final split = key.split('::');
           final itemId = split.first;
-          final episodeId = split.length > 1 && split[1].isNotEmpty
-              ? split[1]
-              : null;
+          final episodeId = split.length > 1 && split[1].isNotEmpty ? split[1] : null;
           final resolvedBytes = await downloadHandler.estimateDownloadBytes(
             itemId,
             episodeId: episodeId,
@@ -730,32 +624,17 @@ class SmartDownloadManager extends _$SmartDownloadManager {
       }
       var managedBytes = stored
           .where((entry) => entry.downloadOrigin == 'smart')
-          .where(
-            (entry) =>
-                selected.contains('${entry.itemId}::${entry.episodeId ?? ''}'),
-          )
-          .where(
-            (entry) => storedKeys.contains(
-              '${entry.itemId}::${entry.episodeId ?? ''}',
-            ),
-          )
+          .where((entry) => selected.contains('${entry.itemId}::${entry.episodeId ?? ''}'))
+          .where((entry) => storedKeys.contains('${entry.itemId}::${entry.episodeId ?? ''}'))
           .fold<int>(0, (sum, entry) => sum + (entry.managedBytes ?? 0));
       managedBytes += activeReservations.entries
-          .where(
-            (entry) =>
-                selected.contains(entry.key) && !storedKeys.contains(entry.key),
-          )
+          .where((entry) => selected.contains(entry.key) && !storedKeys.contains(entry.key))
           .fold<int>(0, (sum, entry) => sum + entry.value);
       for (final key in selected) {
-        if (plannedKeys.contains(key) ||
-            storedKeys.contains(key) ||
-            activeReservations.containsKey(key))
-          continue;
+        if (plannedKeys.contains(key) || storedKeys.contains(key) || activeReservations.containsKey(key)) continue;
         final split = key.split('::');
         final itemId = split.first;
-        final episodeId = split.length > 1 && split[1].isNotEmpty
-            ? split[1]
-            : null;
+        final episodeId = split.length > 1 && split[1].isNotEmpty ? split[1] : null;
         final claim = claims[key];
         var estimatedBytes = claim?.estimatedBytes ?? 0;
         if (cap != null && cap > 0) {
@@ -772,8 +651,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
             continue;
           }
         }
-        if (await downloadHandler.hasActiveTask(itemId, episodeId: episodeId))
-          continue;
+        if (await downloadHandler.hasActiveTask(itemId, episodeId: episodeId)) continue;
         _throwIfReconcileStale(generation, userId);
         plannedKeys.add(key);
         await downloadHandler.downloadFile(
@@ -781,10 +659,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
           episodeId: episodeId,
           downloadType: downloadTypeByKey[key] ?? profile.policy.downloadType,
           acquisitionOrigin: 'smart',
-          smartProfileIds:
-              (profileIdsByKey[key] ?? <String>{profile.id}).toList(
-                growable: false,
-              )..sort(),
+          smartProfileIds: (profileIdsByKey[key] ?? <String>{profile.id}).toList(growable: false)..sort(),
           estimatedBytes: estimatedBytes > 0 ? estimatedBytes : null,
           requiredUserId: userId,
         );
@@ -800,11 +675,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     if (user == null ||
         !ref
             .read(settingsManagerProvider.notifier)
-            .getUserSetting<bool>(
-              user.id,
-              SettingKeys.downloadContinueListeningAndSeries,
-              defaultValue: false,
-            )) {
+            .getUserSetting<bool>(user.id, SettingKeys.downloadContinueListeningAndSeries, defaultValue: false)) {
       return <PlayableRef>{};
     }
 
@@ -814,19 +685,15 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     }
 
     final personalized = await _loadPersonalizedLibrary(library.id);
-    final continueListeningItems =
-        personalized?.continueListening?.entities ?? const <LibraryItem>[];
-    final continueSeriesItems =
-        personalized?.continueSeries?.entities ?? const <LibraryItem>[];
+    final continueListeningItems = personalized?.continueListening?.entities ?? const <LibraryItem>[];
+    final continueSeriesItems = personalized?.continueSeries?.entities ?? const <LibraryItem>[];
     if (continueListeningItems.isEmpty && continueSeriesItems.isEmpty) {
       return <PlayableRef>{};
     }
 
     Map<String, MediaProgress> progress;
     try {
-      progress =
-          ref.read(mediaProgressProvider).asData?.value ??
-          await ref.read(mediaProgressProvider.future);
+      progress = ref.read(mediaProgressProvider).asData?.value ?? await ref.read(mediaProgressProvider.future);
     } catch (_) {
       progress = const <String, MediaProgress>{};
     }
@@ -846,10 +713,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     return references;
   }
 
-  Future<Set<PlayableRef>> _continueItemReferences(
-    LibraryItem item,
-    Map<String, MediaProgress> progress,
-  ) async {
+  Future<Set<PlayableRef>> _continueItemReferences(LibraryItem item, Map<String, MediaProgress> progress) async {
     if (item.mediaType == 'podcast' || item.media?.podcastMedia != null) {
       return _continuePodcastReferences(item, progress);
     }
@@ -857,18 +721,13 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     final currentReference = PlayableRef(itemId: item.id);
     final currentProgress = progress[mediaProgressKey(item.id)];
     final references = <PlayableRef>{};
-    if (currentProgress?.isFinished != true &&
-        !_recentlyCompletedContinueReferences.contains(
-          _key(currentReference),
-        )) {
+    if (currentProgress?.isFinished != true && !_recentlyCompletedContinueReferences.contains(_key(currentReference))) {
       references.add(currentReference);
     }
     return references;
   }
 
-  Future<PersonalizedLibrary?> _loadPersonalizedLibrary(
-    String libraryId,
-  ) async {
+  Future<PersonalizedLibrary?> _loadPersonalizedLibrary(String libraryId) async {
     try {
       return await ref.read(personalizedLibraryProvider(libraryId).future);
     } catch (e, s) {
@@ -886,8 +745,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     Map<String, MediaProgress> progress,
   ) async {
     var item = shelfItem;
-    final shelfEpisodes =
-        item.media?.podcastMedia?.episodes ?? const <Episode>[];
+    final shelfEpisodes = item.media?.podcastMedia?.episodes ?? const <Episode>[];
     if (shelfEpisodes.length < 2) {
       try {
         item = await ref.read(libraryItemProvider(item.id).future);
@@ -911,10 +769,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
                   !entry.isFinished,
             )
             .toList(growable: false)
-          ..sort(
-            (left, right) =>
-                (right.lastUpdate ?? 0).compareTo(left.lastUpdate ?? 0),
-          );
+          ..sort((left, right) => (right.lastUpdate ?? 0).compareTo(left.lastUpdate ?? 0));
     final finishedProgress =
         progress.values
             .where(
@@ -925,23 +780,15 @@ class SmartDownloadManager extends _$SmartDownloadManager {
                   entry.isFinished,
             )
             .toList(growable: false)
-          ..sort(
-            (left, right) =>
-                (right.lastUpdate ?? 0).compareTo(left.lastUpdate ?? 0),
-          );
+          ..sort((left, right) => (right.lastUpdate ?? 0).compareTo(left.lastUpdate ?? 0));
     final activeProgress = currentProgress.firstOrNull;
     if (activeProgress == null && finishedProgress.isNotEmpty) {
       return <PlayableRef>{};
     }
     final currentEpisodeId = activeProgress?.episodeId ?? episodes.first.id;
-    final currentReference = PlayableRef(
-      itemId: item.id,
-      episodeId: currentEpisodeId,
-    );
+    final currentReference = PlayableRef(itemId: item.id, episodeId: currentEpisodeId);
     final references = <PlayableRef>{};
-    if (!_recentlyCompletedContinueReferences.contains(
-      _key(currentReference),
-    )) {
+    if (!_recentlyCompletedContinueReferences.contains(_key(currentReference))) {
       references.add(currentReference);
     }
     return references;
@@ -962,17 +809,11 @@ class SmartDownloadManager extends _$SmartDownloadManager {
         .whereType<String>()
         .toSet();
     _throwIfReconcileStale(generation, userId);
-    final activeKeys = (await downloadHandler.activeSmartDownloadReservations(
-      userId,
-    )).keys.toSet();
+    final activeKeys = (await downloadHandler.activeSmartDownloadReservations(userId)).keys.toSet();
     _throwIfReconcileStale(generation, userId);
     final preferredType = ref
         .read(settingsManagerProvider.notifier)
-        .getUserSetting<String>(
-          userId,
-          SettingKeys.downloadTypePreference,
-          defaultValue: 'askEveryTime',
-        );
+        .getUserSetting<String>(userId, SettingKeys.downloadTypePreference, defaultValue: 'askEveryTime');
     final downloadType = preferredType == 'askEveryTime' ? null : preferredType;
 
     for (final reference in references) {
@@ -981,10 +822,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
       if (storedKeys.contains(key) || activeKeys.contains(key)) {
         continue;
       }
-      if (await downloadHandler.hasActiveTask(
-        reference.itemId,
-        episodeId: reference.episodeId,
-      )) {
+      if (await downloadHandler.hasActiveTask(reference.itemId, episodeId: reference.episodeId)) {
         continue;
       }
       _throwIfReconcileStale(generation, userId);
@@ -1000,9 +838,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     }
   }
 
-  Future<void> _deleteManagedDownloadsForRemovedSources(
-    SmartDownloadProfile profile,
-  ) async {
+  Future<void> _deleteManagedDownloadsForRemovedSources(SmartDownloadProfile profile) async {
     if (!isAudioHandlerInitialized) {
       return;
     }
@@ -1020,23 +856,15 @@ class SmartDownloadManager extends _$SmartDownloadManager {
 
     final claims = await db.getSmartDownloadClaims(profile.id);
     final removedReferences = claims
-        .where(
-          (claim) => removedSourceKeys.contains(
-            '${claim.sourceType}::${claim.sourceId}',
-          ),
-        )
+        .where((claim) => removedSourceKeys.contains('${claim.sourceType}::${claim.sourceId}'))
         .map((claim) => '${claim.itemId}::${claim.episodeId ?? ''}')
         .toSet();
-    for (final source in previousSources.where(
-      (source) => removedSourceKeys.contains(_storedSourceKey(source)),
-    )) {
+    for (final source in previousSources.where((source) => removedSourceKeys.contains(_storedSourceKey(source)))) {
       removedReferences.addAll(_snapshotReferences(source.candidateSnapshot));
     }
     if (removedReferences.isEmpty && currentSourceKeys.isEmpty) {
       final entries = await db.getStoredDownloadEntriesByUser(profile.userId);
-      for (final entry in entries.where(
-        (entry) => entry.downloadOrigin == 'smart',
-      )) {
+      for (final entry in entries.where((entry) => entry.downloadOrigin == 'smart')) {
         final profileIds = _decodeProfileIds(entry.smartProfileIds);
         if (profileIds.length == 1 && profileIds.first == profile.id) {
           removedReferences.add('${entry.itemId}::${entry.episodeId ?? ''}');
@@ -1055,17 +883,11 @@ class SmartDownloadManager extends _$SmartDownloadManager {
 
     final entries = await db.getStoredDownloadEntriesByUser(profile.userId);
     final downloads = await db.getAllStoredDownloadsByUser(profile.userId);
-    final enabledProfileIds =
-        (await db.getSmartDownloadProfiles(profile.userId))
-            .where(
-              (storedProfile) =>
-                  storedProfile.enabled && storedProfile.id != profile.id,
-            )
-            .map((storedProfile) => storedProfile.id)
-            .toSet();
-    for (final entry in entries.where(
-      (entry) => entry.downloadOrigin == 'smart',
-    )) {
+    final enabledProfileIds = (await db.getSmartDownloadProfiles(profile.userId))
+        .where((storedProfile) => storedProfile.enabled && storedProfile.id != profile.id)
+        .map((storedProfile) => storedProfile.id)
+        .toSet();
+    for (final entry in entries.where((entry) => entry.downloadOrigin == 'smart')) {
       final reference = '${entry.itemId}::${entry.episodeId ?? ''}';
       if (!removedReferences.contains(reference)) {
         continue;
@@ -1074,11 +896,10 @@ class SmartDownloadManager extends _$SmartDownloadManager {
       if (!profileIds.contains(profile.id)) {
         continue;
       }
-      final otherClaimingProfileIds =
-          (await db.getSmartDownloadClaimsForReference(
-            entry.itemId,
-            entry.episodeId,
-          )).map((claim) => claim.profileId).where(enabledProfileIds.contains);
+      final otherClaimingProfileIds = (await db.getSmartDownloadClaimsForReference(
+        entry.itemId,
+        entry.episodeId,
+      )).map((claim) => claim.profileId).where(enabledProfileIds.contains);
       final remainingProfileIds = <String>{
         ...profileIds.where((id) => id != profile.id),
         ...otherClaimingProfileIds,
@@ -1093,22 +914,15 @@ class SmartDownloadManager extends _$SmartDownloadManager {
         continue;
       }
       if (_isProtected(entry.itemId, entry.episodeId) ||
-          await downloadHandler.hasActiveTask(
-            entry.itemId,
-            episodeId: entry.episodeId,
-          )) {
+          await downloadHandler.hasActiveTask(entry.itemId, episodeId: entry.episodeId)) {
         continue;
       }
       final download = downloads.where((candidate) {
         final itemId = candidate.item?.id ?? candidate.episode?.libraryItemId;
-        return itemId == entry.itemId &&
-            candidate.episode?.id == entry.episodeId;
+        return itemId == entry.itemId && candidate.episode?.id == entry.episodeId;
       }).firstOrNull;
       if (download != null) {
-        await downloadHandler.deleteDownloadedItem(
-          download,
-          userId: profile.userId,
-        );
+        await downloadHandler.deleteDownloadedItem(download, userId: profile.userId);
       }
     }
   }
@@ -1125,38 +939,21 @@ class SmartDownloadManager extends _$SmartDownloadManager {
 
     final db = ref.read(appDatabaseProvider);
     final now = DateTime.now().millisecondsSinceEpoch;
-    final profilesById = <String, SmartDownloadProfile>{
-      for (final profile in profiles) profile.id: profile,
-    };
+    final profilesById = <String, SmartDownloadProfile>{for (final profile in profiles) profile.id: profile};
     final entries = await db.getStoredDownloadEntriesByUser(userId);
     _throwIfReconcileStale(generation, userId);
-    for (final entry in entries.where(
-      (entry) => entry.downloadOrigin == 'smart',
-    )) {
+    for (final entry in entries.where((entry) => entry.downloadOrigin == 'smart')) {
       _throwIfReconcileStale(generation, userId);
       final key = '${entry.itemId}::${entry.episodeId ?? ''}';
-      if (desiredByReference.contains(key) ||
-          _isProtected(entry.itemId, entry.episodeId))
-        continue;
-      if (await downloadHandler.hasActiveTask(
-        entry.itemId,
-        episodeId: entry.episodeId,
-      ))
-        continue;
+      if (desiredByReference.contains(key) || _isProtected(entry.itemId, entry.episodeId)) continue;
+      if (await downloadHandler.hasActiveTask(entry.itemId, episodeId: entry.episodeId)) continue;
       _throwIfReconcileStale(generation, userId);
-      final graceHours = _graceHoursForEntry(
-        entry.smartProfileIds,
-        profilesById,
-      );
+      final graceHours = _graceHoursForEntry(entry.smartProfileIds, profilesById);
       final graceMillis = Duration(hours: graceHours).inMilliseconds;
       final completedAt = entry.completedAt ?? 0;
       if (completedAt <= 0) continue;
       if (completedAt > 0 && now - completedAt < graceMillis) continue;
-      final download = await db.getStoredDownload(
-        entry.itemId,
-        userId,
-        episodeId: entry.episodeId,
-      );
+      final download = await db.getStoredDownload(entry.itemId, userId, episodeId: entry.episodeId);
       _throwIfReconcileStale(generation, userId);
       if (download != null) {
         await downloadHandler.deleteDownloadedItem(download, userId: userId);
@@ -1165,10 +962,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     }
   }
 
-  int _graceHoursForEntry(
-    String rawProfileIds,
-    Map<String, SmartDownloadProfile> profilesById,
-  ) {
+  int _graceHoursForEntry(String rawProfileIds, Map<String, SmartDownloadProfile> profilesById) {
     try {
       final values = _decodeProfileIds(rawProfileIds)
           .map((id) => profilesById[id]?.policy.deleteAfterHours)
@@ -1186,10 +980,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is List) {
-        return decoded
-            .whereType<String>()
-            .where((id) => id.trim().isNotEmpty)
-            .toList(growable: false);
+        return decoded.whereType<String>().where((id) => id.trim().isNotEmpty).toList(growable: false);
       }
     } catch (_) {}
     return const <String>[];
@@ -1225,9 +1016,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
 
   bool _isProtected(String itemId, String? episodeId) {
     final current = audioHandler.currentMediaItem;
-    if (current != null &&
-        current.itemId == itemId &&
-        current.episodeId == episodeId) {
+    if (current != null && current.itemId == itemId && current.episodeId == episodeId) {
       return true;
     }
     return audioHandler.isInQueue(itemId, episodeId: episodeId);
@@ -1237,9 +1026,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     if (maxAgeDays == null || maxAgeDays <= 0) return true;
     final timestamp = candidate.publishedAt ?? candidate.addedAt;
     if (timestamp == null || timestamp <= 0) return true;
-    final age = DateTime.now().difference(
-      DateTime.fromMillisecondsSinceEpoch(timestamp),
-    );
+    final age = DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(timestamp));
     return age <= Duration(days: maxAgeDays);
   }
 
@@ -1259,16 +1046,13 @@ class SmartDownloadManager extends _$SmartDownloadManager {
   }
 
   void _throwIfReconcileStale(int generation, String userId) {
-    if (generation != _generation ||
-        ref.read(currentUserProvider).value?.id != userId) {
+    if (generation != _generation || ref.read(currentUserProvider).value?.id != userId) {
       throw const _StaleSmartDownloadReconcile();
     }
   }
 
   MediaSourceDescriptor? _sourceFromRow(SmartDownloadSourceEntry row) {
-    final type = MediaSourceType.values
-        .where((value) => value.name == row.sourceType)
-        .firstOrNull;
+    final type = MediaSourceType.values.where((value) => value.name == row.sourceType).firstOrNull;
     if (type == null) return null;
     return MediaSourceDescriptor(
       type: type,
@@ -1282,9 +1066,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
 
   String _key(PlayableRef ref) => '${ref.itemId}::${ref.episodeId ?? ''}';
 
-  String _descriptorSourceKey(MediaSourceDescriptor source) =>
-      '${source.type.name}::${source.sourceId}';
+  String _descriptorSourceKey(MediaSourceDescriptor source) => '${source.type.name}::${source.sourceId}';
 
-  String _storedSourceKey(SmartDownloadSourceEntry source) =>
-      '${source.sourceType}::${source.sourceId}';
+  String _storedSourceKey(SmartDownloadSourceEntry source) => '${source.sourceType}::${source.sourceId}';
 }

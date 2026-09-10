@@ -7,11 +7,8 @@ part 'media_progress_response.g.dart';
 @freezed
 abstract class MediaProgressResponse with _$MediaProgressResponse {
   const factory MediaProgressResponse({
-    @JsonKey(name: 'mediaProgress')
-    @Default(<MediaProgress>[])
-    List<MediaProgress> mediaProgress,
+    @JsonKey(name: 'mediaProgress') @Default(<MediaProgress>[]) List<MediaProgress> mediaProgress,
   }) = _MediaProgressResponse;
 
-  factory MediaProgressResponse.fromJson(Map<String, dynamic> json) =>
-      _$MediaProgressResponseFromJson(json);
+  factory MediaProgressResponse.fromJson(Map<String, dynamic> json) => _$MediaProgressResponseFromJson(json);
 }

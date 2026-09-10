@@ -15,9 +15,7 @@ List<CustomMetadataProvider> _providersFromJson(dynamic value) {
           return CustomMetadataProvider.fromJson(entry);
         }
         if (entry is Map) {
-          return CustomMetadataProvider.fromJson(
-            Map<String, dynamic>.from(entry),
-          );
+          return CustomMetadataProvider.fromJson(Map<String, dynamic>.from(entry));
         }
         return null;
       })
@@ -26,8 +24,7 @@ List<CustomMetadataProvider> _providersFromJson(dynamic value) {
 }
 
 @freezed
-abstract class CustomMetadataProvidersResponse
-    with _$CustomMetadataProvidersResponse {
+abstract class CustomMetadataProvidersResponse with _$CustomMetadataProvidersResponse {
   const factory CustomMetadataProvidersResponse({
     @JsonKey(name: 'providers', fromJson: _providersFromJson)
     @Default(<CustomMetadataProvider>[])

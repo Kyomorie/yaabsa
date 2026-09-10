@@ -1,10 +1,7 @@
 part of 'reader.dart';
 
 extension _ReaderAnnotationSync on _ReaderState {
-  Future<void> _syncAnnotations({
-    required bool isEpubMode,
-    bool showFeedback = true,
-  }) async {
+  Future<void> _syncAnnotations({required bool isEpubMode, bool showFeedback = true}) async {
     final ABSApi? api = ref.read(absApiProvider);
     if (api == null) {
       if (showFeedback) {
@@ -37,21 +34,14 @@ extension _ReaderAnnotationSync on _ReaderState {
           );
         }).toList();
       } else {
-        annotations = _pdfAnnotations
-            .map((annotation) => annotation.toInternalAnnotation())
-            .toList(growable: false);
+        annotations = _pdfAnnotations.map((annotation) => annotation.toInternalAnnotation()).toList(growable: false);
       }
 
-      final payload = annotations
-          .map(_annotationToCompactJson)
-          .toList(growable: false);
+      final payload = annotations.map(_annotationToCompactJson).toList(growable: false);
 
       await api.getMeApi().createBookmark(
         widget.itemId,
-        createBookmarkRequest: CreateBookmarkRequest(
-          time: -1,
-          title: jsonEncode(payload),
-        ),
+        createBookmarkRequest: CreateBookmarkRequest(time: -1, title: jsonEncode(payload)),
       );
 
       await _fetchLatestBookmarks();
@@ -72,10 +62,7 @@ extension _ReaderAnnotationSync on _ReaderState {
     }
   }
 
-  Future<bool> _loadAnnotationsFromApi({
-    required bool isEpubMode,
-    bool showFeedback = true,
-  }) async {
+  Future<bool> _loadAnnotationsFromApi({required bool isEpubMode, bool showFeedback = true}) async {
     final ABSApi? api = ref.read(absApiProvider);
     if (api == null) {
       if (showFeedback) {
@@ -95,10 +82,7 @@ extension _ReaderAnnotationSync on _ReaderState {
     }
 
     final annotationBookmarks = bookmarks
-        .where(
-          (bookmark) =>
-              bookmark.libraryItemId == widget.itemId && bookmark.time == -1,
-        )
+        .where((bookmark) => bookmark.libraryItemId == widget.itemId && bookmark.time == -1)
         .toList(growable: false);
     if (annotationBookmarks.isEmpty) {
       if (showFeedback) {
@@ -138,9 +122,7 @@ extension _ReaderAnnotationSync on _ReaderState {
       }
 
       try {
-        annotations.add(
-          InternalAnnotation.fromJson(Map<String, dynamic>.from(value)),
-        );
+        annotations.add(InternalAnnotation.fromJson(Map<String, dynamic>.from(value)));
       } catch (_) {}
     }
 
@@ -173,9 +155,7 @@ extension _ReaderAnnotationSync on _ReaderState {
       return true;
     }
 
-    final epubAnnotations = annotations
-        .where((annotation) => !_isPdfAnnotation(annotation))
-        .toList(growable: false);
+    final epubAnnotations = annotations.where((annotation) => !_isPdfAnnotation(annotation)).toList(growable: false);
     if (epubAnnotations.isEmpty) {
       if (showFeedback) {
         _showSnackBar('No EPUB annotations found for this item');

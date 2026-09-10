@@ -63,16 +63,10 @@ class SeekBarRow extends StatelessWidget {
     return value;
   }
 
-  Widget _buildTimeLabel(
-    BuildContext context,
-    Duration time, {
-    bool isRightLabel = false,
-  }) {
+  Widget _buildTimeLabel(BuildContext context, Duration time, {bool isRightLabel = false}) {
     final colorScheme = Theme.of(context).colorScheme;
     final formatted = formatDuration(time);
-    final timeText = (isRightLabel && showRemaining)
-        ? '-$formatted'
-        : formatted;
+    final timeText = (isRightLabel && showRemaining) ? '-$formatted' : formatted;
     return Text(
       timeText,
       maxLines: 1,
@@ -92,10 +86,7 @@ class SeekBarRow extends StatelessWidget {
       onTap: onToggleRemaining,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          vertical: timeLabelsBelow ? 0 : 2,
-          horizontal: timeLabelsBelow ? 0 : 8,
-        ),
+        padding: EdgeInsets.symmetric(vertical: timeLabelsBelow ? 0 : 2, horizontal: timeLabelsBelow ? 0 : 8),
         child: _buildTimeLabel(context, time, isRightLabel: true),
       ),
     );
@@ -103,23 +94,16 @@ class SeekBarRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final clampedCurrent = _clampDuration(
-      currentPosition,
-      rangeStart,
-      rangeEnd,
-    );
+    final clampedCurrent = _clampDuration(currentPosition, rangeStart, rangeEnd);
     final rangeDuration = rangeEnd - rangeStart;
     final maxSliderValue = rangeDuration.inMilliseconds / 1000.0;
     final sliderValue = (clampedCurrent - rangeStart).inMilliseconds / 1000.0;
     final hasSeekRange = maxSliderValue > 0;
 
-    final displayRightTime = showRemaining
-        ? rangeEnd - clampedCurrent
-        : rightTime;
+    final displayRightTime = showRemaining ? rangeEnd - clampedCurrent : rightTime;
 
     Future<void> executeSeek(double seconds) {
-      final seekPosition =
-          rangeStart + Duration(milliseconds: (seconds * 1000).round());
+      final seekPosition = rangeStart + Duration(milliseconds: (seconds * 1000).round());
       return onSeek(seekPosition);
     }
 
@@ -157,10 +141,7 @@ class SeekBarRow extends StatelessWidget {
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: _buildTimeLabel(context, leftTime),
-                  ),
+                  child: Align(alignment: Alignment.centerLeft, child: _buildTimeLabel(context, leftTime)),
                 ),
                 Expanded(
                   flex: 2,
@@ -170,13 +151,10 @@ class SeekBarRow extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                                fontSize: timeLabelFontSize,
-                              ),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: timeLabelFontSize,
+                          ),
                         )
                       : const SizedBox.shrink(),
                 ),

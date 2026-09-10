@@ -1,11 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 class SettingsSectionTitle extends StatelessWidget {
-  const SettingsSectionTitle({
-    super.key,
-    required this.title,
-    this.topPadding = 28,
-  });
+  const SettingsSectionTitle({super.key, required this.title, this.topPadding = 28});
 
   final String title;
   final double topPadding;
@@ -16,11 +12,8 @@ class SettingsSectionTitle extends StatelessWidget {
       padding: EdgeInsets.fromLTRB(8, topPadding, 20, 12),
       child: Text(
         title.toUpperCase(),
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.8,
-        ),
+        style: Theme.of(context).textTheme.labelMedium
+            ?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600, letterSpacing: 0.8),
       ),
     );
   }

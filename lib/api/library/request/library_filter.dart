@@ -1,16 +1,6 @@
 import 'dart:convert';
 
-enum LibraryFilterGroup {
-  genres,
-  tags,
-  series,
-  authors,
-  progress,
-  narrators,
-  missing,
-  languages,
-  tracks,
-}
+enum LibraryFilterGroup { genres, tags, series, authors, progress, narrators, missing, languages, tracks }
 
 extension LibraryFilterGroupX on LibraryFilterGroup {
   String get wireValue => switch (this) {
@@ -61,12 +51,7 @@ class GroupedLibraryFilterValue {
   final String value;
 }
 
-enum LibraryProgressFilterValue {
-  finished,
-  notStarted,
-  notFinished,
-  inProgress,
-}
+enum LibraryProgressFilterValue { finished, notStarted, notFinished, inProgress }
 
 extension LibraryProgressFilterValueX on LibraryProgressFilterValue {
   String get wireValue => switch (this) {
@@ -165,10 +150,7 @@ String decodeFilterValue(String value) {
 }
 
 GroupedLibraryFilterValue? parseGroupedLibraryFilterQuery(String? filter) {
-  if (filter == null ||
-      filter.isEmpty ||
-      filter == 'issues' ||
-      filter == 'feed-open') {
+  if (filter == null || filter.isEmpty || filter == 'issues' || filter == 'feed-open') {
     return null;
   }
 
@@ -184,10 +166,7 @@ GroupedLibraryFilterValue? parseGroupedLibraryFilterQuery(String? filter) {
     return null;
   }
 
-  return GroupedLibraryFilterValue(
-    group: group,
-    value: decodeFilterValue(valueRaw),
-  );
+  return GroupedLibraryFilterValue(group: group, value: decodeFilterValue(valueRaw));
 }
 
 String? normalizeLibraryFilterQuery(String? filter) {

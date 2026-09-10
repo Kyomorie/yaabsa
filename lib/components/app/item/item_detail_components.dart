@@ -36,16 +36,9 @@ class ItemHeroCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                IconButton(
-                  onPressed: onBack,
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  tooltip: 'Back',
-                ),
+                IconButton(onPressed: onBack, icon: const Icon(Icons.arrow_back_rounded), tooltip: 'Back'),
                 const SizedBox(width: 4),
-                Text(
-                  'Book details',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
+                Text('Book details', style: Theme.of(context).textTheme.titleSmall),
               ],
             ),
             const SizedBox(height: 6),
@@ -55,11 +48,7 @@ class ItemHeroCard extends StatelessWidget {
                 children: [
                   Align(alignment: Alignment.centerLeft, child: coverWidget),
                   const SizedBox(height: 10),
-                  _TitleAndActions(
-                    title: title,
-                    subtitle: subtitle,
-                    actions: actions,
-                  ),
+                  _TitleAndActions(title: title, subtitle: subtitle, actions: actions),
                 ],
               )
             else
@@ -69,11 +58,7 @@ class ItemHeroCard extends StatelessWidget {
                   coverWidget,
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _TitleAndActions(
-                      title: title,
-                      subtitle: subtitle,
-                      actions: actions,
-                    ),
+                    child: _TitleAndActions(title: title, subtitle: subtitle, actions: actions),
                   ),
                 ],
               ),
@@ -85,11 +70,7 @@ class ItemHeroCard extends StatelessWidget {
 }
 
 class _TitleAndActions extends StatelessWidget {
-  const _TitleAndActions({
-    required this.title,
-    this.subtitle,
-    required this.actions,
-  });
+  const _TitleAndActions({required this.title, this.subtitle, required this.actions});
 
   final String title;
   final String? subtitle;
@@ -100,12 +81,7 @@ class _TitleAndActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
+        Text(title, maxLines: 3, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleLarge),
         if (subtitle != null && subtitle!.trim().isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4),
@@ -113,9 +89,8 @@ class _TitleAndActions extends StatelessWidget {
               subtitle!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
         const SizedBox(height: 10),
@@ -126,12 +101,7 @@ class _TitleAndActions extends StatelessWidget {
 }
 
 class ItemExpandableSection extends StatelessWidget {
-  const ItemExpandableSection({
-    super.key,
-    required this.title,
-    required this.children,
-    this.initiallyExpanded = false,
-  });
+  const ItemExpandableSection({super.key, required this.title, required this.children, this.initiallyExpanded = false});
 
   final String title;
   final List<Widget> children;
@@ -164,12 +134,7 @@ class ItemExpandableSection extends StatelessWidget {
 }
 
 class ItemMetadataCard extends StatelessWidget {
-  const ItemMetadataCard({
-    super.key,
-    required this.rows,
-    this.inlineValues = false,
-    this.useCard = true,
-  });
+  const ItemMetadataCard({super.key, required this.rows, this.inlineValues = false, this.useCard = true});
 
   final List<ItemMetadataRowData> rows;
   final bool inlineValues;
@@ -185,11 +150,7 @@ class ItemMetadataCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: rows
-            .map(
-              (row) => _ItemMetadataRow(row: row, inlineValues: inlineValues),
-            )
-            .toList(),
+        children: rows.map((row) => _ItemMetadataRow(row: row, inlineValues: inlineValues)).toList(),
       ),
     );
 
@@ -202,8 +163,7 @@ class ItemMetadataCard extends StatelessWidget {
 }
 
 class ItemMetadataRowData {
-  const ItemMetadataRowData({required this.label, this.value, this.values})
-    : assert(value != null || values != null);
+  const ItemMetadataRowData({required this.label, this.value, this.values}) : assert(value != null || values != null);
 
   final String label;
   final String? value;
@@ -225,10 +185,8 @@ class _ItemMetadataRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-      letterSpacing: 0.4,
-    );
+    final labelStyle = Theme.of(context).textTheme.labelSmall
+        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 0.4);
     const labelColumnWidth = 120.0;
 
     if (inlineValues) {
@@ -244,13 +202,8 @@ class _ItemMetadataRow extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: row.value != null
-                  ? Text(
-                      row.value!,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    )
-                  : (row.values != null
-                        ? _InlineLinkValues(values: row.values!)
-                        : const SizedBox.shrink()),
+                  ? Text(row.value!, style: Theme.of(context).textTheme.bodyMedium)
+                  : (row.values != null ? _InlineLinkValues(values: row.values!) : const SizedBox.shrink()),
             ),
           ],
         ),
@@ -273,10 +226,7 @@ class _ItemMetadataRow extends StatelessWidget {
               children: row.values!
                   .map(
                     (value) => value.onTap == null
-                        ? Chip(
-                            label: Text(value.label),
-                            visualDensity: VisualDensity.compact,
-                          )
+                        ? Chip(label: Text(value.label), visualDensity: VisualDensity.compact)
                         : ActionChip(
                             label: Text(value.label),
                             visualDensity: VisualDensity.compact,
@@ -306,11 +256,7 @@ class _InlineLinkValues extends StatelessWidget {
       children: [
         for (int i = 0; i < values.length; i++) ...[
           if (i > 0) Text(', ', style: textStyle?.copyWith(color: muted)),
-          _InlineLinkText(
-            label: values[i].label,
-            onTap: values[i].onTap,
-            color: surface,
-          ),
+          _InlineLinkText(label: values[i].label, onTap: values[i].onTap, color: surface),
         ],
       ],
     );
@@ -327,19 +273,13 @@ class _InlineLinkText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      cursor: onTap == null
-          ? SystemMouseCursors.basic
-          : SystemMouseCursors.click,
+      cursor: onTap == null ? SystemMouseCursors.basic : SystemMouseCursors.click,
       child: GestureDetector(
         onTap: onTap,
         child: Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: color,
-            decoration: onTap == null
-                ? TextDecoration.none
-                : TextDecoration.underline,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: color, decoration: onTap == null ? TextDecoration.none : TextDecoration.underline),
         ),
       ),
     );

@@ -34,9 +34,7 @@ class BookmarkCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
-      color: isSelected
-          ? colorScheme.secondaryContainer
-          : colorScheme.surfaceContainerHigh,
+      color: isSelected ? colorScheme.secondaryContainer : colorScheme.surfaceContainerHigh,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
@@ -59,10 +57,7 @@ class BookmarkCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
                   color: colorScheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(12),
@@ -70,16 +65,11 @@ class BookmarkCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Icon(
-                      Icons.play_arrow_rounded,
-                      size: 17,
-                      color: colorScheme.onSecondaryContainer,
-                    ),
+                    Icon(Icons.play_arrow_rounded, size: 17, color: colorScheme.onSecondaryContainer),
                     const SizedBox(width: 3),
                     Text(
                       Duration(seconds: bookmark.time).toHhMmString(),
-                      style: Theme.of(context).textTheme.labelLarge
-                          ?.copyWith(color: colorScheme.onSecondaryContainer),
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: colorScheme.onSecondaryContainer),
                     ),
                   ],
                 ),
@@ -91,29 +81,19 @@ class BookmarkCard extends StatelessWidget {
                   child: Text(
                     note.isEmpty ? 'Untitled bookmark' : note,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: note.isEmpty
-                          ? colorScheme.onSurfaceVariant
-                          : colorScheme.onSurface,
-                      fontStyle: note.isEmpty
-                          ? FontStyle.italic
-                          : FontStyle.normal,
+                      color: note.isEmpty ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+                      fontStyle: note.isEmpty ? FontStyle.italic : FontStyle.normal,
                       height: 1.35,
                     ),
                   ),
                 ),
               ),
               if (selectionMode)
-                Checkbox(
-                  value: isSelected,
-                  onChanged: isBusy ? null : (_) => onSelect(),
-                )
+                Checkbox(value: isSelected, onChanged: isBusy ? null : (_) => onSelect())
               else if (isBusy)
                 const Padding(
                   padding: EdgeInsets.all(10),
-                  child: SizedBox.square(
-                    dimension: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+                  child: SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)),
                 )
               else
                 PopupMenuButton<_BookmarkAction>(
@@ -149,14 +129,8 @@ class BookmarkCard extends StatelessWidget {
                       value: _BookmarkAction.delete,
                       child: ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: Icon(
-                          Icons.delete_outline_rounded,
-                          color: colorScheme.error,
-                        ),
-                        title: Text(
-                          'Delete',
-                          style: TextStyle(color: colorScheme.error),
-                        ),
+                        leading: Icon(Icons.delete_outline_rounded, color: colorScheme.error),
+                        title: Text('Delete', style: TextStyle(color: colorScheme.error)),
                       ),
                     ),
                   ],

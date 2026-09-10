@@ -26,26 +26,17 @@ class CustomHeadersEditor extends StatelessWidget {
       children: [
         Text(
           'Headers are sent with requests to this server. Avoid sharing values that contain secrets.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
+          style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 14),
         if (headers.isEmpty)
           Text(
             'No custom headers configured.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
           )
         else
           ...headers.entries.map(
-            (entry) => _HeaderCard(
-              entry: entry,
-              enabled: enabled,
-              onEdit: onEdit,
-              onRemove: onRemove,
-            ),
+            (entry) => _HeaderCard(entry: entry, enabled: enabled, onEdit: onEdit, onRemove: onRemove),
           ),
         const SizedBox(height: 8),
         Align(
@@ -62,12 +53,7 @@ class CustomHeadersEditor extends StatelessWidget {
 }
 
 class _HeaderCard extends StatelessWidget {
-  const _HeaderCard({
-    required this.entry,
-    required this.enabled,
-    required this.onEdit,
-    required this.onRemove,
-  });
+  const _HeaderCard({required this.entry, required this.enabled, required this.onEdit, required this.onRemove});
 
   final MapEntry<String, String> entry;
   final bool enabled;
@@ -82,10 +68,7 @@ class _HeaderCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(color: colorScheme.surfaceContainer, borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Icon(Icons.http_rounded, color: colorScheme.primary, size: 20),
@@ -94,20 +77,13 @@ class _HeaderCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  entry.key,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall,
-                ),
+                Text(entry.key, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
                 const SizedBox(height: 2),
                 Text(
                   entry.value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),

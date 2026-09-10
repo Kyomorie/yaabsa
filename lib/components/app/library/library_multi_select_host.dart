@@ -39,10 +39,7 @@ class LibraryMultiSelectBindings {
   final ValueChanged<int> toggleSelectionByIndex;
 }
 
-typedef LibraryMultiSelectViewBuilder = Widget Function(
-  BuildContext context,
-  LibraryMultiSelectBindings selection,
-);
+typedef LibraryMultiSelectViewBuilder = Widget Function(BuildContext context, LibraryMultiSelectBindings selection);
 
 class LibraryMultiSelectHost extends HookConsumerWidget {
   const LibraryMultiSelectHost({
@@ -74,27 +71,21 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<SocketBatchQuickMatchComplete?>(
-      socketBatchQuickMatchCompleteProvider,
-      (previous, next) {
-        if (next == null) {
-          return;
-        }
+    ref.listen<SocketBatchQuickMatchComplete?>(socketBatchQuickMatchCompleteProvider, (previous, next) {
+      if (next == null) {
+        return;
+      }
 
-        if (previous?.timestamp == next.timestamp || !context.mounted) {
-          return;
-        }
+      if (previous?.timestamp == next.timestamp || !context.mounted) {
+        return;
+      }
 
-        final updateLabel = next.updates == 1
-            ? '1 book'
-            : '${next.updates} books';
-        final message = next.success && next.updates > 0
-            ? 'Metadata change request completed. $updateLabel updated.'
-            : 'Metadata change request completed.';
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
-      },
-    );
+      final updateLabel = next.updates == 1 ? '1 book' : '${next.updates} books';
+      final message = next.success && next.updates > 0
+          ? 'Metadata change request completed. $updateLabel updated.'
+          : 'Metadata change request completed.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    });
 
     final selectionMode = useState(false);
     final selectedItemIds = useState<Set<String>>(<String>{});
@@ -125,13 +116,9 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
       return null;
     }, <Object?>[scopeKey]);
 
-    final itemIndexById = <String, int>{
-      for (var i = 0; i < visibleItems.length; i++) visibleItems[i].id: i,
-    };
+    final itemIndexById = <String, int>{for (var i = 0; i < visibleItems.length; i++) visibleItems[i].id: i};
     final visibleIds = itemIndexById.keys.toSet();
-    final effectiveSelectedItemIds = selectedItemIds.value
-        .where(visibleIds.contains)
-        .toSet();
+    final effectiveSelectedItemIds = selectedItemIds.value.where(visibleIds.contains).toSet();
 
     if (effectiveSelectedItemIds.length != selectedItemIds.value.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -146,45 +133,32 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
     int? resolveIndexForId(String itemId) => itemIndexById[itemId];
 
     void enterSelectionByIndex(int index) {
-      if (index < 0 ||
-          index >= visibleItems.length ||
-          visibleItems[index].collapsedSeries != null) {
+      if (index < 0 || index >= visibleItems.length || visibleItems[index].collapsedSeries != null) {
         return;
       }
 
-      final next = Set<String>.from(effectiveSelectedItemIds)
-        ..add(visibleItems[index].id);
+      final next = Set<String>.from(effectiveSelectedItemIds)..add(visibleItems[index].id);
       selectedItemIds.value = next;
       selectionMode.value = true;
       selectionAnchorIndex.value = index;
     }
 
     void toggleSelectionByIndex(int index) {
-      if (index < 0 ||
-          index >= visibleItems.length ||
-          visibleItems[index].collapsedSeries != null) {
+      if (index < 0 || index >= visibleItems.length || visibleItems[index].collapsedSeries != null) {
         return;
       }
 
       final next = Set<String>.from(effectiveSelectedItemIds);
       final shiftPressed =
           enableShiftRange &&
-          (HardwareKeyboard.instance.logicalKeysPressed.contains(
-                LogicalKeyboardKey.shiftLeft,
-              ) ||
-              HardwareKeyboard.instance.logicalKeysPressed.contains(
-                LogicalKeyboardKey.shiftRight,
-              ));
+          (HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+              HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftRight));
 
       if (shiftPressed && selectionAnchorIndex.value != null) {
         final start = math.min(selectionAnchorIndex.value!, index);
         final end = math.max(selectionAnchorIndex.value!, index);
 
-        for (
-          var currentIndex = start;
-          currentIndex <= end && currentIndex < visibleItems.length;
-          currentIndex++
-        ) {
+        for (var currentIndex = start; currentIndex <= end && currentIndex < visibleItems.length; currentIndex++) {
           final item = visibleItems[currentIndex];
           if (item.collapsedSeries != null) {
             continue;
@@ -238,13 +212,8 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
     final selectedItems = visibleItems
         .where((item) => effectiveSelectedItemIds.contains(item.id))
         .toList(growable: false);
-    final progressByKey =
-        ref.watch(mediaProgressProvider).asData?.value ??
-        const <String, MediaProgress>{};
-    final allSelectedFinished = areAllSupportedLibraryItemsFinished(
-      selectedItems,
-      progressByKey,
-    );
+    final progressByKey = ref.watch(mediaProgressProvider).asData?.value ?? const <String, MediaProgress>{};
+    final allSelectedFinished = areAllSupportedLibraryItemsFinished(selectedItems, progressByKey);
     final hasDeletableSelectedItems = selectedItems.any(isAudiobookLibraryItem);
 
     final downloadedItemIds = <String>{};
@@ -253,8 +222,7 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
       if (ref.watch(completedDownloadForItemProvider(item.id))) {
         downloadedItemIds.add(item.id);
       }
-      if (ref.watch(downloadInProgressForItemProvider(item.id)).asData?.value ??
-          false) {
+      if (ref.watch(downloadInProgressForItemProvider(item.id)).asData?.value ?? false) {
         downloadingItemIds.add(item.id);
       }
     }
@@ -349,12 +317,8 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
           },
         ),
       MultiSelectAppBarAction(
-        icon: allSelectedFinished
-            ? Icons.remove_done_rounded
-            : Icons.task_alt_rounded,
-        tooltip: allSelectedFinished
-            ? 'Mark selected as unfinished'
-            : 'Mark selected as finished',
+        icon: allSelectedFinished ? Icons.remove_done_rounded : Icons.task_alt_rounded,
+        tooltip: allSelectedFinished ? 'Mark selected as unfinished' : 'Mark selected as finished',
         enabled: !selectionBusy.value,
         onPressed: () {
           runAction(() {
@@ -379,9 +343,7 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
       if (canDeleteItems)
         MultiSelectAppBarAction(
           icon: Icons.delete_outline_rounded,
-          tooltip: hasDeletableSelectedItems
-              ? 'Delete selected audiobooks'
-              : 'No selected audiobooks can be deleted',
+          tooltip: hasDeletableSelectedItems ? 'Delete selected audiobooks' : 'No selected audiobooks can be deleted',
           enabled: !selectionBusy.value && hasDeletableSelectedItems,
           onPressed: () {
             runAction(() async {
@@ -471,9 +433,7 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
     return Focus(
       focusNode: focusNode,
       onKeyEvent: (node, event) {
-        if (selectionMode.value &&
-            event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.escape) {
+        if (selectionMode.value && event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
           clearSelection();
           return KeyEventResult.handled;
         }

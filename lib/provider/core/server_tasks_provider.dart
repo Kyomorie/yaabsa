@@ -28,12 +28,10 @@ class ServerTasksState {
   }) {
     return ServerTasksState(
       tasks: tasks ?? this.tasks,
-      queuedEmbedLibraryItemIds:
-          queuedEmbedLibraryItemIds ?? this.queuedEmbedLibraryItemIds,
+      queuedEmbedLibraryItemIds: queuedEmbedLibraryItemIds ?? this.queuedEmbedLibraryItemIds,
       audioFilesEncoding: audioFilesEncoding ?? this.audioFilesEncoding,
       audioFilesFinished: audioFilesFinished ?? this.audioFilesFinished,
-      taskProgressByLibraryItem:
-          taskProgressByLibraryItem ?? this.taskProgressByLibraryItem,
+      taskProgressByLibraryItem: taskProgressByLibraryItem ?? this.taskProgressByLibraryItem,
     );
   }
 }
@@ -56,10 +54,7 @@ class ServerTasks extends _$ServerTasks {
             .toList(growable: false) ??
         const <String>[];
 
-    state = state.copyWith(
-      tasks: _sortTasks(response.tasks),
-      queuedEmbedLibraryItemIds: queuedIds,
-    );
+    state = state.copyWith(tasks: _sortTasks(response.tasks), queuedEmbedLibraryItemIds: queuedIds);
   }
 
   void addOrUpdateTask(AbsTask task) {
@@ -94,10 +89,7 @@ class ServerTasks extends _$ServerTasks {
     state = state.copyWith(tasks: _sortTasks(tasks));
   }
 
-  void setEmbedMetadataQueued({
-    required String libraryItemId,
-    required bool queued,
-  }) {
+  void setEmbedMetadataQueued({required String libraryItemId, required bool queued}) {
     final normalizedLibraryItemId = libraryItemId.trim();
     if (normalizedLibraryItemId.isEmpty) {
       return;
@@ -115,29 +107,19 @@ class ServerTasks extends _$ServerTasks {
     state = state.copyWith(queuedEmbedLibraryItemIds: nextQueuedIds);
   }
 
-  void updateTrackStarted({
-    required String libraryItemId,
-    required String ino,
-  }) {
+  void updateTrackStarted({required String libraryItemId, required String ino}) {
     updateTrackProgress(libraryItemId: libraryItemId, ino: ino, progress: 0);
   }
 
-  void updateTrackProgress({
-    required String libraryItemId,
-    required String ino,
-    required double progress,
-  }) {
+  void updateTrackProgress({required String libraryItemId, required String ino, required double progress}) {
     final normalizedLibraryItemId = libraryItemId.trim();
     final normalizedIno = ino.trim();
     if (normalizedLibraryItemId.isEmpty || normalizedIno.isEmpty) {
       return;
     }
 
-    final nextAudioFilesEncoding = Map<String, Map<String, String>>.from(
-      state.audioFilesEncoding,
-    );
-    final existingLibraryItemMap =
-        nextAudioFilesEncoding[normalizedLibraryItemId];
+    final nextAudioFilesEncoding = Map<String, Map<String, String>>.from(state.audioFilesEncoding);
+    final existingLibraryItemMap = nextAudioFilesEncoding[normalizedLibraryItemId];
 
     nextAudioFilesEncoding[normalizedLibraryItemId] = {
       ...?existingLibraryItemMap,
@@ -147,62 +129,38 @@ class ServerTasks extends _$ServerTasks {
     state = state.copyWith(audioFilesEncoding: nextAudioFilesEncoding);
   }
 
-  void updateTrackFinished({
-    required String libraryItemId,
-    required String ino,
-  }) {
+  void updateTrackFinished({required String libraryItemId, required String ino}) {
     final normalizedLibraryItemId = libraryItemId.trim();
     final normalizedIno = ino.trim();
     if (normalizedLibraryItemId.isEmpty || normalizedIno.isEmpty) {
       return;
     }
 
-    final nextAudioFilesEncoding = Map<String, Map<String, String>>.from(
-      state.audioFilesEncoding,
-    );
-    final existingEncodingLibraryItemMap =
-        nextAudioFilesEncoding[normalizedLibraryItemId];
-    nextAudioFilesEncoding[normalizedLibraryItemId] = {
-      ...?existingEncodingLibraryItemMap,
-      normalizedIno: '100%',
-    };
+    final nextAudioFilesEncoding = Map<String, Map<String, String>>.from(state.audioFilesEncoding);
+    final existingEncodingLibraryItemMap = nextAudioFilesEncoding[normalizedLibraryItemId];
+    nextAudioFilesEncoding[normalizedLibraryItemId] = {...?existingEncodingLibraryItemMap, normalizedIno: '100%'};
 
-    final nextAudioFilesFinished = Map<String, Map<String, bool>>.from(
-      state.audioFilesFinished,
-    );
-    final existingFinishedLibraryItemMap =
-        nextAudioFilesFinished[normalizedLibraryItemId];
-    nextAudioFilesFinished[normalizedLibraryItemId] = {
-      ...?existingFinishedLibraryItemMap,
-      normalizedIno: true,
-    };
+    final nextAudioFilesFinished = Map<String, Map<String, bool>>.from(state.audioFilesFinished);
+    final existingFinishedLibraryItemMap = nextAudioFilesFinished[normalizedLibraryItemId];
+    nextAudioFilesFinished[normalizedLibraryItemId] = {...?existingFinishedLibraryItemMap, normalizedIno: true};
 
-    state = state.copyWith(
-      audioFilesEncoding: nextAudioFilesEncoding,
-      audioFilesFinished: nextAudioFilesFinished,
-    );
+    state = state.copyWith(audioFilesEncoding: nextAudioFilesEncoding, audioFilesFinished: nextAudioFilesFinished);
   }
 
-  void updateTaskProgress({
-    required String libraryItemId,
-    required double progress,
-  }) {
+  void updateTaskProgress({required String libraryItemId, required double progress}) {
     final normalizedLibraryItemId = libraryItemId.trim();
     if (normalizedLibraryItemId.isEmpty) {
       return;
     }
 
-    final nextTaskProgress = Map<String, String>.from(
-      state.taskProgressByLibraryItem,
-    )..[normalizedLibraryItemId] = _toPercentageText(progress);
+    final nextTaskProgress = Map<String, String>.from(state.taskProgressByLibraryItem)
+      ..[normalizedLibraryItemId] = _toPercentageText(progress);
 
     state = state.copyWith(taskProgressByLibraryItem: nextTaskProgress);
   }
 
   void clearCompletedTaskActivity() {
-    final runningTasks = state.tasks
-        .where((task) => !task.isFinished)
-        .toList(growable: false);
+    final runningTasks = state.tasks.where((task) => !task.isFinished).toList(growable: false);
 
     final activeLibraryItemIds = runningTasks
         .map((task) => task.data?.libraryItemId?.trim())
@@ -210,18 +168,9 @@ class ServerTasks extends _$ServerTasks {
         .where((libraryItemId) => libraryItemId.isNotEmpty)
         .toSet();
 
-    final nextEncoding = _filterByLibraryItemIds(
-      state.audioFilesEncoding,
-      activeLibraryItemIds,
-    );
-    final nextFinished = _filterByLibraryItemIds(
-      state.audioFilesFinished,
-      activeLibraryItemIds,
-    );
-    final nextTaskProgress = _filterByLibraryItemIds(
-      state.taskProgressByLibraryItem,
-      activeLibraryItemIds,
-    );
+    final nextEncoding = _filterByLibraryItemIds(state.audioFilesEncoding, activeLibraryItemIds);
+    final nextFinished = _filterByLibraryItemIds(state.audioFilesFinished, activeLibraryItemIds);
+    final nextTaskProgress = _filterByLibraryItemIds(state.taskProgressByLibraryItem, activeLibraryItemIds);
 
     state = state.copyWith(
       tasks: _sortTasks(runningTasks),
@@ -251,15 +200,10 @@ String _toPercentageText(double value) {
   return '${normalized.round()}%';
 }
 
-Map<String, T> _filterByLibraryItemIds<T>(
-  Map<String, T> source,
-  Set<String> allowedLibraryItemIds,
-) {
+Map<String, T> _filterByLibraryItemIds<T>(Map<String, T> source, Set<String> allowedLibraryItemIds) {
   if (allowedLibraryItemIds.isEmpty) {
     return <String, T>{};
   }
 
-  return Map<String, T>.fromEntries(
-    source.entries.where((entry) => allowedLibraryItemIds.contains(entry.key)),
-  );
+  return Map<String, T>.fromEntries(source.entries.where((entry) => allowedLibraryItemIds.contains(entry.key)));
 }

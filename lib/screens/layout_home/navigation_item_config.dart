@@ -5,9 +5,5 @@ class NavigationItemConfig {
   final String label;
   final Widget page;
 
-  const NavigationItemConfig({
-    required this.icon,
-    required this.label,
-    required this.page,
-  });
+  const NavigationItemConfig({required this.icon, required this.label, required this.page});
 }

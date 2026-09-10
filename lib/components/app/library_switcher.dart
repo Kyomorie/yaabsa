@@ -7,18 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class LibrarySwitcher extends ConsumerWidget {
   const LibrarySwitcher({super.key});
 
-  Widget _chipButton(
-    BuildContext context,
-    String label, {
-    required bool compact,
-  }) {
+  Widget _chipButton(BuildContext context, String label, {required bool compact}) {
     final borderRadius = BorderRadius.circular(compact ? 12 : 14);
     return Container(
       height: 40,
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 12,
-        vertical: compact ? 6 : 8,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12, vertical: compact ? 6 : 8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: borderRadius,
@@ -79,9 +72,7 @@ class LibrarySwitcher extends ConsumerWidget {
                 child: Row(
                   children: [
                     Icon(
-                      library.id == selectedLibraryId
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
+                      library.id == selectedLibraryId ? Icons.check_circle : Icons.radio_button_unchecked,
                       size: 18,
                       color: library.id == selectedLibraryId
                           ? Theme.of(context).colorScheme.primary
@@ -93,9 +84,7 @@ class LibrarySwitcher extends ConsumerWidget {
                         library.name,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontWeight: library.id == selectedLibraryId
-                              ? FontWeight.w600
-                              : FontWeight.w400,
+                          fontWeight: library.id == selectedLibraryId ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
                     ),
@@ -118,11 +107,7 @@ class LibrarySwitcher extends ConsumerWidget {
     return userLibrariesAsyncValue.when(
       data: (libraries) {
         if (libraries.isEmpty) {
-          return _chipButton(
-            context,
-            selectedLibrary?.name ?? 'No library',
-            compact: true,
-          );
+          return _chipButton(context, selectedLibrary?.name ?? 'No library', compact: true);
         }
         return PlatformBuilder(
           mobileBuilder: (ctx) => _buildSelector(
@@ -151,16 +136,8 @@ class LibrarySwitcher extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const SizedBox(
-        width: 26,
-        height: 26,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
-      error: (error, stack) => _chipButton(
-        context,
-        selectedLibrary?.name ?? 'Library error',
-        compact: true,
-      ),
+      loading: () => const SizedBox(width: 26, height: 26, child: CircularProgressIndicator(strokeWidth: 2)),
+      error: (error, stack) => _chipButton(context, selectedLibrary?.name ?? 'Library error', compact: true),
     );
   }
 }

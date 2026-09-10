@@ -22,12 +22,10 @@ class AdminServerLibrariesView extends ConsumerStatefulWidget {
   const AdminServerLibrariesView({super.key});
 
   @override
-  ConsumerState<AdminServerLibrariesView> createState() =>
-      _AdminServerLibrariesViewState();
+  ConsumerState<AdminServerLibrariesView> createState() => _AdminServerLibrariesViewState();
 }
 
-class _AdminServerLibrariesViewState
-    extends ConsumerState<AdminServerLibrariesView> {
+class _AdminServerLibrariesViewState extends ConsumerState<AdminServerLibrariesView> {
   String? _activeUserId;
 
   bool _isLoading = true;
@@ -68,9 +66,7 @@ class _AdminServerLibrariesViewState
         return byOrder;
       }
 
-      final byName = left.name.toLowerCase().compareTo(
-        right.name.toLowerCase(),
-      );
+      final byName = left.name.toLowerCase().compareTo(right.name.toLowerCase());
       if (byName != 0) {
         return byName;
       }
@@ -103,9 +99,7 @@ class _AdminServerLibrariesViewState
 
     try {
       final response = await api.getLibraryApi().getLibraries();
-      final libraries = _sortedLibraries(
-        response.data?.libraries ?? const <Library>[],
-      );
+      final libraries = _sortedLibraries(response.data?.libraries ?? const <Library>[]);
 
       if (!mounted) {
         return;
@@ -121,10 +115,7 @@ class _AdminServerLibrariesViewState
       }
 
       setState(() {
-        _errorMessage = listManagementErrorMessage(
-          error,
-          fallback: 'Failed to load libraries.',
-        );
+        _errorMessage = listManagementErrorMessage(error, fallback: 'Failed to load libraries.');
       });
     } finally {
       if (mounted) {
@@ -151,9 +142,7 @@ class _AdminServerLibrariesViewState
 
   void _removeLibrary(String libraryId) {
     setState(() {
-      _libraries = _libraries
-          .where((entry) => entry.id != libraryId)
-          .toList(growable: false);
+      _libraries = _libraries.where((entry) => entry.id != libraryId).toList(growable: false);
     });
   }
 
@@ -167,10 +156,7 @@ class _AdminServerLibrariesViewState
     });
   }
 
-  bool _hasFolderChanges(
-    Library library,
-    List<LibraryFolderPayload> nextFolders,
-  ) {
+  bool _hasFolderChanges(Library library, List<LibraryFolderPayload> nextFolders) {
     final currentFolders = library.folders ?? const <LibraryFolder>[];
     if (currentFolders.length != nextFolders.length) {
       return true;
@@ -234,10 +220,7 @@ class _AdminServerLibrariesViewState
     return left == right;
   }
 
-  UpdateLibrarySettingsRequest? _buildSettingsPatch({
-    required LibrarySettings current,
-    required LibrarySettings next,
-  }) {
+  UpdateLibrarySettingsRequest? _buildSettingsPatch({required LibrarySettings current, required LibrarySettings next}) {
     final currentJson = current.toJson();
     final nextJson = next.toJson();
     final changedSettings = <String, dynamic>{};
@@ -254,9 +237,7 @@ class _AdminServerLibrariesViewState
       changedSettings[key] = nextValue;
     }
 
-    return changedSettings.isEmpty
-        ? null
-        : UpdateLibrarySettingsRequest.fromJson(changedSettings);
+    return changedSettings.isEmpty ? null : UpdateLibrarySettingsRequest.fromJson(changedSettings);
   }
 
   Future<void> _createLibrary() async {
@@ -303,12 +284,7 @@ class _AdminServerLibrariesViewState
       _invalidateLibraryProviders();
       _showMessage('Library created successfully.');
     } catch (error) {
-      _showMessage(
-        listManagementErrorMessage(
-          error,
-          fallback: 'Failed to create library.',
-        ),
-      );
+      _showMessage(listManagementErrorMessage(error, fallback: 'Failed to create library.'));
     } finally {
       if (mounted) {
         setState(() {
@@ -339,17 +315,10 @@ class _AdminServerLibrariesViewState
     final nextIcon = result.icon.trim();
 
     final changedName = nextName != library.name ? nextName : null;
-    final changedProvider = nextProvider != library.provider
-        ? nextProvider
-        : null;
+    final changedProvider = nextProvider != library.provider ? nextProvider : null;
     final changedIcon = nextIcon != library.icon ? nextIcon : null;
-    final changedFolders = _hasFolderChanges(library, result.folders)
-        ? result.folders
-        : null;
-    final changedSettings = _buildSettingsPatch(
-      current: library.settings,
-      next: result.settings,
-    );
+    final changedFolders = _hasFolderChanges(library, result.folders) ? result.folders : null;
+    final changedSettings = _buildSettingsPatch(current: library.settings, next: result.settings);
 
     if (changedName == null &&
         changedProvider == null &&
@@ -371,10 +340,7 @@ class _AdminServerLibrariesViewState
         settings: changedSettings,
       );
 
-      final response = await api.getLibraryApi().updateLibrary(
-        library.id,
-        request,
-      );
+      final response = await api.getLibraryApi().updateLibrary(library.id, request);
       final updatedLibrary = response.data;
 
       if (updatedLibrary == null) {
@@ -386,21 +352,13 @@ class _AdminServerLibrariesViewState
       _invalidateLibraryProviders();
       _showMessage('Library updated successfully.');
     } catch (error) {
-      _showMessage(
-        listManagementErrorMessage(
-          error,
-          fallback: 'Failed to update library.',
-        ),
-      );
+      _showMessage(listManagementErrorMessage(error, fallback: 'Failed to update library.'));
     } finally {
       _setLibraryBusy(library.id, false);
     }
   }
 
-  Future<void> _scanLibrary(
-    Library library, {
-    required bool forceRescan,
-  }) async {
+  Future<void> _scanLibrary(Library library, {required bool forceRescan}) async {
     if (_busyLibraryIds.contains(library.id)) {
       return;
     }
@@ -414,25 +372,15 @@ class _AdminServerLibrariesViewState
     _setLibraryBusy(library.id, true);
 
     try {
-      final success = await api.getLibraryApi().scanLibrary(
-        library.id,
-        forceRescan: forceRescan,
-      );
+      final success = await api.getLibraryApi().scanLibrary(library.id, forceRescan: forceRescan);
       if (!success) {
         _showMessage('Failed to start library scan.');
         return;
       }
 
-      _showMessage(
-        forceRescan ? 'Force rescan started.' : 'Library scan started.',
-      );
+      _showMessage(forceRescan ? 'Force rescan started.' : 'Library scan started.');
     } catch (error) {
-      _showMessage(
-        listManagementErrorMessage(
-          error,
-          fallback: 'Failed to start library scan.',
-        ),
-      );
+      _showMessage(listManagementErrorMessage(error, fallback: 'Failed to start library scan.'));
     } finally {
       _setLibraryBusy(library.id, false);
     }
@@ -468,12 +416,7 @@ class _AdminServerLibrariesViewState
       _invalidateLibraryProviders();
       _showMessage('Library deleted.');
     } catch (error) {
-      _showMessage(
-        listManagementErrorMessage(
-          error,
-          fallback: 'Failed to delete library.',
-        ),
-      );
+      _showMessage(listManagementErrorMessage(error, fallback: 'Failed to delete library.'));
     } finally {
       _setLibraryBusy(library.id, false);
     }
@@ -511,10 +454,7 @@ class _AdminServerLibrariesViewState
     try {
       final entries = [
         for (var index = 0; index < reordered.length; index++)
-          ReorderLibraryEntryRequest(
-            id: reordered[index].id,
-            newOrder: index + 1,
-          ),
+          ReorderLibraryEntryRequest(id: reordered[index].id, newOrder: index + 1),
       ];
 
       final response = await api.getLibraryApi().reorderLibraries(entries);
@@ -525,11 +465,7 @@ class _AdminServerLibrariesViewState
       }
 
       setState(() {
-        _libraries = _sortedLibraries(
-          serverLibraries == null || serverLibraries.isEmpty
-              ? reordered
-              : serverLibraries,
-        );
+        _libraries = _sortedLibraries(serverLibraries == null || serverLibraries.isEmpty ? reordered : serverLibraries);
       });
 
       _invalidateLibraryProviders();
@@ -542,12 +478,7 @@ class _AdminServerLibrariesViewState
       setState(() {
         _libraries = previousOrder;
       });
-      _showMessage(
-        listManagementErrorMessage(
-          error,
-          fallback: 'Failed to save library order.',
-        ),
-      );
+      _showMessage(listManagementErrorMessage(error, fallback: 'Failed to save library order.'));
     } finally {
       if (mounted) {
         setState(() {
@@ -570,9 +501,8 @@ class _AdminServerLibrariesViewState
               .join(' ')
               .toLowerCase();
 
-          final searchable =
-              '${library.name} ${library.mediaType} ${library.provider} ${library.icon} $foldersText'
-                  .toLowerCase();
+          final searchable = '${library.name} ${library.mediaType} ${library.provider} ${library.icon} $foldersText'
+              .toLowerCase();
           return searchable.contains(normalizedQuery);
         })
         .toList(growable: false);
@@ -607,12 +537,7 @@ class _AdminServerLibrariesViewState
 
       _showMessage('Started match-all metadata job.');
     } catch (error) {
-      _showMessage(
-        listManagementErrorMessage(
-          error,
-          fallback: 'Failed to start match-all metadata job.',
-        ),
-      );
+      _showMessage(listManagementErrorMessage(error, fallback: 'Failed to start match-all metadata job.'));
     } finally {
       _setLibraryBusy(library.id, false);
     }
@@ -629,35 +554,24 @@ class _AdminServerLibrariesViewState
     }
 
     return Card(
-      color: Theme.of(context).colorScheme.errorContainer
-          .withValues(alpha: 0.45),
+      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Row(
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              color: Theme.of(context).colorScheme.error,
-            ),
+            Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error),
             const SizedBox(width: 10),
             Expanded(child: Text(message)),
             const SizedBox(width: 10),
-            TextButton(
-              onPressed: () => unawaited(_loadLibraries(showLoading: true)),
-              child: const Text('Retry'),
-            ),
+            TextButton(onPressed: () => unawaited(_loadLibraries(showLoading: true)), child: const Text('Retry')),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildToolbar({
-    required bool compact,
-    required int totalCount,
-    required int filteredCount,
-  }) {
+  Widget _buildToolbar({required bool compact, required int totalCount, required int filteredCount}) {
     final summaryText = filteredCount == totalCount
         ? '$totalCount libraries'
         : '$filteredCount of $totalCount libraries';
@@ -680,37 +594,26 @@ class _AdminServerLibrariesViewState
           const SizedBox(height: 8),
           Text(
             summaryText,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
               IconButton.filledTonal(
                 tooltip: 'Refresh',
-                onPressed: _isLoading
-                    ? null
-                    : () => unawaited(_loadLibraries(showLoading: true)),
+                onPressed: _isLoading ? null : () => unawaited(_loadLibraries(showLoading: true)),
                 icon: const Icon(Icons.refresh_rounded),
               ),
               const SizedBox(width: 8),
               if (_isSavingOrder)
-                const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+                const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
               const Spacer(),
               IconButton.filled(
                 tooltip: 'Add library',
                 onPressed: _isLoading || _isCreating ? null : _createLibrary,
                 icon: _isCreating
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.library_add_rounded),
               ),
             ],
@@ -740,9 +643,8 @@ class _AdminServerLibrariesViewState
             const SizedBox(width: 12),
             Text(
               summaryText,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -750,36 +652,25 @@ class _AdminServerLibrariesViewState
         Row(
           children: [
             OutlinedButton.icon(
-              onPressed: _isLoading
-                  ? null
-                  : () => unawaited(_loadLibraries(showLoading: true)),
+              onPressed: _isLoading ? null : () => unawaited(_loadLibraries(showLoading: true)),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Refresh'),
             ),
             const SizedBox(width: 10),
             if (_isSavingOrder) ...[
-              const SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
               const SizedBox(width: 8),
               Text(
                 'Saving order...',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
             const Spacer(),
             FilledButton.icon(
               onPressed: _isLoading || _isCreating ? null : _createLibrary,
               icon: _isCreating
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.library_add_rounded),
               label: const Text('Add library'),
             ),
@@ -789,10 +680,7 @@ class _AdminServerLibrariesViewState
     );
   }
 
-  Widget _buildLibrariesList(
-    List<Library> filteredLibraries, {
-    required String? selectedLibraryId,
-  }) {
+  Widget _buildLibrariesList(List<Library> filteredLibraries, {required String? selectedLibraryId}) {
     final canReorder =
         _searchQuery.trim().isEmpty &&
         !_isLoading &&
@@ -808,26 +696,17 @@ class _AdminServerLibrariesViewState
         titleBuilder: (library) => library.name,
         subtitleBuilder: (library) => _mediaTypeLabel(library.mediaType),
         leadingIconBuilder: (library) => _iconForName(library.icon),
-        isSelected: (library) =>
-            selectedLibraryId != null && selectedLibraryId == library.id,
+        isSelected: (library) => selectedLibraryId != null && selectedLibraryId == library.id,
         onReorderItem: canReorder ? _reorderLibraries : null,
         trailingBuilder: (context, library) {
           if (_busyLibraryIds.contains(library.id)) {
-            return const [
-              SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ];
+            return const [SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))];
           }
 
           return [
             FilledButton.tonal(
               onPressed: () => _scanLibrary(library, forceRescan: false),
-              style: FilledButton.styleFrom(
-                visualDensity: VisualDensity.compact,
-              ),
+              style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
               child: const Text('Scan'),
             ),
             PopupMenuButton<String>(
@@ -854,24 +733,12 @@ class _AdminServerLibrariesViewState
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem<String>(
-                  value: 'edit',
-                  child: Text('Edit library'),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'scan-force',
-                  child: Text('Force rescan'),
-                ),
+                const PopupMenuItem<String>(value: 'edit', child: Text('Edit library')),
+                const PopupMenuItem<String>(value: 'scan-force', child: Text('Force rescan')),
                 if (library.mediaType == 'book')
-                  const PopupMenuItem<String>(
-                    value: 'match-all',
-                    child: Text('Match all books'),
-                  ),
+                  const PopupMenuItem<String>(value: 'match-all', child: Text('Match all books')),
                 const PopupMenuDivider(),
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: Text('Delete library'),
-                ),
+                const PopupMenuItem<String>(value: 'delete', child: Text('Delete library')),
               ],
               icon: const Icon(Icons.more_vert_rounded),
             ),
@@ -937,18 +804,9 @@ class _AdminServerLibrariesViewState
               const SizedBox(height: 10),
               _buildErrorCard(),
               if (_errorMessage?.isNotEmpty == true) const SizedBox(height: 10),
-              _buildToolbar(
-                compact: compact,
-                totalCount: _libraries.length,
-                filteredCount: filteredLibraries.length,
-              ),
+              _buildToolbar(compact: compact, totalCount: _libraries.length, filteredCount: filteredLibraries.length),
               const SizedBox(height: 12),
-              Expanded(
-                child: _buildLibrariesList(
-                  filteredLibraries,
-                  selectedLibraryId: selectedLibraryIdAsync.value,
-                ),
-              ),
+              Expanded(child: _buildLibrariesList(filteredLibraries, selectedLibraryId: selectedLibraryIdAsync.value)),
             ],
           ),
         );
@@ -959,10 +817,7 @@ class _AdminServerLibrariesViewState
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text(
-          'Failed to load user data: $error',
-          style: TextStyle(color: Theme.of(context).colorScheme.error),
-        ),
+        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
       ),
     );
   }

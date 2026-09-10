@@ -28,9 +28,7 @@ class SettingsToggleRow extends StatelessWidget {
             Expanded(child: Text(label, style: textStyle)),
             Checkbox(
               value: value,
-              onChanged: enabled
-                  ? (selected) => onChanged(selected ?? false)
-                  : null,
+              onChanged: enabled ? (selected) => onChanged(selected ?? false) : null,
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),

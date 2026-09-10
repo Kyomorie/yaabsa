@@ -13,15 +13,8 @@ part of 'stats_provider.dart';
 final listeningStatsProvider = ListeningStatsProvider._();
 
 final class ListeningStatsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<UserListeningStats>,
-          UserListeningStats,
-          FutureOr<UserListeningStats>
-        >
-    with
-        $FutureModifier<UserListeningStats>,
-        $FutureProvider<UserListeningStats> {
+    extends $FunctionalProvider<AsyncValue<UserListeningStats>, UserListeningStats, FutureOr<UserListeningStats>>
+    with $FutureModifier<UserListeningStats>, $FutureProvider<UserListeningStats> {
   ListeningStatsProvider._()
     : super(
         from: null,
@@ -38,9 +31,8 @@ final class ListeningStatsProvider
 
   @$internal
   @override
-  $FutureProviderElement<UserListeningStats> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<UserListeningStats> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
   FutureOr<UserListeningStats> create(Ref ref) {
@@ -54,25 +46,16 @@ String _$listeningStatsHash() => r'5361356c247ff4b678138d662ad55264ba67185d';
 final yearInReviewStatsProvider = YearInReviewStatsFamily._();
 
 final class YearInReviewStatsProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<YearInReviewStats?>,
-          YearInReviewStats?,
-          FutureOr<YearInReviewStats?>
-        >
-    with
-        $FutureModifier<YearInReviewStats?>,
-        $FutureProvider<YearInReviewStats?> {
-  YearInReviewStatsProvider._({
-    required YearInReviewStatsFamily super.from,
-    required int super.argument,
-  }) : super(
-         retry: null,
-         name: r'yearInReviewStatsProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+    extends $FunctionalProvider<AsyncValue<YearInReviewStats?>, YearInReviewStats?, FutureOr<YearInReviewStats?>>
+    with $FutureModifier<YearInReviewStats?>, $FutureProvider<YearInReviewStats?> {
+  YearInReviewStatsProvider._({required YearInReviewStatsFamily super.from, required int super.argument})
+    : super(
+        retry: null,
+        name: r'yearInReviewStatsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$yearInReviewStatsHash();
@@ -86,9 +69,8 @@ final class YearInReviewStatsProvider
 
   @$internal
   @override
-  $FutureProviderElement<YearInReviewStats?> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<YearInReviewStats?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
   FutureOr<YearInReviewStats?> create(Ref ref) {
@@ -109,8 +91,7 @@ final class YearInReviewStatsProvider
 
 String _$yearInReviewStatsHash() => r'2a75cbb2e3621010da5f506518d8b379dd64ae1d';
 
-final class YearInReviewStatsFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<YearInReviewStats?>, int> {
+final class YearInReviewStatsFamily extends $Family with $FunctionalFamilyOverride<FutureOr<YearInReviewStats?>, int> {
   YearInReviewStatsFamily._()
     : super(
         retry: null,
@@ -120,8 +101,7 @@ final class YearInReviewStatsFamily extends $Family
         isAutoDispose: true,
       );
 
-  YearInReviewStatsProvider call(int year) =>
-      YearInReviewStatsProvider._(argument: year, from: this);
+  YearInReviewStatsProvider call(int year) => YearInReviewStatsProvider._(argument: year, from: this);
 
   @override
   String toString() => r'yearInReviewStatsProvider';
@@ -137,9 +117,7 @@ final class ListeningActivityStatsProvider
           ListeningActivityStats,
           FutureOr<ListeningActivityStats>
         >
-    with
-        $FutureModifier<ListeningActivityStats>,
-        $FutureProvider<ListeningActivityStats> {
+    with $FutureModifier<ListeningActivityStats>, $FutureProvider<ListeningActivityStats> {
   ListeningActivityStatsProvider._()
     : super(
         from: null,
@@ -156,9 +134,8 @@ final class ListeningActivityStatsProvider
 
   @$internal
   @override
-  $FutureProviderElement<ListeningActivityStats> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<ListeningActivityStats> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
   FutureOr<ListeningActivityStats> create(Ref ref) {
@@ -166,19 +143,13 @@ final class ListeningActivityStatsProvider
   }
 }
 
-String _$listeningActivityStatsHash() =>
-    r'114f17e1bcc92cae08f75f75eebaaacf4b637122';
+String _$listeningActivityStatsHash() => r'114f17e1bcc92cae08f75f75eebaaacf4b637122';
 
 @ProviderFor(AdvancedListeningAnalytics)
-final advancedListeningAnalyticsProvider =
-    AdvancedListeningAnalyticsProvider._();
+final advancedListeningAnalyticsProvider = AdvancedListeningAnalyticsProvider._();
 
 final class AdvancedListeningAnalyticsProvider
-    extends
-        $NotifierProvider<
-          AdvancedListeningAnalytics,
-          AdvancedListeningAnalyticsState
-        > {
+    extends $NotifierProvider<AdvancedListeningAnalytics, AdvancedListeningAnalyticsState> {
   AdvancedListeningAnalyticsProvider._()
     : super(
         from: null,
@@ -201,35 +172,23 @@ final class AdvancedListeningAnalyticsProvider
   Override overrideWithValue(AdvancedListeningAnalyticsState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AdvancedListeningAnalyticsState>(
-        value,
-      ),
+      providerOverride: $SyncValueProvider<AdvancedListeningAnalyticsState>(value),
     );
   }
 }
 
-String _$advancedListeningAnalyticsHash() =>
-    r'4e9d0660d3ec1af5721c0f55538d2788ef695b03';
+String _$advancedListeningAnalyticsHash() => r'4e9d0660d3ec1af5721c0f55538d2788ef695b03';
 
-abstract class _$AdvancedListeningAnalytics
-    extends $Notifier<AdvancedListeningAnalyticsState> {
+abstract class _$AdvancedListeningAnalytics extends $Notifier<AdvancedListeningAnalyticsState> {
   AdvancedListeningAnalyticsState build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref =
-        this.ref
-            as $Ref<
-              AdvancedListeningAnalyticsState,
-              AdvancedListeningAnalyticsState
-            >;
+    final ref = this.ref as $Ref<AdvancedListeningAnalyticsState, AdvancedListeningAnalyticsState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<
-                AdvancedListeningAnalyticsState,
-                AdvancedListeningAnalyticsState
-              >,
+              AnyNotifier<AdvancedListeningAnalyticsState, AdvancedListeningAnalyticsState>,
               AdvancedListeningAnalyticsState,
               Object?,
               Object?

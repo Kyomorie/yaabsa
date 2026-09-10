@@ -51,8 +51,7 @@ class LibraryApi {
     return ABSApi.makeApiPostRequest(
       route: '/api/libraries',
       fromJson: (data) => Library.fromJson(data as Map<String, dynamic>),
-      bodyData: Map<String, dynamic>.from(request.toJson())
-        ..removeWhere((key, value) => value == null),
+      bodyData: Map<String, dynamic>.from(request.toJson())..removeWhere((key, value) => value == null),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -70,8 +69,7 @@ class LibraryApi {
     return ABSApi.makeApiPatchRequest(
       route: '/api/libraries/$libraryId',
       fromJson: (data) => Library.fromJson(data as Map<String, dynamic>),
-      bodyData: Map<String, dynamic>.from(request.toJson())
-        ..removeWhere((key, value) => value == null),
+      bodyData: Map<String, dynamic>.from(request.toJson())..removeWhere((key, value) => value == null),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -144,8 +142,7 @@ class LibraryApi {
     Map<String, dynamic>? extra,
   }) async {
     return ABSApi.makeApiPostRequest(
-      route:
-          '/api/libraries/$libraryId/remove-metadata?ext=${Uri.encodeQueryComponent(extension)}',
+      route: '/api/libraries/$libraryId/remove-metadata?ext=${Uri.encodeQueryComponent(extension)}',
       fromJson: (data) => RemoveLibraryMetadataResponse.fromJson(data),
       bodyData: const <String, dynamic>{},
       cancelToken: cancelToken,
@@ -202,8 +199,7 @@ class LibraryApi {
 
     return ABSApi.makeApiGetRequest(
       route: '/api/libraries/$libraryId',
-      fromJson: (data) =>
-          LibraryDetailsResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) => LibraryDetailsResponse.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -382,8 +378,7 @@ class LibraryApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/libraries/$libraryId/recent-episodes',
-      fromJson: (data) =>
-          RecentEpisodesResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) => RecentEpisodesResponse.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,

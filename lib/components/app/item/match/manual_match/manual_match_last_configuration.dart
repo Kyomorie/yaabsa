@@ -3,10 +3,7 @@ import 'dart:convert';
 import 'package:yaabsa/components/app/item/match/manual_match/manual_match_models.dart';
 
 class ManualMatchLastConfiguration {
-  const ManualMatchLastConfiguration({
-    required this.enabledFields,
-    required this.listModes,
-  });
+  const ManualMatchLastConfiguration({required this.enabledFields, required this.listModes});
 
   final Set<ManualMatchField> enabledFields;
   final Map<ManualMatchField, ManualListApplyMode> listModes;
@@ -17,12 +14,8 @@ class ManualMatchLastConfiguration {
 
   String toRawSettingValue() {
     final payload = <String, dynamic>{
-      'enabledFields': enabledFields
-          .map((field) => field.name)
-          .toList(growable: false),
-      'listModes': <String, String>{
-        for (final entry in listModes.entries) entry.key.name: entry.value.name,
-      },
+      'enabledFields': enabledFields.map((field) => field.name).toList(growable: false),
+      'listModes': <String, String>{for (final entry in listModes.entries) entry.key.name: entry.value.name},
     };
     return jsonEncode(payload);
   }
@@ -31,9 +24,7 @@ class ManualMatchLastConfiguration {
     _current = fromRawSettingValue(rawSettingValue);
   }
 
-  static ManualMatchLastConfiguration? fromRawSettingValue(
-    String? rawSettingValue,
-  ) {
+  static ManualMatchLastConfiguration? fromRawSettingValue(String? rawSettingValue) {
     final source = rawSettingValue?.trim();
     if (source == null || source.isEmpty) {
       return null;
@@ -74,10 +65,7 @@ class ManualMatchLastConfiguration {
         return null;
       }
 
-      return ManualMatchLastConfiguration(
-        enabledFields: enabledFields,
-        listModes: listModes,
-      );
+      return ManualMatchLastConfiguration(enabledFields: enabledFields, listModes: listModes);
     } catch (_) {
       return null;
     }

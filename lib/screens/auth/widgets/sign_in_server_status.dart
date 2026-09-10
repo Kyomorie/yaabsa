@@ -2,12 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/api/me/status.dart';
 
 class SignInServerStatus extends StatelessWidget {
-  const SignInServerStatus({
-    super.key,
-    required this.isLoading,
-    required this.status,
-    required this.error,
-  });
+  const SignInServerStatus({super.key, required this.isLoading, required this.status, required this.error});
 
   final bool isLoading;
   final ServerStatus? status;
@@ -24,18 +19,10 @@ class SignInServerStatus extends StatelessWidget {
           SizedBox(
             height: 14,
             width: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(width: 8),
-          Text(
-            'Checking server...',
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
+          Text('Checking server...', style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
         ],
       );
     }
@@ -43,18 +30,12 @@ class SignInServerStatus extends StatelessWidget {
     if (status != null) {
       return Row(
         children: [
-          Icon(
-            Icons.check_circle_rounded,
-            size: 16,
-            color: colorScheme.primary,
-          ),
+          Icon(Icons.check_circle_rounded, size: 16, color: colorScheme.primary),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               status!.serverVersion,
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ),
         ],
@@ -62,10 +43,7 @@ class SignInServerStatus extends StatelessWidget {
     }
 
     if (error != null) {
-      return Text(
-        error!,
-        style: textTheme.bodySmall?.copyWith(color: colorScheme.error),
-      );
+      return Text(error!, style: textTheme.bodySmall?.copyWith(color: colorScheme.error));
     }
 
     return const SizedBox.shrink();

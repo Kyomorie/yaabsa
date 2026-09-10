@@ -6,9 +6,7 @@ part of 'library_folder_payload.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_LibraryFolderPayload _$LibraryFolderPayloadFromJson(
-  Map<String, dynamic> json,
-) => _LibraryFolderPayload(
+_LibraryFolderPayload _$LibraryFolderPayloadFromJson(Map<String, dynamic> json) => _LibraryFolderPayload(
   id: json['id'] as String?,
   fullPath: json['fullPath'] as String?,
   path: json['path'] as String?,
@@ -16,9 +14,7 @@ _LibraryFolderPayload _$LibraryFolderPayloadFromJson(
   addedAt: (json['addedAt'] as num?)?.toInt(),
 );
 
-Map<String, dynamic> _$LibraryFolderPayloadToJson(
-  _LibraryFolderPayload instance,
-) => <String, dynamic>{
+Map<String, dynamic> _$LibraryFolderPayloadToJson(_LibraryFolderPayload instance) => <String, dynamic>{
   'id': ?instance.id,
   'fullPath': ?instance.fullPath,
   'path': ?instance.path,

@@ -10,10 +10,8 @@ abstract class LibraryPodcastTitle with _$LibraryPodcastTitle {
     @JsonKey(name: 'id') String? id,
     @JsonKey(name: 'libraryItemId') String? libraryItemId,
     @JsonKey(name: 'title') @Default('') String title,
-    @JsonKey(name: 'itunesId', fromJson: jsonStringFromDynamic)
-    String? itunesId,
+    @JsonKey(name: 'itunesId', fromJson: jsonStringFromDynamic) String? itunesId,
   }) = _LibraryPodcastTitle;
 
-  factory LibraryPodcastTitle.fromJson(Map<String, dynamic> json) =>
-      _$LibraryPodcastTitleFromJson(json);
+  factory LibraryPodcastTitle.fromJson(Map<String, dynamic> json) => _$LibraryPodcastTitleFromJson(json);
 }

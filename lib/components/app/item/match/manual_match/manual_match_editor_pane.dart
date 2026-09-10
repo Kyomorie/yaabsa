@@ -30,10 +30,8 @@ class ManualMatchEditorPane extends StatelessWidget {
   final bool saving;
   final ValueChanged<bool> onToggleAll;
   final void Function(ManualMatchField field, bool enabled) onToggleField;
-  final void Function(ManualMatchField field, ManualListApplyMode mode)
-  onChangeListMode;
-  final TextEditingController? Function(ManualMatchField field)
-  controllerForField;
+  final void Function(ManualMatchField field, ManualListApplyMode mode) onChangeListMode;
+  final TextEditingController? Function(ManualMatchField field) controllerForField;
   final bool? Function(ManualMatchField field) boolValueForField;
   final void Function(ManualMatchField field, String value) onChangeFieldText;
   final void Function(ManualMatchField field, bool? value) onChangeBoolValue;
@@ -95,13 +93,11 @@ class ManualMatchEditorPane extends StatelessWidget {
                       currentValue: currentValue,
                       textController: controllerForField(field),
                       boolValue: boolValueForField(field),
-                      listMode:
-                          listModes[field] ?? ManualListApplyMode.overwrite,
+                      listMode: listModes[field] ?? ManualListApplyMode.overwrite,
                       onToggleField: (value) => onToggleField(field, value),
                       onTextChanged: (value) => onChangeFieldText(field, value),
                       onBoolChanged: (value) => onChangeBoolValue(field, value),
-                      onListModeChanged: (mode) =>
-                          onChangeListMode(field, mode),
+                      onListModeChanged: (mode) => onChangeListMode(field, mode),
                       buildCurrentCoverPreview: buildCurrentCoverPreview,
                     ),
                     const Divider(height: 1),

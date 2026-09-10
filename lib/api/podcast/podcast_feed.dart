@@ -6,27 +6,20 @@ part 'podcast_feed.g.dart';
 
 @freezed
 abstract class PodcastFeedResponse with _$PodcastFeedResponse {
-  const factory PodcastFeedResponse({
-    @JsonKey(name: 'podcast') required PodcastFeed podcast,
-  }) = _PodcastFeedResponse;
+  const factory PodcastFeedResponse({@JsonKey(name: 'podcast') required PodcastFeed podcast}) = _PodcastFeedResponse;
 
-  factory PodcastFeedResponse.fromJson(Map<String, dynamic> json) =>
-      _$PodcastFeedResponseFromJson(json);
+  factory PodcastFeedResponse.fromJson(Map<String, dynamic> json) => _$PodcastFeedResponseFromJson(json);
 }
 
 @freezed
 abstract class PodcastFeed with _$PodcastFeed {
   const factory PodcastFeed({
     @JsonKey(name: 'metadata') required PodcastFeedMetadata metadata,
-    @JsonKey(name: 'episodes')
-    @Default(<PodcastFeedEpisode>[])
-    List<PodcastFeedEpisode> episodes,
-    @JsonKey(name: 'numEpisodes', fromJson: jsonIntFromDynamic)
-    int? numEpisodes,
+    @JsonKey(name: 'episodes') @Default(<PodcastFeedEpisode>[]) List<PodcastFeedEpisode> episodes,
+    @JsonKey(name: 'numEpisodes', fromJson: jsonIntFromDynamic) int? numEpisodes,
   }) = _PodcastFeed;
 
-  factory PodcastFeed.fromJson(Map<String, dynamic> json) =>
-      _$PodcastFeedFromJson(json);
+  factory PodcastFeed.fromJson(Map<String, dynamic> json) => _$PodcastFeedFromJson(json);
 }
 
 @freezed
@@ -46,8 +39,7 @@ abstract class PodcastFeedMetadata with _$PodcastFeedMetadata {
     @JsonKey(name: 'type') String? type,
   }) = _PodcastFeedMetadata;
 
-  factory PodcastFeedMetadata.fromJson(Map<String, dynamic> json) =>
-      _$PodcastFeedMetadataFromJson(json);
+  factory PodcastFeedMetadata.fromJson(Map<String, dynamic> json) => _$PodcastFeedMetadataFromJson(json);
 }
 
 @freezed
@@ -63,22 +55,17 @@ abstract class PodcastFeedEpisode with _$PodcastFeedEpisode {
     @JsonKey(name: 'episode') String? episode,
     @JsonKey(name: 'author') String? author,
     @JsonKey(name: 'duration') String? duration,
-    @JsonKey(name: 'durationSeconds', fromJson: jsonIntFromDynamic)
-    int? durationSeconds,
+    @JsonKey(name: 'durationSeconds', fromJson: jsonIntFromDynamic) int? durationSeconds,
     @JsonKey(name: 'explicit') String? explicit,
-    @JsonKey(name: 'publishedAt', fromJson: jsonIntFromDynamic)
-    int? publishedAt,
+    @JsonKey(name: 'publishedAt', fromJson: jsonIntFromDynamic) int? publishedAt,
     @JsonKey(name: 'enclosure') PodcastFeedEpisodeEnclosure? enclosure,
     @JsonKey(name: 'guid') String? guid,
     @JsonKey(name: 'chaptersUrl') String? chaptersUrl,
     @JsonKey(name: 'chaptersType') String? chaptersType,
-    @JsonKey(name: 'chapters')
-    @Default(<PodcastFeedEpisodeChapter>[])
-    List<PodcastFeedEpisodeChapter> chapters,
+    @JsonKey(name: 'chapters') @Default(<PodcastFeedEpisodeChapter>[]) List<PodcastFeedEpisodeChapter> chapters,
   }) = _PodcastFeedEpisode;
 
-  factory PodcastFeedEpisode.fromJson(Map<String, dynamic> json) =>
-      _$PodcastFeedEpisodeFromJson(json);
+  factory PodcastFeedEpisode.fromJson(Map<String, dynamic> json) => _$PodcastFeedEpisodeFromJson(json);
 }
 
 @freezed
@@ -100,6 +87,5 @@ abstract class PodcastFeedEpisodeChapter with _$PodcastFeedEpisodeChapter {
     @JsonKey(name: 'start', fromJson: jsonDoubleFromDynamic) double? start,
   }) = _PodcastFeedEpisodeChapter;
 
-  factory PodcastFeedEpisodeChapter.fromJson(Map<String, dynamic> json) =>
-      _$PodcastFeedEpisodeChapterFromJson(json);
+  factory PodcastFeedEpisodeChapter.fromJson(Map<String, dynamic> json) => _$PodcastFeedEpisodeChapterFromJson(json);
 }

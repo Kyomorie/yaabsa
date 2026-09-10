@@ -137,17 +137,12 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
       padding: const EdgeInsets.only(top: 6),
       child: Text(
         errorText,
-        style: Theme.of(context).textTheme.bodySmall
-            ?.copyWith(color: Theme.of(context).colorScheme.error),
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
       ),
     );
   }
 
-  Future<void> _copyToClipboard(
-    BuildContext context, {
-    required String label,
-    required String value,
-  }) async {
+  Future<void> _copyToClipboard(BuildContext context, {required String label, required String value}) async {
     if (value.trim().isEmpty) {
       return;
     }
@@ -162,11 +157,7 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
       ..showSnackBar(SnackBar(content: Text('$label copied.')));
   }
 
-  Widget _buildCallbackUrlRow(
-    BuildContext context, {
-    required String label,
-    required String value,
-  }) {
+  Widget _buildCallbackUrlRow(BuildContext context, {required String label, required String value}) {
     final canCopy = value.trim().isNotEmpty;
 
     return Column(
@@ -177,16 +168,11 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: SelectableText(
-                value.trim().isEmpty ? '-' : value,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              child: SelectableText(value.trim().isEmpty ? '-' : value, style: Theme.of(context).textTheme.bodyMedium),
             ),
             IconButton(
               tooltip: 'Copy URL',
-              onPressed: canCopy
-                  ? () => _copyToClipboard(context, label: label, value: value)
-                  : null,
+              onPressed: canCopy ? () => _copyToClipboard(context, label: label, value: value) : null,
               icon: const Icon(Icons.copy_rounded),
             ),
           ],
@@ -210,9 +196,7 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
               contentPadding: const EdgeInsets.symmetric(horizontal: 4),
               title: const Text('Show custom login message'),
               value: showCustomLoginMessage,
-              onChanged: _canEditFields
-                  ? onShowCustomLoginMessageChanged
-                  : null,
+              onChanged: _canEditFields ? onShowCustomLoginMessageChanged : null,
             ),
             if (showCustomLoginMessage) ...[
               const SizedBox(height: 8),
@@ -237,19 +221,15 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
               contentPadding: const EdgeInsets.symmetric(horizontal: 4),
               title: const Text('Enable local authentication'),
               value: enableLocalAuth,
-              onChanged:
-                  _canEditFields && (!enableLocalAuth || canDisableLocalAuth)
-                  ? onEnableLocalAuthChanged
-                  : null,
+              onChanged: _canEditFields && (!enableLocalAuth || canDisableLocalAuth) ? onEnableLocalAuthChanged : null,
             ),
             if (enableLocalAuth && !canDisableLocalAuth)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Text(
                   'OpenID must be configured before local authentication can be disabled.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
             const SizedBox(height: 8),
@@ -275,11 +255,7 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
                   final autoPopulateButton = FilledButton.icon(
                     onPressed: _canEditFields ? onAutoPopulateOpenId : null,
                     icon: isAutoPopulatingOpenId
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.auto_fix_high_rounded),
                     label: const Text('Auto-populate'),
                   );
@@ -287,11 +263,7 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
                   if (stacked) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        issuerField,
-                        const SizedBox(height: 8),
-                        autoPopulateButton,
-                      ],
+                      children: [issuerField, const SizedBox(height: 8), autoPopulateButton],
                     );
                   }
 
@@ -300,10 +272,7 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
                     children: [
                       Expanded(child: issuerField),
                       const SizedBox(width: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: autoPopulateButton,
-                      ),
+                      Padding(padding: const EdgeInsets.only(top: 2), child: autoPopulateButton),
                     ],
                   );
                 },
@@ -365,22 +334,15 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
                 onChanged: onFieldChanged,
                 suffixIcon: IconButton(
                   tooltip: obscureClientSecret ? 'Show secret' : 'Hide secret',
-                  onPressed: _canEditFields
-                      ? () => onObscureClientSecretChanged(!obscureClientSecret)
-                      : null,
-                  icon: Icon(
-                    obscureClientSecret
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                  ),
+                  onPressed: _canEditFields ? () => onObscureClientSecretChanged(!obscureClientSecret) : null,
+                  icon: Icon(obscureClientSecret ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                 ),
               ),
               const SizedBox(height: 8),
               if (signingAlgorithmOptions.isNotEmpty)
                 YaabsaDropdownField<String>(
                   label: 'Signing Algorithm',
-                  value:
-                      signingAlgorithmOptions.contains(selectedSigningAlgorithm)
+                  value: signingAlgorithmOptions.contains(selectedSigningAlgorithm)
                       ? selectedSigningAlgorithm
                       : signingAlgorithmOptions.first,
                   enabled: _canEditFields,
@@ -390,12 +352,7 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
                     }
                   },
                   items: signingAlgorithmOptions
-                      .map(
-                        (entry) => DropdownMenuItem<String>(
-                          value: entry,
-                          child: Text(entry),
-                        ),
-                      )
+                      .map((entry) => DropdownMenuItem<String>(value: entry, child: Text(entry)))
                       .toList(growable: false),
                 )
               else
@@ -406,8 +363,7 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
                   errorText: signingAlgorithmError,
                   onChanged: onFieldChanged,
                 ),
-              if (signingAlgorithmOptions.isNotEmpty)
-                _buildErrorText(context, signingAlgorithmError),
+              if (signingAlgorithmOptions.isNotEmpty) _buildErrorText(context, signingAlgorithmError),
               const SizedBox(height: 8),
               StringChipListInput(
                 label: 'Mobile Redirect URIs',
@@ -421,11 +377,7 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
               const SizedBox(height: 8),
               YaabsaDropdownField<String>(
                 label: 'Web Redirect Subfolder',
-                value:
-                    const <String>[
-                      '/',
-                      '/audiobookshelf',
-                    ].contains(selectedWebRedirectSubfolder)
+                value: const <String>['/', '/audiobookshelf'].contains(selectedWebRedirectSubfolder)
                     ? selectedWebRedirectSubfolder
                     : '/',
                 enabled: _canEditFields,
@@ -436,25 +388,14 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
                 },
                 items: const [
                   DropdownMenuItem<String>(value: '/', child: Text('/')),
-                  DropdownMenuItem<String>(
-                    value: '/audiobookshelf',
-                    child: Text('/audiobookshelf'),
-                  ),
+                  DropdownMenuItem<String>(value: '/audiobookshelf', child: Text('/audiobookshelf')),
                 ],
               ),
               _buildErrorText(context, subfolderError),
               const SizedBox(height: 8),
-              _buildCallbackUrlRow(
-                context,
-                label: 'Web Callback URL',
-                value: webCallbackUrl,
-              ),
+              _buildCallbackUrlRow(context, label: 'Web Callback URL', value: webCallbackUrl),
               const SizedBox(height: 8),
-              _buildCallbackUrlRow(
-                context,
-                label: 'Mobile Callback URL',
-                value: mobileCallbackUrl,
-              ),
+              _buildCallbackUrlRow(context, label: 'Mobile Callback URL', value: mobileCallbackUrl),
               const SizedBox(height: 8),
               StyledTextField(
                 label: 'OpenID Button Text',
@@ -465,53 +406,29 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
               const SizedBox(height: 8),
               YaabsaDropdownField<String>(
                 label: 'Match Existing Users By',
-                value:
-                    const <String>[
-                      '',
-                      'email',
-                      'username',
-                    ].contains(matchExistingBy)
-                    ? matchExistingBy
-                    : '',
+                value: const <String>['', 'email', 'username'].contains(matchExistingBy) ? matchExistingBy : '',
                 enabled: _canEditFields,
                 onChanged: (next) => onMatchExistingByChanged(next ?? ''),
                 items: const [
-                  DropdownMenuItem<String>(
-                    value: '',
-                    child: Text('Do not match'),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: 'email',
-                    child: Text('Match by email'),
-                  ),
-                  DropdownMenuItem<String>(
-                    value: 'username',
-                    child: Text('Match by username'),
-                  ),
+                  DropdownMenuItem<String>(value: '', child: Text('Do not match')),
+                  DropdownMenuItem<String>(value: 'email', child: Text('Match by email')),
+                  DropdownMenuItem<String>(value: 'username', child: Text('Match by username')),
                 ],
               ),
               const SizedBox(height: 8),
               SwitchListTile.adaptive(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                 title: const Text('Auto-launch OpenID login'),
-                subtitle: const Text(
-                  'Automatically redirect users to OpenID sign-in on the login page.',
-                ),
+                subtitle: const Text('Automatically redirect users to OpenID sign-in on the login page.'),
                 value: authOpenIdAutoLaunch,
-                onChanged: _canEditFields
-                    ? onAuthOpenIdAutoLaunchChanged
-                    : null,
+                onChanged: _canEditFields ? onAuthOpenIdAutoLaunchChanged : null,
               ),
               SwitchListTile.adaptive(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                 title: const Text('Auto-register OpenID users'),
-                subtitle: const Text(
-                  'Create local users automatically when OpenID users sign in for the first time.',
-                ),
+                subtitle: const Text('Create local users automatically when OpenID users sign in for the first time.'),
                 value: authOpenIdAutoRegister,
-                onChanged: _canEditFields
-                    ? onAuthOpenIdAutoRegisterChanged
-                    : null,
+                onChanged: _canEditFields ? onAuthOpenIdAutoRegisterChanged : null,
               ),
               const SizedBox(height: 8),
               StyledTextField(
@@ -540,8 +457,7 @@ class AdminAuthenticationSettingsPanel extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               authMethodsError!,
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: Theme.of(context).colorScheme.error),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
             ),
           ),
       ],

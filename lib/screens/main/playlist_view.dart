@@ -26,11 +26,7 @@ class PlaylistView extends HookConsumerWidget {
     final serverReachable = ref.watch(serverStatusProvider).value ?? false;
 
     if (selectedLibrary == null) {
-      return const Center(
-        child: Text(
-          'No library selected. Please select a library via the switcher.',
-        ),
-      );
+      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
     }
 
     final libraryId = selectedLibrary.id;
@@ -56,16 +52,9 @@ class PlaylistView extends HookConsumerWidget {
               (playlist) => ManagedMultiBookCardConfig(
                 entry: MultiBookEntryData.fromPlaylist(playlist),
                 onTap: () {
-                  context.push(
-                    '/playlist/${playlist.id}',
-                    extra: MultiBookEntryData.fromPlaylist(playlist),
-                  );
+                  context.push('/playlist/${playlist.id}', extra: MultiBookEntryData.fromPlaylist(playlist));
                 },
-                onLongPress:
-                    _canManagePlaylist(
-                      playlist: playlist,
-                      currentUserId: currentUser?.id,
-                    )
+                onLongPress: _canManagePlaylist(playlist: playlist, currentUserId: currentUser?.id)
                     ? () => _showPlaylistActionsSheet(
                         context: context,
                         ref: ref,
@@ -94,37 +83,28 @@ class PlaylistView extends HookConsumerWidget {
           scrollController: scrollController,
           api: api,
           cards: cards,
-          onRefresh: () => ref
-              .read(playlistsProvider(libraryId).notifier)
-              .refresh(withLoading: false),
+          onRefresh: () => ref.read(playlistsProvider(libraryId).notifier).refresh(withLoading: false),
         );
       },
       loading: () => const LoadingView(),
       error: (error, stackTrace) {
         if (!serverReachable) {
           return ConnectionIssueView.offline(
-            onRetry: () => ref
-                .read(playlistsProvider(libraryId).notifier)
-                .refresh(withLoading: true),
+            onRetry: () => ref.read(playlistsProvider(libraryId).notifier).refresh(withLoading: true),
           );
         }
 
         return ConnectionIssueView.requestFailed(
           error: error,
           title: 'Error loading playlists',
-          onRetry: () => ref
-              .read(playlistsProvider(libraryId).notifier)
-              .refresh(withLoading: true),
+          onRetry: () => ref.read(playlistsProvider(libraryId).notifier).refresh(withLoading: true),
         );
       },
     );
   }
 }
 
-bool _canManagePlaylist({
-  required Playlist playlist,
-  required String? currentUserId,
-}) {
+bool _canManagePlaylist({required Playlist playlist, required String? currentUserId}) {
   if (currentUserId == null || currentUserId.isEmpty) {
     return false;
   }
@@ -146,20 +126,13 @@ Future<void> _showPlaylistActionsSheet({
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              title: Text(
-                playlist.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+            ListTile(title: Text(playlist.name, maxLines: 1, overflow: TextOverflow.ellipsis)),
             const Divider(height: 1),
             if (allowBookSelection)
               ListTile(
                 leading: const Icon(Icons.menu_book_rounded),
                 title: const Text('Edit books'),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(_PlaylistAction.editBooks),
+                onTap: () => Navigator.of(sheetContext).pop(_PlaylistAction.editBooks),
               ),
             ListTile(
               leading: const Icon(Icons.edit_outlined),
@@ -169,8 +142,7 @@ Future<void> _showPlaylistActionsSheet({
             ListTile(
               leading: const Icon(Icons.delete_outline_rounded),
               title: const Text('Delete playlist'),
-              onTap: () =>
-                  Navigator.of(sheetContext).pop(_PlaylistAction.delete),
+              onTap: () => Navigator.of(sheetContext).pop(_PlaylistAction.delete),
             ),
           ],
         ),
@@ -184,28 +156,13 @@ Future<void> _showPlaylistActionsSheet({
 
   switch (selectedAction) {
     case _PlaylistAction.editBooks:
-      await _editPlaylistBooks(
-        context: context,
-        ref: ref,
-        libraryId: libraryId,
-        playlist: playlist,
-      );
+      await _editPlaylistBooks(context: context, ref: ref, libraryId: libraryId, playlist: playlist);
       break;
     case _PlaylistAction.edit:
-      await _editPlaylist(
-        context: context,
-        ref: ref,
-        libraryId: libraryId,
-        playlist: playlist,
-      );
+      await _editPlaylist(context: context, ref: ref, libraryId: libraryId, playlist: playlist);
       break;
     case _PlaylistAction.delete:
-      await _deletePlaylist(
-        context: context,
-        ref: ref,
-        libraryId: libraryId,
-        playlist: playlist,
-      );
+      await _deletePlaylist(context: context, ref: ref, libraryId: libraryId, playlist: playlist);
       break;
   }
 }
@@ -231,9 +188,7 @@ Future<void> _createPlaylist({
             .createPlaylist(
               name: name,
               description: description,
-              items: bookIds
-                  .map((bookId) => <String, dynamic>{'libraryItemId': bookId})
-                  .toList(growable: false),
+              items: bookIds.map((bookId) => <String, dynamic>{'libraryItemId': bookId}).toList(growable: false),
             );
       },
       successMessage: 'Playlist created.',
@@ -278,9 +233,7 @@ Future<void> _editPlaylistBooks({
         .read(playlistsProvider(libraryId).notifier)
         .replaceBooksInPlaylist(
           playlist.id,
-          currentBookIds: currentBooks
-              .map((item) => item.id)
-              .toList(growable: false),
+          currentBookIds: currentBooks.map((item) => item.id).toList(growable: false),
           desiredBookIds: bookIds,
         ),
     successMessage: 'Playlist books updated.',
@@ -317,9 +270,7 @@ Future<void> _deletePlaylist({
     context: context,
     title: 'Delete playlist?',
     message: '"${playlist.name}" will be permanently removed.',
-    onDelete: () => ref
-        .read(playlistsProvider(libraryId).notifier)
-        .deletePlaylist(playlist.id),
+    onDelete: () => ref.read(playlistsProvider(libraryId).notifier).deletePlaylist(playlist.id),
     successMessage: 'Playlist deleted.',
     errorFallback: 'Could not delete playlist.',
   );

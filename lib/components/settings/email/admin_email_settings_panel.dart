@@ -81,16 +81,12 @@ class AdminEmailSettingsPanel extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.alternate_email_rounded,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                Icon(Icons.alternate_email_rounded, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'SMTP Settings',
-                    style: Theme.of(context).textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -98,9 +94,8 @@ class AdminEmailSettingsPanel extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Configure server email delivery and send a test message to verify connectivity.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             LayoutBuilder(
@@ -124,9 +119,7 @@ class AdminEmailSettingsPanel extends StatelessWidget {
                         controller: portController,
                         enabled: canEditFields,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         hintText: '465',
                         errorText: portError,
                         onChanged: onPortChanged,
@@ -156,9 +149,7 @@ class AdminEmailSettingsPanel extends StatelessWidget {
                         controller: portController,
                         enabled: canEditFields,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                         hintText: '465',
                         errorText: portError,
                         onChanged: onPortChanged,
@@ -185,28 +176,16 @@ class AdminEmailSettingsPanel extends StatelessWidget {
                   obscureText: obscurePassword,
                   onChanged: onPasswordChanged,
                   suffixIcon: IconButton(
-                    tooltip: obscurePassword
-                        ? 'Show password'
-                        : 'Hide password',
-                    onPressed: canEditFields
-                        ? () => onObscurePasswordChanged(!obscurePassword)
-                        : null,
-                    icon: Icon(
-                      obscurePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
+                    tooltip: obscurePassword ? 'Show password' : 'Hide password',
+                    onPressed: canEditFields ? () => onObscurePasswordChanged(!obscurePassword) : null,
+                    icon: Icon(obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                   ),
                 );
 
                 if (stacked) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      usernameField,
-                      const SizedBox(height: 8),
-                      passwordField,
-                    ],
+                    children: [usernameField, const SizedBox(height: 8), passwordField],
                   );
                 }
 
@@ -268,9 +247,7 @@ class AdminEmailSettingsPanel extends StatelessWidget {
             SwitchListTile.adaptive(
               contentPadding: const EdgeInsets.symmetric(horizontal: 4),
               title: const Text('Reject unauthorized certificates'),
-              subtitle: const Text(
-                'Disable only if your SMTP server uses self-signed certificates.',
-              ),
+              subtitle: const Text('Disable only if your SMTP server uses self-signed certificates.'),
               value: rejectUnauthorized,
               onChanged: canEditFields ? onRejectUnauthorizedChanged : null,
             ),
@@ -281,11 +258,7 @@ class AdminEmailSettingsPanel extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: canSendTest ? onSendTestEmail : null,
                   icon: isSendingTest
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.mark_email_read_outlined),
                   label: const Text('Send Test'),
                 ),
@@ -293,11 +266,7 @@ class AdminEmailSettingsPanel extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: canSaveSettings ? onSaveSettings : null,
                   icon: isSavingSettings
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.save_outlined),
                   label: const Text('Save Settings'),
                 ),

@@ -39,18 +39,10 @@ class SeriesDetailHeader extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  IconButton(
-                    onPressed: onBack,
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    tooltip: 'Back',
-                  ),
+                  IconButton(onPressed: onBack, icon: const Icon(Icons.arrow_back_rounded), tooltip: 'Back'),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: _SeriesDetailTitle(
-                      title: title,
-                      isLoading: isTitleLoading,
-                      hasError: hasTitleError,
-                    ),
+                    child: _SeriesDetailTitle(title: title, isLoading: isTitleLoading, hasError: hasTitleError),
                   ),
                   const SizedBox(width: 4),
                   _SeriesSortAction(
@@ -101,11 +93,7 @@ class _SeriesSortAction extends StatelessWidget {
         tooltip: tooltipMessage,
         onPressed: isBusy ? null : onPressed,
         icon: isBusy
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
+            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
             : const Icon(Icons.sort_rounded),
       );
     }
@@ -115,11 +103,7 @@ class _SeriesSortAction extends StatelessWidget {
       child: OutlinedButton.icon(
         onPressed: isBusy ? null : onPressed,
         icon: isBusy
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
+            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
             : const Icon(Icons.sort_rounded),
         label: Text(_truncateSortLabel(sortLabel)),
       ),
@@ -137,11 +121,7 @@ class _SeriesSortAction extends StatelessWidget {
 }
 
 class _SeriesDetailTitle extends StatelessWidget {
-  const _SeriesDetailTitle({
-    required this.title,
-    required this.isLoading,
-    required this.hasError,
-  });
+  const _SeriesDetailTitle({required this.title, required this.isLoading, required this.hasError});
 
   final String? title;
   final bool isLoading;
@@ -162,11 +142,7 @@ class _SeriesDetailTitle extends StatelessWidget {
     if (isLoading) {
       return const Align(
         alignment: Alignment.centerLeft,
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2.2),
-        ),
+        child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2)),
       );
     }
 

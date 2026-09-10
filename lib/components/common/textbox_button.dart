@@ -17,14 +17,7 @@ class TextboxButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final buttonChild = isLoading
-        ? const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
-            ),
-          )
+        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
         : Icon(icon);
 
     return SizedBox(
@@ -35,11 +28,7 @@ class TextboxButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 8,
-          children: [buttonChild, Text(label)],
-        ),
+        child: Row(mainAxisSize: MainAxisSize.min, spacing: 8, children: [buttonChild, Text(label)]),
       ),
     );
   }

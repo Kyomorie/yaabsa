@@ -9,10 +9,7 @@ Future<int?> showSessionDurationPickerDialog(
   return showDialog<int>(
     context: context,
     builder: (context) {
-      return _SessionDurationPickerDialog(
-        title: title,
-        initialSeconds: initialSeconds,
-      );
+      return _SessionDurationPickerDialog(title: title, initialSeconds: initialSeconds);
     },
   );
 }
@@ -39,10 +36,7 @@ class SessionDurationPickerField extends StatelessWidget {
     final pickedSeconds = await showDialog<int>(
       context: context,
       builder: (context) {
-        return _SessionDurationPickerDialog(
-          title: label,
-          initialSeconds: (seconds ?? 0).round(),
-        );
+        return _SessionDurationPickerDialog(title: label, initialSeconds: (seconds ?? 0).round());
       },
     );
 
@@ -80,21 +74,16 @@ class SessionDurationPickerField extends StatelessWidget {
 }
 
 class _SessionDurationPickerDialog extends StatefulWidget {
-  const _SessionDurationPickerDialog({
-    required this.title,
-    required this.initialSeconds,
-  });
+  const _SessionDurationPickerDialog({required this.title, required this.initialSeconds});
 
   final String title;
   final int initialSeconds;
 
   @override
-  State<_SessionDurationPickerDialog> createState() =>
-      _SessionDurationPickerDialogState();
+  State<_SessionDurationPickerDialog> createState() => _SessionDurationPickerDialogState();
 }
 
-class _SessionDurationPickerDialogState
-    extends State<_SessionDurationPickerDialog> {
+class _SessionDurationPickerDialogState extends State<_SessionDurationPickerDialog> {
   late int _hours;
   late int _minutes;
   late int _seconds;
@@ -102,9 +91,7 @@ class _SessionDurationPickerDialogState
   @override
   void initState() {
     super.initState();
-    final duration = Duration(
-      seconds: widget.initialSeconds < 0 ? 0 : widget.initialSeconds,
-    );
+    final duration = Duration(seconds: widget.initialSeconds < 0 ? 0 : widget.initialSeconds);
     _hours = duration.inHours;
     _minutes = duration.inMinutes.remainder(60);
     _seconds = duration.inSeconds.remainder(60);
@@ -113,9 +100,7 @@ class _SessionDurationPickerDialogState
   @override
   Widget build(BuildContext context) {
     final availableWidth = MediaQuery.of(context).size.width;
-    final dialogWidth = availableWidth > 460
-        ? 420.0
-        : (availableWidth - 36).clamp(280.0, 420.0).toDouble();
+    final dialogWidth = availableWidth > 460 ? 420.0 : (availableWidth - 36).clamp(280.0, 420.0).toDouble();
 
     return AlertDialog(
       title: Text(widget.title),
@@ -124,9 +109,7 @@ class _SessionDurationPickerDialogState
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isCompact = constraints.maxWidth < 360;
-            final targetWidth = isCompact
-                ? ((constraints.maxWidth - 10) / 2)
-                : ((constraints.maxWidth - 20) / 3);
+            final targetWidth = isCompact ? ((constraints.maxWidth - 10) / 2) : ((constraints.maxWidth - 20) / 3);
             final stepperWidth = targetWidth.clamp(110.0, 136.0).toDouble();
 
             return Wrap(
@@ -189,10 +172,7 @@ class _SessionDurationPickerDialogState
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
         FilledButton(
           onPressed: () {
             final totalSeconds = (_hours * 3600) + (_minutes * 60) + _seconds;
@@ -224,9 +204,7 @@ class _DurationStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayValue = padLeft
-        ? value.toString().padLeft(2, '0')
-        : value.toString();
+    final displayValue = padLeft ? value.toString().padLeft(2, '0') : value.toString();
 
     return SizedBox(
       width: width,
@@ -242,29 +220,19 @@ class _DurationStepper extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 iconSize: 20,
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints.tightFor(
-                  width: 34,
-                  height: 34,
-                ),
+                constraints: const BoxConstraints.tightFor(width: 34, height: 34),
                 onPressed: onDecrement,
                 icon: const Icon(Icons.remove_circle_outline_rounded),
               ),
               SizedBox(
                 width: 34,
-                child: Text(
-                  displayValue,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                child: Text(displayValue, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 iconSize: 20,
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints.tightFor(
-                  width: 34,
-                  height: 34,
-                ),
+                constraints: const BoxConstraints.tightFor(width: 34, height: 34),
                 onPressed: onIncrement,
                 icon: const Icon(Icons.add_circle_outline_rounded),
               ),

@@ -44,9 +44,7 @@ class _StatsViewState extends ConsumerState<StatsView> {
     ref.invalidate(listeningStatsProvider);
     ref.invalidate(listeningActivityStatsProvider);
     final analytics = ref.read(advancedListeningAnalyticsProvider);
-    if (_achievementsExpanded ||
-        (_advancedExpanded && _advancedModeEnabled) ||
-        analytics.stats != null) {
+    if (_achievementsExpanded || (_advancedExpanded && _advancedModeEnabled) || analytics.stats != null) {
       unawaited(ref.read(advancedListeningAnalyticsProvider.notifier).load());
     }
     if (_yearInRewindExpanded) {
@@ -82,14 +80,8 @@ class _StatsViewState extends ConsumerState<StatsView> {
             'Advanced mode fetches every listening-session page and can take time on large accounts.',
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Load'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Load')),
           ],
         );
       },
@@ -110,9 +102,7 @@ class _StatsViewState extends ConsumerState<StatsView> {
     }
   }
 
-  AsyncValue<AdvancedListeningStats> _advancedAsyncValue(
-    AdvancedListeningAnalyticsState state,
-  ) {
+  AsyncValue<AdvancedListeningStats> _advancedAsyncValue(AdvancedListeningAnalyticsState state) {
     if (state.stats != null) return AsyncValue.data(state.stats!);
     if (state.errorMessage case final message? when message.isNotEmpty) {
       return AsyncValue.error(message, StackTrace.empty);
@@ -124,21 +114,14 @@ class _StatsViewState extends ConsumerState<StatsView> {
   Widget build(BuildContext context) {
     final listeningStatsAsync = ref.watch(listeningStatsProvider);
     final activityAsync = ref.watch(listeningActivityStatsProvider);
-    final yearStatsAsync = _yearInRewindExpanded
-        ? ref.watch(yearInReviewStatsProvider(_selectedYear))
-        : null;
+    final yearStatsAsync = _yearInRewindExpanded ? ref.watch(yearInReviewStatsProvider(_selectedYear)) : null;
     final horizontalPadding = context.isMobile ? 12.0 : 24.0;
 
     return RefreshIndicator(
       onRefresh: _refreshAll,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          horizontalPadding,
-          18,
-          horizontalPadding,
-          40,
-        ),
+        padding: EdgeInsets.fromLTRB(horizontalPadding, 18, horizontalPadding, 40),
         children: [
           Center(
             child: ConstrainedBox(
@@ -150,8 +133,7 @@ class _StatsViewState extends ConsumerState<StatsView> {
                     skipLoadingOnRefresh: true,
                     skipLoadingOnReload: true,
                     data: (stats) {
-                      final recentSessions =
-                          stats.recentSessions ?? const <PlaybackSession>[];
+                      final recentSessions = stats.recentSessions ?? const <PlaybackSession>[];
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -168,18 +150,11 @@ class _StatsViewState extends ConsumerState<StatsView> {
                               children: [
                                 StatsSummaryGrid(stats: stats),
                                 const SizedBox(height: 20),
-                                Text(
-                                  'Recent pace',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium,
-                                ),
+                                Text('Recent pace', style: Theme.of(context).textTheme.titleMedium),
                                 const SizedBox(height: 10),
                                 StatsActivityTotalsCard(
                                   activityAsync: activityAsync,
-                                  onRefresh: () => ref.invalidate(
-                                    listeningActivityStatsProvider,
-                                  ),
+                                  onRefresh: () => ref.invalidate(listeningActivityStatsProvider),
                                 ),
                               ],
                             ),
@@ -190,16 +165,12 @@ class _StatsViewState extends ConsumerState<StatsView> {
                             icon: Icons.stacked_line_chart_rounded,
                             trailing: IconButton(
                               tooltip: 'Refresh activity',
-                              onPressed: () => ref.invalidate(
-                                listeningActivityStatsProvider,
-                              ),
+                              onPressed: () => ref.invalidate(listeningActivityStatsProvider),
                               icon: const Icon(Icons.refresh_rounded),
                             ),
                             child: StatsActivitySection(
                               activityAsync: activityAsync,
-                              onRefresh: () => ref.invalidate(
-                                listeningActivityStatsProvider,
-                              ),
+                              onRefresh: () => ref.invalidate(listeningActivityStatsProvider),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -207,17 +178,13 @@ class _StatsViewState extends ConsumerState<StatsView> {
                             first: StatsSection(
                               title: 'Weekday rhythm',
                               icon: Icons.view_week_rounded,
-                              child: StatsWeekdayBreakdown(
-                                dayOfWeek: stats.dayOfWeek,
-                              ),
+                              child: StatsWeekdayBreakdown(dayOfWeek: stats.dayOfWeek),
                             ),
                             second: StatsSection(
                               title: 'Recent sessions',
                               icon: Icons.history_rounded,
                               trailing: TextButton(
-                                onPressed: () => context.push(
-                                  UserListeningSessionsView.routeName,
-                                ),
+                                onPressed: () => context.push(UserListeningSessionsView.routeName),
                                 child: const Text('View all'),
                               ),
                               child: StatsRecentSessionsList(
@@ -225,9 +192,7 @@ class _StatsViewState extends ConsumerState<StatsView> {
                                 maxItems: 5,
                                 onSessionTap: (session) {
                                   if (session.libraryItemId.isNotEmpty) {
-                                    context.push(
-                                      '/item/${session.libraryItemId}',
-                                    );
+                                    context.push('/item/${session.libraryItemId}');
                                   }
                                 },
                               ),
@@ -238,36 +203,19 @@ class _StatsViewState extends ConsumerState<StatsView> {
                             title: 'Achievements',
                             icon: Icons.emoji_events_rounded,
                             trailing: IconButton(
-                              tooltip: _achievementsExpanded
-                                  ? 'Collapse achievements'
-                                  : 'Open achievements',
-                              onPressed: () => _setAchievementsExpanded(
-                                !_achievementsExpanded,
-                              ),
-                              icon: Icon(
-                                _achievementsExpanded
-                                    ? Icons.expand_less_rounded
-                                    : Icons.expand_more_rounded,
-                              ),
+                              tooltip: _achievementsExpanded ? 'Collapse achievements' : 'Open achievements',
+                              onPressed: () => _setAchievementsExpanded(!_achievementsExpanded),
+                              icon: Icon(_achievementsExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded),
                             ),
                             compact: !_achievementsExpanded,
                             child: Consumer(
                               builder: (context, ref, _) {
-                                final sessionAnalytics = ref.watch(
-                                  advancedListeningAnalyticsProvider,
-                                );
+                                final sessionAnalytics = ref.watch(advancedListeningAnalyticsProvider);
                                 return StatsAchievementsSection(
                                   stats: stats,
                                   sessionAnalytics: sessionAnalytics,
                                   onRetrySessionAnalytics: () {
-                                    unawaited(
-                                      ref
-                                          .read(
-                                            advancedListeningAnalyticsProvider
-                                                .notifier,
-                                          )
-                                          .load(),
-                                    );
+                                    unawaited(ref.read(advancedListeningAnalyticsProvider.notifier).load());
                                   },
                                 );
                               },
@@ -295,31 +243,20 @@ class _StatsViewState extends ConsumerState<StatsView> {
                     title: 'Year in Rewind',
                     icon: Icons.auto_awesome_rounded,
                     trailing: IconButton(
-                      tooltip: _yearInRewindExpanded
-                          ? 'Collapse Year in Rewind'
-                          : 'Open Year in Rewind',
+                      tooltip: _yearInRewindExpanded ? 'Collapse Year in Rewind' : 'Open Year in Rewind',
                       onPressed: () => _setYearExpanded(!_yearInRewindExpanded),
-                      icon: Icon(
-                        _yearInRewindExpanded
-                            ? Icons.expand_less_rounded
-                            : Icons.expand_more_rounded,
-                      ),
+                      icon: Icon(_yearInRewindExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded),
                     ),
                     compact: !_yearInRewindExpanded,
                     child: _yearInRewindExpanded
                         ? StatsYearRewindSection(
                             selectedYear: _selectedYear,
-                            availableYears: List<int>.generate(
-                              25,
-                              (index) => DateTime.now().year - index,
-                            ),
+                            availableYears: List<int>.generate(25, (index) => DateTime.now().year - index),
                             onYearSelected: (year) {
                               if (_selectedYear == year) return;
                               setState(() => _selectedYear = year);
                             },
-                            onRefresh: () => ref.invalidate(
-                              yearInReviewStatsProvider(_selectedYear),
-                            ),
+                            onRefresh: () => ref.invalidate(yearInReviewStatsProvider(_selectedYear)),
                             statsAsync: yearStatsAsync!,
                           )
                         : const SizedBox.shrink(),
@@ -329,15 +266,9 @@ class _StatsViewState extends ConsumerState<StatsView> {
                     title: 'Advanced analytics',
                     icon: Icons.analytics_rounded,
                     trailing: IconButton(
-                      tooltip: _advancedExpanded
-                          ? 'Collapse advanced analytics'
-                          : 'Open advanced analytics',
+                      tooltip: _advancedExpanded ? 'Collapse advanced analytics' : 'Open advanced analytics',
                       onPressed: () => _setAdvancedExpanded(!_advancedExpanded),
-                      icon: Icon(
-                        _advancedExpanded
-                            ? Icons.expand_less_rounded
-                            : Icons.expand_more_rounded,
-                      ),
+                      icon: Icon(_advancedExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded),
                     ),
                     compact: !_advancedExpanded,
                     child: !_advancedExpanded
@@ -353,17 +284,10 @@ class _StatsViewState extends ConsumerState<StatsView> {
                           )
                         : Consumer(
                             builder: (context, ref, _) {
-                              final advancedState = ref.watch(
-                                advancedListeningAnalyticsProvider,
-                              );
+                              final advancedState = ref.watch(advancedListeningAnalyticsProvider);
                               return StatsAdvancedDashboard(
                                 statsAsync: _advancedAsyncValue(advancedState),
-                                onRefresh: () => ref
-                                    .read(
-                                      advancedListeningAnalyticsProvider
-                                          .notifier,
-                                    )
-                                    .load(),
+                                onRefresh: () => ref.read(advancedListeningAnalyticsProvider.notifier).load(),
                                 loadingProgress: advancedState.progress,
                               );
                             },

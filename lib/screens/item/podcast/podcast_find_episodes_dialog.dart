@@ -11,11 +11,8 @@ Future<List<PodcastFeedEpisode>?> showPodcastFindEpisodesDialog({
 }) {
   return showDialog<List<PodcastFeedEpisode>>(
     context: context,
-    builder: (_) => _PodcastFindEpisodesDialog(
-      podcastTitle: podcastTitle,
-      episodes: episodes,
-      existingEpisodes: existingEpisodes,
-    ),
+    builder: (_) =>
+        _PodcastFindEpisodesDialog(podcastTitle: podcastTitle, episodes: episodes, existingEpisodes: existingEpisodes),
   );
 }
 
@@ -31,12 +28,10 @@ class _PodcastFindEpisodesDialog extends StatefulWidget {
   final List<Episode> existingEpisodes;
 
   @override
-  State<_PodcastFindEpisodesDialog> createState() =>
-      _PodcastFindEpisodesDialogState();
+  State<_PodcastFindEpisodesDialog> createState() => _PodcastFindEpisodesDialogState();
 }
 
-class _PodcastFindEpisodesDialogState
-    extends State<_PodcastFindEpisodesDialog> {
+class _PodcastFindEpisodesDialogState extends State<_PodcastFindEpisodesDialog> {
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedKeys = <String>{};
   late final List<_EpisodeOption> _episodeOptions;
@@ -47,10 +42,7 @@ class _PodcastFindEpisodesDialogState
   @override
   void initState() {
     super.initState();
-    _episodeOptions = _buildEpisodeOptions(
-      widget.episodes,
-      widget.existingEpisodes,
-    );
+    _episodeOptions = _buildEpisodeOptions(widget.episodes, widget.existingEpisodes);
   }
 
   @override
@@ -69,33 +61,27 @@ class _PodcastFindEpisodesDialogState
 
           final title = (option.episode.title ?? '').toLowerCase();
           final subtitle = (option.episode.subtitle ?? '').toLowerCase();
-          return title.contains(normalizedQuery) ||
-              subtitle.contains(normalizedQuery);
+          return title.contains(normalizedQuery) || subtitle.contains(normalizedQuery);
         })
         .toList(growable: true);
 
     filtered.sort((left, right) {
       final leftTime = left.episode.publishedAt ?? 0;
       final rightTime = right.episode.publishedAt ?? 0;
-      return _sortDescending
-          ? rightTime.compareTo(leftTime)
-          : leftTime.compareTo(rightTime);
+      return _sortDescending ? rightTime.compareTo(leftTime) : leftTime.compareTo(rightTime);
     });
 
     return filtered;
   }
 
   List<_EpisodeOption> get _selectableVisibleOptions {
-    return _visibleOptions
-        .where((option) => !option.isAlreadyDownloaded)
-        .toList(growable: false);
+    return _visibleOptions.where((option) => !option.isAlreadyDownloaded).toList(growable: false);
   }
 
   int get _selectedCount {
     var count = 0;
     for (final option in _episodeOptions) {
-      if (!option.isAlreadyDownloaded &&
-          _selectedKeys.contains(option.selectionKey)) {
+      if (!option.isAlreadyDownloaded && _selectedKeys.contains(option.selectionKey)) {
         count++;
       }
     }
@@ -188,19 +174,13 @@ class _PodcastFindEpisodesDialogState
                   ),
                   const SizedBox(width: 8),
                   IconButton.filledTonal(
-                    tooltip: _sortDescending
-                        ? 'Sort newest first'
-                        : 'Sort oldest first',
+                    tooltip: _sortDescending ? 'Sort newest first' : 'Sort oldest first',
                     onPressed: () {
                       setState(() {
                         _sortDescending = !_sortDescending;
                       });
                     },
-                    icon: Icon(
-                      _sortDescending
-                          ? Icons.expand_more_rounded
-                          : Icons.expand_less_rounded,
-                    ),
+                    icon: Icon(_sortDescending ? Icons.expand_more_rounded : Icons.expand_less_rounded),
                   ),
                 ],
               ),
@@ -211,14 +191,8 @@ class _PodcastFindEpisodesDialogState
                     const Spacer(),
                     TextButton.icon(
                       onPressed: _toggleSelectAllVisible,
-                      icon: Icon(
-                        _allVisibleSelected
-                            ? Icons.deselect_rounded
-                            : Icons.select_all_rounded,
-                      ),
-                      label: Text(
-                        _allVisibleSelected ? 'Clear all' : 'Select all',
-                      ),
+                      icon: Icon(_allVisibleSelected ? Icons.deselect_rounded : Icons.select_all_rounded),
+                      label: Text(_allVisibleSelected ? 'Clear all' : 'Select all'),
                     ),
                   ],
                 ),
@@ -226,34 +200,25 @@ class _PodcastFindEpisodesDialogState
               Expanded(child: _buildEpisodeList(visibleOptions)),
               const Divider(height: 1),
               const SizedBox(height: 10),
-              if (_selectedCount == 0 &&
-                  _episodeOptions.every((option) => option.isAlreadyDownloaded))
+              if (_selectedCount == 0 && _episodeOptions.every((option) => option.isAlreadyDownloaded))
                 Text(
                   'All episodes are already downloaded.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 )
               else
                 Text(
                   '$_selectedCount selected',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancel'),
-                  ),
+                  TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
                   const SizedBox(width: 8),
-                  FilledButton(
-                    onPressed: _selectedCount == 0 ? null : _submit,
-                    child: Text(_downloadButtonLabel),
-                  ),
+                  FilledButton(onPressed: _selectedCount == 0 ? null : _submit, child: Text(_downloadButtonLabel)),
                 ],
               ),
             ],
@@ -275,19 +240,14 @@ class _PodcastFindEpisodesDialogState
         final option = options[index];
         final episode = option.episode;
         final isSelected = _selectedKeys.contains(option.selectionKey);
-        final title = (episode.title ?? '').trim().isEmpty
-            ? 'Untitled episode'
-            : episode.title!.trim();
+        final title = (episode.title ?? '').trim().isEmpty ? 'Untitled episode' : episode.title!.trim();
         final subtitle = (episode.subtitle ?? '').trim();
         final dateLabel = _formatPublishedAt(episode.publishedAt);
-        final durationLabel =
-            episode.durationSeconds == null || episode.durationSeconds! <= 0
+        final durationLabel = episode.durationSeconds == null || episode.durationSeconds! <= 0
             ? null
             : formatDurationShort(Duration(seconds: episode.durationSeconds!));
         final sizeBytes = episode.enclosure?.length;
-        final sizeLabel = sizeBytes == null || sizeBytes <= 0
-            ? null
-            : formatBytes(sizeBytes);
+        final sizeLabel = sizeBytes == null || sizeBytes <= 0 ? null : formatBytes(sizeBytes);
 
         final detailParts = <String>[];
         if (dateLabel != null) {
@@ -301,9 +261,7 @@ class _PodcastFindEpisodesDialogState
         }
 
         return InkWell(
-          onTap: option.isAlreadyDownloaded
-              ? null
-              : () => _toggleSelection(option),
+          onTap: option.isAlreadyDownloaded ? null : () => _toggleSelection(option),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
             child: Row(
@@ -312,20 +270,13 @@ class _PodcastFindEpisodesDialogState
                 if (option.isAlreadyDownloaded)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: Icon(
-                      Icons.download_done_rounded,
-                      size: 20,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                    child: Icon(Icons.download_done_rounded, size: 20, color: Theme.of(context).colorScheme.primary),
                   )
                 else
                   SizedBox(
                     width: 26,
                     height: 26,
-                    child: Checkbox(
-                      value: isSelected,
-                      onChanged: (_) => _toggleSelection(option),
-                    ),
+                    child: Checkbox(value: isSelected, onChanged: (_) => _toggleSelection(option)),
                   ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -352,11 +303,7 @@ class _PodcastFindEpisodesDialogState
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
+                                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ),
                       if (detailParts.isNotEmpty)
@@ -365,11 +312,7 @@ class _PodcastFindEpisodesDialogState
                           child: Text(
                             detailParts.join(' • '),
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
+                                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ),
                     ],
@@ -418,11 +361,7 @@ class _PodcastFindEpisodesDialogState
 
   void _submit() {
     final selectedEpisodes = _episodeOptions
-        .where(
-          (option) =>
-              !option.isAlreadyDownloaded &&
-              _selectedKeys.contains(option.selectionKey),
-        )
+        .where((option) => !option.isAlreadyDownloaded && _selectedKeys.contains(option.selectionKey))
         .map((option) => option.episode)
         .toList(growable: false);
 
@@ -431,21 +370,14 @@ class _PodcastFindEpisodesDialogState
 }
 
 class _EpisodeOption {
-  const _EpisodeOption({
-    required this.selectionKey,
-    required this.episode,
-    required this.isAlreadyDownloaded,
-  });
+  const _EpisodeOption({required this.selectionKey, required this.episode, required this.isAlreadyDownloaded});
 
   final String selectionKey;
   final PodcastFeedEpisode episode;
   final bool isAlreadyDownloaded;
 }
 
-List<_EpisodeOption> _buildEpisodeOptions(
-  List<PodcastFeedEpisode> episodes,
-  List<Episode> existingEpisodes,
-) {
+List<_EpisodeOption> _buildEpisodeOptions(List<PodcastFeedEpisode> episodes, List<Episode> existingEpisodes) {
   final existingGuids = <String>{};
   final existingUrls = <String>{};
   final existingTitleAndPublished = <String>{};
@@ -478,27 +410,21 @@ List<_EpisodeOption> _buildEpisodeOptions(
         final guid = episode.guid?.trim();
         final enclosureUrl = episode.enclosure?.url;
         final title = (episode.title ?? '').trim().toLowerCase();
-        final titlePublished = title.isNotEmpty && episode.publishedAt != null
-            ? '$title|${episode.publishedAt}'
-            : null;
+        final titlePublished = title.isNotEmpty && episode.publishedAt != null ? '$title|${episode.publishedAt}' : null;
 
-        final alreadyDownloadedByGuid =
-            guid != null && guid.isNotEmpty && existingGuids.contains(guid);
+        final alreadyDownloadedByGuid = guid != null && guid.isNotEmpty && existingGuids.contains(guid);
         final alreadyDownloadedByUrl =
             enclosureUrl != null &&
             enclosureUrl.trim().isNotEmpty &&
             existingUrls.contains(_cleanEpisodeUrl(enclosureUrl));
         final alreadyDownloadedByTitleAndPublished =
-            titlePublished != null &&
-            existingTitleAndPublished.contains(titlePublished);
+            titlePublished != null && existingTitleAndPublished.contains(titlePublished);
 
         return _EpisodeOption(
           selectionKey: selectionKey,
           episode: episode,
           isAlreadyDownloaded:
-              alreadyDownloadedByGuid ||
-              alreadyDownloadedByUrl ||
-              alreadyDownloadedByTitleAndPublished,
+              alreadyDownloadedByGuid || alreadyDownloadedByUrl || alreadyDownloadedByTitleAndPublished,
         );
       })
       .toList(growable: false);
@@ -535,9 +461,7 @@ String _cleanEpisodeUrl(String rawUrl) {
     return uri.replace(query: '').toString();
   }
 
-  return uri
-      .replace(queryParameters: <String, String>{'id': idValue})
-      .toString();
+  return uri.replace(queryParameters: <String, String>{'id': idValue}).toString();
 }
 
 String? _formatPublishedAt(int? timestampMillis) {
@@ -546,20 +470,7 @@ String? _formatPublishedAt(int? timestampMillis) {
   }
 
   final date = DateTime.fromMillisecondsSinceEpoch(timestampMillis);
-  const months = <String>[
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
+  const months = <String>['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   final month = months[date.month - 1];
   return 'Published $month ${date.day}, ${date.year}';

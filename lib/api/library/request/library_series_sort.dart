@@ -39,33 +39,20 @@ class LibrarySeriesSortSelection {
   bool get isDescending => desc == 1;
 }
 
-const List<LibrarySeriesSortValue> librarySeriesSortOptions =
-    <LibrarySeriesSortValue>[
-      LibrarySeriesSortValue.name,
-      LibrarySeriesSortValue.numBooks,
-      LibrarySeriesSortValue.totalDuration,
-      LibrarySeriesSortValue.addedAt,
-    ];
+const List<LibrarySeriesSortValue> librarySeriesSortOptions = <LibrarySeriesSortValue>[
+  LibrarySeriesSortValue.name,
+  LibrarySeriesSortValue.numBooks,
+  LibrarySeriesSortValue.totalDuration,
+  LibrarySeriesSortValue.addedAt,
+];
 
-LibrarySeriesSortSelection resolveLibrarySeriesSortSelection({
-  required String? activeSort,
-  required int? activeDesc,
-}) {
+LibrarySeriesSortSelection resolveLibrarySeriesSortSelection({required String? activeSort, required int? activeDesc}) {
   final selectedSort = _resolveSortValue(activeSort);
-  return LibrarySeriesSortSelection(
-    sort: selectedSort.wireValue,
-    desc: _resolveSortDesc(activeDesc, selectedSort),
-  );
+  return LibrarySeriesSortSelection(sort: selectedSort.wireValue, desc: _resolveSortDesc(activeDesc, selectedSort));
 }
 
-String buildLibrarySeriesSortLabel({
-  required String? activeSort,
-  required int? activeDesc,
-}) {
-  final selection = resolveLibrarySeriesSortSelection(
-    activeSort: activeSort,
-    activeDesc: activeDesc,
-  );
+String buildLibrarySeriesSortLabel({required String? activeSort, required int? activeDesc}) {
+  final selection = resolveLibrarySeriesSortSelection(activeSort: activeSort, activeDesc: activeDesc);
   final sortValue = LibrarySeriesSortValueX.tryParse(selection.sort);
   if (sortValue == null) {
     return selection.sort;
@@ -76,9 +63,7 @@ String buildLibrarySeriesSortLabel({
 }
 
 LibrarySeriesSortValue _resolveSortValue(String? rawSort) {
-  final parsed = rawSort == null
-      ? null
-      : LibrarySeriesSortValueX.tryParse(rawSort);
+  final parsed = rawSort == null ? null : LibrarySeriesSortValueX.tryParse(rawSort);
   if (parsed != null && librarySeriesSortOptions.contains(parsed)) {
     return parsed;
   }

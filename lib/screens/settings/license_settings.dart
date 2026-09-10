@@ -6,15 +6,9 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:material_ui/material_ui.dart';
 
 class LicenseSettings {
-  static Future<void> showLicensePage({
-    required BuildContext context,
-    bool useRootNavigator = false,
-  }) async {
+  static Future<void> showLicensePage({required BuildContext context, bool useRootNavigator = false}) async {
     final navigator = Navigator.of(context, rootNavigator: useRootNavigator);
-    final CapturedThemes themes = InheritedTheme.capture(
-      from: context,
-      to: navigator.context,
-    );
+    final CapturedThemes themes = InheritedTheme.capture(from: context, to: navigator.context);
 
     final String deviceInfo = await _getDeviceInfo();
     if (!context.mounted) {

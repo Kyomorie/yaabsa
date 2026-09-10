@@ -13,19 +13,12 @@ abstract class AdminUserUpsertRequest with _$AdminUserUpsertRequest {
     @JsonKey(name: 'email') String? email,
     @JsonKey(name: 'type') @Default('user') String type,
     @JsonKey(name: 'isActive') @Default(true) bool isActive,
-    @JsonKey(name: 'permissions')
-    @Default(AdminUserPermissions())
-    AdminUserPermissions permissions,
-    @JsonKey(name: 'librariesAccessible')
-    @Default(<String>[])
-    List<String> librariesAccessible,
-    @JsonKey(name: 'itemTagsSelected')
-    @Default(<String>[])
-    List<String> itemTagsSelected,
+    @JsonKey(name: 'permissions') @Default(AdminUserPermissions()) AdminUserPermissions permissions,
+    @JsonKey(name: 'librariesAccessible') @Default(<String>[]) List<String> librariesAccessible,
+    @JsonKey(name: 'itemTagsSelected') @Default(<String>[]) List<String> itemTagsSelected,
   }) = _AdminUserUpsertRequest;
 
-  factory AdminUserUpsertRequest.fromJson(Map<String, dynamic> json) =>
-      _$AdminUserUpsertRequestFromJson(json);
+  factory AdminUserUpsertRequest.fromJson(Map<String, dynamic> json) => _$AdminUserUpsertRequestFromJson(json);
 
   factory AdminUserUpsertRequest.fromUser(AdminUser user) {
     return AdminUserUpsertRequest(

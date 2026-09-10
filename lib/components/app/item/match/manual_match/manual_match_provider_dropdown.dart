@@ -88,10 +88,7 @@ Future<Set<String>?> _showProviderSelector({
       builder: (context) {
         return FractionallySizedBox(
           heightFactor: 0.7,
-          child: _ProviderSelectionSheet(
-            providers: providers,
-            selectedProviderValues: selectedProviderValues,
-          ),
+          child: _ProviderSelectionSheet(providers: providers, selectedProviderValues: selectedProviderValues),
         );
       },
     );
@@ -103,10 +100,7 @@ Future<Set<String>?> _showProviderSelector({
       return Dialog(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420, maxHeight: 520),
-          child: _ProviderSelectionSheet(
-            providers: providers,
-            selectedProviderValues: selectedProviderValues,
-          ),
+          child: _ProviderSelectionSheet(providers: providers, selectedProviderValues: selectedProviderValues),
         ),
       );
     },
@@ -114,17 +108,13 @@ Future<Set<String>?> _showProviderSelector({
 }
 
 class _ProviderSelectionSheet extends StatefulWidget {
-  const _ProviderSelectionSheet({
-    required this.providers,
-    required this.selectedProviderValues,
-  });
+  const _ProviderSelectionSheet({required this.providers, required this.selectedProviderValues});
 
   final List<SearchProviderOption> providers;
   final Set<String> selectedProviderValues;
 
   @override
-  State<_ProviderSelectionSheet> createState() =>
-      _ProviderSelectionSheetState();
+  State<_ProviderSelectionSheet> createState() => _ProviderSelectionSheetState();
 }
 
 class _ProviderSelectionSheetState extends State<_ProviderSelectionSheet> {
@@ -179,14 +169,10 @@ class _ProviderSelectionSheetState extends State<_ProviderSelectionSheet> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
               const SizedBox(width: 8),
               FilledButton(
-                onPressed: () =>
-                    Navigator.of(context).pop(Set<String>.from(_selected)),
+                onPressed: () => Navigator.of(context).pop(Set<String>.from(_selected)),
                 child: const Text('Apply'),
               ),
             ],

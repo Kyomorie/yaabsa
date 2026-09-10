@@ -56,9 +56,7 @@ Future<List<Library>> userLibraries(Ref ref) async {
     try {
       final librariesResponse = await api.getLibraryApi().getLibraries();
       if (librariesResponse.data != null) {
-        final libraries = List<Library>.unmodifiable(
-          librariesResponse.data!.libraries,
-        );
+        final libraries = List<Library>.unmodifiable(librariesResponse.data!.libraries);
         if (activeUserId != null) {
           _userLibrariesCacheByUserId[activeUserId] = libraries;
         }
@@ -104,11 +102,7 @@ Future<List<Library>> userLibraries(Ref ref) async {
       }
       return List<Library>.unmodifiable(sortedList);
     } catch (e, s) {
-      logger(
-        'Error applying custom library order: $e\\n$s',
-        tag: 'UserLibrariesProvider',
-        level: InfoLevel.warning,
-      );
+      logger('Error applying custom library order: $e\\n$s', tag: 'UserLibrariesProvider', level: InfoLevel.warning);
     }
   }
 
@@ -126,10 +120,7 @@ class SelectedLibraryId extends _$SelectedLibraryId {
     if (userId == null) {
       _selectedLibraryCacheByUserId.clear();
       _selectedLibrarySnapshotHydratedUserIds.clear();
-      logger(
-        'SelectedLibraryIdProvider: No active user, returning null stream.',
-        tag: 'SelectedLibraryId',
-      );
+      logger('SelectedLibraryIdProvider: No active user, returning null stream.', tag: 'SelectedLibraryId');
       return Stream.value(null);
     }
 
@@ -137,38 +128,24 @@ class SelectedLibraryId extends _$SelectedLibraryId {
       unawaited(_hydrateSelectedLibraryCache(userId: userId));
     }
 
-    final stream = db
-        .watchUserSetting(userId, 'selectedLibraryId')
-        .map((e) => e?.value);
+    final stream = db.watchUserSetting(userId, 'selectedLibraryId').map((e) => e?.value);
 
     if (librariesAsync.hasValue && !librariesAsync.isLoading) {
       final libraries = librariesAsync.value ?? const <Library>[];
       unawaited(
         Future<void>(() async {
-          await _ensureSelectionForLibraries(
-            userId: userId,
-            libraries: libraries,
-          );
+          await _ensureSelectionForLibraries(userId: userId, libraries: libraries);
         }),
       );
     }
 
-    logger(
-      'SelectedLibraryIdProvider: Watching selected library ID for user $userId.',
-      tag: 'SelectedLibraryId',
-    );
+    logger('SelectedLibraryIdProvider: Watching selected library ID for user $userId.', tag: 'SelectedLibraryId');
     return stream;
   }
 
-  Future<void> _ensureSelectionForLibraries({
-    required String userId,
-    required List<Library> libraries,
-  }) async {
+  Future<void> _ensureSelectionForLibraries({required String userId, required List<Library> libraries}) async {
     final db = ref.read(appDatabaseProvider);
-    final currentSelectedId = (await db.getUserSetting(
-      userId,
-      'selectedLibraryId',
-    ))?.value;
+    final currentSelectedId = (await db.getUserSetting(userId, 'selectedLibraryId'))?.value;
 
     if (ref.read(currentUserProvider).value?.id != userId) {
       return;
@@ -178,19 +155,14 @@ class SelectedLibraryId extends _$SelectedLibraryId {
       return;
     }
 
-    final hasValidSelection =
-        currentSelectedId != null &&
-        libraries.any((library) => library.id == currentSelectedId);
+    final hasValidSelection = currentSelectedId != null && libraries.any((library) => library.id == currentSelectedId);
 
     final resolvedLibrary = hasValidSelection
         ? libraries.firstWhere((library) => library.id == currentSelectedId)
         : libraries.first;
 
     _selectedLibraryCacheByUserId[userId] = resolvedLibrary;
-    await _persistSelectedLibrarySnapshot(
-      userId: userId,
-      library: resolvedLibrary,
-    );
+    await _persistSelectedLibrarySnapshot(userId: userId, library: resolvedLibrary);
 
     if (hasValidSelection) {
       return;
@@ -218,10 +190,7 @@ class SelectedLibraryId extends _$SelectedLibraryId {
     final db = ref.read(appDatabaseProvider);
 
     try {
-      final rawSnapshot = (await db.getUserSetting(
-        userId,
-        _selectedLibrarySnapshotSettingKey,
-      ))?.value;
+      final rawSnapshot = (await db.getUserSetting(userId, _selectedLibrarySnapshotSettingKey))?.value;
       if (rawSnapshot == null || rawSnapshot.trim().isEmpty) {
         return;
       }
@@ -247,27 +216,17 @@ class SelectedLibraryId extends _$SelectedLibraryId {
     }
   }
 
-  Future<void> _persistSelectedLibrarySnapshot({
-    required String userId,
-    required Library library,
-  }) async {
+  Future<void> _persistSelectedLibrarySnapshot({required String userId, required Library library}) async {
     final db = ref.read(appDatabaseProvider);
     final encodedSnapshot = jsonEncode(library.toJson());
 
     try {
-      final existingSnapshot = (await db.getUserSetting(
-        userId,
-        _selectedLibrarySnapshotSettingKey,
-      ))?.value;
+      final existingSnapshot = (await db.getUserSetting(userId, _selectedLibrarySnapshotSettingKey))?.value;
       if (existingSnapshot == encodedSnapshot) {
         return;
       }
 
-      await db.setUserSetting(
-        userId,
-        _selectedLibrarySnapshotSettingKey,
-        encodedSnapshot,
-      );
+      await db.setUserSetting(userId, _selectedLibrarySnapshotSettingKey, encodedSnapshot);
     } catch (e, s) {
       logger(
         'SelectedLibraryIdProvider: Failed to persist selected library snapshot for user $userId: $e\n$s',
@@ -287,8 +246,7 @@ class SelectedLibraryId extends _$SelectedLibraryId {
     );
     await db.setUserSetting(userId, 'selectedLibraryId', libraryId);
 
-    final libraries =
-        ref.read(userLibrariesProvider).value ?? const <Library>[];
+    final libraries = ref.read(userLibrariesProvider).value ?? const <Library>[];
     for (final library in libraries) {
       if (library.id == libraryId) {
         _selectedLibraryCacheByUserId[userId] = library;
@@ -315,12 +273,9 @@ Library? selectedLibrary(Ref ref) {
   final libraries = librariesAsync.value;
   final selectedId = selectedIdAsync.value;
 
-  final isLibrariesPending =
-      librariesAsync.isLoading || !librariesAsync.hasValue;
-  final isSelectedIdPending =
-      selectedIdAsync.isLoading || !selectedIdAsync.hasValue;
-  final hasTransientFailure =
-      librariesAsync.hasError || selectedIdAsync.hasError;
+  final isLibrariesPending = librariesAsync.isLoading || !librariesAsync.hasValue;
+  final isSelectedIdPending = selectedIdAsync.isLoading || !selectedIdAsync.hasValue;
+  final hasTransientFailure = librariesAsync.hasError || selectedIdAsync.hasError;
 
   if (isLibrariesPending || isSelectedIdPending || hasTransientFailure) {
     return cachedLibrary;
@@ -355,10 +310,7 @@ Library? selectedLibrary(Ref ref) {
     }
 
     _selectedLibraryCacheByUserId.remove(activeUserId);
-    logger(
-      'SelectedLibraryProvider: Selected library ID is null and no cache exists.',
-      tag: 'SelectedLibrary',
-    );
+    logger('SelectedLibraryProvider: Selected library ID is null and no cache exists.', tag: 'SelectedLibrary');
     return null;
   }
 

@@ -26,10 +26,7 @@ abstract class AdvancedTopEntity with _$AdvancedTopEntity {
 
 @freezed
 abstract class AdvancedTimeBucket with _$AdvancedTimeBucket {
-  const factory AdvancedTimeBucket({
-    required String label,
-    required double totalListeningTime,
-  }) = _AdvancedTimeBucket;
+  const factory AdvancedTimeBucket({required String label, required double totalListeningTime}) = _AdvancedTimeBucket;
 }
 
 @freezed

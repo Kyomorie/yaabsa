@@ -10,11 +10,7 @@ import 'package:yaabsa/components/common/library_item_widget.dart';
 import 'package:yaabsa/util/layout_sizes.dart';
 
 class AuthorDetailContent extends ConsumerWidget {
-  const AuthorDetailContent({
-    super.key,
-    required this.author,
-    required this.api,
-  });
+  const AuthorDetailContent({super.key, required this.author, required this.api});
 
   final AuthorDetails author;
   final ABSApi api;
@@ -22,25 +18,17 @@ class AuthorDetailContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final books = author.libraryItems;
-    final seriesGroups = author.series
-        .where((series) => series.items.isNotEmpty)
-        .toList(growable: false);
+    final seriesGroups = author.series.where((series) => series.items.isNotEmpty).toList(growable: false);
 
     return LibraryGridLayoutBuilder(
       builder: (context, gridLayout, _, _) {
         return ListView(
-          padding: EdgeInsets.fromLTRB(
-            gridLayout.horizontalPadding,
-            8,
-            gridLayout.horizontalPadding,
-            16,
-          ),
+          padding: EdgeInsets.fromLTRB(gridLayout.horizontalPadding, 8, gridLayout.horizontalPadding, 16),
           children: [
             if (seriesGroups.isNotEmpty)
               _SectionHeader(
                 title: 'Series',
-                subtitle:
-                    '${seriesGroups.length} ${seriesGroups.length == 1 ? 'series' : 'series groups'}',
+                subtitle: '${seriesGroups.length} ${seriesGroups.length == 1 ? 'series' : 'series groups'}',
               ),
             if (seriesGroups.isNotEmpty) const SizedBox(height: 8),
             if (seriesGroups.isNotEmpty)
@@ -50,22 +38,12 @@ class AuthorDetailContent extends ConsumerWidget {
                   child: _AuthorSeriesGroupSection(series: series, api: api),
                 ),
               ),
-            _SectionHeader(
-              title: 'Books',
-              subtitle:
-                  '${books.length} ${books.length == 1 ? 'book' : 'books'}',
-            ),
+            _SectionHeader(title: 'Books', subtitle: '${books.length} ${books.length == 1 ? 'book' : 'books'}'),
             const SizedBox(height: 8),
             if (books.isEmpty)
-              const _SectionEmptyState(
-                message: 'No books found for this author.',
-              )
+              const _SectionEmptyState(message: 'No books found for this author.')
             else
-              _LibraryItemGrid(
-                items: books,
-                api: api,
-                crossAxisCount: gridLayout.crossAxisCount,
-              ),
+              _LibraryItemGrid(items: books, api: api, crossAxisCount: gridLayout.crossAxisCount),
           ],
         );
       },
@@ -97,34 +75,20 @@ class _AuthorSeriesGroupSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              '$itemCount ${itemCount == 1 ? 'book' : 'books'}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text('$itemCount ${itemCount == 1 ? 'book' : 'books'}', style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(width: 8),
-            TextButton(
-              onPressed: () => context.push('/series/${series.id}'),
-              child: const Text('Open Series'),
-            ),
+            TextButton(onPressed: () => context.push('/series/${series.id}'), child: const Text('Open Series')),
           ],
         ),
         const SizedBox(height: 8),
-        _LibraryItemHorizontalList(
-          items: series.items,
-          api: api,
-          keyPrefix: series.id,
-        ),
+        _LibraryItemHorizontalList(items: series.items, api: api, keyPrefix: series.id),
       ],
     );
   }
 }
 
 class _LibraryItemHorizontalList extends StatelessWidget {
-  const _LibraryItemHorizontalList({
-    required this.items,
-    required this.api,
-    this.keyPrefix,
-  });
+  const _LibraryItemHorizontalList({required this.items, required this.api, this.keyPrefix});
 
   final List<LibraryItem> items;
   final ABSApi api;
@@ -143,19 +107,12 @@ class _LibraryItemHorizontalList extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: appGridSpacing),
         itemBuilder: (context, index) {
           final item = items[index];
-          final keyBase = keyPrefix == null
-              ? item.id
-              : '$keyPrefix-${item.id}-$index';
+          final keyBase = keyPrefix == null ? item.id : '$keyPrefix-${item.id}-$index';
           return SizedBox(
             width: itemWidth,
             child: KeyedSubtree(
               key: ValueKey<String>(keyBase),
-              child: LibraryItemWidget(
-                item,
-                api,
-                showProgress: true,
-                squareCover: true,
-              ),
+              child: LibraryItemWidget(item, api, showProgress: true, squareCover: true),
             ),
           );
         },
@@ -165,11 +122,7 @@ class _LibraryItemHorizontalList extends StatelessWidget {
 }
 
 class _LibraryItemGrid extends StatelessWidget {
-  const _LibraryItemGrid({
-    required this.items,
-    required this.api,
-    required this.crossAxisCount,
-  });
+  const _LibraryItemGrid({required this.items, required this.api, required this.crossAxisCount});
 
   final List<LibraryItem> items;
   final ABSApi api;
@@ -188,12 +141,7 @@ class _LibraryItemGrid extends StatelessWidget {
         final item = items[index];
         return KeyedSubtree(
           key: ValueKey<String>(item.id),
-          child: LibraryItemWidget(
-            item,
-            api,
-            showProgress: true,
-            squareCover: true,
-          ),
+          child: LibraryItemWidget(item, api, showProgress: true, squareCover: true),
         );
       },
     );
@@ -214,8 +162,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           subtitle,
-          style: Theme.of(context).textTheme.bodySmall
-              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ],
     );

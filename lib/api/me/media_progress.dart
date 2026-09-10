@@ -14,31 +14,20 @@ abstract class MediaProgress with _$MediaProgress {
     @JsonKey(name: "libraryItemId") required String libraryItemId,
     @JsonKey(name: "episodeId") required String? episodeId,
     @JsonKey(name: "mediaItemId") required String mediaItemId,
-    @JsonKey(name: "mediaItemType")
-    @MediaItemTypeConverter()
-    required MediaItemType mediaItemType,
-    @AllowNullableForDoubleConverter()
-    @JsonKey(name: "duration")
-    required double duration,
-    @AllowNullableForDoubleConverter()
-    @JsonKey(name: "progress")
-    required double progress,
-    @AllowNullableForDoubleConverter()
-    @JsonKey(name: "currentTime")
-    required double currentTime,
+    @JsonKey(name: "mediaItemType") @MediaItemTypeConverter() required MediaItemType mediaItemType,
+    @AllowNullableForDoubleConverter() @JsonKey(name: "duration") required double duration,
+    @AllowNullableForDoubleConverter() @JsonKey(name: "progress") required double progress,
+    @AllowNullableForDoubleConverter() @JsonKey(name: "currentTime") required double currentTime,
     @JsonKey(name: "isFinished") required bool isFinished,
     @JsonKey(name: "hideFromContinueListening") bool? hideFromContinueListening,
-    @IntToStringConverter()
-    @JsonKey(name: "ebookLocation")
-    String? ebookLocation,
+    @IntToStringConverter() @JsonKey(name: "ebookLocation") String? ebookLocation,
     @JsonKey(name: "ebookProgress") double? ebookProgress,
     @JsonKey(name: "lastUpdate") required int? lastUpdate,
     @JsonKey(name: "startedAt") required int startedAt,
     @JsonKey(name: "finishedAt") required int? finishedAt,
   }) = _MediaProgress;
 
-  factory MediaProgress.fromJson(Map<String, dynamic> json) =>
-      _$MediaProgressFromJson(json);
+  factory MediaProgress.fromJson(Map<String, dynamic> json) => _$MediaProgressFromJson(json);
 }
 
 class IntToStringConverter implements JsonConverter<String, dynamic> {
@@ -55,8 +44,7 @@ class IntToStringConverter implements JsonConverter<String, dynamic> {
   }
 }
 
-class AllowNullableForDoubleConverter
-    implements JsonConverter<double, dynamic> {
+class AllowNullableForDoubleConverter implements JsonConverter<double, dynamic> {
   const AllowNullableForDoubleConverter();
 
   @override

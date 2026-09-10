@@ -50,6 +50,5 @@ abstract class AudioFile with _$AudioFile {
     );
   }
 
-  factory AudioFile.fromJson(Map<String, dynamic> json) =>
-      _$AudioFileFromJson(json);
+  factory AudioFile.fromJson(Map<String, dynamic> json) => _$AudioFileFromJson(json);
 }

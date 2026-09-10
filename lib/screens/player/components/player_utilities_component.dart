@@ -36,9 +36,7 @@ class PlayerUtilitiesComponent extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       alignment: WrapAlignment.center,
-      children: visibleUtilities
-          .map((utility) => _buildUtility(context, utility))
-          .toList(growable: false),
+      children: visibleUtilities.map((utility) => _buildUtility(context, utility)).toList(growable: false),
     );
   }
 

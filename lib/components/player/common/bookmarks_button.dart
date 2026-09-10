@@ -6,9 +6,7 @@ void showPlayerBookmarksSheet(BuildContext context) {
   final messenger = ScaffoldMessenger.of(context);
   final media = audioHandler.currentMediaItem;
   if (media == null) {
-    messenger.showSnackBar(
-      const SnackBar(content: Text('No active media to bookmark.')),
-    );
+    messenger.showSnackBar(const SnackBar(content: Text('No active media to bookmark.')));
     return;
   }
 
@@ -17,8 +15,7 @@ void showPlayerBookmarksSheet(BuildContext context) {
     useSafeArea: true,
     showDragHandle: true,
     isScrollControlled: true,
-    builder: (BuildContext context) =>
-        PlayerBookmarksSheet(itemId: media.itemId, itemTitle: media.title),
+    builder: (BuildContext context) => PlayerBookmarksSheet(itemId: media.itemId, itemTitle: media.title),
   );
 }
 

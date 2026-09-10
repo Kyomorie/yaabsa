@@ -29,11 +29,7 @@ const int _seriesBooksPrefetchThreshold = 8;
 const int _seriesBooksApproxScrollPastCount = 24;
 
 class SeriesDetailView extends HookConsumerWidget {
-  const SeriesDetailView({
-    required this.seriesId,
-    super.key,
-    this.initialEntry,
-  });
+  const SeriesDetailView({required this.seriesId, super.key, this.initialEntry});
 
   final String seriesId;
   final MultiBookEntryData? initialEntry;
@@ -46,22 +42,13 @@ class SeriesDetailView extends HookConsumerWidget {
     final selectedLibrary = ref.watch(selectedLibraryProvider);
     final currentUser = ref.watch(currentUserProvider).value;
     final serverReachable = ref.watch(serverStatusProvider).value ?? false;
-    final managementPreferences = readServerManagementPreferences(
-      ref,
-      currentUser?.id,
-    );
+    final managementPreferences = readServerManagementPreferences(ref, currentUser?.id);
     if (selectedLibrary == null) {
-      return const Center(
-        child: Text(
-          'No library selected. Please select a library via the switcher.',
-        ),
-      );
+      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
     }
 
     if (selectedLibrary.mediaType != 'book') {
-      return const Center(
-        child: Text('Series are available only for book libraries.'),
-      );
+      return const Center(child: Text('Series are available only for book libraries.'));
     }
 
     final api = ref.watch(absApiProvider);
@@ -71,27 +58,18 @@ class SeriesDetailView extends HookConsumerWidget {
 
     final libraryId = selectedLibrary.id;
     final allSeriesAsync = ref.watch(seriesProvider(libraryId));
-    final resolvedEntry = _resolveEntry(
-      seriesId,
-      initialEntry,
-      allSeriesAsync.value?.items,
-    );
+    final resolvedEntry = _resolveEntry(seriesId, initialEntry, allSeriesAsync.value?.items);
     final seriesDetailsAsync = resolvedEntry == null
         ? ref.watch(seriesByIdProvider(seriesId))
         : const AsyncValue<Series>.loading();
     final resolvedSeries = seriesDetailsAsync.value;
     final seriesTitle = resolvedEntry?.title ?? resolvedSeries?.name;
-    final seriesSubtitle =
-        resolvedEntry?.subtitle?.text ??
-        _seriesSubtitleFromSeries(resolvedSeries);
+    final seriesSubtitle = resolvedEntry?.subtitle?.text ?? _seriesSubtitleFromSeries(resolvedSeries);
 
     final booksArgs = SeriesBooksArgs(libraryId: libraryId, seriesId: seriesId);
     final currentBooksProvider = seriesBooksProvider(booksArgs);
     final booksStateAsync = ref.watch(currentBooksProvider);
-    final seriesFilterQuery = LibraryFilter.grouped(
-      LibraryFilterGroup.series,
-      seriesId,
-    ).queryValue;
+    final seriesFilterQuery = LibraryFilter.grouped(LibraryFilterGroup.series, seriesId).queryValue;
 
     return booksStateAsync.when(
       skipLoadingOnRefresh: true,
@@ -109,32 +87,28 @@ class SeriesDetailView extends HookConsumerWidget {
             return;
           }
 
-          final sortSelection =
-              await showModalBottomSheet<LibrarySortSelection>(
-                context: context,
-                showDragHandle: true,
-                builder: (context) => LibrarySortSheet(
-                  libraryMediaType: selectedLibrary.mediaType,
-                  activeFilter: seriesFilterQuery,
-                  activeSort: state.sort,
-                  activeSortDesc: state.desc,
-                ),
-              );
+          final sortSelection = await showModalBottomSheet<LibrarySortSelection>(
+            context: context,
+            showDragHandle: true,
+            builder: (context) => LibrarySortSheet(
+              libraryMediaType: selectedLibrary.mediaType,
+              activeFilter: seriesFilterQuery,
+              activeSort: state.sort,
+              activeSortDesc: state.desc,
+            ),
+          );
 
           if (sortSelection == null || !context.mounted) {
             return;
           }
 
-          if (sortSelection.sort == state.sort &&
-              sortSelection.desc == state.desc) {
+          if (sortSelection.sort == state.sort && sortSelection.desc == state.desc) {
             return;
           }
 
           sortUpdateInFlight.value = true;
           try {
-            await ref
-                .read(currentBooksProvider.notifier)
-                .setSort(sortSelection.sort, newDesc: sortSelection.desc);
+            await ref.read(currentBooksProvider.notifier).setSort(sortSelection.sort, newDesc: sortSelection.desc);
           } finally {
             if (context.mounted) {
               sortUpdateInFlight.value = false;
@@ -145,20 +119,16 @@ class SeriesDetailView extends HookConsumerWidget {
         final canManageBooks = selectedLibrary.mediaType == 'book';
         final hasUpdatePermission = currentUser?.permissions.update ?? false;
         final hasDeletePermission = currentUser?.permissions.delete ?? false;
-        final canEditItems =
-            hasUpdatePermission && managementPreferences.editItemsEnabled;
+        final canEditItems = hasUpdatePermission && managementPreferences.editItemsEnabled;
         final canQuickMatchItems =
-            canManageBooks &&
-            canEditItems &&
-            managementPreferences.allowMatchesQuickMatchesEnabled;
+            canManageBooks && canEditItems && managementPreferences.allowMatchesQuickMatchesEnabled;
 
         final editableItemIds = state.items
             .where((item) => item.collapsedSeries == null)
             .map((item) => item.id)
             .toList(growable: false);
 
-        if (editingItemId.value != null &&
-            !editableItemIds.contains(editingItemId.value)) {
+        if (editingItemId.value != null && !editableItemIds.contains(editingItemId.value)) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             editingItemId.value = null;
           });
@@ -170,18 +140,11 @@ class SeriesDetailView extends HookConsumerWidget {
           visibleItems: state.items,
           enableShiftRange: true,
           canAddToPlaylist: canManageBooks && currentUser != null,
-          canAddToCollection:
-              canManageBooks &&
-              hasUpdatePermission &&
-              managementPreferences.collectionsEnabled,
+          canAddToCollection: canManageBooks && hasUpdatePermission && managementPreferences.collectionsEnabled,
           canQuickMatchItems: canQuickMatchItems,
-          canDeleteItems:
-              canManageBooks &&
-              hasDeletePermission &&
-              managementPreferences.deleteItemsEnabled,
+          canDeleteItems: canManageBooks && hasDeletePermission && managementPreferences.deleteItemsEnabled,
           currentUserId: currentUser?.id,
-          onAfterDelete: () =>
-              ref.read(seriesBooksProvider(booksArgs).notifier).refresh(),
+          onAfterDelete: () => ref.read(seriesBooksProvider(booksArgs).notifier).refresh(),
           builder: (context, selection) {
             return LibraryGridLayoutBuilder(
               builder: (context, gridLayout, _, _) {
@@ -208,60 +171,32 @@ class SeriesDetailView extends HookConsumerWidget {
                             onBack: () => context.pop(),
                             onSortPressed: openSortSheet,
                           ),
-                          if (state.items.isEmpty &&
-                              !state.hasNextPage &&
-                              !state.isLoadingNextPage)
-                            const Expanded(
-                              child: Center(
-                                child: Text('No books found in this series.'),
-                              ),
-                            )
+                          if (state.items.isEmpty && !state.hasNextPage && !state.isLoadingNextPage)
+                            const Expanded(child: Center(child: Text('No books found in this series.')))
                           else
                             Expanded(
                               child: Stack(
                                 children: [
                                   Positioned.fill(
                                     child: RefreshIndicator(
-                                      onRefresh: () => ref
-                                          .read(
-                                            seriesBooksProvider(booksArgs)
-                                                .notifier,
-                                          )
-                                          .refresh(withLoading: false),
+                                      onRefresh: () =>
+                                          ref.read(seriesBooksProvider(booksArgs).notifier).refresh(withLoading: false),
                                       child: AlignedGridView.count(
                                         controller: scrollController,
-                                        physics:
-                                            const AlwaysScrollableScrollPhysics(),
-                                        padding: EdgeInsets.fromLTRB(
-                                          horizontalPadding,
-                                          0,
-                                          horizontalPadding,
-                                          16,
-                                        ),
-                                        crossAxisCount:
-                                            gridLayout.crossAxisCount,
+                                        physics: const AlwaysScrollableScrollPhysics(),
+                                        padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 16),
+                                        crossAxisCount: gridLayout.crossAxisCount,
                                         mainAxisSpacing: appGridSpacing,
                                         crossAxisSpacing: appGridSpacing,
                                         itemCount: estimatedItemCount,
                                         itemBuilder: (context, index) {
-                                          if (index >=
-                                              loadedCount -
-                                                  _seriesBooksPrefetchThreshold) {
-                                            WidgetsBinding.instance
-                                                .addPostFrameCallback((_) {
-                                                  ref
-                                                      .read(
-                                                        currentBooksProvider
-                                                            .notifier,
-                                                      )
-                                                      .ensureLoadedForIndex(
-                                                        index,
-                                                      );
-                                                });
+                                          if (index >= loadedCount - _seriesBooksPrefetchThreshold) {
+                                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              ref.read(currentBooksProvider.notifier).ensureLoadedForIndex(index);
+                                            });
                                           }
 
-                                          if (index >= loadedCount)
-                                            return const _SeriesBooksPlaceholderTile();
+                                          if (index >= loadedCount) return const _SeriesBooksPlaceholderTile();
 
                                           final item = state.items[index];
 
@@ -273,30 +208,20 @@ class SeriesDetailView extends HookConsumerWidget {
                                               audioHandler.playLibraryItem(
                                                 item,
                                                 autoQueueStart: AutoQueueStart(
-                                                  type:
-                                                      AutoQueueStartType.series,
+                                                  type: AutoQueueStartType.series,
                                                   sourceId: seriesId,
                                                   globalIndex: index,
                                                 ),
                                               );
                                             },
-                                            selectionMode:
-                                                selection.selectionMode,
-                                            isSelected: selection
-                                                .selectedItemIds
-                                                .contains(item.id),
+                                            selectionMode: selection.selectionMode,
+                                            isSelected: selection.selectedItemIds.contains(item.id),
                                             enableHoverSelection: true,
-                                            onToggleSelection: () => selection
-                                                .toggleSelectionById(item.id),
-                                            onEnterSelectionMode: () =>
-                                                selection.enterSelectionById(
-                                                  item.id,
-                                                ),
+                                            onToggleSelection: () => selection.toggleSelectionById(item.id),
+                                            onEnterSelectionMode: () => selection.enterSelectionById(item.id),
                                             canEdit: canEditItems,
                                             onEdit: () {
-                                              if (selection.selectionMode ||
-                                                  item.collapsedSeries !=
-                                                      null) {
+                                              if (selection.selectionMode || item.collapsedSeries != null) {
                                                 return;
                                               }
                                               editingItemId.value = item.id;
@@ -306,17 +231,14 @@ class SeriesDetailView extends HookConsumerWidget {
                                       ),
                                     ),
                                   ),
-                                  ScrollToTopButton(
-                                    controller: scrollController,
-                                  ),
+                                  ScrollToTopButton(controller: scrollController),
                                 ],
                               ),
                             ),
                         ],
                       ),
                     ),
-                    if (editingItemId.value != null &&
-                        editableItemIds.contains(editingItemId.value))
+                    if (editingItemId.value != null && editableItemIds.contains(editingItemId.value))
                       LibraryItemEditOverlay(
                         orderedItemIds: editableItemIds,
                         currentItemId: editingItemId.value!,
@@ -340,18 +262,14 @@ class SeriesDetailView extends HookConsumerWidget {
       error: (error, stackTrace) {
         if (!serverReachable) {
           return ConnectionIssueView.offline(
-            onRetry: () => ref
-                .read(seriesBooksProvider(booksArgs).notifier)
-                .refresh(withLoading: true),
+            onRetry: () => ref.read(seriesBooksProvider(booksArgs).notifier).refresh(withLoading: true),
           );
         }
 
         return ConnectionIssueView.requestFailed(
           error: error,
           title: 'Error loading series books',
-          onRetry: () => ref
-              .read(seriesBooksProvider(booksArgs).notifier)
-              .refresh(withLoading: true),
+          onRetry: () => ref.read(seriesBooksProvider(booksArgs).notifier).refresh(withLoading: true),
         );
       },
     );
@@ -364,11 +282,7 @@ String? _seriesSubtitleFromSeries(Series? series) {
   return '$numBooks ${numBooks == 1 ? 'book' : 'books'}';
 }
 
-int _estimatedItemCount({
-  required int loadedCount,
-  required int totalItems,
-  required bool hasNextPage,
-}) {
+int _estimatedItemCount({required int loadedCount, required int totalItems, required bool hasNextPage}) {
   if (totalItems > loadedCount) return totalItems;
   if (hasNextPage) return loadedCount + _seriesBooksApproxScrollPastCount;
   return loadedCount;
@@ -386,10 +300,7 @@ class _SeriesBooksPlaceholderTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AspectRatio(
-            aspectRatio: 1,
-            child: CoverLoadingPlaceholder(borderRadius: 16),
-          ),
+          const AspectRatio(aspectRatio: 1, child: CoverLoadingPlaceholder(borderRadius: 16)),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -416,11 +327,7 @@ class _SeriesBooksPlaceholderTile extends StatelessWidget {
   }
 }
 
-MultiBookEntryData? _resolveEntry(
-  String seriesId,
-  MultiBookEntryData? initialEntry,
-  List<Series>? allSeries,
-) {
+MultiBookEntryData? _resolveEntry(String seriesId, MultiBookEntryData? initialEntry, List<Series>? allSeries) {
   if (initialEntry != null && initialEntry.id == seriesId) {
     return initialEntry;
   }

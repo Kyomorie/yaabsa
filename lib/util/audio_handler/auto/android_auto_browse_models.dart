@@ -8,11 +8,9 @@ const String androidAutoRecentNodeId = 'aa/recent';
 const String androidAutoLibrariesNodeId = 'aa/libraries';
 
 class AndroidAutoBrowseSnapshot {
-  AndroidAutoBrowseSnapshot({
-    required List<MediaItem> continueItems,
-    required List<Library> audioLibraries,
-  }) : continueItems = List.unmodifiable(continueItems),
-       audioLibraries = List.unmodifiable(audioLibraries);
+  AndroidAutoBrowseSnapshot({required List<MediaItem> continueItems, required List<Library> audioLibraries})
+    : continueItems = List.unmodifiable(continueItems),
+      audioLibraries = List.unmodifiable(audioLibraries);
 
   final List<MediaItem> continueItems;
   final List<Library> audioLibraries;
@@ -28,13 +26,11 @@ final class AndroidAutoBrowseReady<T> extends AndroidAutoBrowseResult<T> {
   final T value;
 }
 
-final class AndroidAutoBrowseInitializing<T>
-    extends AndroidAutoBrowseResult<T> {
+final class AndroidAutoBrowseInitializing<T> extends AndroidAutoBrowseResult<T> {
   const AndroidAutoBrowseInitializing();
 }
 
-final class AndroidAutoBrowseAuthRequired<T>
-    extends AndroidAutoBrowseResult<T> {
+final class AndroidAutoBrowseAuthRequired<T> extends AndroidAutoBrowseResult<T> {
   const AndroidAutoBrowseAuthRequired();
 }
 
@@ -78,22 +74,16 @@ class AndroidAutoBrowseSnapshotCache {
           throw const AndroidAutoBrowseStaleRequestException();
         }
         _snapshot = nextSnapshot;
-        _state = AndroidAutoBrowseReady<AndroidAutoBrowseSnapshot>(
-          nextSnapshot,
-        );
+        _state = AndroidAutoBrowseReady<AndroidAutoBrowseSnapshot>(nextSnapshot);
         return nextSnapshot;
       } catch (error, stackTrace) {
-        _state = AndroidAutoBrowseFailure<AndroidAutoBrowseSnapshot>(
-          error,
-          stackTrace,
-        );
+        _state = AndroidAutoBrowseFailure<AndroidAutoBrowseSnapshot>(error, stackTrace);
         if (error is AndroidAutoBrowseStaleRequestException) {
           rethrow;
         }
 
         final lastSuccessfulSnapshot = _snapshot;
-        if (lastSuccessfulSnapshot != null &&
-            requestGeneration == _generation) {
+        if (lastSuccessfulSnapshot != null && requestGeneration == _generation) {
           return lastSuccessfulSnapshot;
         }
         rethrow;
@@ -131,8 +121,7 @@ class AndroidAutoBrowseSnapshotCache {
 }
 
 bool isAndroidAutoAudioLibrary(Library library) {
-  final supportedType =
-      library.mediaType == 'book' || library.mediaType == 'podcast';
+  final supportedType = library.mediaType == 'book' || library.mediaType == 'podcast';
   final numAudioFiles = library.stats?.numAudioFiles;
   return supportedType && numAudioFiles != null && numAudioFiles > 0;
 }
@@ -154,8 +143,7 @@ List<MediaItem> buildAndroidAutoRoot(
   }
 
   Uri? artUri(String id) {
-    return artUriForNode?.call(id) ??
-        Uri.parse('content://android.auto.drawable/$id');
+    return artUriForNode?.call(id) ?? Uri.parse('content://android.auto.drawable/$id');
   }
 
   return <MediaItem>[
@@ -166,16 +154,8 @@ List<MediaItem> buildAndroidAutoRoot(
         artUri: artUri('continue_ic'),
       ),
     if (snapshot.audioLibraries.isNotEmpty) ...[
-      _androidAutoBrowsableRootItem(
-        id: nodeId(androidAutoLibrariesNodeId),
-        title: 'Libraries',
-        artUri: artUri('apps'),
-      ),
-      _androidAutoBrowsableRootItem(
-        id: nodeId(androidAutoRecentNodeId),
-        title: 'Recent',
-        artUri: artUri('recent'),
-      ),
+      _androidAutoBrowsableRootItem(id: nodeId(androidAutoLibrariesNodeId), title: 'Libraries', artUri: artUri('apps')),
+      _androidAutoBrowsableRootItem(id: nodeId(androidAutoRecentNodeId), title: 'Recent', artUri: artUri('recent')),
     ],
   ];
 }
@@ -209,19 +189,13 @@ bool _isAndroidAutoPodcastItem(LibraryItem item) {
   return item.mediaType == 'podcast' || item.media?.podcastMedia != null;
 }
 
-MediaItem _androidAutoBrowsableRootItem({
-  required String id,
-  required String title,
-  Uri? artUri,
-}) {
+MediaItem _androidAutoBrowsableRootItem({required String id, required String title, Uri? artUri}) {
   return MediaItem(
     id: id,
     title: title,
     displayTitle: title,
     artUri: artUri,
     playable: false,
-    extras: const <String, dynamic>{
-      'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2,
-    },
+    extras: const <String, dynamic>{'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2},
   );
 }

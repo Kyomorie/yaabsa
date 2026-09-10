@@ -3,11 +3,7 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 
 class WearVolumeControl extends StatefulWidget {
-  const WearVolumeControl({
-    required this.volume,
-    required this.onChanged,
-    super.key,
-  });
+  const WearVolumeControl({required this.volume, required this.onChanged, super.key});
   final double volume;
   final ValueChanged<double> onChanged;
 
@@ -42,11 +38,7 @@ class _WearVolumeControlState extends State<WearVolumeControl> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.volume_up,
-                color: colorScheme.onSurface.withValues(alpha: 0.38),
-                size: 18,
-              ),
+              Icon(Icons.volume_up, color: colorScheme.onSurface.withValues(alpha: 0.38), size: 18),
               const SizedBox(height: 4),
               SizedBox(
                 width: 110,
@@ -60,11 +52,7 @@ class _WearVolumeControlState extends State<WearVolumeControl> {
                   child: Center(
                     child: Text(
                       '${(_v * 100).round()}%',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w300,
-                        color: colorScheme.onSurface,
-                      ),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w300, color: colorScheme.onSurface),
                     ),
                   ),
                 ),
@@ -83,15 +71,8 @@ class _WearVolumeControlState extends State<WearVolumeControl> {
                     child: Container(
                       width: 36,
                       height: 36,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: colorScheme.primary,
-                      ),
-                      child: Icon(
-                        Icons.check,
-                        color: colorScheme.onPrimary,
-                        size: 22,
-                      ),
+                      decoration: BoxDecoration(shape: BoxShape.circle, color: colorScheme.primary),
+                      child: Icon(Icons.check, color: colorScheme.onPrimary, size: 22),
                     ),
                   ),
                   const SizedBox(width: 20),
@@ -109,11 +90,7 @@ class _WearVolumeControlState extends State<WearVolumeControl> {
   }
 
   Widget _vBtn(IconData i, VoidCallback f) => IconButton(
-    icon: Icon(
-      i,
-      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70),
-      size: 26,
-    ),
+    icon: Icon(i, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.70), size: 26),
     onPressed: f,
     padding: EdgeInsets.zero,
     constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
@@ -121,11 +98,7 @@ class _WearVolumeControlState extends State<WearVolumeControl> {
 }
 
 class _CircularVolumePainter extends CustomPainter {
-  _CircularVolumePainter({
-    required this.volume,
-    required this.color,
-    required this.bg,
-  });
+  _CircularVolumePainter({required this.volume, required this.color, required this.bg});
   final double volume;
   final Color color, bg;
 

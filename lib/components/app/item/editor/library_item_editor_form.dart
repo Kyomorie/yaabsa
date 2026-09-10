@@ -53,11 +53,9 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
   late LibraryItemEditorDraft _initialDraft;
   late String _initialDescriptionDeltaSignature;
 
-  List<LibraryItemEditorNamedEntity> _authors =
-      const <LibraryItemEditorNamedEntity>[];
+  List<LibraryItemEditorNamedEntity> _authors = const <LibraryItemEditorNamedEntity>[];
   List<String> _narrators = const <String>[];
-  List<LibraryItemEditorSeriesEntry> _series =
-      const <LibraryItemEditorSeriesEntry>[];
+  List<LibraryItemEditorSeriesEntry> _series = const <LibraryItemEditorSeriesEntry>[];
   List<String> _genres = const <String>[];
   List<String> _tags = const <String>[];
   final Map<String, String> _pendingSeriesSequences = <String, String>{};
@@ -119,9 +117,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
       selection: const TextSelection.collapsed(offset: 0),
     );
 
-    _initialDescriptionDeltaSignature = jsonEncode(
-      descriptionDocument.toDelta().toJson(),
-    );
+    _initialDescriptionDeltaSignature = jsonEncode(descriptionDocument.toDelta().toJson());
     _initialDraft = draft;
 
     _titleController.text = draft.title;
@@ -182,13 +178,8 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
         if (!mounted) {
           return;
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Release date must be a valid date in the format YYYY-MM-DD.',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Release date must be a valid date in the format YYYY-MM-DD.')));
         return;
       }
 
@@ -197,32 +188,25 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
         if (!mounted) {
           return;
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Feed URL must be a valid HTTP or HTTPS URL.'),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Feed URL must be a valid HTTP or HTTPS URL.')));
         return;
       }
     }
 
     final currentDraft = _currentDraft();
-    final currentDescriptionDeltaSignature = jsonEncode(
-      _descriptionController.document.toDelta().toJson(),
-    );
+    final currentDescriptionDeltaSignature = jsonEncode(_descriptionController.document.toDelta().toJson());
     final diff = buildLibraryItemEditorDiff(
       initial: _initialDraft,
       current: currentDraft,
-      descriptionChanged:
-          currentDescriptionDeltaSignature != _initialDescriptionDeltaSignature,
+      descriptionChanged: currentDescriptionDeltaSignature != _initialDescriptionDeltaSignature,
     );
 
     if (!diff.hasChanges) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('No changes to save.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No changes to save.')));
       return;
     }
 
@@ -266,8 +250,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
     return 'episodic';
   }
 
-  String _sanitizeSeriesSequence(String value) =>
-      value.replaceAll(RegExp(r'\s+'), '');
+  String _sanitizeSeriesSequence(String value) => value.replaceAll(RegExp(r'\s+'), '');
 
   Future<String?> _promptSeriesSequence({String initialValue = ''}) async {
     if (!mounted) {
@@ -329,13 +312,9 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
       return value;
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Could not open the series sequence prompt. Please try again.',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open the series sequence prompt. Please try again.')));
       }
       return null;
     } finally {
@@ -343,10 +322,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
     }
   }
 
-  Future<String?> _prepareSeriesValue(
-    String value,
-    List<String> currentValues,
-  ) async {
+  Future<String?> _prepareSeriesValue(String value, List<String> currentValues) async {
     final normalizedName = value.trim();
     if (normalizedName.isEmpty) {
       return null;
@@ -375,10 +351,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
     return seriesName;
   }
 
-  void _updateAuthorsFromNames(
-    List<String> nextNames,
-    List<LibraryFilterNamedEntity> suggestions,
-  ) {
+  void _updateAuthorsFromNames(List<String> nextNames, List<LibraryFilterNamedEntity> suggestions) {
     final existingByLower = <String, LibraryItemEditorNamedEntity>{
       for (final entry in _authors) entry.name.toLowerCase(): entry,
     };
@@ -398,10 +371,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
 
           final matchedSuggestion = suggestionByLower[lowerName];
           if (matchedSuggestion != null) {
-            return LibraryItemEditorNamedEntity(
-              id: matchedSuggestion.id,
-              name: matchedSuggestion.name,
-            );
+            return LibraryItemEditorNamedEntity(id: matchedSuggestion.id, name: matchedSuggestion.name);
           }
 
           return LibraryItemEditorNamedEntity(id: name, name: name);
@@ -413,10 +383,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
     });
   }
 
-  void _updateSeriesFromNames(
-    List<String> nextNames,
-    List<LibraryFilterNamedEntity> suggestions,
-  ) {
+  void _updateSeriesFromNames(List<String> nextNames, List<LibraryFilterNamedEntity> suggestions) {
     final existingByLower = <String, LibraryItemEditorSeriesEntry>{
       for (final entry in _series) entry.name.toLowerCase(): entry,
     };
@@ -435,14 +402,9 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
           }
 
           final matchedSuggestion = suggestionByLower[lowerName];
-          final pendingSequence =
-              _pendingSeriesSequences.remove(lowerName) ?? '';
+          final pendingSequence = _pendingSeriesSequences.remove(lowerName) ?? '';
           return LibraryItemEditorSeriesEntry(
-            id:
-                matchedSuggestion != null &&
-                    matchedSuggestion.id.trim().isNotEmpty
-                ? matchedSuggestion.id
-                : name,
+            id: matchedSuggestion != null && matchedSuggestion.id.trim().isNotEmpty ? matchedSuggestion.id : name,
             name: name,
             sequence: pendingSequence,
           );
@@ -456,9 +418,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
 
   Future<void> _editSeriesSequenceByName(String seriesName) async {
     final normalizedName = seriesName.trim().toLowerCase();
-    final index = _series.indexWhere(
-      (entry) => entry.name.toLowerCase() == normalizedName,
-    );
+    final index = _series.indexWhere((entry) => entry.name.toLowerCase() == normalizedName);
     if (index < 0) {
       return;
     }
@@ -502,11 +462,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
                 publisherSuggestions: publisherSuggestions,
               ),
               const SizedBox(height: 6),
-              Divider(
-                color: Theme.of(context).colorScheme.outlineVariant
-                    .withValues(alpha: 0.5),
-                height: 1,
-              ),
+              Divider(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5), height: 1),
               const SizedBox(height: 6),
               _buildPeopleAndTaxonomySection(
                 context,
@@ -518,11 +474,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
                 tagsSuggestions: tagsSuggestions,
               ),
               const SizedBox(height: 6),
-              Divider(
-                color: Theme.of(context).colorScheme.outlineVariant
-                    .withValues(alpha: 0.5),
-                height: 1,
-              ),
+              Divider(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5), height: 1),
               const SizedBox(height: 6),
               _buildDescriptionSection(context),
             ],
@@ -542,11 +494,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
               FilledButton.icon(
                 onPressed: widget.isSaving ? null : _submit,
                 icon: widget.isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2.2),
-                      )
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2))
                     : const Icon(Icons.save_rounded),
                 label: Text(widget.isSaving ? 'Saving...' : 'Save'),
               ),
@@ -554,11 +502,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
               FilledButton.icon(
                 onPressed: widget.isSaving ? null : () => _submit(pop: true),
                 icon: widget.isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2.2),
-                      )
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2))
                     : const Icon(Icons.save_rounded),
                 label: Text(widget.isSaving ? 'Saving...' : 'Save & Close'),
               ),
@@ -576,23 +520,11 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
     required List<String> publisherSuggestions,
   }) {
     final fields = <Widget>[
-      StyledTextField(
-        label: 'Title',
-        controller: _titleController,
-        onChanged: (_) => setState(() {}),
-      ),
+      StyledTextField(label: 'Title', controller: _titleController, onChanged: (_) => setState(() {})),
       if (!isPodcast)
-        StyledTextField(
-          label: 'Subtitle',
-          controller: _subtitleController,
-          onChanged: (_) => setState(() {}),
-        ),
+        StyledTextField(label: 'Subtitle', controller: _subtitleController, onChanged: (_) => setState(() {})),
       if (isPodcast)
-        StyledTextField(
-          label: 'Author',
-          controller: _podcastAuthorController,
-          onChanged: (_) => setState(() {}),
-        ),
+        StyledTextField(label: 'Author', controller: _podcastAuthorController, onChanged: (_) => setState(() {})),
       if (!isPodcast)
         StyledTextField(
           label: 'Published year',
@@ -604,9 +536,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
         StyledTextField(
           label: 'Publisher',
           controller: _publisherController,
-          hintText: publisherSuggestions.isEmpty
-              ? null
-              : publisherSuggestions.first,
+          hintText: publisherSuggestions.isEmpty ? null : publisherSuggestions.first,
           onChanged: (_) => setState(() {}),
         ),
       if (isPodcast)
@@ -619,23 +549,11 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
       StyledTextField(
         label: 'Language',
         controller: _languageController,
-        hintText: languageSuggestions.isEmpty
-            ? null
-            : languageSuggestions.first,
+        hintText: languageSuggestions.isEmpty ? null : languageSuggestions.first,
         onChanged: (_) => setState(() {}),
       ),
-      if (!isPodcast)
-        StyledTextField(
-          label: 'ISBN',
-          controller: _isbnController,
-          onChanged: (_) => setState(() {}),
-        ),
-      if (!isPodcast)
-        StyledTextField(
-          label: 'ASIN',
-          controller: _asinController,
-          onChanged: (_) => setState(() {}),
-        ),
+      if (!isPodcast) StyledTextField(label: 'ISBN', controller: _isbnController, onChanged: (_) => setState(() {})),
+      if (!isPodcast) StyledTextField(label: 'ASIN', controller: _asinController, onChanged: (_) => setState(() {})),
       if (isPodcast)
         StyledTextField(
           label: 'Feed URL',
@@ -644,11 +562,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
           onChanged: (_) => setState(() {}),
         ),
       if (isPodcast)
-        StyledTextField(
-          label: 'iTunes ID',
-          controller: _itunesIdController,
-          onChanged: (_) => setState(() {}),
-        ),
+        StyledTextField(label: 'iTunes ID', controller: _itunesIdController, onChanged: (_) => setState(() {})),
       if (isPodcast)
         LibraryItemEditorPodcastTypeField(
           value: _podcastTypeValue,
@@ -678,10 +592,7 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Metadata',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontSize: 15),
-        ),
+        Text('Metadata', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontSize: 15)),
         const SizedBox(height: 4),
         _ResponsiveEditorFields(children: fields),
       ],
@@ -705,14 +616,9 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
             children: [
               StringChipListInput(
                 label: 'Authors',
-                values: _authors
-                    .map((entry) => entry.name)
-                    .toList(growable: false),
-                suggestions: authorsSuggestions
-                    .map((entry) => entry.name)
-                    .toList(growable: false),
-                onChanged: (next) =>
-                    _updateAuthorsFromNames(next, authorsSuggestions),
+                values: _authors.map((entry) => entry.name).toList(growable: false),
+                suggestions: authorsSuggestions.map((entry) => entry.name).toList(growable: false),
+                onChanged: (next) => _updateAuthorsFromNames(next, authorsSuggestions),
               ),
               StringChipListInput(
                 label: 'Narrators',
@@ -732,18 +638,13 @@ class _LibraryItemEditorFormState extends State<LibraryItemEditorForm> {
             if (!isPodcast)
               StringChipListInput(
                 label: 'Series',
-                values: _series
-                    .map((entry) => entry.name)
-                    .toList(growable: false),
-                suggestions: seriesSuggestions
-                    .map((entry) => entry.name)
-                    .toList(growable: false),
+                values: _series.map((entry) => entry.name).toList(growable: false),
+                suggestions: seriesSuggestions.map((entry) => entry.name).toList(growable: false),
                 hintText: 'Add series',
                 chipLabelBuilder: _seriesChipLabel,
                 onChipTap: _editSeriesSequenceByName,
                 onTryAdd: _prepareSeriesValue,
-                onChanged: (next) =>
-                    _updateSeriesFromNames(next, seriesSuggestions),
+                onChanged: (next) => _updateSeriesFromNames(next, seriesSuggestions),
               ),
             StringChipListInput(
               label: 'Genres',
@@ -790,19 +691,13 @@ class _ResponsiveEditorFields extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final twoColumns =
-            context.isDesktop ||
-            (context.isTablet && constraints.maxWidth >= 720);
-        final width = twoColumns
-            ? (constraints.maxWidth - 8) / 2
-            : constraints.maxWidth;
+        final twoColumns = context.isDesktop || (context.isTablet && constraints.maxWidth >= 720);
+        final width = twoColumns ? (constraints.maxWidth - 8) / 2 : constraints.maxWidth;
 
         return Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: [
-            for (final child in children) SizedBox(width: width, child: child),
-          ],
+          children: [for (final child in children) SizedBox(width: width, child: child)],
         );
       },
     );
@@ -832,17 +727,8 @@ class _MetadataFlagsField extends StatelessWidget {
         spacing: 12,
         runSpacing: 4,
         children: [
-          _InlineSwitchField(
-            label: 'Explicit',
-            value: explicit,
-            onChanged: onExplicitChanged,
-          ),
-          if (showAbridged)
-            _InlineSwitchField(
-              label: 'Abridged',
-              value: abridged,
-              onChanged: onAbridgedChanged,
-            ),
+          _InlineSwitchField(label: 'Explicit', value: explicit, onChanged: onExplicitChanged),
+          if (showAbridged) _InlineSwitchField(label: 'Abridged', value: abridged, onChanged: onAbridgedChanged),
         ],
       ),
     );
@@ -850,11 +736,7 @@ class _MetadataFlagsField extends StatelessWidget {
 }
 
 class _InlineSwitchField extends StatelessWidget {
-  const _InlineSwitchField({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
+  const _InlineSwitchField({required this.label, required this.value, required this.onChanged});
 
   final String label;
   final bool value;

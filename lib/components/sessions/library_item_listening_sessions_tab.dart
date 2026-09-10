@@ -17,22 +17,16 @@ import 'package:yaabsa/screens/item/podcast/podcast_episode_utils.dart';
 import 'package:yaabsa/util/logger.dart';
 
 class LibraryItemListeningSessionsTab extends ConsumerStatefulWidget {
-  const LibraryItemListeningSessionsTab({
-    super.key,
-    required this.item,
-    this.initialEpisodeId,
-  });
+  const LibraryItemListeningSessionsTab({super.key, required this.item, this.initialEpisodeId});
 
   final LibraryItem item;
   final String? initialEpisodeId;
 
   @override
-  ConsumerState<LibraryItemListeningSessionsTab> createState() =>
-      _LibraryItemListeningSessionsTabState();
+  ConsumerState<LibraryItemListeningSessionsTab> createState() => _LibraryItemListeningSessionsTabState();
 }
 
-class _LibraryItemListeningSessionsTabState
-    extends ConsumerState<LibraryItemListeningSessionsTab> {
+class _LibraryItemListeningSessionsTabState extends ConsumerState<LibraryItemListeningSessionsTab> {
   static const int _defaultItemsPerPage = 20;
   static const List<int> _pageSizeOptions = <int>[20, 50, 100];
 
@@ -56,10 +50,7 @@ class _LibraryItemListeningSessionsTabState
     final initialEpisode = widget.initialEpisodeId;
     final hasInitialEpisode =
         initialEpisode != null &&
-        (widget.item.media?.podcastMedia?.episodes?.any(
-              (episode) => episode.id == initialEpisode,
-            ) ??
-            false);
+        (widget.item.media?.podcastMedia?.episodes?.any((episode) => episode.id == initialEpisode) ?? false);
     _selectedEpisodeId = hasInitialEpisode ? initialEpisode : null;
   }
 
@@ -107,9 +98,7 @@ class _LibraryItemListeningSessionsTabState
 
       setState(() {
         _sessions = pageData.sessions;
-        _selectedSessionIds.removeWhere(
-          (sessionId) => !_sessions.any((session) => session.id == sessionId),
-        );
+        _selectedSessionIds.removeWhere((sessionId) => !_sessions.any((session) => session.id == sessionId));
         _totalSessions = pageData.total ?? pageData.sessions.length;
         _numPages = (pageData.numPages ?? 1) <= 0 ? 1 : pageData.numPages!;
         _currentPage = pageData.page ?? _currentPage;
@@ -216,15 +205,11 @@ class _LibraryItemListeningSessionsTabState
 
   Future<void> _bulkDeleteSelectedSessions(User currentUser) async {
     final api = _api();
-    if (api == null ||
-        _isBulkDeleting ||
-        !_canDeleteSelectedSessions(currentUser)) {
+    if (api == null || _isBulkDeleting || !_canDeleteSelectedSessions(currentUser)) {
       return;
     }
 
-    final selectedSessions = _sessions
-        .where((session) => _selectedSessionIds.contains(session.id))
-        .toList();
+    final selectedSessions = _sessions.where((session) => _selectedSessionIds.contains(session.id)).toList();
     if (selectedSessions.isEmpty) {
       return;
     }
@@ -234,18 +219,10 @@ class _LibraryItemListeningSessionsTabState
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Selected Sessions'),
-          content: Text(
-            'Delete ${selectedSessions.length} selected session(s)? This cannot be undone.',
-          ),
+          content: Text('Delete ${selectedSessions.length} selected session(s)? This cannot be undone.'),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
           ],
         );
       },
@@ -298,25 +275,16 @@ class _LibraryItemListeningSessionsTabState
 
     final messenger = ScaffoldMessenger.of(context);
     if (deletedCount > 0) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Deleted $deletedCount session(s).')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text('Deleted $deletedCount session(s).')));
     }
     if (failedSessionIds.isNotEmpty) {
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            'Failed to delete ${failedSessionIds.length} session(s). Check logs for details.',
-          ),
-        ),
+        SnackBar(content: Text('Failed to delete ${failedSessionIds.length} session(s). Check logs for details.')),
       );
     }
   }
 
-  Future<void> _openSessionDialog(
-    PlaybackSession session,
-    User currentUser,
-  ) async {
+  Future<void> _openSessionDialog(PlaybackSession session, User currentUser) async {
     final api = _api();
     if (api == null) {
       return;
@@ -332,10 +300,7 @@ class _LibraryItemListeningSessionsTabState
       canDelete: canDelete,
       onSave: canEdit
           ? (updatedSession) async {
-              await api.getSessionApi().syncLocalSession(
-                updatedSession,
-                deleteFirst: true,
-              );
+              await api.getSessionApi().syncLocalSession(updatedSession, deleteFirst: true);
               return true;
             }
           : null,
@@ -392,15 +357,10 @@ class _LibraryItemListeningSessionsTabState
                       isDense: true,
                     ),
                     options: [
-                      const YaabsaDropdownOption<String?>(
-                        value: null,
-                        label: 'All Episodes',
-                      ),
+                      const YaabsaDropdownOption<String?>(value: null, label: 'All Episodes'),
                       ..._episodes.map(
-                        (episode) => YaabsaDropdownOption<String?>(
-                          value: episode.id,
-                          label: podcastEpisodeTitle(episode),
-                        ),
+                        (episode) =>
+                            YaabsaDropdownOption<String?>(value: episode.id, label: podcastEpisodeTitle(episode)),
                       ),
                     ],
                     onChanged: _isLoading
@@ -414,18 +374,12 @@ class _LibraryItemListeningSessionsTabState
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Card(
-                    color: Theme.of(context).colorScheme.errorContainer
-                        .withValues(alpha: 0.45),
+                    color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       child: Text(
                         _errorMessage!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onErrorContainer,
-                        ),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
                       ),
                     ),
                   ),
@@ -444,10 +398,7 @@ class _LibraryItemListeningSessionsTabState
                 onNext: _currentPage < (_numPages - 1) ? _goToNextPage : null,
               ),
               if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: LinearProgressIndicator(minHeight: 2),
-                ),
+                const Padding(padding: EdgeInsets.only(bottom: 8), child: LinearProgressIndicator(minHeight: 2)),
               if (_selectedSessionIds.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -456,23 +407,13 @@ class _LibraryItemListeningSessionsTabState
                       Text('${_selectedSessionIds.length} selected'),
                       const Spacer(),
                       FilledButton.icon(
-                        onPressed:
-                            (_isBulkDeleting ||
-                                !_canDeleteSelectedSessions(currentUser))
+                        onPressed: (_isBulkDeleting || !_canDeleteSelectedSessions(currentUser))
                             ? null
                             : () {
-                                unawaited(
-                                  _bulkDeleteSelectedSessions(currentUser),
-                                );
+                                unawaited(_bulkDeleteSelectedSessions(currentUser));
                               },
                         icon: _isBulkDeleting
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.delete_outline_rounded),
                         label: const Text('Delete Selected'),
                       ),

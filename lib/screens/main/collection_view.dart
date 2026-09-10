@@ -26,11 +26,7 @@ class CollectionView extends HookConsumerWidget {
     final serverReachable = ref.watch(serverStatusProvider).value ?? false;
 
     if (selectedLibrary == null) {
-      return const Center(
-        child: Text(
-          'No library selected. Please select a library via the switcher.',
-        ),
-      );
+      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
     }
 
     final libraryId = selectedLibrary.id;
@@ -41,20 +37,12 @@ class CollectionView extends HookConsumerWidget {
 
     final currentUser = ref.watch(currentUserProvider).value;
     ref.watch(userSettingsWatcherProvider);
-    final managementPreferences = readServerManagementPreferences(
-      ref,
-      currentUser?.id,
-    );
-    final collectionsManagementEnabled =
-        managementPreferences.collectionsEnabled;
-    final hasCollectionManagementPermission =
-        currentUser?.permissions.update ?? false;
-    final canEditCollections =
-        hasCollectionManagementPermission && collectionsManagementEnabled;
-    final canDeleteCollections =
-        hasCollectionManagementPermission && collectionsManagementEnabled;
-    final canCreateCollections =
-        canEditCollections && selectedLibrary.mediaType == 'book';
+    final managementPreferences = readServerManagementPreferences(ref, currentUser?.id);
+    final collectionsManagementEnabled = managementPreferences.collectionsEnabled;
+    final hasCollectionManagementPermission = currentUser?.permissions.update ?? false;
+    final canEditCollections = hasCollectionManagementPermission && collectionsManagementEnabled;
+    final canDeleteCollections = hasCollectionManagementPermission && collectionsManagementEnabled;
+    final canCreateCollections = canEditCollections && selectedLibrary.mediaType == 'book';
 
     final collectionStateAsync = ref.watch(collectionsProvider(libraryId));
 
@@ -68,10 +56,7 @@ class CollectionView extends HookConsumerWidget {
               (collection) => ManagedMultiBookCardConfig(
                 entry: MultiBookEntryData.fromCollection(collection),
                 onTap: () {
-                  context.push(
-                    '/collection/${collection.id}',
-                    extra: MultiBookEntryData.fromCollection(collection),
-                  );
+                  context.push('/collection/${collection.id}', extra: MultiBookEntryData.fromCollection(collection));
                 },
                 onLongPress: (canEditCollections || canDeleteCollections)
                     ? () => _showCollectionActionsSheet(
@@ -91,39 +76,28 @@ class CollectionView extends HookConsumerWidget {
           title: 'Collections',
           createLabel: 'New collection',
           emptyTitle: 'No collections yet.',
-          emptyMessage:
-              'Create one to group books you want to revisit together.',
+          emptyMessage: 'Create one to group books you want to revisit together.',
           onCreate: canCreateCollections
-              ? () => _createCollection(
-                  context: context,
-                  ref: ref,
-                  libraryId: libraryId,
-                )
+              ? () => _createCollection(context: context, ref: ref, libraryId: libraryId)
               : null,
           scrollController: scrollController,
           api: api,
           cards: cards,
-          onRefresh: () => ref
-              .read(collectionsProvider(libraryId).notifier)
-              .refresh(withLoading: false),
+          onRefresh: () => ref.read(collectionsProvider(libraryId).notifier).refresh(withLoading: false),
         );
       },
       loading: () => const LoadingView(),
       error: (error, stackTrace) {
         if (!serverReachable) {
           return ConnectionIssueView.offline(
-            onRetry: () => ref
-                .read(collectionsProvider(libraryId).notifier)
-                .refresh(withLoading: true),
+            onRetry: () => ref.read(collectionsProvider(libraryId).notifier).refresh(withLoading: true),
           );
         }
 
         return ConnectionIssueView.requestFailed(
           error: error,
           title: 'Error loading collections',
-          onRetry: () => ref
-              .read(collectionsProvider(libraryId).notifier)
-              .refresh(withLoading: true),
+          onRetry: () => ref.read(collectionsProvider(libraryId).notifier).refresh(withLoading: true),
         );
       },
     );
@@ -145,34 +119,25 @@ Future<void> _showCollectionActionsSheet({
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              title: Text(
-                collection.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+            ListTile(title: Text(collection.name, maxLines: 1, overflow: TextOverflow.ellipsis)),
             const Divider(height: 1),
             if (canEditCollections)
               ListTile(
                 leading: const Icon(Icons.menu_book_rounded),
                 title: const Text('Edit books'),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(_CollectionAction.editBooks),
+                onTap: () => Navigator.of(sheetContext).pop(_CollectionAction.editBooks),
               ),
             if (canEditCollections)
               ListTile(
                 leading: const Icon(Icons.edit_outlined),
                 title: const Text('Edit details'),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(_CollectionAction.edit),
+                onTap: () => Navigator.of(sheetContext).pop(_CollectionAction.edit),
               ),
             if (canDeleteCollections)
               ListTile(
                 leading: const Icon(Icons.delete_outline_rounded),
                 title: const Text('Delete collection'),
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(_CollectionAction.delete),
+                onTap: () => Navigator.of(sheetContext).pop(_CollectionAction.delete),
               ),
           ],
         ),
@@ -186,28 +151,13 @@ Future<void> _showCollectionActionsSheet({
 
   switch (selectedAction) {
     case _CollectionAction.editBooks:
-      await _editCollectionBooks(
-        context: context,
-        ref: ref,
-        libraryId: libraryId,
-        collection: collection,
-      );
+      await _editCollectionBooks(context: context, ref: ref, libraryId: libraryId, collection: collection);
       break;
     case _CollectionAction.edit:
-      await _editCollection(
-        context: context,
-        ref: ref,
-        libraryId: libraryId,
-        collection: collection,
-      );
+      await _editCollection(context: context, ref: ref, libraryId: libraryId, collection: collection);
       break;
     case _CollectionAction.delete:
-      await _deleteCollection(
-        context: context,
-        ref: ref,
-        libraryId: libraryId,
-        collection: collection,
-      );
+      await _deleteCollection(context: context, ref: ref, libraryId: libraryId, collection: collection);
       break;
   }
 }
@@ -226,11 +176,7 @@ Future<void> _createCollection({
     onCreate: ({required name, description, required bookIds}) {
       return ref
           .read(collectionsProvider(libraryId).notifier)
-          .createCollection(
-            name: name,
-            description: description,
-            bookIds: bookIds,
-          );
+          .createCollection(name: name, description: description, bookIds: bookIds);
     },
     successMessage: 'Collection created.',
     errorFallback: 'Could not create collection.',
@@ -255,9 +201,7 @@ Future<void> _editCollectionBooks({
         .read(collectionsProvider(libraryId).notifier)
         .replaceBooksInCollection(
           collection.id,
-          currentBookIds: currentBooks
-              .map((item) => item.id)
-              .toList(growable: false),
+          currentBookIds: currentBooks.map((item) => item.id).toList(growable: false),
           desiredBookIds: bookIds,
         ),
     successMessage: 'Collection books updated.',
@@ -294,9 +238,7 @@ Future<void> _deleteCollection({
     context: context,
     title: 'Delete collection?',
     message: '"${collection.name}" will be permanently removed.',
-    onDelete: () => ref
-        .read(collectionsProvider(libraryId).notifier)
-        .deleteCollection(collection.id),
+    onDelete: () => ref.read(collectionsProvider(libraryId).notifier).deleteCollection(collection.id),
     successMessage: 'Collection deleted.',
     errorFallback: 'Could not delete collection.',
   );

@@ -1,24 +1,14 @@
 part of '../bg_audio_handler.dart';
 
 extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
-  _AndroidAutoPlaybackTarget? _androidAutoPlaybackTargetFromMediaId(
-    String mediaId,
-  ) {
+  _AndroidAutoPlaybackTarget? _androidAutoPlaybackTargetFromMediaId(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
 
-    if (segments.length == 4 &&
-        segments[0] == 'aa' &&
-        segments[1] == 'play' &&
-        segments[2] == 'item') {
-      return _AndroidAutoPlaybackTarget(
-        itemId: Uri.decodeComponent(segments[3]),
-      );
+    if (segments.length == 4 && segments[0] == 'aa' && segments[1] == 'play' && segments[2] == 'item') {
+      return _AndroidAutoPlaybackTarget(itemId: Uri.decodeComponent(segments[3]));
     }
 
-    if (segments.length == 5 &&
-        segments[0] == 'aa' &&
-        segments[1] == 'play' &&
-        segments[2] == 'episode') {
+    if (segments.length == 5 && segments[0] == 'aa' && segments[1] == 'play' && segments[2] == 'episode') {
       return _AndroidAutoPlaybackTarget(
         itemId: Uri.decodeComponent(segments[3]),
         episodeId: Uri.decodeComponent(segments[4]),
@@ -28,13 +18,8 @@ extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
     return null;
   }
 
-  _AndroidAutoPagingOptions _androidAutoPagingFromOptions(
-    Map<String, dynamic>? options,
-  ) {
-    final page = _androidAutoReadInt(options, const <String>[
-      'android.media.browse.extra.PAGE',
-      'page',
-    ]);
+  _AndroidAutoPagingOptions _androidAutoPagingFromOptions(Map<String, dynamic>? options) {
+    final page = _androidAutoReadInt(options, const <String>['android.media.browse.extra.PAGE', 'page']);
     final pageSize = _androidAutoReadInt(options, const <String>[
       'android.media.browse.extra.PAGE_SIZE',
       'pageSize',
@@ -43,11 +28,7 @@ extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
 
     return _AndroidAutoPagingOptions(
       page: (page ?? 0) < 0 ? 0 : (page ?? 0),
-      pageSize: _clampInt(
-        pageSize ?? _androidAutoDefaultPageSize,
-        1,
-        _androidAutoMaxPageSize,
-      ),
+      pageSize: _clampInt(pageSize ?? _androidAutoDefaultPageSize, 1, _androidAutoMaxPageSize),
       hasExplicitPaging: page != null || pageSize != null,
     );
   }
@@ -76,10 +57,7 @@ extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
     return null;
   }
 
-  List<T> _androidAutoApplyPaging<T>(
-    List<T> items,
-    _AndroidAutoPagingOptions paging,
-  ) {
+  List<T> _androidAutoApplyPaging<T>(List<T> items, _AndroidAutoPagingOptions paging) {
     if (items.isEmpty) {
       return List<T>.empty(growable: false);
     }
@@ -111,10 +89,7 @@ extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
     return 'aa/library/${Uri.encodeComponent(libraryId)}';
   }
 
-  String _androidAutoLibraryTabNodeId(
-    String libraryId,
-    _AndroidAutoLibraryTab tab,
-  ) {
+  String _androidAutoLibraryTabNodeId(String libraryId, _AndroidAutoLibraryTab tab) {
     return '${_androidAutoLibraryNodeId(libraryId)}/tab/${tab.key}';
   }
 
@@ -156,9 +131,7 @@ extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
 
   String? _androidAutoRecentLibraryIdFromNode(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
-    if (segments.length == 3 &&
-        segments[0] == 'aa' &&
-        segments[1] == 'recent') {
+    if (segments.length == 3 && segments[0] == 'aa' && segments[1] == 'recent') {
       return Uri.decodeComponent(segments[2]);
     }
     return null;
@@ -166,17 +139,13 @@ extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
 
   String? _androidAutoLibraryIdFromNode(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
-    if (segments.length == 3 &&
-        segments[0] == 'aa' &&
-        segments[1] == 'library') {
+    if (segments.length == 3 && segments[0] == 'aa' && segments[1] == 'library') {
       return Uri.decodeComponent(segments[2]);
     }
     return null;
   }
 
-  ({String libraryId, String letter})? _androidAutoAllLetterNodeFromId(
-    String mediaId,
-  ) {
+  ({String libraryId, String letter})? _androidAutoAllLetterNodeFromId(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
     if (segments.length != 7 ||
         segments[0] != 'aa' ||
@@ -195,13 +164,9 @@ extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
     return (libraryId: Uri.decodeComponent(segments[2]), letter: letter);
   }
 
-  ({String libraryId, _AndroidAutoLibraryTab tab})?
-  _androidAutoLibraryTabFromNode(String mediaId) {
+  ({String libraryId, _AndroidAutoLibraryTab tab})? _androidAutoLibraryTabFromNode(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
-    if (segments.length != 5 ||
-        segments[0] != 'aa' ||
-        segments[1] != 'library' ||
-        segments[3] != 'tab') {
+    if (segments.length != 5 || segments[0] != 'aa' || segments[1] != 'library' || segments[3] != 'tab') {
       return null;
     }
 
@@ -213,97 +178,54 @@ extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
     return (libraryId: Uri.decodeComponent(segments[2]), tab: tab);
   }
 
-  ({String libraryId, String authorId})? _androidAutoAuthorNodeFromId(
-    String mediaId,
-  ) {
+  ({String libraryId, String authorId})? _androidAutoAuthorNodeFromId(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
-    if (segments.length != 5 ||
-        segments[0] != 'aa' ||
-        segments[1] != 'library' ||
-        segments[3] != 'author') {
+    if (segments.length != 5 || segments[0] != 'aa' || segments[1] != 'library' || segments[3] != 'author') {
       return null;
     }
 
-    return (
-      libraryId: Uri.decodeComponent(segments[2]),
-      authorId: Uri.decodeComponent(segments[4]),
-    );
+    return (libraryId: Uri.decodeComponent(segments[2]), authorId: Uri.decodeComponent(segments[4]));
   }
 
-  ({String libraryId, String seriesId})? _androidAutoSeriesNodeFromId(
-    String mediaId,
-  ) {
+  ({String libraryId, String seriesId})? _androidAutoSeriesNodeFromId(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
-    if (segments.length != 5 ||
-        segments[0] != 'aa' ||
-        segments[1] != 'library' ||
-        segments[3] != 'series') {
+    if (segments.length != 5 || segments[0] != 'aa' || segments[1] != 'library' || segments[3] != 'series') {
       return null;
     }
 
-    return (
-      libraryId: Uri.decodeComponent(segments[2]),
-      seriesId: Uri.decodeComponent(segments[4]),
-    );
+    return (libraryId: Uri.decodeComponent(segments[2]), seriesId: Uri.decodeComponent(segments[4]));
   }
 
-  ({String libraryId, String collectionId})? _androidAutoCollectionNodeFromId(
-    String mediaId,
-  ) {
+  ({String libraryId, String collectionId})? _androidAutoCollectionNodeFromId(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
-    if (segments.length != 5 ||
-        segments[0] != 'aa' ||
-        segments[1] != 'library' ||
-        segments[3] != 'collection') {
+    if (segments.length != 5 || segments[0] != 'aa' || segments[1] != 'library' || segments[3] != 'collection') {
       return null;
     }
 
-    return (
-      libraryId: Uri.decodeComponent(segments[2]),
-      collectionId: Uri.decodeComponent(segments[4]),
-    );
+    return (libraryId: Uri.decodeComponent(segments[2]), collectionId: Uri.decodeComponent(segments[4]));
   }
 
-  ({String libraryId, String playlistId})? _androidAutoPlaylistNodeFromId(
-    String mediaId,
-  ) {
+  ({String libraryId, String playlistId})? _androidAutoPlaylistNodeFromId(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
-    if (segments.length != 5 ||
-        segments[0] != 'aa' ||
-        segments[1] != 'library' ||
-        segments[3] != 'playlist') {
+    if (segments.length != 5 || segments[0] != 'aa' || segments[1] != 'library' || segments[3] != 'playlist') {
       return null;
     }
 
-    return (
-      libraryId: Uri.decodeComponent(segments[2]),
-      playlistId: Uri.decodeComponent(segments[4]),
-    );
+    return (libraryId: Uri.decodeComponent(segments[2]), playlistId: Uri.decodeComponent(segments[4]));
   }
 
-  ({String libraryId, String narrator})? _androidAutoNarratorNodeFromId(
-    String mediaId,
-  ) {
+  ({String libraryId, String narrator})? _androidAutoNarratorNodeFromId(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
-    if (segments.length != 5 ||
-        segments[0] != 'aa' ||
-        segments[1] != 'library' ||
-        segments[3] != 'narrator') {
+    if (segments.length != 5 || segments[0] != 'aa' || segments[1] != 'library' || segments[3] != 'narrator') {
       return null;
     }
 
-    return (
-      libraryId: Uri.decodeComponent(segments[2]),
-      narrator: Uri.decodeComponent(segments[4]),
-    );
+    return (libraryId: Uri.decodeComponent(segments[2]), narrator: Uri.decodeComponent(segments[4]));
   }
 
   String? _androidAutoPodcastItemIdFromNode(String mediaId) {
     final segments = _androidAutoSegments(mediaId);
-    if (segments.length != 4 ||
-        segments[0] != 'aa' ||
-        segments[1] != 'podcast' ||
-        segments[2] != 'item') {
+    if (segments.length != 4 || segments[0] != 'aa' || segments[1] != 'podcast' || segments[2] != 'item') {
       return null;
     }
 
@@ -311,9 +233,6 @@ extension _BGAudioHandlerAndroidAutoIds on BGAudioHandler {
   }
 
   List<String> _androidAutoSegments(String value) {
-    return value
-        .split('/')
-        .where((segment) => segment.isNotEmpty)
-        .toList(growable: false);
+    return value.split('/').where((segment) => segment.isNotEmpty).toList(growable: false);
   }
 }

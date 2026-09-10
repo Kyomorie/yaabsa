@@ -62,15 +62,13 @@ class _LibrarySettingsState extends ConsumerState<LibrarySettings> {
                       icon: Icons.subtitles_outlined,
                       title: 'View Subtitles',
                       subtitle: 'Configure details that are shown for items, series and authors as a subtitle',
-                      onTap: () =>
-                          context.push(LibraryViewSubtitleSettings.routeName),
+                      onTap: () => context.push(LibraryViewSubtitleSettings.routeName),
                     ),
                   ],
                   settings: [
                     SettingSlider<double>(
                       label: 'Library Grid Scale',
-                      description:
-                          'Scales library item cards in all grid views',
+                      description: 'Scales library item cards in all grid views',
                       values: appLibraryGridScaleOptions,
                       valueLabels: appLibraryGridScaleLabels,
                       settingKey: SettingKeys.libraryGridScale,
@@ -83,8 +81,7 @@ class _LibrarySettingsState extends ConsumerState<LibrarySettings> {
 
                     const SettingSwitchTile(
                       label: 'Show Shelf Play Button',
-                      settingKey:
-                          SettingKeys.personalizedShelfShowPlayVisibleButton,
+                      settingKey: SettingKeys.personalizedShelfShowPlayVisibleButton,
                       subtitle: 'Adds a play-all button on Continue Listening and Newest Episodes shelves',
                     ),
                     SettingSwitchTile(
@@ -107,10 +104,8 @@ class _LibrarySettingsState extends ConsumerState<LibrarySettings> {
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) => Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text('Failed to load user settings: $error'),
-          ),
+          error: (error, _) =>
+              Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load user settings: $error')),
         ),
       ],
     );

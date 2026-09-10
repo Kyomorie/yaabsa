@@ -12,8 +12,7 @@ part of 'smart_download_provider.dart';
 @ProviderFor(SmartDownloadManager)
 final smartDownloadManagerProvider = SmartDownloadManagerProvider._();
 
-final class SmartDownloadManagerProvider
-    extends $NotifierProvider<SmartDownloadManager, SmartDownloadState> {
+final class SmartDownloadManagerProvider extends $NotifierProvider<SmartDownloadManager, SmartDownloadState> {
   SmartDownloadManagerProvider._()
     : super(
         from: null,
@@ -34,15 +33,11 @@ final class SmartDownloadManagerProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(SmartDownloadState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<SmartDownloadState>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<SmartDownloadState>(value));
   }
 }
 
-String _$smartDownloadManagerHash() =>
-    r'e2703105e69f13cf2b87865e0f107b2708606d59';
+String _$smartDownloadManagerHash() => r'e2703105e69f13cf2b87865e0f107b2708606d59';
 
 abstract class _$SmartDownloadManager extends $Notifier<SmartDownloadState> {
   SmartDownloadState build();

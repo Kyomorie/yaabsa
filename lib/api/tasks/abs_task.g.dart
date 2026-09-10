@@ -9,14 +9,10 @@ part of 'abs_task.dart';
 _AbsTask _$AbsTaskFromJson(Map<String, dynamic> json) => _AbsTask(
   id: json['id'] as String,
   action: json['action'] as String? ?? '',
-  data: json['data'] == null
-      ? null
-      : AbsTaskData.fromJson(json['data'] as Map<String, dynamic>),
+  data: json['data'] == null ? null : AbsTaskData.fromJson(json['data'] as Map<String, dynamic>),
   title: json['title'] as String?,
   titleKey: json['titleKey'] as String?,
-  titleSubs: json['titleSubs'] == null
-      ? const <String>[]
-      : jsonStringListFromDynamic(json['titleSubs']),
+  titleSubs: json['titleSubs'] == null ? const <String>[] : jsonStringListFromDynamic(json['titleSubs']),
   description: json['description'] as String?,
   descriptionKey: json['descriptionKey'] as String?,
   descriptionSubs: json['descriptionSubs'] == null
@@ -24,9 +20,7 @@ _AbsTask _$AbsTaskFromJson(Map<String, dynamic> json) => _AbsTask(
       : jsonStringListFromDynamic(json['descriptionSubs']),
   error: json['error'] as String?,
   errorKey: json['errorKey'] as String?,
-  errorSubs: json['errorSubs'] == null
-      ? const <String>[]
-      : jsonStringListFromDynamic(json['errorSubs']),
+  errorSubs: json['errorSubs'] == null ? const <String>[] : jsonStringListFromDynamic(json['errorSubs']),
   showSuccess: json['showSuccess'] as bool? ?? false,
   isFailed: json['isFailed'] as bool? ?? false,
   isFinished: json['isFinished'] as bool? ?? false,
@@ -60,53 +54,42 @@ _AbsTaskData _$AbsTaskDataFromJson(Map<String, dynamic> json) => _AbsTaskData(
   ino: jsonStringFromDynamic(json['ino']),
   encodeOptions: json['encodeOptions'] == null
       ? null
-      : AbsTaskEncodeOptions.fromJson(
-          json['encodeOptions'] as Map<String, dynamic>,
-        ),
+      : AbsTaskEncodeOptions.fromJson(json['encodeOptions'] as Map<String, dynamic>),
   scanResults: json['scanResults'] == null
       ? null
-      : AbsTaskScanResults.fromJson(
-          json['scanResults'] as Map<String, dynamic>,
-        ),
+      : AbsTaskScanResults.fromJson(json['scanResults'] as Map<String, dynamic>),
 );
 
-Map<String, dynamic> _$AbsTaskDataToJson(_AbsTaskData instance) =>
-    <String, dynamic>{
-      'libraryItemId': instance.libraryItemId,
-      'libraryId': instance.libraryId,
-      'ino': instance.ino,
-      'encodeOptions': instance.encodeOptions,
-      'scanResults': instance.scanResults,
-    };
+Map<String, dynamic> _$AbsTaskDataToJson(_AbsTaskData instance) => <String, dynamic>{
+  'libraryItemId': instance.libraryItemId,
+  'libraryId': instance.libraryId,
+  'ino': instance.ino,
+  'encodeOptions': instance.encodeOptions,
+  'scanResults': instance.scanResults,
+};
 
-_AbsTaskEncodeOptions _$AbsTaskEncodeOptionsFromJson(
-  Map<String, dynamic> json,
-) => _AbsTaskEncodeOptions(
+_AbsTaskEncodeOptions _$AbsTaskEncodeOptionsFromJson(Map<String, dynamic> json) => _AbsTaskEncodeOptions(
   codec: jsonStringFromDynamic(json['codec']),
   bitrate: jsonStringFromDynamic(json['bitrate']),
   channels: jsonIntFromDynamic(json['channels']),
 );
 
-Map<String, dynamic> _$AbsTaskEncodeOptionsToJson(
-  _AbsTaskEncodeOptions instance,
-) => <String, dynamic>{
+Map<String, dynamic> _$AbsTaskEncodeOptionsToJson(_AbsTaskEncodeOptions instance) => <String, dynamic>{
   'codec': instance.codec,
   'bitrate': instance.bitrate,
   'channels': instance.channels,
 };
 
-_AbsTaskScanResults _$AbsTaskScanResultsFromJson(Map<String, dynamic> json) =>
-    _AbsTaskScanResults(
-      added: jsonIntFromDynamic(json['added']),
-      updated: jsonIntFromDynamic(json['updated']),
-      missing: jsonIntFromDynamic(json['missing']),
-      elapsed: jsonIntFromDynamic(json['elapsed']),
-    );
+_AbsTaskScanResults _$AbsTaskScanResultsFromJson(Map<String, dynamic> json) => _AbsTaskScanResults(
+  added: jsonIntFromDynamic(json['added']),
+  updated: jsonIntFromDynamic(json['updated']),
+  missing: jsonIntFromDynamic(json['missing']),
+  elapsed: jsonIntFromDynamic(json['elapsed']),
+);
 
-Map<String, dynamic> _$AbsTaskScanResultsToJson(_AbsTaskScanResults instance) =>
-    <String, dynamic>{
-      'added': instance.added,
-      'updated': instance.updated,
-      'missing': instance.missing,
-      'elapsed': instance.elapsed,
-    };
+Map<String, dynamic> _$AbsTaskScanResultsToJson(_AbsTaskScanResults instance) => <String, dynamic>{
+  'added': instance.added,
+  'updated': instance.updated,
+  'missing': instance.missing,
+  'elapsed': instance.elapsed,
+};

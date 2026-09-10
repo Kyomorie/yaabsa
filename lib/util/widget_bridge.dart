@@ -36,20 +36,15 @@ class WidgetBridge {
     try {
       final payload = <String, dynamic>{
         if (userId != null && userId.trim().isNotEmpty) 'userId': userId,
-        if (userName != null && userName.trim().isNotEmpty)
-          'userName': userName,
+        if (userName != null && userName.trim().isNotEmpty) 'userName': userName,
         'libraryId': libraryId,
-        if (libraryName != null && libraryName.trim().isNotEmpty)
-          'libraryName': libraryName,
+        if (libraryName != null && libraryName.trim().isNotEmpty) 'libraryName': libraryName,
         'shelfId': shelfId,
         'shelfLabel': shelfLabel,
         'itemsJson': jsonEncode(items),
       };
 
-      final result = await _channel.invokeMethod<bool>(
-        'publishShelfSnapshot',
-        payload,
-      );
+      final result = await _channel.invokeMethod<bool>('publishShelfSnapshot', payload);
       return result ?? false;
     } catch (e) {
       logger(
@@ -61,26 +56,19 @@ class WidgetBridge {
     }
   }
 
-  static Future<bool> publishWidgetConfig({
-    required int appWidgetId,
-    required Map<String, dynamic> config,
-  }) async {
+  static Future<bool> publishWidgetConfig({required int appWidgetId, required Map<String, dynamic> config}) async {
     if (!_isAndroid) {
       return false;
     }
 
     try {
-      final result = await _channel.invokeMethod<bool>(
-        'publishWidgetConfig',
-        <String, dynamic>{'appWidgetId': appWidgetId, 'config': config},
-      );
+      final result = await _channel.invokeMethod<bool>('publishWidgetConfig', <String, dynamic>{
+        'appWidgetId': appWidgetId,
+        'config': config,
+      });
       return result ?? false;
     } catch (e) {
-      logger(
-        'Failed to publish widget config for $appWidgetId: $e',
-        tag: 'WidgetBridge',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to publish widget config for $appWidgetId: $e', tag: 'WidgetBridge', level: InfoLevel.warning);
       return false;
     }
   }
@@ -91,17 +79,12 @@ class WidgetBridge {
     }
 
     try {
-      final result = await _channel.invokeMethod<bool>(
-        'publishWidgetTheme',
-        <String, dynamic>{'isDarkMode': isDarkMode},
-      );
+      final result = await _channel.invokeMethod<bool>('publishWidgetTheme', <String, dynamic>{
+        'isDarkMode': isDarkMode,
+      });
       return result ?? false;
     } catch (e) {
-      logger(
-        'Failed to publish widget theme: $e',
-        tag: 'WidgetBridge',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to publish widget theme: $e', tag: 'WidgetBridge', level: InfoLevel.warning);
       return false;
     }
   }
@@ -112,16 +95,10 @@ class WidgetBridge {
     }
 
     try {
-      final result = await _channel.invokeMethod<bool>(
-        'consumePopulateAllRequest',
-      );
+      final result = await _channel.invokeMethod<bool>('consumePopulateAllRequest');
       return result ?? false;
     } catch (e) {
-      logger(
-        'Failed to consume widget populate-all request: $e',
-        tag: 'WidgetBridge',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to consume widget populate-all request: $e', tag: 'WidgetBridge', level: InfoLevel.warning);
       return false;
     }
   }
@@ -132,16 +109,9 @@ class WidgetBridge {
     }
 
     try {
-      await _channel.invokeMethod<void>(
-        'triggerWidgetUpdate',
-        <String, dynamic>{'appWidgetId': appWidgetId},
-      );
+      await _channel.invokeMethod<void>('triggerWidgetUpdate', <String, dynamic>{'appWidgetId': appWidgetId});
     } catch (e) {
-      logger(
-        'Failed to trigger widget update: $e',
-        tag: 'WidgetBridge',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to trigger widget update: $e', tag: 'WidgetBridge', level: InfoLevel.warning);
     }
   }
 
@@ -204,10 +174,7 @@ class WidgetBridge {
 
       final items = <Map<String, dynamic>>[];
       for (final item in shelf.entities.take(maxItemsPerShelf)) {
-        final coverUrl = api
-            ?.getLibraryItemApi()
-            .getCoverUri(item.id, item: item)
-            .toString();
+        final coverUrl = api?.getLibraryItemApi().getCoverUri(item.id, item: item).toString();
         final coverAuthToken = api?.token;
 
         final itemData = <String, dynamic>{

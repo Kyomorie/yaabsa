@@ -8,18 +8,9 @@ import 'package:yaabsa/components/common/managed_list_operations.dart';
 import 'package:yaabsa/provider/common/library_item_sync.dart';
 import 'package:yaabsa/provider/core/user_providers.dart';
 
-void removeLibraryItemsLocally(
-  WidgetRef ref,
-  Iterable<LibraryItem> removedItems,
-) {
+void removeLibraryItemsLocally(WidgetRef ref, Iterable<LibraryItem> removedItems) {
   for (final removedItem in removedItems) {
-    unawaited(
-      processLibraryItemRemoved(
-        container: ref.container,
-        item: removedItem,
-        source: 'item_delete_actions',
-      ),
-    );
+    unawaited(processLibraryItemRemoved(container: ref.container, item: removedItem, source: 'item_delete_actions'));
   }
 }
 
@@ -27,16 +18,11 @@ bool isAudiobookLibraryItem(LibraryItem item) {
   return item.mediaType == 'book' || item.media?.bookMedia != null;
 }
 
-bool canDeleteAudiobook({
-  required LibraryItem item,
-  required bool hasDeletePermission,
-}) {
+bool canDeleteAudiobook({required LibraryItem item, required bool hasDeletePermission}) {
   return hasDeletePermission && isAudiobookLibraryItem(item);
 }
 
-List<LibraryItem> collectUniqueDeletableAudiobooks(
-  Iterable<LibraryItem> items,
-) {
+List<LibraryItem> collectUniqueDeletableAudiobooks(Iterable<LibraryItem> items) {
   final seenIds = <String>{};
   final deletableItems = <LibraryItem>[];
 
@@ -66,18 +52,12 @@ Future<bool> deleteAudiobookWithConfirmation({
   VoidCallback? onSuccess,
 }) async {
   if (!isAudiobookLibraryItem(item)) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Only audiobooks can be deleted from this action.'),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Only audiobooks can be deleted from this action.')));
     return false;
   }
 
-  final deleteMode = await showLibraryItemDeleteDialog(
-    context: context,
-    deleteCount: 1,
-  );
+  final deleteMode = await showLibraryItemDeleteDialog(context: context, deleteCount: 1);
   if (!context.mounted || deleteMode == null) {
     return false;
   }
@@ -93,10 +73,7 @@ Future<bool> deleteAudiobookWithConfirmation({
         throw Exception('API not available');
       }
 
-      final deleted = await api.getLibraryItemApi().deleteLibraryItem(
-        item.id,
-        hardDelete: hardDelete,
-      );
+      final deleted = await api.getLibraryItemApi().deleteLibraryItem(item.id, hardDelete: hardDelete);
       if (!deleted) {
         throw Exception('Delete request failed.');
       }
@@ -127,11 +104,7 @@ Future<bool> deleteAudiobooksInBulkWithConfirmation({
 
   if (deletableItems.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'No selected audiobooks can be deleted. Select audiobook items and try again.',
-        ),
-      ),
+      const SnackBar(content: Text('No selected audiobooks can be deleted. Select audiobook items and try again.')),
     );
     return false;
   }
@@ -148,9 +121,7 @@ Future<bool> deleteAudiobooksInBulkWithConfirmation({
   }
 
   final hardDelete = deleteMode == LibraryItemDeleteMode.absAndFileSystem;
-  final deleteIds = deletableItems
-      .map((item) => item.id)
-      .toList(growable: false);
+  final deleteIds = deletableItems.map((item) => item.id).toList(growable: false);
 
   var didDelete = false;
   await runManagedListMutation(
@@ -161,10 +132,7 @@ Future<bool> deleteAudiobooksInBulkWithConfirmation({
         throw Exception('API not available');
       }
 
-      final deleted = await api.getLibraryItemApi().deleteLibraryItems(
-        deleteIds,
-        hardDelete: hardDelete,
-      );
+      final deleted = await api.getLibraryItemApi().deleteLibraryItems(deleteIds, hardDelete: hardDelete);
       if (!deleted) {
         throw Exception('Bulk delete request failed.');
       }

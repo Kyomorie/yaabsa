@@ -12,6 +12,5 @@ abstract class EpisodeEnclosure with _$EpisodeEnclosure {
     @JsonKey(name: 'length', fromJson: jsonIntFromDynamic) int? length,
   }) = _EpisodeEnclosure;
 
-  factory EpisodeEnclosure.fromJson(Map<String, dynamic> json) =>
-      _$EpisodeEnclosureFromJson(json);
+  factory EpisodeEnclosure.fromJson(Map<String, dynamic> json) => _$EpisodeEnclosureFromJson(json);
 }

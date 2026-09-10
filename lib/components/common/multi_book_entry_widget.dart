@@ -28,17 +28,12 @@ class MultiBookEntryData {
   final int? totalBooks;
 
   factory MultiBookEntryData.fromSeries(Series series) {
-    final bookIds = _dedupeItemIds([
-      ...?series.books?.map((book) => book.id),
-      ...?series.libraryItemIds,
-    ]);
+    final bookIds = _dedupeItemIds([...?series.books?.map((book) => book.id), ...?series.libraryItemIds]);
 
     return MultiBookEntryData(
       id: series.id,
       title: series.name,
-      subtitle: series.numBooks == null
-          ? null
-          : LibraryViewSubtitle.plain('${series.numBooks} books'),
+      subtitle: series.numBooks == null ? null : LibraryViewSubtitle.plain('${series.numBooks} books'),
       bookItemIds: bookIds,
       totalBooks: series.numBooks ?? bookIds.length,
     );
@@ -47,17 +42,14 @@ class MultiBookEntryData {
   factory MultiBookEntryData.fromPlaylist(Playlist playlist) {
     final itemCount = playlist.items?.length;
     final bookIds = _dedupeItemIds(
-      playlist.items?.map((item) => item.libraryItem?.id ?? item.itemId) ??
-          const <String>[],
+      playlist.items?.map((item) => item.libraryItem?.id ?? item.itemId) ?? const <String>[],
     );
     final description = playlist.description?.trim();
 
     return MultiBookEntryData(
       id: playlist.id,
       title: playlist.name,
-      subtitle: description == null || description.isEmpty
-          ? null
-          : LibraryViewSubtitle.plain(description),
+      subtitle: description == null || description.isEmpty ? null : LibraryViewSubtitle.plain(description),
       bookItemIds: bookIds,
       totalBooks: itemCount ?? bookIds.length,
     );
@@ -65,17 +57,13 @@ class MultiBookEntryData {
 
   factory MultiBookEntryData.fromCollection(Collection collection) {
     final itemCount = collection.items?.length;
-    final bookIds = _dedupeItemIds(
-      collection.items?.map((item) => item.id) ?? const <String>[],
-    );
+    final bookIds = _dedupeItemIds(collection.items?.map((item) => item.id) ?? const <String>[]);
     final description = collection.description?.trim();
 
     return MultiBookEntryData(
       id: collection.id,
       title: collection.name,
-      subtitle: description == null || description.isEmpty
-          ? null
-          : LibraryViewSubtitle.plain(description),
+      subtitle: description == null || description.isEmpty ? null : LibraryViewSubtitle.plain(description),
       bookItemIds: bookIds,
       totalBooks: itemCount ?? bookIds.length,
     );
@@ -83,14 +71,9 @@ class MultiBookEntryData {
 
   int get totalBookCount => totalBooks ?? bookItemIds.length;
 
-  List<String> previewBookIds({
-    int maxBooksToShow = defaultMultiBookPreviewLimit,
-  }) {
+  List<String> previewBookIds({int maxBooksToShow = defaultMultiBookPreviewLimit}) {
     final safeLimit = maxBooksToShow < 1 ? 1 : maxBooksToShow;
-    return bookItemIds
-        .where((id) => id.isNotEmpty)
-        .take(safeLimit)
-        .toList(growable: false);
+    return bookItemIds.where((id) => id.isNotEmpty).take(safeLimit).toList(growable: false);
   }
 }
 
@@ -124,8 +107,7 @@ class MultiBookEntryWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final previewBookIds = entry.previewBookIds(maxBooksToShow: maxBooksToShow);
     final subtitle = _resolveSubtitle();
-    final hiddenBookCount = (entry.totalBookCount - previewBookIds.length)
-        .clamp(0, entry.totalBookCount);
+    final hiddenBookCount = (entry.totalBookCount - previewBookIds.length).clamp(0, entry.totalBookCount);
 
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,9 +131,8 @@ class MultiBookEntryWidget extends StatelessWidget {
         if (showSubtitle && subtitle != null)
           AdditionalInformationText(
             subtitle: subtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
       ],
     );
@@ -160,12 +141,7 @@ class MultiBookEntryWidget extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(16),
-        child: content,
-      ),
+      child: InkWell(onTap: onTap, onLongPress: onLongPress, borderRadius: BorderRadius.circular(16), child: content),
     );
   }
 
@@ -173,8 +149,7 @@ class MultiBookEntryWidget extends StatelessWidget {
     if (entry.subtitle != null) {
       return entry.subtitle!.isEmpty ? null : entry.subtitle;
     }
-    if (entry.totalBookCount > 0)
-      return LibraryViewSubtitle.plain('${entry.totalBookCount} books');
+    if (entry.totalBookCount > 0) return LibraryViewSubtitle.plain('${entry.totalBookCount} books');
     return null;
   }
 }
@@ -208,17 +183,12 @@ class _StackedCovers extends StatelessWidget {
       return AspectRatio(aspectRatio: 1, child: _buildCoverStack(context));
     }
 
-    return SizedBox(
-      height: compact ? 120 : 148,
-      child: _buildCoverStack(context),
-    );
+    return SizedBox(height: compact ? 120 : 148, child: _buildCoverStack(context));
   }
 
   Widget _buildCoverStack(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final visibleIds = itemIds
-        .take(_maxRenderedSeriesCovers)
-        .toList(growable: false);
+    final visibleIds = itemIds.take(_maxRenderedSeriesCovers).toList(growable: false);
 
     if (visibleIds.isEmpty) {
       return ClipRRect(
@@ -231,22 +201,14 @@ class _StackedCovers extends StatelessWidget {
                 color: colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(
-                Icons.menu_book_outlined,
-                color: colorScheme.onSurfaceVariant,
-                size: compact ? 34 : 42,
-              ),
+              child: Icon(Icons.menu_book_outlined, color: colorScheme.onSurfaceVariant, size: compact ? 34 : 42),
             ),
             if (progress != null && progress! > 0)
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: Colors.black45,
-                ),
+                child: LinearProgressIndicator(value: progress, minHeight: 6, backgroundColor: Colors.black45),
               ),
           ],
         ),
@@ -263,32 +225,20 @@ class _StackedCovers extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  _SingleCoverWithBlur(
-                    api: api,
-                    itemId: visibleIds.first,
-                    compact: compact,
-                  ),
+                  _SingleCoverWithBlur(api: api, itemId: visibleIds.first, compact: compact),
                   if (progress != null && progress! > 0)
                     Positioned(
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 6,
-                        backgroundColor: Colors.black45,
-                      ),
+                      child: LinearProgressIndicator(value: progress, minHeight: 6, backgroundColor: Colors.black45),
                     ),
                 ],
               ),
             ),
           ),
           if (hiddenBookCount > 0)
-            Positioned(
-              top: -2,
-              right: -4,
-              child: _ExtraCountBadge(hiddenBookCount: hiddenBookCount),
-            ),
+            Positioned(top: -2, right: -4, child: _ExtraCountBadge(hiddenBookCount: hiddenBookCount)),
         ],
       );
     }
@@ -302,9 +252,7 @@ class _StackedCovers extends StatelessWidget {
         final coverSize = math.min(width, height);
         final top = (height - coverSize) / 2;
         final defaultStep = coverSize * (compact ? 0.1 : 0.12);
-        final availableStep = count <= 1
-            ? 0.0
-            : (width - coverSize) / (count - 1);
+        final availableStep = count <= 1 ? 0.0 : (width - coverSize) / (count - 1);
         final step = availableStep > 0 ? availableStep : defaultStep;
         final startLeft = availableStep > 0 ? 0.0 : -(step * (count - 1)) / 2;
 
@@ -336,22 +284,14 @@ class _StackedCovers extends StatelessWidget {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 6,
-                          backgroundColor: Colors.black45,
-                        ),
+                        child: LinearProgressIndicator(value: progress, minHeight: 6, backgroundColor: Colors.black45),
                       ),
                   ],
                 ),
               ),
             ),
             if (hiddenBookCount > 0)
-              Positioned(
-                top: -2,
-                right: -4,
-                child: _ExtraCountBadge(hiddenBookCount: hiddenBookCount),
-              ),
+              Positioned(top: -2, right: -4, child: _ExtraCountBadge(hiddenBookCount: hiddenBookCount)),
           ],
         );
       },
@@ -360,11 +300,7 @@ class _StackedCovers extends StatelessWidget {
 }
 
 class _SingleCoverWithBlur extends StatelessWidget {
-  const _SingleCoverWithBlur({
-    required this.api,
-    required this.itemId,
-    required this.compact,
-  });
+  const _SingleCoverWithBlur({required this.api, required this.itemId, required this.compact});
 
   final ABSApi api;
   final String itemId;
@@ -384,15 +320,8 @@ class _SingleCoverWithBlur extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               ImageFiltered(
-                imageFilter: ImageFilter.blur(
-                  sigmaX: compact ? 10 : 14,
-                  sigmaY: compact ? 10 : 14,
-                ),
-                child: api.getLibraryItemApi().getLibraryItemCover(
-                  itemId,
-                  width: width,
-                  height: height,
-                ),
+                imageFilter: ImageFilter.blur(sigmaX: compact ? 10 : 14, sigmaY: compact ? 10 : 14),
+                child: api.getLibraryItemApi().getLibraryItemCover(itemId, width: width, height: height),
               ),
               DecoratedBox(
                 decoration: BoxDecoration(
@@ -443,13 +372,7 @@ class _CoverCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: colorScheme.surface, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
-            blurRadius: 7,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.14), blurRadius: 7, offset: const Offset(0, 2))],
       ),
       child: ClipRRect(borderRadius: BorderRadius.circular(14), child: child),
     );
@@ -465,15 +388,8 @@ class _ExtraCountBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Text(
-        '+$hiddenBookCount',
-        style: Theme.of(context).textTheme.labelSmall
-            ?.copyWith(color: Colors.white),
-      ),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.72), borderRadius: BorderRadius.circular(99)),
+      child: Text('+$hiddenBookCount', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white)),
     );
   }
 }

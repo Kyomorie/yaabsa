@@ -148,11 +148,7 @@ class SettingsManager extends _$SettingsManager {
     try {
       await db.setGlobalSetting(key, encodedValue);
     } catch (e) {
-      logger(
-        'Failed to persist global setting "$key": $e',
-        tag: 'SettingsManager',
-        level: InfoLevel.error,
-      );
+      logger('Failed to persist global setting "$key": $e', tag: 'SettingsManager', level: InfoLevel.error);
       rethrow;
     }
   }
@@ -175,11 +171,7 @@ class SettingsManager extends _$SettingsManager {
 
   Future<void> setUserSetting<T>(String? userId, String key, T value) async {
     if (userId == null) {
-      logger(
-        'setUserSetting called with null userId for key: $key',
-        tag: 'SettingsManager',
-        level: InfoLevel.warning,
-      );
+      logger('setUserSetting called with null userId for key: $key', tag: 'SettingsManager', level: InfoLevel.warning);
       return;
     }
 

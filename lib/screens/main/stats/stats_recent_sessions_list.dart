@@ -3,12 +3,7 @@ import 'package:yaabsa/api/library_items/playback_session.dart';
 import 'package:yaabsa/screens/main/stats/stats_formatters.dart';
 
 class StatsRecentSessionsList extends StatelessWidget {
-  const StatsRecentSessionsList({
-    super.key,
-    required this.sessions,
-    this.maxItems = 8,
-    this.onSessionTap,
-  });
+  const StatsRecentSessionsList({super.key, required this.sessions, this.maxItems = 8, this.onSessionTap});
 
   final List<PlaybackSession> sessions;
   final int maxItems;
@@ -17,14 +12,10 @@ class StatsRecentSessionsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (sessions.isEmpty) {
-      return Text(
-        'No recent sessions available.',
-        style: Theme.of(context).textTheme.bodyMedium,
-      );
+      return Text('No recent sessions available.', style: Theme.of(context).textTheme.bodyMedium);
     }
 
-    final sorted = List<PlaybackSession>.from(sessions)
-      ..sort((a, b) => _sessionTimeMs(b).compareTo(_sessionTimeMs(a)));
+    final sorted = List<PlaybackSession>.from(sessions)..sort((a, b) => _sessionTimeMs(b).compareTo(_sessionTimeMs(a)));
     final visible = sorted.take(maxItems).toList(growable: false);
 
     return ListView.separated(
@@ -48,11 +39,7 @@ class StatsRecentSessionsList extends StatelessWidget {
             dense: true,
             contentPadding: EdgeInsets.zero,
             title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-            subtitle: Text(
-              subtitleParts.join(' • '),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+            subtitle: Text(subtitleParts.join(' • '), maxLines: 1, overflow: TextOverflow.ellipsis),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -89,8 +76,7 @@ class StatsRecentSessionsList extends StatelessWidget {
       return displayAuthor;
     }
 
-    final podcastAuthor = session.mediaMetadata?.podcastMetadata?.author
-        ?.trim();
+    final podcastAuthor = session.mediaMetadata?.podcastMetadata?.author?.trim();
     if (podcastAuthor != null && podcastAuthor.isNotEmpty) {
       return podcastAuthor;
     }

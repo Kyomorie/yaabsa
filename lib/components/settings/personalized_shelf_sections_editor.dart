@@ -7,33 +7,23 @@ import 'package:yaabsa/util/home_navigation_preferences.dart';
 import 'package:yaabsa/util/personalized_shelf_preferences.dart';
 
 class PersonalizedShelfSectionsEditor extends ConsumerStatefulWidget {
-  const PersonalizedShelfSectionsEditor({
-    super.key,
-    required this.userId,
-    required this.mediaType,
-  });
+  const PersonalizedShelfSectionsEditor({super.key, required this.userId, required this.mediaType});
 
   final String userId;
   final HomeLibraryMediaType mediaType;
 
   @override
-  ConsumerState<PersonalizedShelfSectionsEditor> createState() =>
-      _PersonalizedShelfSectionsEditorState();
+  ConsumerState<PersonalizedShelfSectionsEditor> createState() => _PersonalizedShelfSectionsEditorState();
 }
 
-class _PersonalizedShelfSectionsEditorState
-    extends ConsumerState<PersonalizedShelfSectionsEditor> {
+class _PersonalizedShelfSectionsEditorState extends ConsumerState<PersonalizedShelfSectionsEditor> {
   bool _isSaving = false;
 
-  String get _settingKey =>
-      PersonalizedShelfPreferencesCodec.settingKeyFor(widget.mediaType);
+  String get _settingKey => PersonalizedShelfPreferencesCodec.settingKeyFor(widget.mediaType);
 
   String get _title => '${widget.mediaType.label} libraries';
 
-  Future<void> _persistPreferences(
-    PersonalizedShelfPreferences preferences, {
-    String? successMessage,
-  }) async {
+  Future<void> _persistPreferences(PersonalizedShelfPreferences preferences, {String? successMessage}) async {
     if (_isSaving) {
       return;
     }
@@ -43,26 +33,19 @@ class _PersonalizedShelfSectionsEditorState
     try {
       await ref
           .read(settingsManagerProvider.notifier)
-          .setUserSetting<String>(
-            widget.userId,
-            _settingKey,
-            PersonalizedShelfPreferencesCodec.encode(preferences),
-          );
+          .setUserSetting<String>(widget.userId, _settingKey, PersonalizedShelfPreferencesCodec.encode(preferences));
 
       if (!mounted || successMessage == null || successMessage.isEmpty) {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(successMessage)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(successMessage)));
     } catch (error) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update $_title: $error')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update $_title: $error')));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -79,11 +62,7 @@ class _PersonalizedShelfSectionsEditorState
     await _persistPreferences(nextPreferences);
   }
 
-  Future<void> _handleReorder(
-    PersonalizedShelfPreferences preferences,
-    int oldIndex,
-    int newIndex,
-  ) async {
+  Future<void> _handleReorder(PersonalizedShelfPreferences preferences, int oldIndex, int newIndex) async {
     var targetIndex = newIndex;
     if (targetIndex > oldIndex) {
       targetIndex -= 1;
@@ -98,13 +77,8 @@ class _PersonalizedShelfSectionsEditorState
   }
 
   Future<void> _resetToDefaults() async {
-    final defaults = PersonalizedShelfPreferencesCodec.defaultsFor(
-      widget.mediaType,
-    );
-    await _persistPreferences(
-      defaults,
-      successMessage: 'Reset $_title to defaults.',
-    );
+    final defaults = PersonalizedShelfPreferencesCodec.defaultsFor(widget.mediaType);
+    await _persistPreferences(defaults, successMessage: 'Reset $_title to defaults.');
   }
 
   BorderRadius _getBorderRadius(int index, int total) {
@@ -138,27 +112,18 @@ class _PersonalizedShelfSectionsEditorState
         .getUserSetting<String>(
           widget.userId,
           _settingKey,
-          defaultValue: PersonalizedShelfPreferencesCodec.defaultEncodedFor(
-            widget.mediaType,
-          ),
+          defaultValue: PersonalizedShelfPreferencesCodec.defaultEncodedFor(widget.mediaType),
         );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SettingsEditorHeader(
-          title: _title,
-          topPadding: 20,
-          onReset: _isSaving ? null : _resetToDefaults,
-        ),
+        SettingsEditorHeader(title: _title, topPadding: 20, onReset: _isSaving ? null : _resetToDefaults),
         StreamBuilder<UserSettingEntry?>(
           stream: appDatabase.watchUserSetting(widget.userId, _settingKey),
           builder: (context, snapshot) {
             final rawValue = snapshot.data?.value ?? fallbackRawValue;
-            final preferences = PersonalizedShelfPreferencesCodec.decode(
-              rawValue,
-              widget.mediaType,
-            );
+            final preferences = PersonalizedShelfPreferencesCodec.decode(rawValue, widget.mediaType);
             final total = preferences.orderedSectionIds.length;
 
             return Padding(
@@ -169,40 +134,27 @@ class _PersonalizedShelfSectionsEditorState
                 physics: const NeverScrollableScrollPhysics(),
                 onReorderItem: _isSaving
                     ? (_, _) {}
-                    : (oldIndex, newIndex) =>
-                          _handleReorder(preferences, oldIndex, newIndex),
+                    : (oldIndex, newIndex) => _handleReorder(preferences, oldIndex, newIndex),
                 itemCount: total,
                 itemBuilder: (context, index) {
                   final sectionId = preferences.orderedSectionIds[index];
                   final section = PersonalizedShelfSection.fromId(sectionId);
-                  final isVisible = !preferences.hiddenSectionIds.contains(
-                    sectionId,
-                  );
+                  final isVisible = !preferences.hiddenSectionIds.contains(sectionId);
 
                   return Padding(
                     key: ValueKey('${widget.mediaType.name}:$sectionId'),
-                    padding: EdgeInsets.only(
-                      bottom: index == total - 1 ? 0 : 2,
-                    ),
+                    padding: EdgeInsets.only(bottom: index == total - 1 ? 0 : 2),
                     child: ClipRRect(
                       borderRadius: _getBorderRadius(index, total),
                       child: Container(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest
-                            .withValues(alpha: 0.5),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                         child: _PersonalizedShelfSectionRow(
                           sectionLabel: section?.label ?? sectionId,
-                          sectionIcon:
-                              section?.icon ?? Icons.view_carousel_outlined,
+                          sectionIcon: section?.icon ?? Icons.view_carousel_outlined,
                           isVisible: isVisible,
                           isSaving: _isSaving,
                           onVisibilityChanged: (nextValue) =>
-                              _handleVisibilityToggle(
-                                preferences,
-                                sectionId,
-                                nextValue,
-                              ),
+                              _handleVisibilityToggle(preferences, sectionId, nextValue),
                           reorderIndex: index,
                         ),
                       ),
@@ -248,23 +200,15 @@ class _PersonalizedShelfSectionRow extends StatelessWidget {
           Expanded(
             child: Text(
               sectionLabel,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: colorScheme.onSurface,
-              ),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w500, color: colorScheme.onSurface),
             ),
           ),
-          Switch.adaptive(
-            value: isVisible,
-            onChanged: isSaving ? null : onVisibilityChanged,
-          ),
+          Switch.adaptive(value: isVisible, onChanged: isSaving ? null : onVisibilityChanged),
           const SizedBox(width: 16),
           ReorderableDragStartListener(
             index: reorderIndex,
-            child: Icon(
-              Icons.drag_handle_rounded,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-            ),
+            child: Icon(Icons.drag_handle_rounded, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
           ),
         ],
       ),

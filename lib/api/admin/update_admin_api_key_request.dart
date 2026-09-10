@@ -10,6 +10,5 @@ abstract class UpdateAdminApiKeyRequest with _$UpdateAdminApiKeyRequest {
     @JsonKey(name: 'isActive') bool? isActive,
   }) = _UpdateAdminApiKeyRequest;
 
-  factory UpdateAdminApiKeyRequest.fromJson(Map<String, dynamic> json) =>
-      _$UpdateAdminApiKeyRequestFromJson(json);
+  factory UpdateAdminApiKeyRequest.fromJson(Map<String, dynamic> json) => _$UpdateAdminApiKeyRequestFromJson(json);
 }

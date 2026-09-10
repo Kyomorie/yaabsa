@@ -1,22 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/screens/player/layout/player_layout_config.dart';
 
-typedef PlayerPlacementVisiblePredicate = bool Function(
-  PlayerComponentPlacement placement,
-);
-typedef PlayerPlacementWidgetBuilder = Widget Function(
-  PlayerComponentPlacement placement,
-);
-typedef PlayerPlacementMoveCallback = void Function(
-  PlayerComponentType type,
-  int deltaX,
-  int deltaY,
-);
-typedef PlayerPlacementResizeCallback = void Function(
-  PlayerComponentType type,
-  int deltaWidth,
-  int deltaHeight,
-);
+typedef PlayerPlacementVisiblePredicate = bool Function(PlayerComponentPlacement placement);
+typedef PlayerPlacementWidgetBuilder = Widget Function(PlayerComponentPlacement placement);
+typedef PlayerPlacementMoveCallback = void Function(PlayerComponentType type, int deltaX, int deltaY);
+typedef PlayerPlacementResizeCallback = void Function(PlayerComponentType type, int deltaWidth, int deltaHeight);
 typedef PlayerPlacementActionCallback = void Function(PlayerComponentType type);
 
 class PlayerGridCanvas extends StatelessWidget {
@@ -47,16 +35,11 @@ class PlayerGridCanvas extends StatelessWidget {
   Widget build(BuildContext context) {
     final columns = playerGridColumnsForSize(screenSize);
     final rows = playerGridRowsForSize(screenSize);
-    final placements = profile.orderedPlacements
-        .where(isPlacementVisible)
-        .toList(growable: false);
+    final placements = profile.orderedPlacements.where(isPlacementVisible).toList(growable: false);
 
     if (placements.isEmpty) {
       return Center(
-        child: Text(
-          'No components are visible for this layout.',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
+        child: Text('No components are visible for this layout.', style: Theme.of(context).textTheme.bodyLarge),
       );
     }
 
@@ -74,11 +57,8 @@ class PlayerGridCanvas extends StatelessWidget {
               .map((placement) {
                 final left = placement.x * (cellWidth + gap);
                 final top = placement.y * (cellHeight + gap);
-                final width =
-                    placement.width * cellWidth + (placement.width - 1) * gap;
-                final height =
-                    placement.height * cellHeight +
-                    (placement.height - 1) * gap;
+                final width = placement.width * cellWidth + (placement.width - 1) * gap;
+                final height = placement.height * cellHeight + (placement.height - 1) * gap;
 
                 return AnimatedPositioned(
                   key: ValueKey<PlayerComponentType>(placement.type),
@@ -299,10 +279,7 @@ class _EditableGridTileState extends State<_EditableGridTile> {
       children: <Widget>[
         IgnorePointer(
           ignoring: true,
-          child: Opacity(
-            opacity: widget.placement.visible ? 1 : 0.45,
-            child: widget.child,
-          ),
+          child: Opacity(opacity: widget.placement.visible ? 1 : 0.45, child: widget.child),
         ),
         Positioned.fill(
           child: DecoratedBox(
@@ -310,8 +287,7 @@ class _EditableGridTileState extends State<_EditableGridTile> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: widget.placement.visible
-                    ? Theme.of(context).colorScheme.primary
-                          .withValues(alpha: 0.8)
+                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.8)
                     : Theme.of(context).colorScheme.outlineVariant,
                 width: 1.1,
               ),
@@ -364,13 +340,9 @@ class _EditableGridTileState extends State<_EditableGridTile> {
             children: <Widget>[
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 2,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface
-                        .withValues(alpha: 0.88),
+                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.88),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -391,17 +363,16 @@ class _EditableGridTileState extends State<_EditableGridTile> {
                       widget.onHidePlacement?.call(widget.placement.type);
                   }
                 },
-                itemBuilder: (BuildContext context) =>
-                    <PopupMenuEntry<_TileComponentAction>>[
-                      const PopupMenuItem<_TileComponentAction>(
-                        value: _TileComponentAction.settings,
-                        child: Text('Settings'),
-                      ),
-                      const PopupMenuItem<_TileComponentAction>(
-                        value: _TileComponentAction.hide,
-                        child: Text('Remove from layout'),
-                      ),
-                    ],
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<_TileComponentAction>>[
+                  const PopupMenuItem<_TileComponentAction>(
+                    value: _TileComponentAction.settings,
+                    child: Text('Settings'),
+                  ),
+                  const PopupMenuItem<_TileComponentAction>(
+                    value: _TileComponentAction.hide,
+                    child: Text('Remove from layout'),
+                  ),
+                ],
                 icon: const Icon(Icons.more_horiz_rounded, size: 18),
               ),
             ],
@@ -411,22 +382,14 @@ class _EditableGridTileState extends State<_EditableGridTile> {
           right: 1,
           bottom: 1,
           child: _EditorToolbar(
-            onMoveLeft: () =>
-                widget.onMovePlacement?.call(widget.placement.type, -1, 0),
-            onMoveRight: () =>
-                widget.onMovePlacement?.call(widget.placement.type, 1, 0),
-            onMoveUp: () =>
-                widget.onMovePlacement?.call(widget.placement.type, 0, -1),
-            onMoveDown: () =>
-                widget.onMovePlacement?.call(widget.placement.type, 0, 1),
-            onNarrower: () =>
-                widget.onResizePlacement?.call(widget.placement.type, -1, 0),
-            onWider: () =>
-                widget.onResizePlacement?.call(widget.placement.type, 1, 0),
-            onShorter: () =>
-                widget.onResizePlacement?.call(widget.placement.type, 0, -1),
-            onTaller: () =>
-                widget.onResizePlacement?.call(widget.placement.type, 0, 1),
+            onMoveLeft: () => widget.onMovePlacement?.call(widget.placement.type, -1, 0),
+            onMoveRight: () => widget.onMovePlacement?.call(widget.placement.type, 1, 0),
+            onMoveUp: () => widget.onMovePlacement?.call(widget.placement.type, 0, -1),
+            onMoveDown: () => widget.onMovePlacement?.call(widget.placement.type, 0, 1),
+            onNarrower: () => widget.onResizePlacement?.call(widget.placement.type, -1, 0),
+            onWider: () => widget.onResizePlacement?.call(widget.placement.type, 1, 0),
+            onShorter: () => widget.onResizePlacement?.call(widget.placement.type, 0, -1),
+            onTaller: () => widget.onResizePlacement?.call(widget.placement.type, 0, 1),
           ),
         ),
       ],
@@ -434,17 +397,7 @@ class _EditableGridTileState extends State<_EditableGridTile> {
   }
 }
 
-enum _TileGestureMode {
-  move,
-  left,
-  right,
-  top,
-  bottom,
-  topLeft,
-  topRight,
-  bottomLeft,
-  bottomRight,
-}
+enum _TileGestureMode { move, left, right, top, bottom, topLeft, topRight, bottomLeft, bottomRight }
 
 enum _TileComponentAction { settings, hide }
 
@@ -482,46 +435,14 @@ class _EditorToolbar extends StatelessWidget {
           spacing: 1,
           runSpacing: 1,
           children: <Widget>[
-            _TinyToolButton(
-              icon: Icons.arrow_back_rounded,
-              tooltip: 'Move left',
-              onPressed: onMoveLeft,
-            ),
-            _TinyToolButton(
-              icon: Icons.arrow_upward_rounded,
-              tooltip: 'Move up',
-              onPressed: onMoveUp,
-            ),
-            _TinyToolButton(
-              icon: Icons.arrow_downward_rounded,
-              tooltip: 'Move down',
-              onPressed: onMoveDown,
-            ),
-            _TinyToolButton(
-              icon: Icons.arrow_forward_rounded,
-              tooltip: 'Move right',
-              onPressed: onMoveRight,
-            ),
-            _TinyToolButton(
-              icon: Icons.width_normal_rounded,
-              tooltip: 'Narrower',
-              onPressed: onNarrower,
-            ),
-            _TinyToolButton(
-              icon: Icons.width_wide_rounded,
-              tooltip: 'Wider',
-              onPressed: onWider,
-            ),
-            _TinyToolButton(
-              icon: Icons.vertical_align_top_rounded,
-              tooltip: 'Shorter',
-              onPressed: onShorter,
-            ),
-            _TinyToolButton(
-              icon: Icons.vertical_align_bottom_rounded,
-              tooltip: 'Taller',
-              onPressed: onTaller,
-            ),
+            _TinyToolButton(icon: Icons.arrow_back_rounded, tooltip: 'Move left', onPressed: onMoveLeft),
+            _TinyToolButton(icon: Icons.arrow_upward_rounded, tooltip: 'Move up', onPressed: onMoveUp),
+            _TinyToolButton(icon: Icons.arrow_downward_rounded, tooltip: 'Move down', onPressed: onMoveDown),
+            _TinyToolButton(icon: Icons.arrow_forward_rounded, tooltip: 'Move right', onPressed: onMoveRight),
+            _TinyToolButton(icon: Icons.width_normal_rounded, tooltip: 'Narrower', onPressed: onNarrower),
+            _TinyToolButton(icon: Icons.width_wide_rounded, tooltip: 'Wider', onPressed: onWider),
+            _TinyToolButton(icon: Icons.vertical_align_top_rounded, tooltip: 'Shorter', onPressed: onShorter),
+            _TinyToolButton(icon: Icons.vertical_align_bottom_rounded, tooltip: 'Taller', onPressed: onTaller),
           ],
         ),
       ),
@@ -530,11 +451,7 @@ class _EditorToolbar extends StatelessWidget {
 }
 
 class _TinyToolButton extends StatelessWidget {
-  const _TinyToolButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
+  const _TinyToolButton({required this.icon, required this.tooltip, required this.onPressed});
 
   final IconData icon;
   final String tooltip;

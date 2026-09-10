@@ -12,11 +12,7 @@ const Color _roseSeed = Color(0xFFBE185D);
 /// Theme configuration resolved from the stored global settings, shared by
 /// the phone and Wear OS entry points.
 class AppThemeSelection {
-  const AppThemeSelection({
-    required this.mode,
-    required this.preset,
-    required this.customSeedColor,
-  });
+  const AppThemeSelection({required this.mode, required this.preset, required this.customSeedColor});
 
   final AppThemeMode mode;
   final AppThemePreset preset;
@@ -24,8 +20,7 @@ class AppThemeSelection {
 
   bool get useAmoledDark => mode == AppThemeMode.amoled;
 
-  ThemeMode get materialThemeMode =>
-      useAmoledDark ? ThemeMode.dark : toMaterialThemeMode(mode);
+  ThemeMode get materialThemeMode => useAmoledDark ? ThemeMode.dark : toMaterialThemeMode(mode);
 
   ThemeData themeData(Brightness brightness) => buildAppThemeData(
     brightness: brightness,
@@ -38,33 +33,15 @@ class AppThemeSelection {
 /// Resolves the theme selection from the stored global settings and rebuilds
 /// the watching widget when any of them change.
 AppThemeSelection watchAppThemeSelection(WidgetRef ref) {
-  final modeSetting = ref
-      .watch(globalSettingByKeyProvider(SettingKeys.appThemeMode))
-      .asData
-      ?.value;
-  final presetSetting = ref
-      .watch(globalSettingByKeyProvider(SettingKeys.appThemePreset))
-      .asData
-      ?.value;
-  final redSetting = ref
-      .watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomRed))
-      .asData
-      ?.value;
-  final greenSetting = ref
-      .watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomGreen))
-      .asData
-      ?.value;
-  final blueSetting = ref
-      .watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomBlue))
-      .asData
-      ?.value;
+  final modeSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemeMode)).asData?.value;
+  final presetSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemePreset)).asData?.value;
+  final redSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomRed)).asData?.value;
+  final greenSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomGreen)).asData?.value;
+  final blueSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomBlue)).asData?.value;
 
-  final defaultRed =
-      defaultSettings[SettingKeys.appThemeCustomRed] as int? ?? 15;
-  final defaultGreen =
-      defaultSettings[SettingKeys.appThemeCustomGreen] as int? ?? 118;
-  final defaultBlue =
-      defaultSettings[SettingKeys.appThemeCustomBlue] as int? ?? 110;
+  final defaultRed = defaultSettings[SettingKeys.appThemeCustomRed] as int? ?? 15;
+  final defaultGreen = defaultSettings[SettingKeys.appThemeCustomGreen] as int? ?? 118;
+  final defaultBlue = defaultSettings[SettingKeys.appThemeCustomBlue] as int? ?? 110;
 
   return AppThemeSelection(
     mode: AppThemeMode.fromSettingValue(modeSetting),
@@ -96,10 +73,7 @@ ThemeMode toMaterialThemeMode(AppThemeMode mode) {
   }
 }
 
-Color appThemeSeedColor({
-  required AppThemePreset preset,
-  required Color customSeedColor,
-}) {
+Color appThemeSeedColor({required AppThemePreset preset, required Color customSeedColor}) {
   switch (preset) {
     case AppThemePreset.yaabsa:
       return _yaabsaSeed;
@@ -122,22 +96,14 @@ ThemeData buildAppThemeData({
   required Color customSeedColor,
   required bool useAmoledDark,
 }) {
-  final seedColor = appThemeSeedColor(
-    preset: preset,
-    customSeedColor: customSeedColor,
-  );
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: seedColor,
-    brightness: brightness,
-  );
+  final seedColor = appThemeSeedColor(preset: preset, customSeedColor: customSeedColor);
+  final colorScheme = ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness);
 
   final baseTheme = ThemeData(
     useMaterial3: true,
     colorScheme: colorScheme,
     switchTheme: SwitchThemeData(
-      thumbIcon: WidgetStateProperty.resolveWith<Icon?>((
-        Set<WidgetState> states,
-      ) {
+      thumbIcon: WidgetStateProperty.resolveWith<Icon?>((Set<WidgetState> states) {
         if (states.contains(WidgetState.selected)) {
           return const Icon(Icons.check, size: 16);
         }
@@ -158,20 +124,16 @@ ThemeData buildAppThemeData({
 }
 
 ThemeData _buildAmoledDarkTheme(ThemeData baseTheme, Color seedColor) {
-  final colorScheme =
-      ColorScheme.fromSeed(
-        seedColor: seedColor,
-        brightness: Brightness.dark,
-      ).copyWith(
-        surface: Colors.black,
-        surfaceContainerLowest: Colors.black,
-        surfaceContainerLow: const Color(0xFF040404),
-        surfaceContainer: const Color(0xFF080808),
-        surfaceContainerHigh: const Color(0xFF0D0D0D),
-        surfaceContainerHighest: const Color(0xFF121212),
-        shadow: Colors.black,
-        scrim: Colors.black,
-      );
+  final colorScheme = ColorScheme.fromSeed(seedColor: seedColor, brightness: Brightness.dark).copyWith(
+    surface: Colors.black,
+    surfaceContainerLowest: Colors.black,
+    surfaceContainerLow: const Color(0xFF040404),
+    surfaceContainer: const Color(0xFF080808),
+    surfaceContainerHigh: const Color(0xFF0D0D0D),
+    surfaceContainerHighest: const Color(0xFF121212),
+    shadow: Colors.black,
+    scrim: Colors.black,
+  );
 
   return baseTheme.copyWith(
     colorScheme: colorScheme,

@@ -8,9 +8,7 @@ enum HomeLibraryMediaType {
   podcast;
 
   static HomeLibraryMediaType fromLibraryMediaType(String? libraryMediaType) {
-    return libraryMediaType == 'podcast'
-        ? HomeLibraryMediaType.podcast
-        : HomeLibraryMediaType.book;
+    return libraryMediaType == 'podcast' ? HomeLibraryMediaType.podcast : HomeLibraryMediaType.book;
   }
 
   String get label {
@@ -90,9 +88,7 @@ enum HomePrimaryView {
     }
 
     final normalized = key.trim().toLowerCase();
-    if (normalized == 'add' ||
-        normalized == 'podcastadd' ||
-        normalized == 'podcast_add') {
+    if (normalized == 'add' || normalized == 'podcastadd' || normalized == 'podcast_add') {
       return HomePrimaryView.podcastAdd;
     }
 
@@ -126,9 +122,7 @@ enum HomePrimaryView {
       return null;
     }
 
-    if (normalized == 'add' ||
-        normalized == 'podcastadd' ||
-        normalized == 'podcast_add') {
+    if (normalized == 'add' || normalized == 'podcastadd' || normalized == 'podcast_add') {
       return HomePrimaryView.podcastAdd;
     }
 
@@ -150,15 +144,10 @@ class HomeNavigationPreferences {
   final HomePrimaryView defaultView;
 
   List<HomePrimaryView> get visibleViews {
-    return orderedViews
-        .where((view) => !hiddenViews.contains(view))
-        .toList(growable: false);
+    return orderedViews.where((view) => !hiddenViews.contains(view)).toList(growable: false);
   }
 
-  HomeNavigationPreferences withVisibility(
-    HomePrimaryView view,
-    bool isVisible,
-  ) {
+  HomeNavigationPreferences withVisibility(HomePrimaryView view, bool isVisible) {
     final nextHiddenViews = hiddenViews.toSet();
     if (isVisible) {
       nextHiddenViews.remove(view);
@@ -184,10 +173,7 @@ class HomeNavigationPreferences {
   }
 
   HomeNavigationPreferences reordered(int oldIndex, int newIndex) {
-    if (oldIndex < 0 ||
-        oldIndex >= orderedViews.length ||
-        newIndex < 0 ||
-        newIndex >= orderedViews.length) {
+    if (oldIndex < 0 || oldIndex >= orderedViews.length || newIndex < 0 || newIndex >= orderedViews.length) {
       return this;
     }
 
@@ -218,9 +204,7 @@ class HomeNavigationPreferencesCodec {
     }
   }
 
-  static List<HomePrimaryView> availableViewsFor(
-    HomeLibraryMediaType mediaType,
-  ) {
+  static List<HomePrimaryView> availableViewsFor(HomeLibraryMediaType mediaType) {
     switch (mediaType) {
       case HomeLibraryMediaType.book:
         return const [
@@ -260,10 +244,7 @@ class HomeNavigationPreferencesCodec {
     );
   }
 
-  static HomeNavigationPreferences decode(
-    String? rawValue,
-    HomeLibraryMediaType mediaType,
-  ) {
+  static HomeNavigationPreferences decode(String? rawValue, HomeLibraryMediaType mediaType) {
     final fallback = defaultsFor(mediaType);
     if (rawValue == null || rawValue.trim().isEmpty) {
       return fallback;
@@ -282,12 +263,8 @@ class HomeNavigationPreferencesCodec {
       final rawOrder = decoded[_orderKey];
       if (rawOrder is List) {
         for (final rawView in rawOrder) {
-          final parsedView = HomePrimaryView.fromStorageKey(
-            rawView?.toString(),
-          );
-          if (parsedView != null &&
-              availableViews.contains(parsedView) &&
-              !order.contains(parsedView)) {
+          final parsedView = HomePrimaryView.fromStorageKey(rawView?.toString());
+          if (parsedView != null && availableViews.contains(parsedView) && !order.contains(parsedView)) {
             order.add(parsedView);
           }
         }
@@ -303,18 +280,14 @@ class HomeNavigationPreferencesCodec {
       final rawHidden = decoded[_hiddenKey];
       if (rawHidden is List) {
         for (final rawView in rawHidden) {
-          final parsedView = HomePrimaryView.fromStorageKey(
-            rawView?.toString(),
-          );
+          final parsedView = HomePrimaryView.fromStorageKey(rawView?.toString());
           if (parsedView != null && order.contains(parsedView)) {
             hidden.add(parsedView);
           }
         }
       }
 
-      final requestedDefault = HomePrimaryView.fromStorageKey(
-        decoded[_defaultKey]?.toString(),
-      );
+      final requestedDefault = HomePrimaryView.fromStorageKey(decoded[_defaultKey]?.toString());
 
       return _normalize(
         mediaType: mediaType,
@@ -342,9 +315,7 @@ class HomeNavigationPreferencesCodec {
 
     final payload = <String, dynamic>{
       _defaultKey: normalized.defaultView.storageKey,
-      _orderKey: normalized.orderedViews
-          .map((view) => view.storageKey)
-          .toList(growable: false),
+      _orderKey: normalized.orderedViews.map((view) => view.storageKey).toList(growable: false),
       _hiddenKey: orderedHidden,
     };
 
@@ -379,15 +350,10 @@ class HomeNavigationPreferencesCodec {
       }
     }
 
-    var visibleViews = normalizedOrder
-        .where((view) => !normalizedHidden.contains(view))
-        .toList(growable: false);
+    var visibleViews = normalizedOrder.where((view) => !normalizedHidden.contains(view)).toList(growable: false);
     if (visibleViews.isEmpty) {
       normalizedHidden.clear();
-      visibleViews = List<HomePrimaryView>.from(
-        normalizedOrder,
-        growable: false,
-      );
+      visibleViews = List<HomePrimaryView>.from(normalizedOrder, growable: false);
     }
 
     final defaultView =

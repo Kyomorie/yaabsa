@@ -13,10 +13,7 @@ Future<void> quickMatchSingleItem({
   required LibraryItem item,
 }) async {
   final metadata = item.media?.bookMedia?.metadata;
-  final defaultProvider = _resolveLibraryDefaultProvider(
-    ref: ref,
-    libraryId: item.libraryId,
-  );
+  final defaultProvider = _resolveLibraryDefaultProvider(ref: ref, libraryId: item.libraryId);
 
   final options = await showQuickMatchOptionsDialog(
     context: context,
@@ -34,9 +31,7 @@ Future<void> quickMatchSingleItem({
   final api = ref.read(absApiProvider);
   if (api == null) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No API session available.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No API session available.')));
     }
     return;
   }
@@ -52,10 +47,7 @@ Future<void> quickMatchSingleItem({
   );
 
   try {
-    final response = await api.getLibraryItemApi().quickMatchLibraryItem(
-      item.id,
-      request: request,
-    );
+    final response = await api.getLibraryItemApi().quickMatchLibraryItem(item.id, request: request);
 
     if (!context.mounted) {
       return;
@@ -69,27 +61,19 @@ Future<void> quickMatchSingleItem({
         ? response.message!.trim()
         : 'Quick match finished with no metadata changes.';
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   } catch (error) {
     if (!context.mounted) {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Could not run quick match: $error')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not run quick match: $error')));
   }
 }
 
-String? _resolveLibraryDefaultProvider({
-  required WidgetRef ref,
-  required String? libraryId,
-}) {
+String? _resolveLibraryDefaultProvider({required WidgetRef ref, required String? libraryId}) {
   final selectedLibrary = ref.read(selectedLibraryProvider);
-  if (libraryId != null &&
-      selectedLibrary?.id == libraryId &&
-      selectedLibrary?.provider.trim().isNotEmpty == true) {
+  if (libraryId != null && selectedLibrary?.id == libraryId && selectedLibrary?.provider.trim().isNotEmpty == true) {
     return selectedLibrary?.provider;
   }
 

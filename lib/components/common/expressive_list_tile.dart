@@ -50,9 +50,7 @@ class ExpressiveListTile extends StatelessWidget {
       color: enabled ? activeBgColor : activeBgColor.withValues(alpha: 0.5),
       shape: RoundedRectangleBorder(
         borderRadius: resolvedBorderRadius,
-        side: selected
-            ? BorderSide(color: colorScheme.primary, width: 1.5)
-            : BorderSide.none,
+        side: selected ? BorderSide(color: colorScheme.primary, width: 1.5) : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -60,9 +58,7 @@ class ExpressiveListTile extends StatelessWidget {
         onLongPress: enabled ? onLongPress : null,
         borderRadius: resolvedBorderRadius,
         child: Padding(
-          padding:
-              contentPadding ??
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: contentPadding ?? const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             children: [
               if (leading != null) ...[leading!, const SizedBox(width: 16)],
@@ -75,9 +71,7 @@ class ExpressiveListTile extends StatelessWidget {
                       style: theme.textTheme.titleMedium!.copyWith(
                         fontWeight: FontWeight.w600,
                         color: enabled
-                            ? (selected
-                                  ? colorScheme.onPrimaryContainer
-                                  : colorScheme.onSurface)
+                            ? (selected ? colorScheme.onPrimaryContainer : colorScheme.onSurface)
                             : colorScheme.onSurface.withValues(alpha: 0.38),
                       ),
                       child: title,
@@ -88,13 +82,9 @@ class ExpressiveListTile extends StatelessWidget {
                         style: theme.textTheme.bodyMedium!.copyWith(
                           color: enabled
                               ? (selected
-                                    ? colorScheme.onPrimaryContainer.withValues(
-                                        alpha: 0.8,
-                                      )
+                                    ? colorScheme.onPrimaryContainer.withValues(alpha: 0.8)
                                     : colorScheme.onSurfaceVariant)
-                              : colorScheme.onSurfaceVariant.withValues(
-                                  alpha: 0.38,
-                                ),
+                              : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
                         ),
                         child: subtitle!,
                       ),

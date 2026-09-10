@@ -9,10 +9,8 @@ abstract class AuthorStats with _$AuthorStats {
   const factory AuthorStats({
     @JsonKey(name: "id") required String id,
     @JsonKey(name: "name") required String name,
-    @JsonKey(name: "count", fromJson: jsonIntRequiredFromDynamic)
-    required int count,
+    @JsonKey(name: "count", fromJson: jsonIntRequiredFromDynamic) required int count,
   }) = _AuthorStats;
 
-  factory AuthorStats.fromJson(Map<String, dynamic> json) =>
-      _$AuthorStatsFromJson(json);
+  factory AuthorStats.fromJson(Map<String, dynamic> json) => _$AuthorStatsFromJson(json);
 }

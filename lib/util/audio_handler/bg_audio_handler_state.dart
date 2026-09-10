@@ -16,28 +16,19 @@ extension _BGAudioHandlerState on BGAudioHandler {
   Stream<Duration> _positionStreamInternal() {
     final localPositionStream = _player.positionStream
         .throttleTime(const Duration(milliseconds: 200))
-        .map(
-          (position) =>
-              (_currentMediaItem?.offsetForTrack(_currentTrackIndex) ??
-                  Duration.zero) +
-              position,
-        )
+        .map((position) => (_currentMediaItem?.offsetForTrack(_currentTrackIndex) ?? Duration.zero) + position)
         .distinct();
 
     if (!_supportsCastPlatform) {
       return localPositionStream;
     }
 
-    final castPositionStream = GoogleCastRemoteMediaClient
-        .instance
-        .playerPositionStream
+    final castPositionStream = GoogleCastRemoteMediaClient.instance.playerPositionStream
         .throttleTime(const Duration(milliseconds: 200))
         .map(_castAbsolutePosition)
         .distinct();
 
-    return castControlActiveStream.startWith(isCastControlActive).switchMap((
-      castActive,
-    ) {
+    return castControlActiveStream.startWith(isCastControlActive).switchMap((castActive) {
       if (castActive) {
         return castPositionStream.startWith(position);
       }
@@ -52,16 +43,8 @@ extension _BGAudioHandlerState on BGAudioHandler {
     }
 
     final localPositionStream = _player
-        .createPositionStream(
-          minPeriod: _subtitlePositionUpdateInterval,
-          maxPeriod: _subtitlePositionUpdateInterval,
-        )
-        .map(
-          (position) =>
-              (_currentMediaItem?.offsetForTrack(_currentTrackIndex) ??
-                  Duration.zero) +
-              position,
-        )
+        .createPositionStream(minPeriod: _subtitlePositionUpdateInterval, maxPeriod: _subtitlePositionUpdateInterval)
+        .map((position) => (_currentMediaItem?.offsetForTrack(_currentTrackIndex) ?? Duration.zero) + position)
         .distinct();
 
     if (!_supportsCastPlatform) {
@@ -69,22 +52,17 @@ extension _BGAudioHandlerState on BGAudioHandler {
       return localPositionStream;
     }
 
-    final castPositionStream = GoogleCastRemoteMediaClient
-        .instance
-        .playerPositionStream
+    final castPositionStream = GoogleCastRemoteMediaClient.instance.playerPositionStream
         .throttleTime(_subtitlePositionUpdateInterval)
         .map(_castAbsolutePosition)
         .distinct();
 
-    final stream = castControlActiveStream
-        .startWith(isCastControlActive)
-        .switchMap((castActive) {
-          if (castActive) {
-            return castPositionStream.startWith(position);
-          }
-          return localPositionStream.startWith(position);
-        })
-        .distinct();
+    final stream = castControlActiveStream.startWith(isCastControlActive).switchMap((castActive) {
+      if (castActive) {
+        return castPositionStream.startWith(position);
+      }
+      return localPositionStream.startWith(position);
+    }).distinct();
     _subtitlePositionStream = stream;
     return stream;
   }
@@ -92,12 +70,7 @@ extension _BGAudioHandlerState on BGAudioHandler {
   Stream<Duration> _bufferedPositionStreamInternal() {
     return _player.bufferedPositionStream
         .throttleTime(const Duration(seconds: 1))
-        .map(
-          (position) =>
-              (_currentMediaItem?.offsetForTrack(_currentTrackIndex) ??
-                  Duration.zero) +
-              position,
-        )
+        .map((position) => (_currentMediaItem?.offsetForTrack(_currentTrackIndex) ?? Duration.zero) + position)
         .distinct();
   }
 
@@ -109,9 +82,7 @@ extension _BGAudioHandlerState on BGAudioHandler {
   }
 
   Stream<List<InternalChapter>> _chaptersStreamInternal() {
-    return mediaItemStream
-        .map((position) => _currentMediaItem?.chapters ?? [])
-        .distinct();
+    return mediaItemStream.map((position) => _currentMediaItem?.chapters ?? []).distinct();
   }
 
   Stream<int> _queueLengthStreamInternal() {
@@ -140,13 +111,9 @@ extension _BGAudioHandlerState on BGAudioHandler {
   Duration _positionInternal() {
     if (isCastControlActive) {
       final pos = _castAbsolutePosition(
-        Duration(
-          seconds:
-              GoogleCastRemoteMediaClient.instance.playerPosition.inSeconds,
-        ),
+        Duration(seconds: GoogleCastRemoteMediaClient.instance.playerPosition.inSeconds),
       );
-      if (GoogleCastSessionManager.instance.connectionState ==
-          GoogleCastConnectState.connected) {
+      if (GoogleCastSessionManager.instance.connectionState == GoogleCastConnectState.connected) {
         _lastKnownCastPosition = pos;
       }
       return pos;
@@ -203,8 +170,7 @@ extension _BGAudioHandlerState on BGAudioHandler {
     }
 
     final remoteContentId = status.mediaInformation?.contentId;
-    return remoteContentId != null &&
-        remoteContentId == _castControlledContentId;
+    return remoteContentId != null && remoteContentId == _castControlledContentId;
   }
 
   PlayerState _castPlayerStateFromStatus(GoggleCastMediaStatus? status) {
@@ -252,9 +218,7 @@ extension _BGAudioHandlerState on BGAudioHandler {
   Duration _trackEndDurationForIndex(InternalMedia media, int trackIndex) {
     final track = media.tracks[trackIndex];
     final endSeconds = track.end ?? ((track.start ?? 0) + track.duration);
-    return Duration(
-      microseconds: (endSeconds * Duration.microsecondsPerSecond).round(),
-    );
+    return Duration(microseconds: (endSeconds * Duration.microsecondsPerSecond).round());
   }
 
   Duration _castAbsolutePosition(Duration castRelativePosition) {
@@ -266,9 +230,7 @@ extension _BGAudioHandlerState on BGAudioHandler {
     final trackIndex = _resolvedCastTrackIndex(media);
     final trackStart = media.startDurationForTrack(trackIndex);
     final trackEnd = _trackEndDurationForIndex(media, trackIndex);
-    final boundedTrackEnd = trackEnd < trackStart
-        ? media.totalDuration
-        : trackEnd;
+    final boundedTrackEnd = trackEnd < trackStart ? media.totalDuration : trackEnd;
     final absolute = trackStart + castRelativePosition;
     if (absolute < trackStart) {
       return trackStart;
@@ -291,44 +253,33 @@ extension _BGAudioHandlerState on BGAudioHandler {
     final trackIndex = _resolvedCastTrackIndex(media);
     final trackStart = media.startDurationForTrack(trackIndex);
     final trackEnd = _trackEndDurationForIndex(media, trackIndex);
-    final boundedTrackEnd = trackEnd < trackStart
-        ? media.totalDuration
-        : trackEnd;
+    final boundedTrackEnd = trackEnd < trackStart ? media.totalDuration : trackEnd;
 
     final bounded = absolutePosition < trackStart
         ? trackStart
-        : (absolutePosition > boundedTrackEnd
-              ? boundedTrackEnd
-              : absolutePosition);
+        : (absolutePosition > boundedTrackEnd ? boundedTrackEnd : absolutePosition);
     return bounded - trackStart;
   }
 
   Duration _localAbsolutePosition() {
-    return (_currentMediaItem?.offsetForTrack(_currentTrackIndex) ??
-            Duration.zero) +
-        _player.position;
+    return (_currentMediaItem?.offsetForTrack(_currentTrackIndex) ?? Duration.zero) + _player.position;
   }
 
   void _refreshPlayerControlState() {
-    if (_supportsCastPlatform &&
-        !GoogleCastSessionManager.instance.hasConnectedSession) {
+    if (_supportsCastPlatform && !GoogleCastSessionManager.instance.hasConnectedSession) {
       _clearCastControlTracking();
     }
 
     final castActive = _computeCastControlActive();
-    if (!_castControlActiveSubject.isClosed &&
-        _castControlActiveSubject.value != castActive) {
+    if (!_castControlActiveSubject.isClosed && _castControlActiveSubject.value != castActive) {
       _castControlActiveSubject.add(castActive);
     }
 
     final state = castActive
-        ? _castPlayerStateFromStatus(
-            GoogleCastRemoteMediaClient.instance.mediaStatus,
-          )
+        ? _castPlayerStateFromStatus(GoogleCastRemoteMediaClient.instance.mediaStatus)
         : _player.playerState;
 
-    if (!_playerControlStateSubject.isClosed &&
-        !_isSameControlState(_playerControlStateSubject.value, state)) {
+    if (!_playerControlStateSubject.isClosed && !_isSameControlState(_playerControlStateSubject.value, state)) {
       _playerControlStateSubject.add(state);
     }
   }
@@ -338,52 +289,43 @@ extension _BGAudioHandlerState on BGAudioHandler {
       return;
     }
 
-    _castSessionSubscription = GoogleCastSessionManager
-        .instance
-        .currentSessionStream
-        .listen((session) {
-          final wasCastControlActive = isCastControlActive;
-          if (session?.connectionState != GoogleCastConnectState.connected) {
-            if (wasCastControlActive) {
-              unawaited(deactivateCastControl());
-            } else {
-              _clearCastControlTracking();
-            }
-          }
-          _refreshPlayerControlState();
-          if (wasCastControlActive != isCastControlActive ||
-              isCastControlActive) {
-            unawaited(_updatePlaybackState());
-          }
-        });
+    _castSessionSubscription = GoogleCastSessionManager.instance.currentSessionStream.listen((session) {
+      final wasCastControlActive = isCastControlActive;
+      if (session?.connectionState != GoogleCastConnectState.connected) {
+        if (wasCastControlActive) {
+          unawaited(deactivateCastControl());
+        } else {
+          _clearCastControlTracking();
+        }
+      }
+      _refreshPlayerControlState();
+      if (wasCastControlActive != isCastControlActive || isCastControlActive) {
+        unawaited(_updatePlaybackState());
+      }
+    });
 
-    _castMediaStatusSubscription = GoogleCastRemoteMediaClient
-        .instance
-        .mediaStatusStream
-        .listen((_) {
-          final wasCastControlActive = isCastControlActive;
+    _castMediaStatusSubscription = GoogleCastRemoteMediaClient.instance.mediaStatusStream.listen((_) {
+      final wasCastControlActive = isCastControlActive;
 
-          final status = GoogleCastRemoteMediaClient.instance.mediaStatus;
-          if (status != null &&
-              status.playerState == CastMediaPlayerState.idle) {
-            final reason = status.idleReason;
-            if (reason == GoogleCastMediaIdleReason.finished ||
-                reason == GoogleCastMediaIdleReason.cancelled ||
-                reason == GoogleCastMediaIdleReason.error) {
-              if (wasCastControlActive) {
-                unawaited(deactivateCastControl());
-              } else {
-                _clearCastControlTracking();
-              }
-            }
+      final status = GoogleCastRemoteMediaClient.instance.mediaStatus;
+      if (status != null && status.playerState == CastMediaPlayerState.idle) {
+        final reason = status.idleReason;
+        if (reason == GoogleCastMediaIdleReason.finished ||
+            reason == GoogleCastMediaIdleReason.cancelled ||
+            reason == GoogleCastMediaIdleReason.error) {
+          if (wasCastControlActive) {
+            unawaited(deactivateCastControl());
+          } else {
+            _clearCastControlTracking();
           }
+        }
+      }
 
-          _refreshPlayerControlState();
-          if (wasCastControlActive != isCastControlActive ||
-              isCastControlActive) {
-            unawaited(_updatePlaybackState());
-          }
-        });
+      _refreshPlayerControlState();
+      if (wasCastControlActive != isCastControlActive || isCastControlActive) {
+        unawaited(_updatePlaybackState());
+      }
+    });
   }
 }
 

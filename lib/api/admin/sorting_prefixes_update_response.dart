@@ -5,8 +5,7 @@ part 'sorting_prefixes_update_response.freezed.dart';
 part 'sorting_prefixes_update_response.g.dart';
 
 @freezed
-abstract class SortingPrefixesUpdateResponse
-    with _$SortingPrefixesUpdateResponse {
+abstract class SortingPrefixesUpdateResponse with _$SortingPrefixesUpdateResponse {
   const factory SortingPrefixesUpdateResponse({
     @JsonKey(name: 'rowsUpdated') required int rowsUpdated,
     @JsonKey(name: 'serverSettings') required ServerSettings serverSettings,

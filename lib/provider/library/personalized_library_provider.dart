@@ -11,13 +11,9 @@ import 'package:yaabsa/models/internal_download.dart';
 
 part 'personalized_library_provider.g.dart';
 
-final Map<String, PersonalizedLibrary>
-_personalizedLibraryCacheByUserLibraryKey = {};
+final Map<String, PersonalizedLibrary> _personalizedLibraryCacheByUserLibraryKey = {};
 
-String _personalizedCacheKey({
-  required String libraryId,
-  required String? userId,
-}) {
+String _personalizedCacheKey({required String libraryId, required String? userId}) {
   return '${userId ?? ''}:$libraryId';
 }
 
@@ -31,10 +27,7 @@ class PersonalizedLibraryNotifier extends _$PersonalizedLibraryNotifier {
     bool bypassCache = false,
   }) async {
     final api = ref.read(absApiProvider);
-    final cacheKey = _personalizedCacheKey(
-      libraryId: libraryId,
-      userId: userId,
-    );
+    final cacheKey = _personalizedCacheKey(libraryId: libraryId, userId: userId);
     final cachedLibrary = _personalizedLibraryCacheByUserLibraryKey[cacheKey];
 
     if (!ref.read(serverReachabilityProvider)) {
@@ -82,11 +75,7 @@ class PersonalizedLibraryNotifier extends _$PersonalizedLibraryNotifier {
         return cachedLibrary;
       }
 
-      logger(
-        'Error fetching personalized library: $e\n$s',
-        tag: 'PersonalizedLibraryNotifier',
-        level: InfoLevel.error,
-      );
+      logger('Error fetching personalized library: $e\n$s', tag: 'PersonalizedLibraryNotifier', level: InfoLevel.error);
       rethrow;
     } catch (e, s) {
       if (cachedLibrary != null) {
@@ -98,11 +87,7 @@ class PersonalizedLibraryNotifier extends _$PersonalizedLibraryNotifier {
         return cachedLibrary;
       }
 
-      logger(
-        'Error fetching personalized library: $e\n$s',
-        tag: 'PersonalizedLibraryNotifier',
-        level: InfoLevel.error,
-      );
+      logger('Error fetching personalized library: $e\n$s', tag: 'PersonalizedLibraryNotifier', level: InfoLevel.error);
       rethrow;
     } finally {
       if (identical(_activeRequestToken, cancelToken)) {
@@ -119,10 +104,7 @@ class PersonalizedLibraryNotifier extends _$PersonalizedLibraryNotifier {
       }
     });
 
-    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (
-      previous,
-      next,
-    ) {
+    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (previous, next) {
       if (next == null) {
         return;
       }
@@ -140,29 +122,17 @@ class PersonalizedLibraryNotifier extends _$PersonalizedLibraryNotifier {
     return _fetchPersonalizedLibrary(libraryId, userId: activeUserId);
   }
 
-  Future<void> refresh(
-    String libraryId, {
-    bool withLoading = false,
-    bool bypassCache = false,
-  }) async {
+  Future<void> refresh(String libraryId, {bool withLoading = false, bool bypassCache = false}) async {
     final activeUserId = ref.read(currentUserProvider).value?.id;
-    final cacheKey = _personalizedCacheKey(
-      libraryId: libraryId,
-      userId: activeUserId,
-    );
+    final cacheKey = _personalizedCacheKey(libraryId: libraryId, userId: activeUserId);
 
     if (withLoading) {
       state = const AsyncValue.loading();
     }
 
-    final fallbackData =
-        state.value ?? _personalizedLibraryCacheByUserLibraryKey[cacheKey];
+    final fallbackData = state.value ?? _personalizedLibraryCacheByUserLibraryKey[cacheKey];
     final nextState = await AsyncValue.guard(
-      () => _fetchPersonalizedLibrary(
-        libraryId,
-        userId: activeUserId,
-        bypassCache: bypassCache,
-      ),
+      () => _fetchPersonalizedLibrary(libraryId, userId: activeUserId, bypassCache: bypassCache),
     );
 
     if (!ref.mounted) {
@@ -177,10 +147,7 @@ class PersonalizedLibraryNotifier extends _$PersonalizedLibraryNotifier {
     state = nextState;
   }
 
-  void _applyLibraryItemMutation(
-    LibraryItemMutation mutation, {
-    required String libraryId,
-  }) {
+  void _applyLibraryItemMutation(LibraryItemMutation mutation, {required String libraryId}) {
     final currentLibrary = state.asData?.value;
     if (currentLibrary == null) {
       return;
@@ -188,13 +155,8 @@ class PersonalizedLibraryNotifier extends _$PersonalizedLibraryNotifier {
 
     final mutationLibraryId = mutation.libraryId?.trim();
     final hasLibraryMismatch =
-        mutationLibraryId != null &&
-        mutationLibraryId.isNotEmpty &&
-        mutationLibraryId != libraryId;
-    final itemExistsInShelves = _containsLibraryItem(
-      currentLibrary,
-      mutation.itemId,
-    );
+        mutationLibraryId != null && mutationLibraryId.isNotEmpty && mutationLibraryId != libraryId;
+    final itemExistsInShelves = _containsLibraryItem(currentLibrary, mutation.itemId);
 
     if (hasLibraryMismatch && !itemExistsInShelves) {
       return;
@@ -212,10 +174,7 @@ class PersonalizedLibraryNotifier extends _$PersonalizedLibraryNotifier {
     state = AsyncValue.data(nextLibrary);
 
     final activeUserId = ref.read(currentUserProvider).value?.id;
-    final cacheKey = _personalizedCacheKey(
-      libraryId: libraryId,
-      userId: activeUserId,
-    );
+    final cacheKey = _personalizedCacheKey(libraryId: libraryId, userId: activeUserId);
     _personalizedLibraryCacheByUserLibraryKey[cacheKey] = nextLibrary;
   }
 }
@@ -231,14 +190,8 @@ PersonalizedLibrary _mutatePersonalizedLibrary(
         itemExistsInShelves
             ? _replaceLibraryItemInShelf(shelf, mutation.item)
             : _prependLibraryItemToShelf(shelf, mutation.item),
-      LibraryItemMutationType.updated => _replaceLibraryItemInShelf(
-        shelf,
-        mutation.item,
-      ),
-      LibraryItemMutationType.removed => _removeLibraryItemFromShelf(
-        shelf,
-        mutation.itemId,
-      ),
+      LibraryItemMutationType.updated => _replaceLibraryItemInShelf(shelf, mutation.item),
+      LibraryItemMutationType.removed => _removeLibraryItemFromShelf(shelf, mutation.itemId),
     };
   }
 
@@ -276,9 +229,7 @@ PersonalizedLibrary _mutatePersonalizedLibrary(
     discover: nextDiscover,
     listenAgain: nextListenAgain,
     continueSeries: nextContinueSeries,
-    extraLibraryShelves: extraShelvesChanged
-        ? nextExtraLibraryShelves
-        : current.extraLibraryShelves,
+    extraLibraryShelves: extraShelvesChanged ? nextExtraLibraryShelves : current.extraLibraryShelves,
   );
 }
 
@@ -308,10 +259,7 @@ bool _containsLibraryItem(PersonalizedLibrary library, String itemId) {
   return false;
 }
 
-ShelfEntry<LibraryItem>? _replaceLibraryItemInShelf(
-  ShelfEntry<LibraryItem>? shelf,
-  LibraryItem? item,
-) {
+ShelfEntry<LibraryItem>? _replaceLibraryItemInShelf(ShelfEntry<LibraryItem>? shelf, LibraryItem? item) {
   if (shelf == null || item == null) {
     return shelf;
   }
@@ -326,10 +274,7 @@ ShelfEntry<LibraryItem>? _replaceLibraryItemInShelf(
   return shelf.copyWith(entities: nextEntities);
 }
 
-ShelfEntry<LibraryItem>? _prependLibraryItemToShelf(
-  ShelfEntry<LibraryItem>? shelf,
-  LibraryItem? item,
-) {
+ShelfEntry<LibraryItem>? _prependLibraryItemToShelf(ShelfEntry<LibraryItem>? shelf, LibraryItem? item) {
   if (shelf == null || item == null) {
     return shelf;
   }
@@ -338,9 +283,7 @@ ShelfEntry<LibraryItem>? _prependLibraryItemToShelf(
     return shelf;
   }
 
-  final existingIndex = shelf.entities.indexWhere(
-    (entity) => entity.id == item.id,
-  );
+  final existingIndex = shelf.entities.indexWhere((entity) => entity.id == item.id);
   final nextEntities = List<LibraryItem>.from(shelf.entities);
   if (existingIndex >= 0) {
     nextEntities[existingIndex] = item;
@@ -351,23 +294,17 @@ ShelfEntry<LibraryItem>? _prependLibraryItemToShelf(
   return shelf.copyWith(entities: nextEntities, total: shelf.total + 1);
 }
 
-ShelfEntry<LibraryItem>? _removeLibraryItemFromShelf(
-  ShelfEntry<LibraryItem>? shelf,
-  String itemId,
-) {
+ShelfEntry<LibraryItem>? _removeLibraryItemFromShelf(ShelfEntry<LibraryItem>? shelf, String itemId) {
   if (shelf == null) {
     return shelf;
   }
 
-  final existingIndex = shelf.entities.indexWhere(
-    (entity) => entity.id == itemId,
-  );
+  final existingIndex = shelf.entities.indexWhere((entity) => entity.id == itemId);
   if (existingIndex == -1) {
     return shelf;
   }
 
-  final nextEntities = List<LibraryItem>.from(shelf.entities)
-    ..removeAt(existingIndex);
+  final nextEntities = List<LibraryItem>.from(shelf.entities)..removeAt(existingIndex);
   final nextTotal = shelf.total > 0 ? shelf.total - 1 : nextEntities.length;
   return shelf.copyWith(entities: nextEntities, total: nextTotal);
 }

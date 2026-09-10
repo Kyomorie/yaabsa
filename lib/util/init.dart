@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:yaabsa/models/internal_media.dart'
-    show notificationArtworkDecodeMaxDimension;
+import 'package:yaabsa/models/internal_media.dart' show notificationArtworkDecodeMaxDimension;
 import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/device_capabilities.dart';
 import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
@@ -14,8 +13,7 @@ import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:yaabsa/database/connection/cache_db.dart'
-    show openCacheDatabase;
+import 'package:yaabsa/database/connection/cache_db.dart' show openCacheDatabase;
 import 'package:audio_service_mpris/audio_service_mpris.dart';
 
 import 'package:yaabsa/database/settings_manager.dart';
@@ -26,11 +24,7 @@ import 'logger.dart';
 class Init {
   static void initLogger() async {
     FlutterError.onError = (details) {
-      logger(
-        'FlutterError: ${details.exceptionAsString()}',
-        tag: 'FlutterError',
-        level: InfoLevel.error,
-      );
+      logger('FlutterError: ${details.exceptionAsString()}', tag: 'FlutterError', level: InfoLevel.error);
       FlutterError.presentError(details);
     };
     logger('Logger initialized', tag: 'Init', level: InfoLevel.info);
@@ -64,11 +58,7 @@ class Init {
   }
 
   static String? _discoverLibmpvPath() {
-    final searchDirectories = <String>{
-      '/app/lib',
-      '/app/lib64',
-      '/app/yaabsa/lib',
-    };
+    final searchDirectories = <String>{'/app/lib', '/app/lib64', '/app/yaabsa/lib'};
 
     final snapRoot = _snapRoot();
     if (snapRoot != null) {
@@ -95,11 +85,7 @@ class Init {
           return matches.first;
         }
       } catch (e) {
-        logger(
-          'Failed to scan $searchDirectory for libmpv: $e',
-          tag: 'Init',
-          level: InfoLevel.warning,
-        );
+        logger('Failed to scan $searchDirectory for libmpv: $e', tag: 'Init', level: InfoLevel.warning);
       }
     }
 
@@ -114,28 +100,16 @@ class Init {
     final configuredPath = Platform.environment['LIBMPV_LIBRARY_PATH'];
     if (configuredPath != null && configuredPath.isNotEmpty) {
       if (!p.isAbsolute(configuredPath) || File(configuredPath).existsSync()) {
-        logger(
-          'Using libmpv path from environment: $configuredPath',
-          tag: 'Init',
-          level: InfoLevel.info,
-        );
+        logger('Using libmpv path from environment: $configuredPath', tag: 'Init', level: InfoLevel.info);
         return configuredPath;
       }
 
-      logger(
-        'Configured libmpv path does not exist: $configuredPath',
-        tag: 'Init',
-        level: InfoLevel.warning,
-      );
+      logger('Configured libmpv path does not exist: $configuredPath', tag: 'Init', level: InfoLevel.warning);
     }
 
     if (!_isContainerRuntime()) {
       if (!_isSnapRuntime()) {
-        logger(
-          'No Flatpak or Snap runtime detected',
-          tag: 'Init',
-          level: InfoLevel.debug,
-        );
+        logger('No Flatpak or Snap runtime detected', tag: 'Init', level: InfoLevel.debug);
         return null;
       }
 
@@ -144,16 +118,11 @@ class Init {
       logger('Running as Flatpak', tag: 'Init', level: InfoLevel.debug);
     }
 
-    final fallbackCandidates = <String>[
-      '/app/lib/libmpv.so',
-      '/app/lib64/libmpv.so',
-    ];
+    final fallbackCandidates = <String>['/app/lib/libmpv.so', '/app/lib64/libmpv.so'];
 
     final snapRoot = _snapRoot();
     if (snapRoot != null) {
-      fallbackCandidates.addAll(<String>[
-        '$snapRoot/usr/lib/x86_64-linux-gnu/libmpv.so.2',
-      ]);
+      fallbackCandidates.addAll(<String>['$snapRoot/usr/lib/x86_64-linux-gnu/libmpv.so.2']);
     }
 
     for (final candidate in fallbackCandidates) {
@@ -164,11 +133,7 @@ class Init {
 
     final discoveredPath = _discoverLibmpvPath();
     if (discoveredPath != null) {
-      logger(
-        'Discovered libmpv path: $discoveredPath',
-        tag: 'Init',
-        level: InfoLevel.info,
-      );
+      logger('Discovered libmpv path: $discoveredPath', tag: 'Init', level: InfoLevel.info);
       return discoveredPath;
     }
 
@@ -210,32 +175,14 @@ class Init {
     }
     if (!kIsWeb) {
       JustAudioMediaKit.prefetchPlaylist = false;
-      JustAudioMediaKit.ensureInitialized(
-        linux: true,
-        windows: true,
-        libmpv: libmpvPath,
-      );
-      final disableFdk = settingsManager.getGlobalSetting<bool>(
-        SettingKeys.disableFdkAacDecoder,
-      );
-      JustAudioMediaKit.excludedAudioDecoders = disableFdk
-          ? const {'libfdk_aac'}
-          : const {};
-      logger(
-        'FDK AAC decoder disabled by setting: $disableFdk',
-        tag: 'Init',
-        level: InfoLevel.info,
-      );
+      JustAudioMediaKit.ensureInitialized(linux: true, windows: true, libmpv: libmpvPath);
+      final disableFdk = settingsManager.getGlobalSetting<bool>(SettingKeys.disableFdkAacDecoder);
+      JustAudioMediaKit.excludedAudioDecoders = disableFdk ? const {'libfdk_aac'} : const {};
+      logger('FDK AAC decoder disabled by setting: $disableFdk', tag: 'Init', level: InfoLevel.info);
     }
 
-    final ffSeconds = settingsManager.getGlobalSetting<int>(
-      SettingKeys.fastForwardInterval,
-      defaultValue: 10,
-    );
-    final rwSeconds = settingsManager.getGlobalSetting<int>(
-      SettingKeys.rewindInterval,
-      defaultValue: 10,
-    );
+    final ffSeconds = settingsManager.getGlobalSetting<int>(SettingKeys.fastForwardInterval, defaultValue: 10);
+    final rwSeconds = settingsManager.getGlobalSetting<int>(SettingKeys.rewindInterval, defaultValue: 10);
 
     _audioHandler = await AudioService.init(
       builder: () => BGAudioHandler(containerRef),
@@ -252,10 +199,8 @@ class Init {
         rewindInterval: Duration(seconds: rwSeconds),
         androidBrowsableRootExtras: <String, dynamic>{
           AndroidContentStyle.supportedKey: true,
-          AndroidContentStyle.playableHintKey:
-              AndroidContentStyle.listItemHintValue,
-          AndroidContentStyle.browsableHintKey:
-              AndroidContentStyle.listItemHintValue,
+          AndroidContentStyle.playableHintKey: AndroidContentStyle.listItemHintValue,
+          AndroidContentStyle.browsableHintKey: AndroidContentStyle.listItemHintValue,
           'android.media.browse.SEARCH_SUPPORTED': true,
         },
       ),
@@ -271,15 +216,9 @@ class Init {
     cacheDb = await openCacheDatabase();
 
     try {
-      packageInfo = await PackageInfo.fromPlatform().timeout(
-        const Duration(seconds: 2),
-      );
+      packageInfo = await PackageInfo.fromPlatform().timeout(const Duration(seconds: 2));
     } catch (e, s) {
-      logger(
-        'Failed to retrieve package info on startup: $e\n$s',
-        tag: 'Init',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to retrieve package info on startup: $e\n$s', tag: 'Init', level: InfoLevel.warning);
       packageInfo = PackageInfo(
         appName: 'Yaabsa',
         packageName: 'de.vito0912.yaabsa',
@@ -292,11 +231,7 @@ class Init {
 
   static Future<void> late() async {
     if (!_sleepTimerKeepAliveAttached) {
-      containerRef.listen<SleepTimerData>(
-        sleepTimerHandlerProvider,
-        (previous, next) {},
-        fireImmediately: true,
-      );
+      containerRef.listen<SleepTimerData>(sleepTimerHandlerProvider, (previous, next) {}, fireImmediately: true);
       _sleepTimerKeepAliveAttached = true;
     }
 

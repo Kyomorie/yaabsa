@@ -106,11 +106,7 @@ Future<_ResolvedCastTrack?> _resolveRemoteCastTrack({
 
     final resolvedRemoteIndex = remoteTrack.index ?? currentTrack.index;
     final remoteTrackUrl = remoteTrack
-        .toInternalTrack(
-          api.basePathOverride,
-          remoteSession.id,
-          localIndex: resolvedRemoteIndex,
-        )
+        .toInternalTrack(api.basePathOverride, remoteSession.id, localIndex: resolvedRemoteIndex)
         .url;
 
     if (remoteTrackUrl == null || remoteTrackUrl.isEmpty) {
@@ -124,11 +120,7 @@ Future<_ResolvedCastTrack?> _resolveRemoteCastTrack({
 
     return _ResolvedCastTrack(uri: remoteUri, mimeType: remoteTrack.mimeType);
   } catch (e, s) {
-    logger(
-      'Failed to resolve remote cast track for ${media.id}: $e\n$s',
-      tag: 'CastButton',
-      level: InfoLevel.warning,
-    );
+    logger('Failed to resolve remote cast track for ${media.id}: $e\n$s', tag: 'CastButton', level: InfoLevel.warning);
     return null;
   }
 }
@@ -145,17 +137,10 @@ Future<_ResolvedCastTrack?> _resolveCastTrack({
 
   final parsedTrackUri = Uri.tryParse(trackUrl);
   if (parsedTrackUri != null && _isHttpUri(parsedTrackUri)) {
-    return _ResolvedCastTrack(
-      uri: parsedTrackUri,
-      mimeType: currentTrack.mimeType,
-    );
+    return _ResolvedCastTrack(uri: parsedTrackUri, mimeType: currentTrack.mimeType);
   }
 
-  return _resolveRemoteCastTrack(
-    media: media,
-    currentTrack: currentTrack,
-    currentTrackIndex: currentTrackIndex,
-  );
+  return _resolveRemoteCastTrack(media: media, currentTrack: currentTrack, currentTrackIndex: currentTrackIndex);
 }
 
 Uri? _resolveCastCoverUri(InternalMedia media) {
@@ -172,10 +157,7 @@ Uri? _resolveCastCoverUri(InternalMedia media) {
   return api.getLibraryItemApi().getCoverUri(media.itemId);
 }
 
-Future<void> showCastDevicePicker(
-  BuildContext context, {
-  bool ensureInitialized = true,
-}) async {
+Future<void> showCastDevicePicker(BuildContext context, {bool ensureInitialized = true}) async {
   if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
     _showCastMessage(context, 'Chrome Cast is unavailable on this platform.');
     return;
@@ -210,8 +192,7 @@ Future<void> showCastDevicePicker(
       context: context,
       useSafeArea: true,
       showDragHandle: true,
-      builder: (context) =>
-          _CastDeviceSheet(onDisconnect: () => _disconnectSession(context)),
+      builder: (context) => _CastDeviceSheet(onDisconnect: () => _disconnectSession(context)),
     );
 
     if (selectedDevice == null) {
@@ -259,13 +240,9 @@ Future<void> _disconnectSession(BuildContext context) async {
   }
 }
 
-Future<void> _connectAndCast(
-  BuildContext context,
-  GoogleCastDevice device,
-) async {
+Future<void> _connectAndCast(BuildContext context, GoogleCastDevice device) async {
   try {
-    final started = await GoogleCastSessionManager.instance
-        .startSessionWithDevice(device);
+    final started = await GoogleCastSessionManager.instance.startSessionWithDevice(device);
     final connected = started
         ? await _waitForConnectedSession()
         : GoogleCastSessionManager.instance.hasConnectedSession;
@@ -293,21 +270,14 @@ Future<void> _connectAndCast(
       return;
     }
 
-    audioHandler.activateCastControl(
-      contentId: castTarget.contentId,
-      trackIndex: castTarget.trackIndex,
-    );
+    audioHandler.activateCastControl(contentId: castTarget.contentId, trackIndex: castTarget.trackIndex);
     _showCastMessage(context, 'Casting to ${device.friendlyName}.');
   } catch (e) {
     if (!context.mounted) {
       return;
     }
 
-    logger(
-      'Failed to connect and cast: $e',
-      tag: 'CastButton',
-      level: InfoLevel.warning,
-    );
+    logger('Failed to connect and cast: $e', tag: 'CastButton', level: InfoLevel.warning);
     _showCastMessage(context, 'Failed to cast: $e');
   }
 }
@@ -319,10 +289,7 @@ Future<bool> _waitForConnectedSession() async {
 
   try {
     await GoogleCastSessionManager.instance.currentSessionStream
-        .firstWhere(
-          (session) =>
-              session?.connectionState == GoogleCastConnectState.connected,
-        )
+        .firstWhere((session) => session?.connectionState == GoogleCastConnectState.connected)
         .timeout(const Duration(seconds: 8));
 
     return true;
@@ -379,9 +346,7 @@ Future<_CastTarget?> _castCurrentTrack(BuildContext context) async {
 
   final contentType = resolvedCastTrack.mimeType.isNotEmpty
       ? resolvedCastTrack.mimeType
-      : (currentTrack.mimeType.isNotEmpty
-            ? currentTrack.mimeType
-            : 'audio/mpeg');
+      : (currentTrack.mimeType.isNotEmpty ? currentTrack.mimeType : 'audio/mpeg');
 
   final GoogleCastMediaInformation mediaInfo;
   if (!kIsWeb && Platform.isAndroid) {
@@ -408,9 +373,7 @@ Future<_CastTarget?> _castCurrentTrack(BuildContext context) async {
     mediaInfo,
     autoPlay: true,
     playPosition: audioHandler.player.position,
-    customData: requestHeaders.isEmpty
-        ? null
-        : <String, dynamic>{'headers': requestHeaders},
+    customData: requestHeaders.isEmpty ? null : <String, dynamic>{'headers': requestHeaders},
   );
 
   return _CastTarget(contentId: media.id, trackIndex: currentTrackIndex);
@@ -443,8 +406,7 @@ class _CastButtonState extends ConsumerState<CastButton> {
   bool _initializationAttempted = false;
   bool _isInitialized = false;
 
-  bool get _isSupportedPlatform =>
-      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+  bool get _isSupportedPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   Future<bool> _ensureInitialized() async {
     if (!_isSupportedPlatform) {
@@ -512,18 +474,13 @@ class _CastButtonState extends ConsumerState<CastButton> {
       stream: GoogleCastSessionManager.instance.currentSessionStream,
       initialData: GoogleCastSessionManager.instance.currentSession,
       builder: (context, snapshot) {
-        final hasConnectedSession =
-            GoogleCastSessionManager.instance.hasConnectedSession;
+        final hasConnectedSession = GoogleCastSessionManager.instance.hasConnectedSession;
         final session = snapshot.data;
-        final isConnected =
-            hasConnectedSession ||
-            session?.connectionState == GoogleCastConnectState.connected;
+        final isConnected = hasConnectedSession || session?.connectionState == GoogleCastConnectState.connected;
 
         return IconButton(
           onPressed: _handlePressed,
-          tooltip: isConnected
-              ? 'Manage cast device'
-              : 'Connect to a cast device',
+          tooltip: isConnected ? 'Manage cast device' : 'Connect to a cast device',
           iconSize: widget.iconSize,
           icon: Icon(isConnected ? Icons.cast_connected : Icons.cast),
         );
@@ -547,43 +504,30 @@ class _CastDeviceSheet extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Cast Devices',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text('Cast Devices', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               StreamBuilder<GoogleCastSession?>(
                 stream: GoogleCastSessionManager.instance.currentSessionStream,
                 initialData: GoogleCastSessionManager.instance.currentSession,
                 builder: (context, sessionSnapshot) {
-                  final hasConnectedSession =
-                      GoogleCastSessionManager.instance.hasConnectedSession;
+                  final hasConnectedSession = GoogleCastSessionManager.instance.hasConnectedSession;
                   final session = sessionSnapshot.data;
                   final isConnected =
-                      hasConnectedSession ||
-                      session?.connectionState ==
-                          GoogleCastConnectState.connected;
+                      hasConnectedSession || session?.connectionState == GoogleCastConnectState.connected;
 
                   return Expanded(
                     child: StreamBuilder<List<GoogleCastDevice>>(
                       stream: GoogleCastDiscoveryManager.instance.devicesStream,
                       initialData: GoogleCastDiscoveryManager.instance.devices,
                       builder: (context, devicesSnapshot) {
-                        final devices =
-                            devicesSnapshot.data ?? const <GoogleCastDevice>[];
+                        final devices = devicesSnapshot.data ?? const <GoogleCastDevice>[];
 
                         if (devices.isEmpty && !isConnected) {
                           return const Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.4,
-                                  ),
-                                ),
+                                SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.4)),
                                 SizedBox(height: 10),
                                 Text('Searching for cast devices...'),
                               ],
@@ -612,9 +556,7 @@ class _CastDeviceSheet extends StatelessWidget {
                               ListTile(
                                 leading: const Icon(Icons.cast),
                                 title: Text(device.friendlyName),
-                                subtitle: Text(
-                                  device.modelName ?? 'Unknown model',
-                                ),
+                                subtitle: Text(device.modelName ?? 'Unknown model'),
                                 onTap: () => Navigator.of(context).pop(device),
                               ),
                           ],

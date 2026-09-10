@@ -2,12 +2,7 @@ import 'package:yaabsa/util/globals.dart';
 import 'package:material_ui/material_ui.dart';
 
 class SkipButton extends StatelessWidget {
-  const SkipButton({
-    super.key,
-    required this.previous,
-    this.iconSize,
-    this.buttonSize = 48,
-  });
+  const SkipButton({super.key, required this.previous, this.iconSize, this.buttonSize = 48});
 
   final bool previous;
   final double? iconSize;

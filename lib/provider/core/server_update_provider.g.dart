@@ -12,8 +12,7 @@ part of 'server_update_provider.dart';
 @ProviderFor(ServerUpdateState)
 final serverUpdateStateProvider = ServerUpdateStateProvider._();
 
-final class ServerUpdateStateProvider
-    extends $AsyncNotifierProvider<ServerUpdateState, ServerUpdateInfo?> {
+final class ServerUpdateStateProvider extends $AsyncNotifierProvider<ServerUpdateState, ServerUpdateInfo?> {
   ServerUpdateStateProvider._()
     : super(
         from: null,
@@ -40,8 +39,7 @@ abstract class _$ServerUpdateState extends $AsyncNotifier<ServerUpdateInfo?> {
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref =
-        this.ref as $Ref<AsyncValue<ServerUpdateInfo?>, ServerUpdateInfo?>;
+    final ref = this.ref as $Ref<AsyncValue<ServerUpdateInfo?>, ServerUpdateInfo?>;
     final element =
         ref.element
             as $ClassProviderElement<

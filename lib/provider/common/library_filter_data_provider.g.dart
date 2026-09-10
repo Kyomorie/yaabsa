@@ -13,25 +13,16 @@ part of 'library_filter_data_provider.dart';
 final libraryFilterDataProvider = LibraryFilterDataFamily._();
 
 final class LibraryFilterDataProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<LibraryFilterData?>,
-          LibraryFilterData?,
-          FutureOr<LibraryFilterData?>
-        >
-    with
-        $FutureModifier<LibraryFilterData?>,
-        $FutureProvider<LibraryFilterData?> {
-  LibraryFilterDataProvider._({
-    required LibraryFilterDataFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'libraryFilterDataProvider',
-         isAutoDispose: false,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+    extends $FunctionalProvider<AsyncValue<LibraryFilterData?>, LibraryFilterData?, FutureOr<LibraryFilterData?>>
+    with $FutureModifier<LibraryFilterData?>, $FutureProvider<LibraryFilterData?> {
+  LibraryFilterDataProvider._({required LibraryFilterDataFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'libraryFilterDataProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$libraryFilterDataHash();
@@ -45,9 +36,8 @@ final class LibraryFilterDataProvider
 
   @$internal
   @override
-  $FutureProviderElement<LibraryFilterData?> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<LibraryFilterData?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
   FutureOr<LibraryFilterData?> create(Ref ref) {
@@ -79,8 +69,7 @@ final class LibraryFilterDataFamily extends $Family
         isAutoDispose: false,
       );
 
-  LibraryFilterDataProvider call(String libraryId) =>
-      LibraryFilterDataProvider._(argument: libraryId, from: this);
+  LibraryFilterDataProvider call(String libraryId) => LibraryFilterDataProvider._(argument: libraryId, from: this);
 
   @override
   String toString() => r'libraryFilterDataProvider';

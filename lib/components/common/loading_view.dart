@@ -4,11 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:yaabsa/provider/core/user_providers.dart';
 
 class LoadingView extends ConsumerWidget {
-  const LoadingView({
-    super.key,
-    this.showDownloadsShortcut = true,
-    this.alwaysShowDownloadsShortcut = false,
-  });
+  const LoadingView({super.key, this.showDownloadsShortcut = true, this.alwaysShowDownloadsShortcut = false});
 
   final bool showDownloadsShortcut;
   final bool alwaysShowDownloadsShortcut;
@@ -17,8 +13,7 @@ class LoadingView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserAsync = ref.watch(currentUserProvider);
     final canDownload = currentUserAsync.value?.permissions.download ?? false;
-    final shouldShowButton =
-        (canDownload && showDownloadsShortcut) || alwaysShowDownloadsShortcut;
+    final shouldShowButton = (canDownload && showDownloadsShortcut) || alwaysShowDownloadsShortcut;
 
     return Stack(
       children: [

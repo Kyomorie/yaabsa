@@ -37,8 +37,7 @@ abstract class LibraryItem with _$LibraryItem {
     @JsonKey(name: "recentEpisode") Episode? recentEpisode,
   }) = _LibraryItem;
 
-  factory LibraryItem.fromJson(Map<String, dynamic> json) =>
-      _$LibraryItemFromJson(json);
+  factory LibraryItem.fromJson(Map<String, dynamic> json) => _$LibraryItemFromJson(json);
 
   // QoL
   String get title {
@@ -47,9 +46,7 @@ abstract class LibraryItem with _$LibraryItem {
       return collapsedTitle;
     }
 
-    return media?.bookMedia?.metadata.title ??
-        media?.podcastMedia?.metadata.title ??
-        'Untitled';
+    return media?.bookMedia?.metadata.title ?? media?.podcastMedia?.metadata.title ?? 'Untitled';
   }
 
   String? get subtitle {
@@ -63,11 +60,7 @@ abstract class LibraryItem with _$LibraryItem {
         .where((author) => author.isNotEmpty)
         .join(', ');
 
-    return _firstNonEmpty(<String?>[
-      authors,
-      bookMetadata?.authorName,
-      media?.podcastMedia?.metadata.author,
-    ]);
+    return _firstNonEmpty(<String?>[authors, bookMetadata?.authorName, media?.podcastMedia?.metadata.author]);
   }
 
   String? get narratorString {
@@ -85,10 +78,7 @@ abstract class LibraryItem with _$LibraryItem {
 
   String? get seriesName {
     final metadata = media?.bookMedia?.metadata;
-    return _firstNonEmpty(<String?>[
-      metadata?.series?.firstOrNull?.name,
-      metadata?.seriesName,
-    ]);
+    return _firstNonEmpty(<String?>[metadata?.series?.firstOrNull?.name, metadata?.seriesName]);
   }
 
   String? get seriesPosition {

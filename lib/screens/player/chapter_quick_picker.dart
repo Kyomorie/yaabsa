@@ -10,10 +10,7 @@ void showChapterQuickPicker(BuildContext context) {
       return SafeArea(
         child: SizedBox(
           height: MediaQuery.of(context).size.height * 0.75,
-          child: const Padding(
-            padding: EdgeInsets.fromLTRB(12, 4, 12, 12),
-            child: ChapterView(),
-          ),
+          child: const Padding(padding: EdgeInsets.fromLTRB(12, 4, 12, 12), child: ChapterView()),
         ),
       );
     },

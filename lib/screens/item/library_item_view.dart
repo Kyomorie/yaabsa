@@ -27,8 +27,7 @@ class _LibraryItemViewState extends ConsumerState<LibraryItemView> {
   @override
   void didUpdateWidget(covariant LibraryItemView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.itemId != widget.itemId ||
-        oldWidget.initialEditorTab != widget.initialEditorTab) {
+    if (oldWidget.itemId != widget.itemId || oldWidget.initialEditorTab != widget.initialEditorTab) {
       _didOpenInitialEditor = false;
     }
   }
@@ -36,12 +35,10 @@ class _LibraryItemViewState extends ConsumerState<LibraryItemView> {
   @override
   Widget build(BuildContext context) {
     final itemAsync = ref.watch(libraryItemProvider(widget.itemId));
-    final canDownload =
-        ref.watch(currentUserProvider).value?.permissions.download ?? false;
+    final canDownload = ref.watch(currentUserProvider).value?.permissions.download ?? false;
     return itemAsync.when(
       data: (item) {
-        final isPodcast =
-            item.mediaType == 'podcast' || item.media?.podcastMedia != null;
+        final isPodcast = item.mediaType == 'podcast' || item.media?.podcastMedia != null;
         _scheduleInitialEditor(item, isPodcast: isPodcast);
         return isPodcast
             ? LibraryItemPodcastView(item: item, canDownload: canDownload)
@@ -52,7 +49,9 @@ class _LibraryItemViewState extends ConsumerState<LibraryItemView> {
         return ConnectionIssueView.requestFailed(
           error: error,
           title: isNotFound ? 'Item not found' : 'Unable to load item',
-          message: isNotFound ? 'This item may have been moved or deleted.' : 'Please try again. If the issue persists, check your server connection.',
+          message: isNotFound
+              ? 'This item may have been moved or deleted.'
+              : 'Please try again. If the issue persists, check your server connection.',
           showDownloadsShortcut: !isNotFound,
           onRetry: () async {
             ref.invalidate(libraryItemProvider(widget.itemId));
@@ -67,9 +66,7 @@ class _LibraryItemViewState extends ConsumerState<LibraryItemView> {
   }
 
   void _scheduleInitialEditor(LibraryItem item, {required bool isPodcast}) {
-    if (_didOpenInitialEditor ||
-        isPodcast ||
-        widget.initialEditorTab != 'encoder') {
+    if (_didOpenInitialEditor || isPodcast || widget.initialEditorTab != 'encoder') {
       return;
     }
 

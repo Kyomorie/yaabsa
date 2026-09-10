@@ -7,11 +7,6 @@ part of 'genres_response.dart';
 // **************************************************************************
 
 _GenresResponse _$GenresResponseFromJson(Map<String, dynamic> json) =>
-    _GenresResponse(
-      genres: json['genres'] == null
-          ? const <String>[]
-          : _stringListFromJson(json['genres']),
-    );
+    _GenresResponse(genres: json['genres'] == null ? const <String>[] : _stringListFromJson(json['genres']));
 
-Map<String, dynamic> _$GenresResponseToJson(_GenresResponse instance) =>
-    <String, dynamic>{'genres': instance.genres};
+Map<String, dynamic> _$GenresResponseToJson(_GenresResponse instance) => <String, dynamic>{'genres': instance.genres};

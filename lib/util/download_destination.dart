@@ -20,15 +20,12 @@ class DownloadTaskDestination {
     this.directory,
     this.storageBasePath,
   }) : assert(
-         (usesUriTask && directoryUri != null) ||
-             (!usesUriTask && baseDirectory != null && directory != null),
+         (usesUriTask && directoryUri != null) || (!usesUriTask && baseDirectory != null && directory != null),
          'DownloadTaskDestination must define either directoryUri or baseDirectory+directory',
        );
 
-  const DownloadTaskDestination.uri({
-    required Uri directoryUri,
-    bool saf = true,
-  }) : this._(usesUriTask: true, saf: saf, directoryUri: directoryUri);
+  const DownloadTaskDestination.uri({required Uri directoryUri, bool saf = true})
+    : this._(usesUriTask: true, saf: saf, directoryUri: directoryUri);
 
   const DownloadTaskDestination.path({
     required BaseDirectory baseDirectory,
@@ -68,14 +65,8 @@ Future<String?> resolveDownloadBasePath(String? basePath) async {
   return basePath;
 }
 
-Future<String?> resolveStoredDownloadPath(
-  String? path,
-  String? basePath,
-) async {
-  if (path == null ||
-      path.trim().isEmpty ||
-      basePath == null ||
-      basePath.isEmpty) {
+Future<String?> resolveStoredDownloadPath(String? path, String? basePath) async {
+  if (path == null || path.trim().isEmpty || basePath == null || basePath.isEmpty) {
     return path;
   }
 
@@ -95,10 +86,7 @@ Future<String?> resolveStoredDownloadPath(
 }
 
 Future<String?> storeDownloadPath(String? path, String? basePath) async {
-  if (path == null ||
-      path.trim().isEmpty ||
-      basePath == null ||
-      basePath.isEmpty) {
+  if (path == null || path.trim().isEmpty || basePath == null || basePath.isEmpty) {
     return path;
   }
 
@@ -112,21 +100,16 @@ Future<String?> storeDownloadPath(String? path, String? basePath) async {
     return path;
   }
 
-  final filePath = parsed?.scheme == 'file'
-      ? parsed!.toFilePath(windows: Platform.isWindows)
-      : path;
-  if (!p.isWithin(root, filePath) &&
-      p.normalize(root) != p.normalize(filePath)) {
+  final filePath = parsed?.scheme == 'file' ? parsed!.toFilePath(windows: Platform.isWindows) : path;
+  if (!p.isWithin(root, filePath) && p.normalize(root) != p.normalize(filePath)) {
     return path;
   }
   return p.relative(filePath, from: root);
 }
 
-bool get supportsCustomDownloadLocation =>
-    !kIsWeb && (Platform.isAndroid || Platform.isLinux || Platform.isWindows);
+bool get supportsCustomDownloadLocation => !kIsWeb && (Platform.isAndroid || Platform.isLinux || Platform.isWindows);
 
-bool get disablesCustomDownloadLocation =>
-    !kIsWeb && (Platform.isIOS || Platform.isMacOS);
+bool get disablesCustomDownloadLocation => !kIsWeb && (Platform.isIOS || Platform.isMacOS);
 
 bool get isFlatpakRuntime {
   if (kIsWeb || !Platform.isLinux) {
@@ -156,10 +139,7 @@ Uri? parseDownloadLocationSetting(String? rawValue) {
 }
 
 String encodeDesktopDownloadLocation(String directoryPath) {
-  return Uri.file(
-    directoryPath,
-    windows: !kIsWeb && Platform.isWindows,
-  ).toString();
+  return Uri.file(directoryPath, windows: !kIsWeb && Platform.isWindows).toString();
 }
 
 String formatDownloadLocationForDisplay(String? rawValue) {
@@ -217,9 +197,7 @@ Future<DownloadTaskDestination> resolveDownloadTaskDestination(
     if (Platform.isAndroid) {
       final activatedUri = await downloader.uri.activate(customLocation);
       if (activatedUri == null) {
-        throw Exception(
-          'The selected Android folder is no longer accessible. Please pick it again.',
-        );
+        throw Exception('The selected Android folder is no longer accessible. Please pick it again.');
       }
 
       return DownloadTaskDestination.uri(directoryUri: activatedUri);
@@ -227,9 +205,7 @@ Future<DownloadTaskDestination> resolveDownloadTaskDestination(
 
     if (Platform.isLinux || Platform.isWindows) {
       if (customLocation.scheme != 'file') {
-        throw Exception(
-          'Custom download location must be a local folder on this platform.',
-        );
+        throw Exception('Custom download location must be a local folder on this platform.');
       }
 
       final rootPath = customLocation.toFilePath(windows: Platform.isWindows);

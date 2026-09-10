@@ -36,12 +36,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     }
 
     if (autoQueueContext != null) {
-      unawaited(
-        _startAutoQueue(
-          autoQueueContext,
-          QueueItem(itemId: item.id, episodeId: episode.id),
-        ),
-      );
+      unawaited(_startAutoQueue(autoQueueContext, QueueItem(itemId: item.id, episodeId: episode.id)));
     }
   }
 
@@ -65,9 +60,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         );
     if (!isCurrentItem) {
       final hasPlaybackToReplace =
-          _currentMediaItem != null ||
-          queueList.isNotEmpty ||
-          _player.processingState != ProcessingState.idle;
+          _currentMediaItem != null || queueList.isNotEmpty || _player.processingState != ProcessingState.idle;
       if (hasPlaybackToReplace) {
         await stop(clearQueue: !preserveQueue);
       }
@@ -79,26 +72,16 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       _lastQueueItem = targetItem;
 
       try {
-        _currentMediaItem = await _ref
-            .read(sessionRepositoryProvider)
-            .openSession(itemId, episodeId: episodeId);
+        _currentMediaItem = await _ref.read(sessionRepositoryProvider).openSession(itemId, episodeId: episodeId);
         if (_currentMediaItem == null) {
-          logger(
-            'No media item found for ID: $itemId',
-            tag: 'AudioHandler',
-            level: InfoLevel.error,
-          );
+          logger('No media item found for ID: $itemId', tag: 'AudioHandler', level: InfoLevel.error);
           PlayerUtils.disableWakelock(_ref);
           _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
           return false;
         }
         await _setSource(ignoreSavedProgress: true);
       } catch (e, s) {
-        logger(
-          'Failed to prepare item $itemId for playback: $e\n$s',
-          tag: 'AudioHandler',
-          level: InfoLevel.error,
-        );
+        logger('Failed to prepare item $itemId for playback: $e\n$s', tag: 'AudioHandler', level: InfoLevel.error);
         _currentMediaItem = null;
         PlayerUtils.disableWakelock(_ref);
         _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
@@ -118,9 +101,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       TrayManager.update();
       if (!isCurrentItem) {
         _markPendingManualQueueSessionPlayed();
-        unawaited(
-          _setupAutoQueueOnResume(itemId: itemId, episodeId: episodeId),
-        );
+        unawaited(_setupAutoQueueOnResume(itemId: itemId, episodeId: episodeId));
       }
       return true;
     } catch (e, s) {
@@ -159,36 +140,20 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         libraryId != null &&
         _ref
             .read(settingsManagerProvider.notifier)
-            .getUserSetting<bool>(
-              activeUserId,
-              'music_library_$libraryId',
-              defaultValue: false,
-            );
+            .getUserSetting<bool>(activeUserId, 'music_library_$libraryId', defaultValue: false);
 
     if (isMusic) {
       _clearAutoQueueState();
       _activeMusicLibraryId = libraryId;
       _activeMusicLibraryFilter = filter;
-      unawaited(
-        _queueMusicLibraryItems(
-          libraryId,
-          item.id,
-          sort: sort,
-          desc: desc,
-          filter: filter,
-        ),
-      );
+      unawaited(_queueMusicLibraryItems(libraryId, item.id, sort: sort, desc: desc, filter: filter));
       return;
     } else {
       _activeMusicLibraryId = null;
     }
 
     if (!_isAutoQueueEnabled) {
-      logger(
-        'Auto queue disabled. Skipping auto-queue setup.',
-        tag: 'AudioHandler',
-        level: InfoLevel.debug,
-      );
+      logger('Auto queue disabled. Skipping auto-queue setup.', tag: 'AudioHandler', level: InfoLevel.debug);
       return;
     }
 
@@ -207,10 +172,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     }
 
     if (autoQueueStart.type != AutoQueueStartType.none) {
-      final scopedContext = await _buildAutoQueueContextFromStart(
-        item,
-        autoQueueStart,
-      );
+      final scopedContext = await _buildAutoQueueContextFromStart(item, autoQueueStart);
       if (scopedContext == null) {
         logger(
           'Auto queue scope could not be resolved for ${autoQueueStart.type.name} (sourceId=${autoQueueStart.sourceId}).',
@@ -239,11 +201,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       return;
     }
 
-    logger(
-      'Attempting fallback series auto queue for item ${item.id}.',
-      tag: 'AudioHandler',
-      level: InfoLevel.debug,
-    );
+    logger('Attempting fallback series auto queue for item ${item.id}.', tag: 'AudioHandler', level: InfoLevel.debug);
     final fallbackContext = await _buildSeriesFallbackAutoQueueContext(item);
     if (fallbackContext != null) {
       unawaited(_startAutoQueue(fallbackContext, QueueItem(itemId: item.id)));
@@ -264,26 +222,16 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     _currentTrackIndex = 0;
 
     try {
-      await _syncService.flush(
-        positionOverride: transitionPosition,
-        sessionClosing: true,
-      );
+      await _syncService.flush(positionOverride: transitionPosition, sessionClosing: true);
       await _ref.read(sessionRepositoryProvider).closeSession();
     } catch (e) {
-      logger(
-        'Error preparing queued transition: $e',
-        tag: 'AudioHandler',
-        level: InfoLevel.error,
-      );
+      logger('Error preparing queued transition: $e', tag: 'AudioHandler', level: InfoLevel.error);
     }
 
     await _safePlayerStop();
   }
 
-  Future<void> _syncedPlay({
-    bool restoreProgress = false,
-    bool skipResumeProgressReconcile = false,
-  }) async {
+  Future<void> _syncedPlay({bool restoreProgress = false, bool skipResumeProgressReconcile = false}) async {
     if (_chapterNotificationEnabled) {
       _updateMediaItemForChapterNotification();
     } else {
@@ -299,12 +247,8 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       level: InfoLevel.info,
     );
 
-    if (restoreProgress &&
-        !skipResumeProgressReconcile &&
-        !isCastControlActive) {
-      unawaited(
-        _reconcileResumeProgressInBackground(resumeItem, startPosition),
-      );
+    if (restoreProgress && !skipResumeProgressReconcile && !isCastControlActive) {
+      unawaited(_reconcileResumeProgressInBackground(resumeItem, startPosition));
     } else if (restoreProgress && skipResumeProgressReconcile) {
       logger(
         'Resume progress reconcile skipped because playback position was manually changed while paused.',
@@ -315,27 +259,16 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
     unawaited(
       _player.play().catchError((error, stackTrace) {
-        logger(
-          'Failed to start player playback: $error\\n$stackTrace',
-          tag: 'AudioHandler',
-          level: InfoLevel.error,
-        );
+        logger('Failed to start player playback: $error\\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);
       }),
     );
   }
 
-  Future<void> _reconcileResumeProgressInBackground(
-    InternalMedia resumeItem,
-    Duration startPosition,
-  ) async {
+  Future<void> _reconcileResumeProgressInBackground(InternalMedia resumeItem, Duration startPosition) async {
     final activeUserId = _ref.read(currentUserProvider).value?.id;
     final isMusic = _ref
         .read(settingsManagerProvider.notifier)
-        .getUserSetting<bool>(
-          activeUserId,
-          'music_library_${resumeItem.libraryId}',
-          defaultValue: false,
-        );
+        .getUserSetting<bool>(activeUserId, 'music_library_${resumeItem.libraryId}', defaultValue: false);
     if (isMusic) {
       return;
     }
@@ -355,10 +288,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     try {
       final progress = await _ref
           .read(mediaProgressProvider.notifier)
-          .fetchOrRefreshIndividualProgress(
-            resumeItem.itemId,
-            episodeId: resumeItem.episodeId,
-          );
+          .fetchOrRefreshIndividualProgress(resumeItem.itemId, episodeId: resumeItem.episodeId);
 
       final currentMedia = _currentMediaItem;
       if (currentMedia == null ||
@@ -387,11 +317,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
       final remotePosition = progress.isFinished
           ? Duration.zero
-          : Duration(
-              microseconds:
-                  (progress.currentTime * Duration.microsecondsPerSecond)
-                      .round(),
-            );
+          : Duration(microseconds: (progress.currentTime * Duration.microsecondsPerSecond).round());
       final positionDrift = (remotePosition - startPosition).abs();
 
       logger(
@@ -414,11 +340,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
       await _seekWithoutPausedManualMarker(() => _seekInternal(remotePosition));
     } catch (e) {
-      logger(
-        'Background resume reconcile failed: $e',
-        tag: 'AudioHandler',
-        level: InfoLevel.warning,
-      );
+      logger('Background resume reconcile failed: $e', tag: 'AudioHandler', level: InfoLevel.warning);
     }
   }
 
@@ -432,43 +354,23 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     final api = _ref.read(absApiProvider);
     if (api == null) return;
     try {
-      final request = LibraryItemsRequest(
-        limit: 1000,
-        page: 0,
-        sort: sort,
-        desc: desc,
-        filter: filter,
-      );
-      final response = await api.getLibraryApi().getLibraryItems(
-        libraryId,
-        request,
-        extra: const {'noCache': true},
-      );
+      final request = LibraryItemsRequest(limit: 1000, page: 0, sort: sort, desc: desc, filter: filter);
+      final response = await api.getLibraryApi().getLibraryItems(libraryId, request, extra: const {'noCache': true});
       final data = response.data;
       if (data != null && data.results.isNotEmpty) {
         final total = data.total ?? data.results.length;
         final targetSize = (total / 2).round().clamp(1, 20);
 
-        final otherItems = data.results
-            .where((item) => item.id != currentItemId)
-            .toList();
+        final otherItems = data.results.where((item) => item.id != currentItemId).toList();
         otherItems.shuffle(); // Randomize!
 
         final itemsToQueue = otherItems.take(targetSize).toList();
         for (final item in itemsToQueue) {
-          addToQueue(
-            QueueItem(itemId: item.id),
-            displayInfo: _displayInfoFromLibraryItem(item),
-            markAsManual: false,
-          );
+          addToQueue(QueueItem(itemId: item.id), displayInfo: _displayInfoFromLibraryItem(item), markAsManual: false);
         }
       }
     } catch (e) {
-      logger(
-        'Failed to queue music library items: $e',
-        tag: 'AudioHandler',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to queue music library items: $e', tag: 'AudioHandler', level: InfoLevel.warning);
     }
   }
 }

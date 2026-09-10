@@ -31,6 +31,5 @@ abstract class LoggerData with _$LoggerData {
     List<ServerLogEntry> currentDailyLogs,
   }) = _LoggerData;
 
-  factory LoggerData.fromJson(Map<String, dynamic> json) =>
-      _$LoggerDataFromJson(json);
+  factory LoggerData.fromJson(Map<String, dynamic> json) => _$LoggerDataFromJson(json);
 }

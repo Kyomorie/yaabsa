@@ -31,8 +31,7 @@ class UserListeningSessionsView extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Listening Sessions',
-                    style: Theme.of(context).textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
                   ),
                 ),
               ],

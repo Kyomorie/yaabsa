@@ -6,11 +6,7 @@ extension _BGAudioHandlerQueue on BGAudioHandler {
       try {
         return await _ref.read(libraryItemProvider(itemId).future);
       } catch (e) {
-        logger(
-          'Failed to resolve queue item $itemId: $e',
-          tag: 'AudioHandler',
-          level: InfoLevel.warning,
-        );
+        logger('Failed to resolve queue item $itemId: $e', tag: 'AudioHandler', level: InfoLevel.warning);
         return null;
       }
     });
@@ -65,20 +61,12 @@ extension _BGAudioHandlerQueue on BGAudioHandler {
     final nextQueue = List<PlayerQueueEntry>.from(queueList);
     final moved = nextQueue.removeAt(oldIndex);
     final pinned = moved.autoQueued
-        ? PlayerQueueEntry(
-            id: moved.id,
-            item: moved.item,
-            displayInfo: moved.displayInfo,
-            autoQueuePage: null,
-          )
+        ? PlayerQueueEntry(id: moved.id, item: moved.item, displayInfo: moved.displayInfo, autoQueuePage: null)
         : moved;
     nextQueue.insert(targetIndex, pinned);
     if (moved.autoQueued) {
       _autoQueueSuppressedReferences.remove(
-        _queueItemReferenceKey(
-          itemId: moved.item.itemId,
-          episodeId: moved.item.episodeId,
-        ),
+        _queueItemReferenceKey(itemId: moved.item.itemId, episodeId: moved.item.episodeId),
       );
       _originalQueueList = _originalQueueList
           .map((entry) => entry.id == moved.id ? pinned : entry)
@@ -136,25 +124,16 @@ extension _BGAudioHandlerQueue on BGAudioHandler {
     if (autoQueued) {
       queueList = [...queueList, entry];
     } else {
-      final firstGeneratedIndex = queueList.indexWhere(
-        (queuedEntry) => queuedEntry.autoQueued,
-      );
+      final firstGeneratedIndex = queueList.indexWhere((queuedEntry) => queuedEntry.autoQueued);
       if (firstGeneratedIndex < 0) {
         queueList = [...queueList, entry];
       } else {
-        queueList = [
-          ...queueList.take(firstGeneratedIndex),
-          entry,
-          ...queueList.skip(firstGeneratedIndex),
-        ];
+        queueList = [...queueList.take(firstGeneratedIndex), entry, ...queueList.skip(firstGeneratedIndex)];
       }
     }
 
     final manager = _ref.read(settingsManagerProvider.notifier);
-    final isMix = manager.getGlobalSetting<bool>(
-      SettingKeys.mixQueue,
-      defaultValue: false,
-    );
+    final isMix = manager.getGlobalSetting<bool>(SettingKeys.mixQueue, defaultValue: false);
     if (isMix) {
       _originalQueueList.add(entry);
     }
@@ -163,51 +142,31 @@ extension _BGAudioHandlerQueue on BGAudioHandler {
   }
 
   QueueDisplayInfo _displayInfoFromLibraryItem(LibraryItem item) {
-    return QueueDisplayInfo(
-      title: item.title,
-      subtitle: item.subtitle,
-      author: item.authorString,
-    );
+    return QueueDisplayInfo(title: item.title, subtitle: item.subtitle, author: item.authorString);
   }
 
-  QueueDisplayInfo _displayInfoFromPodcastEpisode(
-    LibraryItem item,
-    Episode episode,
-  ) {
-    final title = (episode.title != null && episode.title!.trim().isNotEmpty)
-        ? episode.title!.trim()
-        : item.title;
-    final subtitle =
-        (episode.subtitle != null && episode.subtitle!.trim().isNotEmpty)
+  QueueDisplayInfo _displayInfoFromPodcastEpisode(LibraryItem item, Episode episode) {
+    final title = (episode.title != null && episode.title!.trim().isNotEmpty) ? episode.title!.trim() : item.title;
+    final subtitle = (episode.subtitle != null && episode.subtitle!.trim().isNotEmpty)
         ? episode.subtitle!.trim()
         : item.title;
-    return QueueDisplayInfo(
-      title: title,
-      subtitle: subtitle,
-      author: item.authorString,
-    );
+    return QueueDisplayInfo(title: title, subtitle: subtitle, author: item.authorString);
   }
 
   bool get _isAutoQueueEnabled {
     return !_autoQueueDisabledForCurrentSession &&
-        _ref
-            .read(settingsManagerProvider.notifier)
-            .getGlobalSetting<bool>(SettingKeys.autoQueue);
+        _ref.read(settingsManagerProvider.notifier).getGlobalSetting<bool>(SettingKeys.autoQueue);
   }
 
   bool get _isSeriesFallbackAutoQueueEnabled {
     return _ref
         .read(settingsManagerProvider.notifier)
-        .getGlobalSetting<bool>(
-          SettingKeys.autoQueueIncludeSeriesOutsideContext,
-        );
+        .getGlobalSetting<bool>(SettingKeys.autoQueueIncludeSeriesOutsideContext);
   }
 
   PlayerQueueSnapshot _buildQueueSnapshot() {
     final autoState = _autoQueueState;
-    final autoQueueRemaining = autoState == null
-        ? 0
-        : _remainingAutoQueueItems(autoState);
+    final autoQueueRemaining = autoState == null ? 0 : _remainingAutoQueueItems(autoState);
 
     return PlayerQueueSnapshot(
       entries: List<PlayerQueueEntry>.unmodifiable(queueList),
@@ -215,8 +174,7 @@ extension _BGAudioHandlerQueue on BGAudioHandler {
       autoQueueActive: autoState != null,
       autoQueueLoading: autoState?.isLoading ?? false,
       autoQueueRemaining: autoQueueRemaining,
-      canLoadMoreAutoQueue:
-          autoState != null && !autoState.isLoading && autoQueueRemaining > 0,
+      canLoadMoreAutoQueue: autoState != null && !autoState.isLoading && autoQueueRemaining > 0,
     );
   }
 
@@ -225,22 +183,17 @@ extension _BGAudioHandlerQueue on BGAudioHandler {
       return 0;
     }
 
-    final highestLoadedAbsoluteIndex =
-        ((state.highestLoadedPage + 1) * state.pageSize - 1)
-            .clamp(0, state.totalItems - 1)
-            .toInt();
-    final loadedAfterCurrent =
-        (highestLoadedAbsoluteIndex - state.currentItemAbsoluteIndex)
-            .clamp(0, state.totalItems)
-            .toInt();
-    final totalAfterCurrent =
-        (state.totalItems - state.currentItemAbsoluteIndex - 1)
-            .clamp(0, state.totalItems)
-            .toInt();
-
-    return (totalAfterCurrent - loadedAfterCurrent)
+    final highestLoadedAbsoluteIndex = ((state.highestLoadedPage + 1) * state.pageSize - 1)
+        .clamp(0, state.totalItems - 1)
+        .toInt();
+    final loadedAfterCurrent = (highestLoadedAbsoluteIndex - state.currentItemAbsoluteIndex)
         .clamp(0, state.totalItems)
         .toInt();
+    final totalAfterCurrent = (state.totalItems - state.currentItemAbsoluteIndex - 1)
+        .clamp(0, state.totalItems)
+        .toInt();
+
+    return (totalAfterCurrent - loadedAfterCurrent).clamp(0, state.totalItems).toInt();
   }
 
   void _maybePrefetchAutoQueue({int minBufferedEntries = 5}) {
@@ -249,8 +202,7 @@ extension _BGAudioHandlerQueue on BGAudioHandler {
       return;
     }
 
-    if (_remainingAutoQueueItems(autoState) <= 0 ||
-        queueList.length > minBufferedEntries) {
+    if (_remainingAutoQueueItems(autoState) <= 0 || queueList.length > minBufferedEntries) {
       return;
     }
 

@@ -44,12 +44,10 @@ class PlayerSettingsEqualizer extends ConsumerStatefulWidget {
   static const String routeName = '/settings/player/equalizer';
 
   @override
-  ConsumerState<PlayerSettingsEqualizer> createState() =>
-      _PlayerSettingsEqualizerState();
+  ConsumerState<PlayerSettingsEqualizer> createState() => _PlayerSettingsEqualizerState();
 }
 
-class _PlayerSettingsEqualizerState
-    extends ConsumerState<PlayerSettingsEqualizer> {
+class _PlayerSettingsEqualizerState extends ConsumerState<PlayerSettingsEqualizer> {
   Map<int, double> currentGains = {};
   String currentPreset = 'Flat';
   bool _isInitialized = false;
@@ -67,24 +65,15 @@ class _PlayerSettingsEqualizerState
           Padding(
             padding: EdgeInsets.all(24.0),
             child: Center(
-              child: Text(
-                'Equalizer is not available on this device/platform.',
-                textAlign: TextAlign.center,
-              ),
+              child: Text('Equalizer is not available on this device/platform.', textAlign: TextAlign.center),
             ),
           ),
         ],
       );
     }
 
-    final equalizerEnabledStr = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.equalizerEnabled))
-        .asData
-        ?.value;
-    final equalizerEnabled = SettingsParser.decodeValue<bool>(
-      equalizerEnabledStr,
-      false,
-    );
+    final equalizerEnabledStr = ref.watch(globalSettingByKeyProvider(SettingKeys.equalizerEnabled)).asData?.value;
+    final equalizerEnabled = SettingsParser.decodeValue<bool>(equalizerEnabledStr, false);
     final equalizer = audioHandler.equalizer;
 
     return SettingsPageScaffold(
@@ -98,9 +87,7 @@ class _PlayerSettingsEqualizerState
           initialData: equalizer?.status,
           builder: (context, statusSnapshot) {
             final unavailable =
-                equalizer == null ||
-                statusSnapshot.data?.availability ==
-                    AudioEffectAvailability.unavailable;
+                equalizer == null || statusSnapshot.data?.availability == AudioEffectAvailability.unavailable;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -111,10 +98,7 @@ class _PlayerSettingsEqualizerState
                       ? null
                       : (newValue) => ref
                             .read(settingsManagerProvider.notifier)
-                            .setGlobalSetting<bool>(
-                              SettingKeys.equalizerEnabled,
-                              newValue,
-                            ),
+                            .setGlobalSetting<bool>(SettingKeys.equalizerEnabled, newValue),
                 ),
                 const SizedBox(height: 12),
                 if (!equalizerEnabled)
@@ -124,11 +108,7 @@ class _PlayerSettingsEqualizerState
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.equalizer_rounded,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
+                          const Icon(Icons.equalizer_rounded, size: 64, color: Colors.grey),
                           const SizedBox(height: 16),
                           Text(
                             'Equalizer is currently disabled',
@@ -152,11 +132,7 @@ class _PlayerSettingsEqualizerState
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.equalizer_rounded,
-                            size: 64,
-                            color: Colors.orange,
-                          ),
+                          const Icon(Icons.equalizer_rounded, size: 64, color: Colors.orange),
                           const SizedBox(height: 16),
                           Text(
                             'Equalizer unavailable',
@@ -186,17 +162,11 @@ class _PlayerSettingsEqualizerState
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.play_circle_outline,
-                                  size: 64,
-                                  color: Colors.grey,
-                                ),
+                                const Icon(Icons.play_circle_outline, size: 64, color: Colors.grey),
                                 const SizedBox(height: 16),
                                 Text(
                                   'No Active Playback Session',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium,
+                                  style: Theme.of(context).textTheme.titleMedium,
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 8),
@@ -211,12 +181,7 @@ class _PlayerSettingsEqualizerState
                         );
                       }
 
-                      return _buildEqualizerParameters(
-                        context,
-                        ref,
-                        equalizer,
-                        equalizerEnabled,
-                      );
+                      return _buildEqualizerParameters(context, ref, equalizer, equalizerEnabled);
                     },
                   ),
               ],
@@ -247,10 +212,7 @@ class _PlayerSettingsEqualizerState
           return Padding(
             padding: const EdgeInsets.all(24.0),
             child: Center(
-              child: Text(
-                'Error loading equalizer parameters: ${snapshot.error}',
-                textAlign: TextAlign.center,
-              ),
+              child: Text('Error loading equalizer parameters: ${snapshot.error}', textAlign: TextAlign.center),
             ),
           );
         }
@@ -259,24 +221,13 @@ class _PlayerSettingsEqualizerState
         if (params == null || params.bands.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(24.0),
-            child: Center(
-              child: Text(
-                'No equalizer bands found',
-                textAlign: TextAlign.center,
-              ),
-            ),
+            child: Center(child: Text('No equalizer bands found', textAlign: TextAlign.center)),
           );
         }
 
         if (!_isInitialized) {
-          final savedGainsStr = ref
-              .read(globalSettingByKeyProvider(SettingKeys.equalizerBandGains))
-              .asData
-              ?.value;
-          final savedPreset = ref
-              .read(globalSettingByKeyProvider(SettingKeys.equalizerPreset))
-              .asData
-              ?.value;
+          final savedGainsStr = ref.read(globalSettingByKeyProvider(SettingKeys.equalizerBandGains)).asData?.value;
+          final savedPreset = ref.read(globalSettingByKeyProvider(SettingKeys.equalizerPreset)).asData?.value;
 
           if (savedPreset != null) {
             currentPreset = savedPreset;
@@ -285,10 +236,7 @@ class _PlayerSettingsEqualizerState
           if (savedGainsStr != null && savedGainsStr.isNotEmpty) {
             try {
               final Map<String, dynamic> decoded = jsonDecode(savedGainsStr);
-              currentGains = decoded.map(
-                (key, value) =>
-                    MapEntry(int.parse(key), (value as num).toDouble()),
-              );
+              currentGains = decoded.map((key, value) => MapEntry(int.parse(key), (value as num).toDouble()));
             } catch (e) {
               currentGains = {};
             }
@@ -297,11 +245,7 @@ class _PlayerSettingsEqualizerState
           for (final band in params.bands) {
             if (!currentGains.containsKey(band.index)) {
               if (currentPreset != 'Custom') {
-                currentGains[band.index] = getPresetGainForBand(
-                  currentPreset,
-                  band.index,
-                  params.bands.length,
-                );
+                currentGains[band.index] = getPresetGainForBand(currentPreset, band.index, params.bands.length);
               } else {
                 currentGains[band.index] = band.gain;
               }
@@ -321,20 +265,11 @@ class _PlayerSettingsEqualizerState
                 decoration: const InputDecoration(
                   labelText: 'Equalizer Preset',
                   border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 items: [
-                  ...equalizerPresets.keys.map(
-                    (preset) =>
-                        DropdownMenuItem(value: preset, child: Text(preset)),
-                  ),
-                  const DropdownMenuItem(
-                    value: 'Custom',
-                    child: Text('Custom'),
-                  ),
+                  ...equalizerPresets.keys.map((preset) => DropdownMenuItem(value: preset, child: Text(preset))),
+                  const DropdownMenuItem(value: 'Custom', child: Text('Custom')),
                 ],
                 onChanged: (newPreset) {
                   if (newPreset != null) {
@@ -349,10 +284,7 @@ class _PlayerSettingsEqualizerState
               elevation: 0,
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 24,
-                  horizontal: 8,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
                 child: SizedBox(
                   height: 260,
                   child: Center(
@@ -364,9 +296,7 @@ class _PlayerSettingsEqualizerState
                           final band = params.bands[index];
                           final double gain = currentGains[band.index] ?? 0.0;
                           return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
                             child: SizedBox(
                               width: 72,
                               child: EqualizerBandSlider(
@@ -385,10 +315,7 @@ class _PlayerSettingsEqualizerState
                                 onChangeEnd: (finalVal) {
                                   ref
                                       .read(settingsManagerProvider.notifier)
-                                      .setGlobalSetting(
-                                        SettingKeys.equalizerPreset,
-                                        'Custom',
-                                      );
+                                      .setGlobalSetting(SettingKeys.equalizerPreset, 'Custom');
                                   _saveGainsToDb(currentGains);
                                 },
                               ),
@@ -420,20 +347,14 @@ class _PlayerSettingsEqualizerState
       currentGains = updatedGains;
     });
 
-    ref
-        .read(settingsManagerProvider.notifier)
-        .setGlobalSetting(SettingKeys.equalizerPreset, presetName);
+    ref.read(settingsManagerProvider.notifier).setGlobalSetting(SettingKeys.equalizerPreset, presetName);
     _saveGainsToDb(updatedGains);
   }
 
   void _saveGainsToDb(Map<int, double> gains) {
-    final Map<String, double> stringKeyMap = gains.map(
-      (key, value) => MapEntry(key.toString(), value),
-    );
+    final Map<String, double> stringKeyMap = gains.map((key, value) => MapEntry(key.toString(), value));
     final jsonStr = jsonEncode(stringKeyMap);
-    ref
-        .read(settingsManagerProvider.notifier)
-        .setGlobalSetting(SettingKeys.equalizerBandGains, jsonStr);
+    ref.read(settingsManagerProvider.notifier).setGlobalSetting(SettingKeys.equalizerBandGains, jsonStr);
   }
 }
 
@@ -471,10 +392,8 @@ class EqualizerBandSlider extends StatelessWidget {
       children: [
         Text(
           '${currentGain > 0 ? '+' : ''}${currentGain.toStringAsFixed(1)} dB',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w500,
-            color: enabled ? null : Theme.of(context).disabledColor,
-          ),
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(fontWeight: FontWeight.w500, color: enabled ? null : Theme.of(context).disabledColor),
         ),
         const SizedBox(height: 8),
         Expanded(
@@ -499,10 +418,8 @@ class EqualizerBandSlider extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           _formatFrequency(band.centerFrequency),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: enabled ? null : Theme.of(context).disabledColor,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(fontWeight: FontWeight.bold, color: enabled ? null : Theme.of(context).disabledColor),
         ),
       ],
     );

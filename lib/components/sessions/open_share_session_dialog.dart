@@ -11,29 +11,20 @@ Future<bool?> showOpenShareSessionDialog(
   return showDialog<bool>(
     context: context,
     builder: (context) {
-      return _OpenShareSessionDialog(
-        session: session,
-        canDelete: canDelete,
-        onDelete: onDelete,
-      );
+      return _OpenShareSessionDialog(session: session, canDelete: canDelete, onDelete: onDelete);
     },
   );
 }
 
 class _OpenShareSessionDialog extends StatefulWidget {
-  const _OpenShareSessionDialog({
-    required this.session,
-    required this.canDelete,
-    this.onDelete,
-  });
+  const _OpenShareSessionDialog({required this.session, required this.canDelete, this.onDelete});
 
   final OpenShareSession session;
   final bool canDelete;
   final Future<bool> Function()? onDelete;
 
   @override
-  State<_OpenShareSessionDialog> createState() =>
-      _OpenShareSessionDialogState();
+  State<_OpenShareSessionDialog> createState() => _OpenShareSessionDialogState();
 }
 
 class _OpenShareSessionDialogState extends State<_OpenShareSessionDialog> {
@@ -62,10 +53,7 @@ class _OpenShareSessionDialogState extends State<_OpenShareSessionDialog> {
         children: [
           SizedBox(
             width: 116,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
+            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
           const SizedBox(width: 8),
           Expanded(child: Text(value)),
@@ -85,14 +73,9 @@ class _OpenShareSessionDialogState extends State<_OpenShareSessionDialog> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Shared Session'),
-          content: const Text(
-            'Delete this shared session permanently? This cannot be undone.',
-          ),
+          content: const Text('Delete this shared session permanently? This cannot be undone.'),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
             FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error,
@@ -167,47 +150,28 @@ class _OpenShareSessionDialogState extends State<_OpenShareSessionDialog> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              if (author != null && author.isNotEmpty)
-                _buildSummaryTile('Author', author),
-              if (userName != null && userName.isNotEmpty)
-                _buildSummaryTile('User', userName),
-              if (deviceName != null && deviceName.isNotEmpty)
-                _buildSummaryTile('Device', deviceName),
+              if (author != null && author.isNotEmpty) _buildSummaryTile('Author', author),
+              if (userName != null && userName.isNotEmpty) _buildSummaryTile('User', userName),
+              if (deviceName != null && deviceName.isNotEmpty) _buildSummaryTile('Device', deviceName),
               _buildSummaryTile('Date', formatDateTimeLabel(_sessionDate())),
               _buildSummaryTile('Session ID', widget.session.id),
               if (_actionError != null && _actionError!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
-                  child: Text(
-                    _actionError!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                  child: Text(_actionError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: _isDeleting
-              ? null
-              : () => Navigator.of(context).pop(false),
-          child: const Text('Close'),
-        ),
+        TextButton(onPressed: _isDeleting ? null : () => Navigator.of(context).pop(false), child: const Text('Close')),
         if (widget.canDelete)
           TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
             onPressed: _isDeleting ? null : _delete,
             child: _isDeleting
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Text('Delete'),
           ),
       ],

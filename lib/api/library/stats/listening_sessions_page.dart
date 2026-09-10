@@ -11,11 +11,8 @@ abstract class ListeningSessionsPage with _$ListeningSessionsPage {
     @JsonKey(name: 'numPages') int? numPages,
     @JsonKey(name: 'page') int? page,
     @JsonKey(name: 'itemsPerPage') int? itemsPerPage,
-    @JsonKey(name: 'sessions')
-    @Default(<PlaybackSession>[])
-    List<PlaybackSession> sessions,
+    @JsonKey(name: 'sessions') @Default(<PlaybackSession>[]) List<PlaybackSession> sessions,
   }) = _ListeningSessionsPage;
 
-  factory ListeningSessionsPage.fromJson(Map<String, dynamic> json) =>
-      _$ListeningSessionsPageFromJson(json);
+  factory ListeningSessionsPage.fromJson(Map<String, dynamic> json) => _$ListeningSessionsPageFromJson(json);
 }

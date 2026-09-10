@@ -49,10 +49,7 @@ class StatsWeekdayBreakdown extends StatelessWidget {
     ];
 
     if (entries.every((entry) => entry.value <= 0)) {
-      return Text(
-        'No weekday listening data available.',
-        style: Theme.of(context).textTheme.bodyMedium,
-      );
+      return Text('No weekday listening data available.', style: Theme.of(context).textTheme.bodyMedium);
     }
 
     return StatsRankedList(entries: entries, previewCount: 7);

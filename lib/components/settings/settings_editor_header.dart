@@ -1,12 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 class SettingsEditorHeader extends StatelessWidget {
-  const SettingsEditorHeader({
-    super.key,
-    required this.title,
-    required this.onReset,
-    this.topPadding = 20,
-  });
+  const SettingsEditorHeader({super.key, required this.title, required this.onReset, this.topPadding = 20});
 
   final String title;
   final VoidCallback? onReset;
@@ -22,17 +17,11 @@ class SettingsEditorHeader extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-              ],
+              children: [Text(title, style: Theme.of(context).textTheme.titleMedium)],
             ),
           ),
           const SizedBox(width: 12),
-          TextButton.icon(
-            onPressed: onReset,
-            icon: const Icon(Icons.restart_alt_rounded),
-            label: const Text('Reset'),
-          ),
+          TextButton.icon(onPressed: onReset, icon: const Icon(Icons.restart_alt_rounded), label: const Text('Reset')),
         ],
       ),
     );

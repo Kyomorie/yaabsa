@@ -34,10 +34,9 @@ class PlaylistsState {
   }
 }
 
-final playlistsProvider =
-    AsyncNotifierProvider.family<PlaylistsNotifier, PlaylistsState, String>(
-      PlaylistsNotifier.new,
-    );
+final playlistsProvider = AsyncNotifierProvider.family<PlaylistsNotifier, PlaylistsState, String>(
+  PlaylistsNotifier.new,
+);
 
 class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
   PlaylistsNotifier(this.libraryId);
@@ -50,27 +49,16 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
       throw Exception('User not authenticated or API not available.');
     }
 
-    final response = await absApi.getListApi().getUserPlaylist(
-      forceServer: forceServer,
-    );
+    final response = await absApi.getListApi().getUserPlaylist(forceServer: forceServer);
     final data = response.data;
     if (data == null) {
       throw Exception('No playlists data received from API.');
     }
 
-    final filteredPlaylists =
-        data.items
-            .where((item) => item.libraryId == libraryId)
-            .toList(growable: false)
-          ..sort(
-            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-          );
+    final filteredPlaylists = data.items.where((item) => item.libraryId == libraryId).toList(growable: false)
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
 
-    return PlaylistsState(
-      items: filteredPlaylists,
-      libraryId: libraryId,
-      totalItems: filteredPlaylists.length,
-    );
+    return PlaylistsState(items: filteredPlaylists, libraryId: libraryId, totalItems: filteredPlaylists.length);
   }
 
   @override
@@ -78,10 +66,7 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
     return _fetchPlaylists();
   }
 
-  Future<void> refresh({
-    bool withLoading = true,
-    bool forceServer = true,
-  }) async {
+  Future<void> refresh({bool withLoading = true, bool forceServer = true}) async {
     if (withLoading) {
       state = const AsyncValue.loading();
     }
@@ -125,21 +110,13 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
     return created;
   }
 
-  Future<Playlist> updatePlaylist(
-    String playlistId, {
-    required String name,
-    String? description,
-  }) async {
+  Future<Playlist> updatePlaylist(String playlistId, {required String name, String? description}) async {
     final absApi = ref.read(absApiProvider);
     if (absApi == null) {
       throw Exception('User not authenticated or API not available.');
     }
 
-    final updatedResponse = await absApi.getListApi().updatePlaylist(
-      playlistId,
-      name: name,
-      description: description,
-    );
+    final updatedResponse = await absApi.getListApi().updatePlaylist(playlistId, name: name, description: description);
 
     final updated = updatedResponse.data;
     if (updated == null) {
@@ -150,10 +127,7 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
     return updated;
   }
 
-  Future<Playlist> addBooksToPlaylist(
-    String playlistId, {
-    required List<String> bookIds,
-  }) async {
+  Future<Playlist> addBooksToPlaylist(String playlistId, {required List<String> bookIds}) async {
     if (bookIds.isEmpty) {
       throw Exception('No books selected.');
     }
@@ -165,9 +139,7 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
 
     final updatedResponse = await absApi.getListApi().addItemsToPlaylist(
       playlistId,
-      items: bookIds
-          .map((bookId) => {'libraryItemId': bookId})
-          .toList(growable: false),
+      items: bookIds.map((bookId) => {'libraryItemId': bookId}).toList(growable: false),
     );
 
     final updated = updatedResponse.data;
@@ -179,10 +151,7 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
     return updated;
   }
 
-  Future<Playlist> removeBooksFromPlaylist(
-    String playlistId, {
-    required List<String> bookIds,
-  }) async {
+  Future<Playlist> removeBooksFromPlaylist(String playlistId, {required List<String> bookIds}) async {
     if (bookIds.isEmpty) {
       throw Exception('No books selected.');
     }
@@ -195,12 +164,7 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
     final updatedResponse = await absApi.getListApi().removeItemsFromPlaylist(
       playlistId,
       items: bookIds
-          .map(
-            (bookId) => <String, dynamic>{
-              'libraryItemId': bookId,
-              'episodeId': null,
-            },
-          )
+          .map((bookId) => <String, dynamic>{'libraryItemId': bookId, 'episodeId': null})
           .toList(growable: false),
     );
 
@@ -222,9 +186,7 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
     final normalizedDesired = _normalizeItemIds(desiredBookIds);
 
     if (normalizedDesired.isEmpty) {
-      throw Exception(
-        'Playlists cannot be empty. Keep at least one book selected.',
-      );
+      throw Exception('Playlists cannot be empty. Keep at least one book selected.');
     }
 
     if (_sameOrder(normalizedCurrent, normalizedDesired)) {
@@ -245,19 +207,13 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
     final currentSet = normalizedCurrent.toSet();
     final desiredSet = normalizedDesired.toSet();
 
-    final itemsToAdd = normalizedDesired
-        .where((id) => !currentSet.contains(id))
-        .toList(growable: false);
-    final itemsToRemove = normalizedCurrent
-        .where((id) => !desiredSet.contains(id))
-        .toList(growable: false);
+    final itemsToAdd = normalizedDesired.where((id) => !currentSet.contains(id)).toList(growable: false);
+    final itemsToRemove = normalizedCurrent.where((id) => !desiredSet.contains(id)).toList(growable: false);
 
     if (itemsToAdd.isNotEmpty) {
       await absApi.getListApi().addItemsToPlaylist(
         playlistId,
-        items: itemsToAdd
-            .map((bookId) => <String, dynamic>{'libraryItemId': bookId})
-            .toList(growable: false),
+        items: itemsToAdd.map((bookId) => <String, dynamic>{'libraryItemId': bookId}).toList(growable: false),
       );
     }
 
@@ -265,21 +221,14 @@ class PlaylistsNotifier extends AsyncNotifier<PlaylistsState> {
       await absApi.getListApi().removeItemsFromPlaylist(
         playlistId,
         items: itemsToRemove
-            .map(
-              (bookId) => <String, dynamic>{
-                'libraryItemId': bookId,
-                'episodeId': null,
-              },
-            )
+            .map((bookId) => <String, dynamic>{'libraryItemId': bookId, 'episodeId': null})
             .toList(growable: false),
       );
     }
 
     final updatedResponse = await absApi.getListApi().updatePlaylist(
       playlistId,
-      items: normalizedDesired
-          .map((bookId) => <String, dynamic>{'libraryItemId': bookId})
-          .toList(growable: false),
+      items: normalizedDesired.map((bookId) => <String, dynamic>{'libraryItemId': bookId}).toList(growable: false),
     );
 
     await refresh(withLoading: false, forceServer: true);

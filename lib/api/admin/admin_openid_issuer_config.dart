@@ -12,11 +12,8 @@ abstract class AdminOpenIdIssuerConfig with _$AdminOpenIdIssuerConfig {
     @JsonKey(name: 'userinfo_endpoint') String? userInfoEndpoint,
     @JsonKey(name: 'end_session_endpoint') String? endSessionEndpoint,
     @JsonKey(name: 'jwks_uri') String? jwksUri,
-    @JsonKey(name: 'id_token_signing_alg_values_supported')
-    @Default(<String>[])
-    List<String> signingAlgorithms,
+    @JsonKey(name: 'id_token_signing_alg_values_supported') @Default(<String>[]) List<String> signingAlgorithms,
   }) = _AdminOpenIdIssuerConfig;
 
-  factory AdminOpenIdIssuerConfig.fromJson(Map<String, dynamic> json) =>
-      _$AdminOpenIdIssuerConfigFromJson(json);
+  factory AdminOpenIdIssuerConfig.fromJson(Map<String, dynamic> json) => _$AdminOpenIdIssuerConfigFromJson(json);
 }

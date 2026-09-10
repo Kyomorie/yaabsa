@@ -6,23 +6,16 @@ InputDecoration yaabsaFieldDecoration(
   BuildContext context, {
   required String label,
   String? hintText,
-  EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(
-    horizontal: 12,
-    vertical: 12,
-  ),
+  EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
 }) {
   final colorScheme = Theme.of(context).colorScheme;
   final defaultBorder = OutlineInputBorder(
     borderRadius: BorderRadius.circular(10),
-    borderSide: BorderSide(
-      color: colorScheme.outlineVariant.withValues(alpha: 0.34),
-    ),
+    borderSide: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.34)),
   );
   final focusedBorder = OutlineInputBorder(
     borderRadius: BorderRadius.circular(10),
-    borderSide: BorderSide(
-      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-    ),
+    borderSide: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
   );
 
   return InputDecoration(
@@ -59,10 +52,7 @@ class StyledTextField extends StatelessWidget {
     this.obscureText = false,
     this.prefixIcon,
     this.suffixIcon,
-    this.contentPadding = const EdgeInsets.symmetric(
-      horizontal: 12,
-      vertical: 12,
-    ),
+    this.contentPadding = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
   });
 
   final String label;
@@ -88,18 +78,12 @@ class StyledTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final decoration =
-        yaabsaFieldDecoration(
-          context,
-          label: label,
-          hintText: hintText,
-          contentPadding: contentPadding,
-        ).copyWith(
-          helperText: helperText,
-          errorText: errorText,
-          prefixIcon: prefixIcon,
-          suffixIcon: suffixIcon,
-        );
+    final decoration = yaabsaFieldDecoration(
+      context,
+      label: label,
+      hintText: hintText,
+      contentPadding: contentPadding,
+    ).copyWith(helperText: helperText, errorText: errorText, prefixIcon: prefixIcon, suffixIcon: suffixIcon);
 
     return TextField(
       controller: controller,
@@ -142,10 +126,7 @@ class StyledTextFormField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.validator,
-    this.contentPadding = const EdgeInsets.symmetric(
-      horizontal: 12,
-      vertical: 12,
-    ),
+    this.contentPadding = const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
   });
 
   final String label;
@@ -171,18 +152,12 @@ class StyledTextFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final decoration =
-        yaabsaFieldDecoration(
-          context,
-          label: label,
-          hintText: hintText,
-          contentPadding: contentPadding,
-        ).copyWith(
-          helperText: helperText,
-          errorText: errorText,
-          prefixIcon: prefixIcon,
-          suffixIcon: suffixIcon,
-        );
+    final decoration = yaabsaFieldDecoration(
+      context,
+      label: label,
+      hintText: hintText,
+      contentPadding: contentPadding,
+    ).copyWith(helperText: helperText, errorText: errorText, prefixIcon: prefixIcon, suffixIcon: suffixIcon);
 
     return TextFormField(
       controller: controller,
@@ -293,11 +268,7 @@ class YaabsaDropdownField<T> extends StatelessWidget {
       value: value,
       options: _mapItemsToOptions(),
       onChanged: enabled ? onChanged : null,
-      decoration: yaabsaFieldDecoration(
-        context,
-        label: label,
-        hintText: hintText,
-      ),
+      decoration: yaabsaFieldDecoration(context, label: label, hintText: hintText),
     );
   }
 }

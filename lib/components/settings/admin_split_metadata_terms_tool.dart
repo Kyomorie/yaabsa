@@ -9,17 +9,12 @@ import 'package:yaabsa/provider/core/user_providers.dart';
 import 'package:yaabsa/util/admin_item_metadata_tools.dart';
 
 class AdminSplitMetadataTermsTool extends ConsumerWidget {
-  const AdminSplitMetadataTermsTool({
-    super.key,
-    required this.splitType,
-    this.onCompleted,
-  });
+  const AdminSplitMetadataTermsTool({super.key, required this.splitType, this.onCompleted});
 
   final MetadataSplitType splitType;
   final Future<void> Function()? onCompleted;
 
-  String get _label =>
-      splitType == MetadataSplitType.tags ? 'Split Tags' : 'Split Genres';
+  String get _label => splitType == MetadataSplitType.tags ? 'Split Tags' : 'Split Genres';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,15 +28,13 @@ class AdminSplitMetadataTermsTool extends ConsumerWidget {
   Future<void> _openDialog(BuildContext context, WidgetRef ref) async {
     final api = ref.read(absApiProvider);
     if (api == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('No active API client.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No active API client.')));
       return;
     }
 
     final result = await showDialog<SplitMetadataTermsToolResult>(
       context: context,
-      builder: (dialogContext) =>
-          _SplitMetadataTermsDialog(api: api, splitType: splitType),
+      builder: (dialogContext) => _SplitMetadataTermsDialog(api: api, splitType: splitType),
     );
 
     if (!context.mounted || result == null) {
@@ -70,14 +63,11 @@ class _SplitMetadataTermsDialog extends StatefulWidget {
   final MetadataSplitType splitType;
 
   @override
-  State<_SplitMetadataTermsDialog> createState() =>
-      _SplitMetadataTermsDialogState();
+  State<_SplitMetadataTermsDialog> createState() => _SplitMetadataTermsDialogState();
 }
 
 class _SplitMetadataTermsDialogState extends State<_SplitMetadataTermsDialog> {
-  final TextEditingController _delimiterController = TextEditingController(
-    text: ',',
-  );
+  final TextEditingController _delimiterController = TextEditingController(text: ',');
 
   bool _isLoadingLibraries = true;
   bool _isRunning = false;
@@ -98,8 +88,7 @@ class _SplitMetadataTermsDialogState extends State<_SplitMetadataTermsDialog> {
     super.dispose();
   }
 
-  String get _noun =>
-      widget.splitType == MetadataSplitType.tags ? 'tags' : 'genres';
+  String get _noun => widget.splitType == MetadataSplitType.tags ? 'tags' : 'genres';
 
   Future<void> _loadLibraries() async {
     setState(() {
@@ -193,9 +182,7 @@ class _SplitMetadataTermsDialogState extends State<_SplitMetadataTermsDialog> {
     final busy = _isRunning || _isLoadingLibraries;
 
     return AlertDialog(
-      title: Text(
-        'Split ${widget.splitType == MetadataSplitType.tags ? 'Tags' : 'Genres'}',
-      ),
+      title: Text('Split ${widget.splitType == MetadataSplitType.tags ? 'Tags' : 'Genres'}'),
       content: SizedBox(
         width: 640,
         child: SingleChildScrollView(
@@ -213,20 +200,14 @@ class _SplitMetadataTermsDialogState extends State<_SplitMetadataTermsDialog> {
                 enabled: !busy,
                 decoration: const InputDecoration(
                   labelText: 'Delimiter',
-                  helperText:
-                      'Example: "," splits "Fantasy, Sci-Fi" into two values.',
+                  helperText: 'Example: "," splits "Fantasy, Sci-Fi" into two values.',
                 ),
               ),
               const SizedBox(height: 10),
               if (_errorMessage != null && _errorMessage!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                  child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ),
               if (_isLoadingLibraries)
                 const Padding(
@@ -244,23 +225,14 @@ class _SplitMetadataTermsDialogState extends State<_SplitMetadataTermsDialog> {
                   },
                   enabled: !busy,
                 ),
-              if (_isRunning) ...[
-                const SizedBox(height: 12),
-                const LinearProgressIndicator(minHeight: 4),
-              ],
+              if (_isRunning) ...[const SizedBox(height: 12), const LinearProgressIndicator(minHeight: 4)],
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: busy ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: busy ? null : _runTool,
-          child: Text(_isRunning ? 'Running...' : 'Run Tool'),
-        ),
+        TextButton(onPressed: busy ? null : () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        FilledButton(onPressed: busy ? null : _runTool, child: Text(_isRunning ? 'Running...' : 'Run Tool')),
       ],
     );
   }

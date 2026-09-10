@@ -13,7 +13,4 @@ class ServerReachabilityNotifier extends Notifier<bool> {
   }
 }
 
-final serverReachabilityProvider =
-    NotifierProvider<ServerReachabilityNotifier, bool>(
-      ServerReachabilityNotifier.new,
-    );
+final serverReachabilityProvider = NotifierProvider<ServerReachabilityNotifier, bool>(ServerReachabilityNotifier.new);

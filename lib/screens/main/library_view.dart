@@ -34,46 +34,30 @@ class LibraryView extends HookConsumerWidget {
     final serverReachable = ref.watch(serverStatusProvider).value ?? false;
 
     if (selectedLibrary == null) {
-      return const Center(
-        child: Text(
-          'No library selected. Please select a library via the switcher.',
-        ),
-      );
+      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
     }
 
     final appDatabase = ref.watch(appDatabaseProvider);
     final currentUser = ref.watch(currentUserProvider).value;
     ref.watch(userSettingsWatcherProvider);
     final subtitlePreferences = currentUser == null
-        ? LibraryViewSubtitlePreferencesCodec.defaultsFor(
-            LibraryViewSubtitleView.library,
-          )
+        ? LibraryViewSubtitlePreferencesCodec.defaultsFor(LibraryViewSubtitleView.library)
         : LibraryViewSubtitlePreferencesCodec.decode(
             ref
                 .read(settingsManagerProvider.notifier)
                 .getUserSetting<String>(
                   currentUser.id,
                   LibraryViewSubtitleView.library.settingKey,
-                  defaultValue:
-                      LibraryViewSubtitlePreferencesCodec.defaultEncodedFor(
-                        LibraryViewSubtitleView.library,
-                      ),
+                  defaultValue: LibraryViewSubtitlePreferencesCodec.defaultEncodedFor(LibraryViewSubtitleView.library),
                 ),
             LibraryViewSubtitleView.library,
           );
-    final managementPreferences = readServerManagementPreferences(
-      ref,
-      currentUser?.id,
-    );
+    final managementPreferences = readServerManagementPreferences(ref, currentUser?.id);
     final collapseSeriesFallback = currentUser == null
         ? false
         : ref
               .read(settingsManagerProvider.notifier)
-              .getUserSetting<bool>(
-                currentUser.id,
-                SettingKeys.collapseSeries,
-                defaultValue: false,
-              );
+              .getUserSetting<bool>(currentUser.id, SettingKeys.collapseSeries, defaultValue: false);
 
     final String libraryId = selectedLibrary.id;
     final filterDataAsync = ref.watch(libraryFilterDataProvider(libraryId));
@@ -84,21 +68,10 @@ class LibraryView extends HookConsumerWidget {
     }
 
     return StreamBuilder<UserSettingEntry?>(
-      stream: currentUser == null
-          ? null
-          : appDatabase.watchUserSetting(
-              currentUser.id,
-              SettingKeys.collapseSeries,
-            ),
+      stream: currentUser == null ? null : appDatabase.watchUserSetting(currentUser.id, SettingKeys.collapseSeries),
       builder: (context, snapshot) {
-        final collapseSeriesEnabled = SettingsParser.decodeValue<bool>(
-          snapshot.data?.value,
-          collapseSeriesFallback,
-        );
-        final initialCollapseSeries =
-            selectedLibrary.mediaType == 'book' && collapseSeriesEnabled
-            ? 1
-            : 0;
+        final collapseSeriesEnabled = SettingsParser.decodeValue<bool>(snapshot.data?.value, collapseSeriesFallback);
+        final initialCollapseSeries = selectedLibrary.mediaType == 'book' && collapseSeriesEnabled ? 1 : 0;
         final itemsProvider = libraryItemsProvider(
           libraryId,
           initialFilter: initialFilter,
@@ -112,16 +85,11 @@ class LibraryView extends HookConsumerWidget {
           data: (state) {
             final items = state.items;
             final canManageBooks = selectedLibrary.mediaType == 'book';
-            final hasUpdatePermission =
-                currentUser?.permissions.update ?? false;
-            final hasDeletePermission =
-                currentUser?.permissions.delete ?? false;
-            final canEditItems =
-                hasUpdatePermission && managementPreferences.editItemsEnabled;
+            final hasUpdatePermission = currentUser?.permissions.update ?? false;
+            final hasDeletePermission = currentUser?.permissions.delete ?? false;
+            final canEditItems = hasUpdatePermission && managementPreferences.editItemsEnabled;
             final canQuickMatchItems =
-                canManageBooks &&
-                canEditItems &&
-                managementPreferences.allowMatchesQuickMatchesEnabled;
+                canManageBooks && canEditItems && managementPreferences.allowMatchesQuickMatchesEnabled;
             final subtitleResolver = LibraryViewSubtitleResolver(
               preferences: subtitlePreferences,
               view: LibraryViewSubtitleView.library,
@@ -132,8 +100,7 @@ class LibraryView extends HookConsumerWidget {
                 .map((item) => item.id)
                 .toList(growable: false);
 
-            if (editingItemId.value != null &&
-                !editableItemIds.contains(editingItemId.value)) {
+            if (editingItemId.value != null && !editableItemIds.contains(editingItemId.value)) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 editingItemId.value = null;
               });
@@ -145,15 +112,9 @@ class LibraryView extends HookConsumerWidget {
               visibleItems: items,
               enableShiftRange: true,
               canAddToPlaylist: canManageBooks && currentUser != null,
-              canAddToCollection:
-                  canManageBooks &&
-                  hasUpdatePermission &&
-                  managementPreferences.collectionsEnabled,
+              canAddToCollection: canManageBooks && hasUpdatePermission && managementPreferences.collectionsEnabled,
               canQuickMatchItems: canQuickMatchItems,
-              canDeleteItems:
-                  canManageBooks &&
-                  hasDeletePermission &&
-                  managementPreferences.deleteItemsEnabled,
+              canDeleteItems: canManageBooks && hasDeletePermission && managementPreferences.deleteItemsEnabled,
               currentUserId: currentUser?.id,
               onAfterDelete: () => ref.read(itemsProvider.notifier).refresh(),
               builder: (context, selection) {
@@ -168,36 +129,22 @@ class LibraryView extends HookConsumerWidget {
                             activeSort: state.sort,
                             activeSortDesc: state.desc,
                             filterDataAsync: filterDataAsync,
-                            onFilterSelected: (filterQuery) => ref
-                                .read(itemsProvider.notifier)
-                                .setFilter(filterQuery),
+                            onFilterSelected: (filterQuery) => ref.read(itemsProvider.notifier).setFilter(filterQuery),
                             onSortSelected: (sortSelection) => ref
                                 .read(itemsProvider.notifier)
-                                .setSort(
-                                  sortSelection.sort,
-                                  newDesc: sortSelection.desc,
-                                ),
-                            onClearFilter: () =>
-                                ref.read(itemsProvider.notifier).clearFilter(),
+                                .setSort(sortSelection.sort, newDesc: sortSelection.desc),
+                            onClearFilter: () => ref.read(itemsProvider.notifier).clearFilter(),
                           ),
                           Expanded(
-                            child:
-                                items.isEmpty &&
-                                    !state.hasNextPage &&
-                                    !state.isLoadingNextPage
-                                ? const Center(
-                                    child: Text(
-                                      'No items found in this library.',
-                                    ),
-                                  )
+                            child: items.isEmpty && !state.hasNextPage && !state.isLoadingNextPage
+                                ? const Center(child: Text('No items found in this library.'))
                                 : LibraryItemsGrid(
                                     scrollController: scrollController,
                                     items: items,
                                     totalItems: state.totalItems,
                                     hasNextPage: state.hasNextPage,
                                     api: api,
-                                    subtitleBuilder:
-                                        subtitleResolver.forLibraryItem,
+                                    subtitleBuilder: subtitleResolver.forLibraryItem,
                                     onPlayItem: (item, _) {
                                       audioHandler.playLibraryItem(
                                         item,
@@ -207,20 +154,15 @@ class LibraryView extends HookConsumerWidget {
                                       );
                                     },
                                     onEnsureLoadedForIndex: (index) {
-                                      ref
-                                          .read(itemsProvider.notifier)
-                                          .ensureLoadedForIndex(index);
+                                      ref.read(itemsProvider.notifier).ensureLoadedForIndex(index);
                                     },
                                     selectionMode: selection.selectionMode,
                                     selectedItemIds: selection.selectedItemIds,
-                                    onToggleSelection: (_, index) =>
-                                        selection.toggleSelectionByIndex(index),
-                                    onEnterSelectionMode: (_, index) =>
-                                        selection.enterSelectionByIndex(index),
+                                    onToggleSelection: (_, index) => selection.toggleSelectionByIndex(index),
+                                    onEnterSelectionMode: (_, index) => selection.enterSelectionByIndex(index),
                                     canEditItems: canEditItems,
                                     onEditItem: (item, _) {
-                                      if (selection.selectionMode ||
-                                          item.collapsedSeries != null) {
+                                      if (selection.selectionMode || item.collapsedSeries != null) {
                                         return;
                                       }
                                       editingItemId.value = item.id;
@@ -231,8 +173,7 @@ class LibraryView extends HookConsumerWidget {
                       ),
                     ),
                     ScrollToTopButton(controller: scrollController),
-                    if (editingItemId.value != null &&
-                        editableItemIds.contains(editingItemId.value))
+                    if (editingItemId.value != null && editableItemIds.contains(editingItemId.value))
                       LibraryItemEditOverlay(
                         orderedItemIds: editableItemIds,
                         currentItemId: editingItemId.value!,

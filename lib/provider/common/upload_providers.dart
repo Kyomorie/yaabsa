@@ -5,10 +5,7 @@ import 'package:yaabsa/provider/core/user_providers.dart';
 part 'upload_providers.g.dart';
 
 @Riverpod(keepAlive: true)
-Future<List<SearchProviderOption>> uploadMetadataProviders(
-  Ref ref,
-  String mediaType,
-) async {
+Future<List<SearchProviderOption>> uploadMetadataProviders(Ref ref, String mediaType) async {
   final api = ref.watch(absApiProvider);
   if (api == null) {
     return <SearchProviderOption>[];
@@ -20,9 +17,7 @@ Future<List<SearchProviderOption>> uploadMetadataProviders(
     return <SearchProviderOption>[];
   }
 
-  final rawOptions = mediaType == 'podcast'
-      ? providerLists.podcasts
-      : providerLists.books;
+  final rawOptions = mediaType == 'podcast' ? providerLists.podcasts : providerLists.books;
   final seen = <String>{};
   return rawOptions.where((option) => seen.add(option.value)).toList();
 }

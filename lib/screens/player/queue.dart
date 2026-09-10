@@ -5,11 +5,7 @@ import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
 
 class PlayerQueueView extends StatefulWidget {
-  const PlayerQueueView({
-    super.key,
-    this.showEmptyIcon = true,
-    this.emptyMode = PlayerCollectionEmptyMode.full,
-  });
+  const PlayerQueueView({super.key, this.showEmptyIcon = true, this.emptyMode = PlayerCollectionEmptyMode.full});
 
   final bool showEmptyIcon;
   final PlayerCollectionEmptyMode emptyMode;
@@ -72,10 +68,7 @@ class _PlayerQueueViewState extends State<PlayerQueueView> {
             return const _QueueCompactEmptyState();
           }
 
-          return _QueueEmptyState(
-            showIcon: widget.showEmptyIcon,
-            isLoading: queueSnapshot.autoQueueLoading,
-          );
+          return _QueueEmptyState(showIcon: widget.showEmptyIcon, isLoading: queueSnapshot.autoQueueLoading);
         }
 
         return Column(
@@ -102,22 +95,14 @@ class _PlayerQueueViewState extends State<PlayerQueueView> {
                 itemBuilder: (context, index) {
                   final entry = entries[index];
 
-                  return _QueueTile(
-                    entry: entry,
-                    index: index,
-                    key: ValueKey(entry.id),
-                  );
+                  return _QueueTile(entry: entry, index: index, key: ValueKey(entry.id));
                 },
               ),
             ),
             if (queueSnapshot.autoQueueLoading)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
               ),
           ],
         );
@@ -136,17 +121,12 @@ class _QueueCompactEmptyState extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.queue_music_rounded,
-            size: 16,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          Icon(Icons.queue_music_rounded, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: 6),
           Text(
             'Queue is empty',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -155,11 +135,7 @@ class _QueueCompactEmptyState extends StatelessWidget {
 }
 
 class _QueueTile extends StatelessWidget {
-  const _QueueTile({
-    required this.entry,
-    required this.index,
-    required super.key,
-  });
+  const _QueueTile({required this.entry, required this.index, required super.key});
 
   final PlayerQueueEntry entry;
   final int index;
@@ -176,10 +152,7 @@ class _QueueTile extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 10),
         leading: ReorderableDragStartListener(
           index: index,
-          child: Icon(
-            Icons.drag_handle_rounded,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          child: Icon(Icons.drag_handle_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         title: titleFromQueue != null
             ? Text(titleFromQueue, maxLines: 1, overflow: TextOverflow.ellipsis)
@@ -188,11 +161,7 @@ class _QueueTile extends StatelessWidget {
                 builder: (context, snapshot) {
                   final resolvedTitle = snapshot.data?.title;
                   if (resolvedTitle != null && resolvedTitle.isNotEmpty) {
-                    return Text(
-                      resolvedTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    );
+                    return Text(resolvedTitle, maxLines: 1, overflow: TextOverflow.ellipsis);
                   }
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -200,17 +169,11 @@ class _QueueTile extends StatelessWidget {
                       'Loading title...',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     );
                   }
 
-                  return Text(
-                    entry.item.itemId,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  );
+                  return Text(entry.item.itemId, maxLines: 1, overflow: TextOverflow.ellipsis);
                 },
               ),
         subtitle: subtitleFromQueue != null || authorFromQueue != null
@@ -218,9 +181,7 @@ class _QueueTile extends StatelessWidget {
                 subtitleFromQueue ?? authorFromQueue!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               )
             : null,
         trailing: Row(
@@ -229,11 +190,7 @@ class _QueueTile extends StatelessWidget {
             if (entry.autoQueued)
               Padding(
                 padding: const EdgeInsets.only(right: 6),
-                child: Icon(
-                  Icons.playlist_add_check_rounded,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.secondary,
-                ),
+                child: Icon(Icons.playlist_add_check_rounded, size: 18, color: Theme.of(context).colorScheme.secondary),
               ),
             IconButton(
               tooltip: 'Remove from queue',
@@ -264,23 +221,12 @@ class _QueueEmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (showIcon)
-              Icon(
-                Icons.queue_music_rounded,
-                size: 36,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              Icon(Icons.queue_music_rounded, size: 36, color: Theme.of(context).colorScheme.onSurfaceVariant),
             if (showIcon) const SizedBox(height: 10),
-            Text(
-              'Queue is empty',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Queue is empty', style: Theme.of(context).textTheme.titleMedium),
             if (isLoading) ...[
               const SizedBox(height: 8),
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
             ],
           ],
         ),

@@ -1,12 +1,6 @@
 class AdminAuthenticationSettingsValidation {
-  static final RegExp _redirectUriPattern = RegExp(
-    r'^\w+://[\w\.-]+(/[\w\./-]*)*$',
-    caseSensitive: false,
-  );
-  static final RegExp _claimPattern = RegExp(
-    r'^[a-zA-Z][a-zA-Z0-9_-]*$',
-    caseSensitive: false,
-  );
+  static final RegExp _redirectUriPattern = RegExp(r'^\w+://[\w\.-]+(/[\w\./-]*)*$', caseSensitive: false);
+  static final RegExp _claimPattern = RegExp(r'^[a-zA-Z][a-zA-Z0-9_-]*$', caseSensitive: false);
 
   static String? normalizeNullable(String value) {
     final trimmed = value.trim();
@@ -16,10 +10,7 @@ class AdminAuthenticationSettingsValidation {
   static String normalizeIssuerUrlForLookup(String value) {
     var normalized = value.trim();
     if (normalized.endsWith('/.well-known/openid-configuration')) {
-      normalized = normalized.replaceAll(
-        '/.well-known/openid-configuration',
-        '',
-      );
+      normalized = normalized.replaceAll('/.well-known/openid-configuration', '');
     }
     if (normalized.endsWith('/')) {
       normalized = normalized.substring(0, normalized.length - 1);

@@ -6,9 +6,7 @@ part of 'filesystem_paths_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_FilesystemPathsResponse _$FilesystemPathsResponseFromJson(
-  Map<String, dynamic> json,
-) => _FilesystemPathsResponse(
+_FilesystemPathsResponse _$FilesystemPathsResponseFromJson(Map<String, dynamic> json) => _FilesystemPathsResponse(
   posix: json['posix'] as bool,
   directories:
       (json['directories'] as List<dynamic>?)
@@ -17,9 +15,7 @@ _FilesystemPathsResponse _$FilesystemPathsResponseFromJson(
       const <FilesystemDirectory>[],
 );
 
-Map<String, dynamic> _$FilesystemPathsResponseToJson(
-  _FilesystemPathsResponse instance,
-) => <String, dynamic>{
+Map<String, dynamic> _$FilesystemPathsResponseToJson(_FilesystemPathsResponse instance) => <String, dynamic>{
   'posix': instance.posix,
   'directories': instance.directories,
 };

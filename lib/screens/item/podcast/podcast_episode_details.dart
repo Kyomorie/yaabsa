@@ -72,10 +72,7 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progress = ref.watch(
-      mediaProgressProvider.select(
-        (asyncValue) =>
-            asyncValue.value?[mediaProgressKey(item.id, episode.id)],
-      ),
+      mediaProgressProvider.select((asyncValue) => asyncValue.value?[mediaProgressKey(item.id, episode.id)]),
     );
 
     final progressStatus = podcastEpisodeCompleted(progress)
@@ -89,9 +86,7 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
     final episodeDurationSeconds = episode.audioFile?.duration;
     final durationLabel = episodeDurationSeconds == null
         ? null
-        : formatDurationShort(
-            Duration(seconds: episodeDurationSeconds.round()),
-          );
+        : formatDurationShort(Duration(seconds: episodeDurationSeconds.round()));
     final fullDescription = podcastEpisodeDescriptionFullText(episode);
 
     final currentUser = ref.watch(currentUserProvider).value;
@@ -102,19 +97,12 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
     final currentUserId = currentUser?.id;
 
     return StreamBuilder<List<TaskRecord>>(
-      stream: downloadHandler.taskQueueStreamForItem(
-        item.id,
-        episodeId: episode.id,
-      ),
+      stream: downloadHandler.taskQueueStreamForItem(item.id, episodeId: episode.id),
       initialData: const <TaskRecord>[],
       builder: (context, taskSnapshot) {
         final activeTasks = taskSnapshot.data ?? const <TaskRecord>[];
         final isDownloading = activeTasks.any(
-          (task) => downloadHandler.taskBelongsToItem(
-            task,
-            item.id,
-            episodeId: episode.id,
-          ),
+          (task) => downloadHandler.taskBelongsToItem(task, item.id, episodeId: episode.id),
         );
 
         return StreamBuilder<List<InternalDownload>>(
@@ -129,12 +117,9 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
               stream: audioHandler.queueSnapshotStream,
               initialData: audioHandler.queueSnapshot,
               builder: (context, queueSnapshotBuilder) {
-                final queueSnapshot =
-                    queueSnapshotBuilder.data ?? const PlayerQueueSnapshot();
+                final queueSnapshot = queueSnapshotBuilder.data ?? const PlayerQueueSnapshot();
                 final isQueued = queueSnapshot.entries.any(
-                  (entry) =>
-                      entry.item.itemId == item.id &&
-                      entry.item.episodeId == episode.id,
+                  (entry) => entry.item.itemId == item.id && entry.item.episodeId == episode.id,
                 );
 
                 return StreamBuilder<PlayerState>(
@@ -145,8 +130,7 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
                     final isCurrentEpisode =
                         audioHandler.currentMediaItem?.itemId == item.id &&
                         audioHandler.currentMediaItem?.episodeId == episode.id;
-                    final isPlayingCurrentEpisode =
-                        isCurrentEpisode && (playerState?.playing ?? false);
+                    final isPlayingCurrentEpisode = isCurrentEpisode && (playerState?.playing ?? false);
 
                     return Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -162,21 +146,14 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
                                 tooltip: 'Close',
                               ),
                             ),
-                          Text(
-                            podcastEpisodeTitle(episode),
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
+                          Text(podcastEpisodeTitle(episode), style: Theme.of(context).textTheme.titleLarge),
                           if (podcastEpisodeSubtitle(episode) != null)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
                                 podcastEpisodeSubtitle(episode)!,
                                 style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                    ),
+                                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                               ),
                             ),
                           const SizedBox(height: 10),
@@ -193,10 +170,7 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
                             const SizedBox(height: 8),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(99),
-                              child: LinearProgressIndicator(
-                                value: progressValue,
-                                minHeight: 4,
-                              ),
+                              child: LinearProgressIndicator(value: progressValue, minHeight: 4),
                             ),
                           ],
                           const SizedBox(height: 12),
@@ -222,38 +196,20 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
                                       ? Icons.pause_rounded
                                       : Icons.play_arrow_rounded,
                                 ),
-                                label: Text(
-                                  isCurrentEpisode && isPlayingCurrentEpisode
-                                      ? 'Pause'
-                                      : 'Play',
-                                ),
+                                label: Text(isCurrentEpisode && isPlayingCurrentEpisode ? 'Pause' : 'Play'),
                               ),
                               FilledButton.tonalIcon(
                                 onPressed: isCurrentEpisode
                                     ? null
                                     : () {
                                         if (isQueued) {
-                                          audioHandler.removeFromQueueByItemId(
-                                            item.id,
-                                            episodeId: episode.id,
-                                          );
+                                          audioHandler.removeFromQueueByItemId(item.id, episodeId: episode.id);
                                         } else {
-                                          audioHandler.addPodcastEpisodeToQueue(
-                                            item,
-                                            episode,
-                                          );
+                                          audioHandler.addPodcastEpisodeToQueue(item, episode);
                                         }
                                       },
-                                icon: Icon(
-                                  isQueued
-                                      ? Icons.playlist_remove_rounded
-                                      : Icons.queue_music_rounded,
-                                ),
-                                label: Text(
-                                  isQueued
-                                      ? 'Remove from Queue'
-                                      : 'Add to Queue',
-                                ),
+                                icon: Icon(isQueued ? Icons.playlist_remove_rounded : Icons.queue_music_rounded),
+                                label: Text(isQueued ? 'Remove from Queue' : 'Add to Queue'),
                               ),
                               if (canDownload && isDownloading)
                                 FilledButton.tonalIcon(
@@ -261,99 +217,62 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
                                   icon: const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.2,
-                                    ),
+                                    child: CircularProgressIndicator(strokeWidth: 2.2),
                                   ),
                                   label: const Text('Downloading'),
                                 ),
                               if (canDownload && !isDownloading && isDownloaded)
                                 FilledButton.tonalIcon(
-                                  onPressed:
-                                      currentUserId == null ||
-                                          episodeDownload == null
+                                  onPressed: currentUserId == null || episodeDownload == null
                                       ? null
                                       : () async {
                                           try {
-                                            final result =
-                                                await runWithLoadingSnackBar(
-                                                  context: context,
-                                                  message: 'Deleting downloaded files...',
-                                                  action: () => downloadHandler
-                                                      .deleteDownloadedItem(
-                                                        episodeDownload,
-                                                        userId: currentUserId,
-                                                      ),
-                                                );
+                                            final result = await runWithLoadingSnackBar(
+                                              context: context,
+                                              message: 'Deleting downloaded files...',
+                                              action: () => downloadHandler.deleteDownloadedItem(
+                                                episodeDownload,
+                                                userId: currentUserId,
+                                              ),
+                                            );
                                             if (!context.mounted) {
                                               return;
                                             }
-                                            final failedSuffix =
-                                                result.failedFiles > 0
+                                            final failedSuffix = result.failedFiles > 0
                                                 ? ' ${result.failedFiles} file(s) could not be removed.'
                                                 : '';
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
+                                            ScaffoldMessenger.of(context).showSnackBar(
                                               SnackBar(
-                                                content: Text(
-                                                  'Deleted ${result.deletedFiles} file(s).$failedSuffix',
-                                                ),
+                                                content: Text('Deleted ${result.deletedFiles} file(s).$failedSuffix'),
                                               ),
                                             );
                                           } catch (e) {
                                             if (!context.mounted) {
                                               return;
                                             }
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Could not delete download: $e',
-                                                ),
-                                              ),
-                                            );
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(SnackBar(content: Text('Could not delete download: $e')));
                                           }
                                         },
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                  ),
+                                  icon: const Icon(Icons.delete_outline_rounded),
                                   label: const Text('Delete download'),
                                 ),
-                              if (canDownload &&
-                                  !isDownloading &&
-                                  !isDownloaded)
+                              if (canDownload && !isDownloading && !isDownloaded)
                                 FilledButton.tonalIcon(
                                   onPressed: () async {
                                     try {
-                                      await downloadHandler.downloadFile(
-                                        item.id,
-                                        episodeId: episode.id,
-                                      );
+                                      await downloadHandler.downloadFile(item.id, episodeId: episode.id);
                                       if (!context.mounted) {
                                         return;
                                       }
                                       ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Download added to queue.',
-                                              ),
-                                            ),
-                                          );
+                                          .showSnackBar(const SnackBar(content: Text('Download added to queue.')));
                                     } catch (e) {
                                       if (!context.mounted) {
                                         return;
                                       }
                                       ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Could not start download: $e',
-                                              ),
-                                            ),
-                                          );
+                                          .showSnackBar(SnackBar(content: Text('Could not start download: $e')));
                                     }
                                   },
                                   icon: const Icon(Icons.download_rounded),
@@ -362,17 +281,12 @@ class PodcastEpisodeDetailsContent extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          Text(
-                            'Description',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
+                          Text('Description', style: Theme.of(context).textTheme.titleMedium),
                           const SizedBox(height: 8),
                           Expanded(
                             child: SingleChildScrollView(
                               child: SelectableText(
-                                fullDescription.isEmpty
-                                    ? 'No description available.'
-                                    : fullDescription,
+                                fullDescription.isEmpty ? 'No description available.' : fullDescription,
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ),

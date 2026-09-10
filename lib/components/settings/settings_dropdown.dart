@@ -56,24 +56,18 @@ class SettingDropdown<T> extends ConsumerWidget {
     final textTheme = theme.textTheme;
 
     if (settingKey == null) {
-      if (values.isEmpty ||
-          valueLabels.isEmpty ||
-          values.length != valueLabels.length) {
+      if (values.isEmpty || valueLabels.isEmpty || values.length != valueLabels.length) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
           child: Text(
             'Configuration error for dropdown: $label',
-            style: textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.error,
-            ),
+            style: textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
           ),
         );
       }
 
       final fallbackValue = values.first;
-      final resolvedValue = value != null && values.contains(value)
-          ? value as T
-          : fallbackValue;
+      final resolvedValue = value != null && values.contains(value) ? value as T : fallbackValue;
 
       return _buildDropdownContent(
         context,
@@ -85,57 +79,40 @@ class SettingDropdown<T> extends ConsumerWidget {
       );
     }
 
-    final settingAsyncValue = ref.watch(
-      globalSettingByKeyProvider(settingKey!),
-    );
+    final settingAsyncValue = ref.watch(globalSettingByKeyProvider(settingKey!));
 
     return settingAsyncValue.when(
       data: (stringValue) {
         final dynamic defaultValueDynamic = defaultSettings[settingKey!];
         if (defaultValueDynamic is! T) {
           if (values.isNotEmpty && defaultValueDynamic == null) {
-            final T currentValue = SettingsParser.decodeValue<T>(
-              stringValue,
-              values.first,
-            );
+            final T currentValue = SettingsParser.decodeValue<T>(stringValue, values.first);
             return _buildDropdownContent(
               context,
               currentValue,
               enabled: enabled && !isLoading,
               onValueSelected: (newValue) {
-                ref
-                    .read(settingsManagerProvider.notifier)
-                    .setGlobalSetting<T>(settingKey!, newValue);
+                ref.read(settingsManagerProvider.notifier).setGlobalSetting<T>(settingKey!, newValue);
                 onChanged?.call(newValue);
               },
             );
           }
           return Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20.0,
-              vertical: 12.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
             child: Text(
               'Error: Default value for $settingKey (type: ${defaultValueDynamic?.runtimeType}) is not of type $T or values list is empty.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.error,
-              ),
+              style: textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
             ),
           );
         }
         final T defaultValue = defaultValueDynamic;
-        final T currentValue = SettingsParser.decodeValue<T>(
-          stringValue,
-          defaultValue,
-        );
+        final T currentValue = SettingsParser.decodeValue<T>(stringValue, defaultValue);
         return _buildDropdownContent(
           context,
           currentValue,
           enabled: enabled && !isLoading,
           onValueSelected: (newValue) {
-            ref
-                .read(settingsManagerProvider.notifier)
-                .setGlobalSetting<T>(settingKey!, newValue);
+            ref.read(settingsManagerProvider.notifier).setGlobalSetting<T>(settingKey!, newValue);
             onChanged?.call(newValue);
           },
         );
@@ -149,18 +126,12 @@ class SettingDropdown<T> extends ConsumerWidget {
             Flexible(
               child: Text(
                 label,
-                style: textTheme.titleMedium?.copyWith(
-                  color: theme.disabledColor,
-                ),
+                style: textTheme.titleMedium?.copyWith(color: theme.disabledColor),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
             ),
-            const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            ),
+            const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5)),
           ],
         ),
       ),
@@ -173,9 +144,7 @@ class SettingDropdown<T> extends ConsumerWidget {
             Flexible(
               child: Text(
                 label,
-                style: textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.error,
-                ),
+                style: textTheme.titleMedium?.copyWith(color: theme.colorScheme.error),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
@@ -193,15 +162,12 @@ class SettingDropdown<T> extends ConsumerWidget {
     required bool enabled,
     required ValueChanged<T> onValueSelected,
   }) {
-    if (values.isEmpty ||
-        valueLabels.isEmpty ||
-        values.length != valueLabels.length) {
+    if (values.isEmpty || valueLabels.isEmpty || values.length != valueLabels.length) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
         child: Text(
           'Configuration error for dropdown: $label',
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: Theme.of(context).colorScheme.error),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
         ),
       );
     }
@@ -209,9 +175,7 @@ class SettingDropdown<T> extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final int currentIndex = values.indexOf(currentValue);
-    final int safeIndex = currentIndex >= 0 && currentIndex < values.length
-        ? currentIndex
-        : 0;
+    final int safeIndex = currentIndex >= 0 && currentIndex < values.length ? currentIndex : 0;
     final String currentDisplayValue = valueLabels[safeIndex];
 
     final bool useFewOptionsInlineStyle = values.length <= 3;
@@ -237,9 +201,7 @@ class SettingDropdown<T> extends ConsumerWidget {
                     label,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: enabled
-                          ? colorScheme.primary
-                          : colorScheme.primary.withValues(alpha: 0.38),
+                      color: enabled ? colorScheme.primary : colorScheme.primary.withValues(alpha: 0.38),
                     ),
                   ),
                   if (description != null && description!.isNotEmpty) ...[
@@ -249,9 +211,7 @@ class SettingDropdown<T> extends ConsumerWidget {
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: enabled
                             ? colorScheme.onSurfaceVariant
-                            : colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.38,
-                              ),
+                            : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
                       ),
                     ),
                   ],
@@ -262,12 +222,7 @@ class SettingDropdown<T> extends ConsumerWidget {
               InkWell(
                 onTap: enabled ? () => onValueSelected(values[i]) : null,
                 child: Padding(
-                  padding: const EdgeInsets.only(
-                    left: 32,
-                    right: 20,
-                    top: 12,
-                    bottom: 12,
-                  ),
+                  padding: const EdgeInsets.only(left: 32, right: 20, top: 12, bottom: 12),
                   child: Row(
                     children: [
                       Expanded(
@@ -279,12 +234,8 @@ class SettingDropdown<T> extends ConsumerWidget {
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 fontWeight: FontWeight.w500,
                                 color: enabled
-                                    ? (values[i] == currentValue
-                                          ? colorScheme.primary
-                                          : colorScheme.onSurface)
-                                    : colorScheme.onSurface.withValues(
-                                        alpha: 0.38,
-                                      ),
+                                    ? (values[i] == currentValue ? colorScheme.primary : colorScheme.onSurface)
+                                    : colorScheme.onSurface.withValues(alpha: 0.38),
                               ),
                             ),
                             if (valueDescriptions != null &&
@@ -296,19 +247,14 @@ class SettingDropdown<T> extends ConsumerWidget {
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: enabled
                                       ? colorScheme.onSurfaceVariant
-                                      : colorScheme.onSurfaceVariant.withValues(
-                                          alpha: 0.38,
-                                        ),
+                                      : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
                                 ),
                               ),
                             ],
                           ],
                         ),
                       ),
-                      Radio<T>(
-                        value: values[i],
-                        activeColor: colorScheme.primary,
-                      ),
+                      Radio<T>(value: values[i], activeColor: colorScheme.primary),
                     ],
                   ),
                 ),
@@ -324,17 +270,13 @@ class SettingDropdown<T> extends ConsumerWidget {
           label,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w500,
-            color: enabled
-                ? colorScheme.onSurface
-                : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            color: enabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
           ),
         ),
         subtitle: Text(
           currentDisplayValue,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: enabled
-                ? colorScheme.onSurfaceVariant
-                : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
+            color: enabled ? colorScheme.onSurfaceVariant : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
           ),
         ),
         trailing: Row(
@@ -345,19 +287,13 @@ class SettingDropdown<T> extends ConsumerWidget {
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Tooltip(
                   message: tooltip!,
-                  child: Icon(
-                    icon,
-                    size: 20,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  child: Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
                 ),
               ),
             Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: colorScheme.onSurfaceVariant.withValues(
-                alpha: enabled ? 0.6 : 0.38,
-              ),
+              color: colorScheme.onSurfaceVariant.withValues(alpha: enabled ? 0.6 : 0.38),
             ),
           ],
         ),
@@ -367,9 +303,7 @@ class SettingDropdown<T> extends ConsumerWidget {
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       title: Text(label),
                       content: SizedBox(
                         width: double.maxFinite,
@@ -386,42 +320,26 @@ class SettingDropdown<T> extends ConsumerWidget {
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                if (description != null &&
-                                    description!.isNotEmpty) ...[
+                                if (description != null && description!.isNotEmpty) ...[
                                   Padding(
-                                    padding: const EdgeInsets.only(
-                                      bottom: 12.0,
-                                      left: 4.0,
-                                      right: 4.0,
-                                    ),
+                                    padding: const EdgeInsets.only(bottom: 12.0, left: 4.0, right: 4.0),
                                     child: Text(
                                       description!,
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                            color: colorScheme.onSurfaceVariant,
-                                          ),
+                                      style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                                     ),
                                   ),
                                   const Divider(height: 16),
                                 ],
                                 for (int i = 0; i < values.length; i++) ...[
                                   ListTile(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 4,
-                                    ),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                     title: Text(
                                       valueLabels[i],
-                                      style: theme.textTheme.bodyLarge
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w500,
-                                            color: values[i] == currentValue
-                                                ? colorScheme.primary
-                                                : colorScheme.onSurface,
-                                          ),
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        color: values[i] == currentValue ? colorScheme.primary : colorScheme.onSurface,
+                                      ),
                                     ),
                                     subtitle:
                                         valueDescriptions != null &&
@@ -429,36 +347,25 @@ class SettingDropdown<T> extends ConsumerWidget {
                                             valueDescriptions![i].isNotEmpty
                                         ? Text(
                                             valueDescriptions![i],
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                                  color: colorScheme
-                                                      .onSurfaceVariant,
-                                                ),
+                                            style: theme.textTheme.bodySmall?.copyWith(
+                                              color: colorScheme.onSurfaceVariant,
+                                            ),
                                           )
                                         : null,
-                                    trailing: Radio<T>(
-                                      value: values[i],
-                                      activeColor: colorScheme.primary,
-                                    ),
+                                    trailing: Radio<T>(value: values[i], activeColor: colorScheme.primary),
                                     onTap: () {
                                       onValueSelected(values[i]);
                                       Navigator.of(context).pop();
                                     },
                                   ),
-                                  if (i < values.length - 1)
-                                    const Divider(height: 8, thickness: 0.5),
+                                  if (i < values.length - 1) const Divider(height: 8, thickness: 0.5),
                                 ],
                               ],
                             ),
                           ),
                         ),
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Cancel'),
-                        ),
-                      ],
+                      actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel'))],
                     );
                   },
                 );
@@ -500,8 +407,7 @@ class SettingMultiSelectDropdown<T> extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Text(
           'Configuration error for dropdown: $label',
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: Theme.of(context).colorScheme.error),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
         ),
       );
     }
@@ -526,42 +432,27 @@ class SettingMultiSelectDropdown<T> extends StatelessWidget {
         label,
         style: theme.textTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.w500,
-          color: isEnabled
-              ? colorScheme.onSurface
-              : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          color: isEnabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
         ),
       ),
       subtitle: Text(
         selectedLabel,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: isEnabled
-              ? colorScheme.onSurfaceVariant
-              : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
+          color: isEnabled ? colorScheme.onSurfaceVariant : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
         ),
       ),
       trailing: isLoading
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2.5),
-            )
+          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2.5))
           : Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: colorScheme.onSurfaceVariant.withValues(
-                alpha: isEnabled ? 0.6 : 0.38,
-              ),
+              color: colorScheme.onSurfaceVariant.withValues(alpha: isEnabled ? 0.6 : 0.38),
             ),
-      onTap: isEnabled
-          ? () => _showSelectionDialog(context, initialSelection: selected)
-          : null,
+      onTap: isEnabled ? () => _showSelectionDialog(context, initialSelection: selected) : null,
     );
   }
 
-  Future<void> _showSelectionDialog(
-    BuildContext context, {
-    required Set<T> initialSelection,
-  }) {
+  Future<void> _showSelectionDialog(BuildContext context, {required Set<T> initialSelection}) {
     return showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -570,9 +461,7 @@ class SettingMultiSelectDropdown<T> extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               title: Text(label),
               content: SizedBox(
                 width: double.maxFinite,
@@ -585,11 +474,7 @@ class SettingMultiSelectDropdown<T> extends StatelessWidget {
                         Text(
                           description!,
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
+                              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         const Divider(height: 24),
                       ],
@@ -605,24 +490,18 @@ class SettingMultiSelectDropdown<T> extends StatelessWidget {
                               }
                             });
                           },
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                           controlAffinity: ListTileControlAffinity.trailing,
                           title: Text(valueLabels[index]),
                         ),
-                        if (index < values.length - 1)
-                          const Divider(height: 8, thickness: 0.5),
+                        if (index < values.length - 1) const Divider(height: 8, thickness: 0.5),
                       ],
                     ],
                   ),
                 ),
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: const Text('Cancel'),
-                ),
+                TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
                 FilledButton(
                   onPressed: () {
                     onValueChanged([

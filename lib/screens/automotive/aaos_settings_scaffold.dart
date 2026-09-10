@@ -5,12 +5,7 @@ import 'package:yaabsa/util/aaos_service.dart';
 enum AaosSettingsBackTarget { mediaCenter, settingsHome }
 
 class AaosSettingsScaffold extends StatelessWidget {
-  const AaosSettingsScaffold({
-    super.key,
-    required this.child,
-    required this.backTarget,
-    this.title = 'Settings',
-  });
+  const AaosSettingsScaffold({super.key, required this.child, required this.backTarget, this.title = 'Settings'});
 
   final Widget child;
   final AaosSettingsBackTarget backTarget;
@@ -23,9 +18,7 @@ class AaosSettingsScaffold extends StatelessWidget {
       'refresh': DateTime.now().microsecondsSinceEpoch.toString(),
     };
 
-    context.go(
-      Uri(path: state.uri.path, queryParameters: queryParameters).toString(),
-    );
+    context.go(Uri(path: state.uri.path, queryParameters: queryParameters).toString());
   }
 
   Future<void> _handleBack(BuildContext context) async {
@@ -34,9 +27,7 @@ class AaosSettingsScaffold extends StatelessWidget {
       return;
     }
 
-    final launched = await AaosService.instance.launchMediaCenter(
-      finishActivity: true,
-    );
+    final launched = await AaosService.instance.launchMediaCenter(finishActivity: true);
     if (!context.mounted || launched) {
       return;
     }

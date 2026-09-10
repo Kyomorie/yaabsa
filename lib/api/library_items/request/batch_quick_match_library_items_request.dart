@@ -5,15 +5,13 @@ part 'batch_quick_match_library_items_request.freezed.dart';
 part 'batch_quick_match_library_items_request.g.dart';
 
 @freezed
-abstract class BatchQuickMatchLibraryItemsRequest
-    with _$BatchQuickMatchLibraryItemsRequest {
+abstract class BatchQuickMatchLibraryItemsRequest with _$BatchQuickMatchLibraryItemsRequest {
   @JsonSerializable(explicitToJson: true, includeIfNull: false)
   const factory BatchQuickMatchLibraryItemsRequest({
     @JsonKey(name: 'libraryItemIds') required List<String> libraryItemIds,
     @JsonKey(name: 'options') required QuickMatchLibraryItemOptions options,
   }) = _BatchQuickMatchLibraryItemsRequest;
 
-  factory BatchQuickMatchLibraryItemsRequest.fromJson(
-    Map<String, dynamic> json,
-  ) => _$BatchQuickMatchLibraryItemsRequestFromJson(json);
+  factory BatchQuickMatchLibraryItemsRequest.fromJson(Map<String, dynamic> json) =>
+      _$BatchQuickMatchLibraryItemsRequestFromJson(json);
 }

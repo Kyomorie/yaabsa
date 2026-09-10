@@ -64,16 +64,8 @@ class ListeningSessionTile extends StatelessWidget {
                         },
                 )
               : null,
-          title: Text(
-            listeningSessionTitle(session),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            subtitleParts.join(' • '),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          title: Text(listeningSessionTitle(session), maxLines: 1, overflow: TextOverflow.ellipsis),
+          subtitle: Text(subtitleParts.join(' • '), maxLines: 2, overflow: TextOverflow.ellipsis),
           trailing: SizedBox(
             width: 92,
             child: Column(

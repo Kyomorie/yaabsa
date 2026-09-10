@@ -8,12 +8,7 @@ import 'package:yaabsa/screens/main/stats/stats_formatters.dart';
 import 'package:yaabsa/util/globals.dart';
 
 class StatsAdvancedDashboard extends StatelessWidget {
-  const StatsAdvancedDashboard({
-    super.key,
-    required this.statsAsync,
-    required this.onRefresh,
-    this.loadingProgress,
-  });
+  const StatsAdvancedDashboard({super.key, required this.statsAsync, required this.onRefresh, this.loadingProgress});
 
   final AsyncValue<AdvancedListeningStats> statsAsync;
   final VoidCallback onRefresh;
@@ -72,22 +67,10 @@ class StatsAdvancedDashboard extends StatelessWidget {
                 label: 'Podcast listening',
                 value: formatListeningSeconds(stats.totalPodcastListeningTime),
               ),
-              StatsMetric(
-                icon: Icons.library_books_rounded,
-                label: 'Unique items',
-                value: '${stats.uniqueItems}',
-              ),
-              StatsMetric(
-                icon: Icons.people_alt_rounded,
-                label: 'Unique authors',
-                value: '${stats.uniqueAuthors}',
-              ),
+              StatsMetric(icon: Icons.library_books_rounded, label: 'Unique items', value: '${stats.uniqueItems}'),
+              StatsMetric(icon: Icons.people_alt_rounded, label: 'Unique authors', value: '${stats.uniqueAuthors}'),
               if (stats.favoriteWeekday != null)
-                StatsMetric(
-                  icon: Icons.today_rounded,
-                  label: 'Favorite weekday',
-                  value: stats.favoriteWeekday!,
-                ),
+                StatsMetric(icon: Icons.today_rounded, label: 'Favorite weekday', value: stats.favoriteWeekday!),
               if (stats.favoriteHour != null)
                 StatsMetric(
                   icon: Icons.access_time_rounded,
@@ -111,12 +94,9 @@ class StatsAdvancedDashboard extends StatelessWidget {
           const SizedBox(height: 22),
           LayoutBuilder(
             builder: (context, constraints) {
-              final columns = context.isMobile || constraints.maxWidth < 760
-                  ? 1
-                  : 2;
+              final columns = context.isMobile || constraints.maxWidth < 760 ? 1 : 2;
               const spacing = 16.0;
-              final width =
-                  (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
+              final width = (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
               final panels = [
                 _AdvancedRankPanel(
                   title: 'Top items',
@@ -126,12 +106,8 @@ class StatsAdvancedDashboard extends StatelessWidget {
                       StatsRankedEntry(
                         label: '${item.title} • ${item.author}',
                         value: item.totalListeningTime,
-                        trailing: formatListeningSeconds(
-                          item.totalListeningTime,
-                        ),
-                        onTap: item.id.isEmpty
-                            ? null
-                            : () => context.push('/item/${item.id}'),
+                        trailing: formatListeningSeconds(item.totalListeningTime),
+                        onTap: item.id.isEmpty ? null : () => context.push('/item/${item.id}'),
                       ),
                   ],
                 ),
@@ -143,14 +119,10 @@ class StatsAdvancedDashboard extends StatelessWidget {
                       StatsRankedEntry(
                         label: author.name,
                         value: author.totalListeningTime,
-                        trailing: formatListeningSeconds(
-                          author.totalListeningTime,
-                        ),
+                        trailing: formatListeningSeconds(author.totalListeningTime),
                         onTap: author.id == null || author.id!.isEmpty
                             ? null
-                            : () => context.push(
-                                '/author/${Uri.encodeComponent(author.id!)}',
-                              ),
+                            : () => context.push('/author/${Uri.encodeComponent(author.id!)}'),
                       ),
                   ],
                 ),
@@ -162,9 +134,7 @@ class StatsAdvancedDashboard extends StatelessWidget {
                       StatsRankedEntry(
                         label: bucket.label,
                         value: bucket.totalListeningTime,
-                        trailing: formatListeningSeconds(
-                          bucket.totalListeningTime,
-                        ),
+                        trailing: formatListeningSeconds(bucket.totalListeningTime),
                       ),
                   ],
                   previewCount: 7,
@@ -177,9 +147,7 @@ class StatsAdvancedDashboard extends StatelessWidget {
                       StatsRankedEntry(
                         label: bucket.label,
                         value: bucket.totalListeningTime,
-                        trailing: formatListeningSeconds(
-                          bucket.totalListeningTime,
-                        ),
+                        trailing: formatListeningSeconds(bucket.totalListeningTime),
                       ),
                   ],
                   previewCount: 8,
@@ -193,9 +161,7 @@ class StatsAdvancedDashboard extends StatelessWidget {
                         StatsRankedEntry(
                           label: bucket.label,
                           value: bucket.totalListeningTime,
-                          trailing: formatListeningSeconds(
-                            bucket.totalListeningTime,
-                          ),
+                          trailing: formatListeningSeconds(bucket.totalListeningTime),
                         ),
                     ],
                   ),
@@ -204,10 +170,7 @@ class StatsAdvancedDashboard extends StatelessWidget {
               return Wrap(
                 spacing: spacing,
                 runSpacing: spacing,
-                children: [
-                  for (final panel in panels)
-                    SizedBox(width: width, child: panel),
-                ],
+                children: [for (final panel in panels) SizedBox(width: width, child: panel)],
               );
             },
           ),
@@ -229,12 +192,7 @@ class StatsAdvancedDashboard extends StatelessWidget {
 }
 
 class _AdvancedRankPanel extends StatelessWidget {
-  const _AdvancedRankPanel({
-    required this.title,
-    required this.icon,
-    required this.entries,
-    this.previewCount = 5,
-  });
+  const _AdvancedRankPanel({required this.title, required this.icon, required this.entries, this.previewCount = 5});
 
   final String title;
   final IconData icon;
@@ -246,10 +204,7 @@ class _AdvancedRankPanel extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
+      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainer, borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -276,12 +231,8 @@ class _AdvancedLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final value = progress?.progress;
-    final pages = progress == null
-        ? null
-        : '${progress!.loadedPages}/${progress!.totalPages ?? '?'} pages';
-    final sessions = progress == null
-        ? null
-        : '${progress!.loadedSessions}/${progress!.totalSessions ?? '?'} sessions';
+    final pages = progress == null ? null : '${progress!.loadedPages}/${progress!.totalPages ?? '?'} pages';
+    final sessions = progress == null ? null : '${progress!.loadedSessions}/${progress!.totalSessions ?? '?'} sessions';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -290,9 +241,7 @@ class _AdvancedLoading extends StatelessWidget {
           LinearProgressIndicator(value: value),
           const SizedBox(height: 12),
           Text(
-            progress == null
-                ? 'Loading advanced analytics…'
-                : 'Loading advanced analytics • $pages • $sessions',
+            progress == null ? 'Loading advanced analytics…' : 'Loading advanced analytics • $pages • $sessions',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],

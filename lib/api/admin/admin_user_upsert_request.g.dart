@@ -6,9 +6,7 @@ part of 'admin_user_upsert_request.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_AdminUserUpsertRequest _$AdminUserUpsertRequestFromJson(
-  Map<String, dynamic> json,
-) => _AdminUserUpsertRequest(
+_AdminUserUpsertRequest _$AdminUserUpsertRequestFromJson(Map<String, dynamic> json) => _AdminUserUpsertRequest(
   username: json['username'] as String,
   password: json['password'] as String?,
   email: json['email'] as String?,
@@ -16,24 +14,13 @@ _AdminUserUpsertRequest _$AdminUserUpsertRequestFromJson(
   isActive: json['isActive'] as bool? ?? true,
   permissions: json['permissions'] == null
       ? const AdminUserPermissions()
-      : AdminUserPermissions.fromJson(
-          json['permissions'] as Map<String, dynamic>,
-        ),
+      : AdminUserPermissions.fromJson(json['permissions'] as Map<String, dynamic>),
   librariesAccessible:
-      (json['librariesAccessible'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const <String>[],
-  itemTagsSelected:
-      (json['itemTagsSelected'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const <String>[],
+      (json['librariesAccessible'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
+  itemTagsSelected: (json['itemTagsSelected'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
 );
 
-Map<String, dynamic> _$AdminUserUpsertRequestToJson(
-  _AdminUserUpsertRequest instance,
-) => <String, dynamic>{
+Map<String, dynamic> _$AdminUserUpsertRequestToJson(_AdminUserUpsertRequest instance) => <String, dynamic>{
   'username': instance.username,
   'password': instance.password,
   'email': instance.email,

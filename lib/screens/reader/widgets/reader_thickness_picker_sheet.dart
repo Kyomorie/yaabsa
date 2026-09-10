@@ -24,26 +24,16 @@ class ReaderThicknessPickerSheet extends StatelessWidget {
         children: [
           Text(
             'Select Underline Thickness',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 16),
           ...thicknesses.map((thickness) {
             return ListTile(
-              title: Text(
-                '${thickness.toInt()}px',
-                style: TextStyle(color: colorScheme.onSurface),
-              ),
+              title: Text('${thickness.toInt()}px', style: TextStyle(color: colorScheme.onSurface)),
               leading: Container(
                 width: 40,
                 height: thickness,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(thickness / 2),
-                ),
+                decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(thickness / 2)),
               ),
               onTap: () => onThicknessSelected(thickness),
             );

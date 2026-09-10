@@ -20,8 +20,7 @@ abstract class AdminBackup with _$AdminBackup {
     @JsonKey(name: 'serverVersion') String? serverVersion,
   }) = _AdminBackup;
 
-  factory AdminBackup.fromJson(Map<String, dynamic> json) =>
-      _$AdminBackupFromJson(json);
+  factory AdminBackup.fromJson(Map<String, dynamic> json) => _$AdminBackupFromJson(json);
 
   bool get canRestore {
     final hasKey = (key ?? '').trim().isNotEmpty;

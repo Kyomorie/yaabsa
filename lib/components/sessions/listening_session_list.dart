@@ -25,19 +25,14 @@ class ListeningSessionTable extends StatelessWidget {
   final String? Function(PlaybackSession session)? usernameForSession;
   final bool showSelection;
   final Set<String> selectedSessionIds;
-  final void Function(PlaybackSession session, bool selected)?
-  onSelectionChanged;
+  final void Function(PlaybackSession session, bool selected)? onSelectionChanged;
   final List<ExpressiveTableAction<PlaybackSession>> actions;
   final double actionsColumnWidth;
 
   @override
   Widget build(BuildContext context) {
     final sorted = List<PlaybackSession>.from(sessions)
-      ..sort(
-        (a, b) =>
-            listeningSessionTimestampMs(b)
-                .compareTo(listeningSessionTimestampMs(a)),
-      );
+      ..sort((a, b) => listeningSessionTimestampMs(b).compareTo(listeningSessionTimestampMs(a)));
 
     return ExpressiveActionTable<PlaybackSession>(
       rows: sorted,
@@ -58,33 +53,24 @@ class ListeningSessionTable extends StatelessWidget {
           id: 'title',
           label: 'Title',
           width: 220,
-          cellBuilder: (context, session) => Text(
-            listeningSessionTitle(session),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          cellBuilder: (context, session) =>
+              Text(listeningSessionTitle(session), maxLines: 2, overflow: TextOverflow.ellipsis),
         ),
         ExpressiveTableColumn<PlaybackSession>(
           id: 'author',
           label: 'Author',
           width: 160,
           showOnMobile: false,
-          cellBuilder: (context, session) => Text(
-            listeningSessionAuthor(session),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          cellBuilder: (context, session) =>
+              Text(listeningSessionAuthor(session), maxLines: 2, overflow: TextOverflow.ellipsis),
         ),
         if (usernameForSession != null)
           ExpressiveTableColumn<PlaybackSession>(
             id: 'user',
             label: 'User',
             width: 140,
-            cellBuilder: (context, session) => Text(
-              usernameForSession!(session) ?? '',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+            cellBuilder: (context, session) =>
+                Text(usernameForSession!(session) ?? '', maxLines: 2, overflow: TextOverflow.ellipsis),
           ),
 
         ExpressiveTableColumn<PlaybackSession>(
@@ -92,11 +78,8 @@ class ListeningSessionTable extends StatelessWidget {
           label: 'Device',
           width: 100,
           showOnMobile: false,
-          cellBuilder: (context, session) => Text(
-            listeningSessionDeviceLabel(session),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          cellBuilder: (context, session) =>
+              Text(listeningSessionDeviceLabel(session), maxLines: 2, overflow: TextOverflow.ellipsis),
         ),
         ExpressiveTableColumn<PlaybackSession>(
           id: 'date',
@@ -108,11 +91,7 @@ class ListeningSessionTable extends StatelessWidget {
           },
           cellBuilder: (context, session) {
             final dt = listeningSessionDateTime(session);
-            return Text(
-              dt != null ? timeago.format(dt) : '-',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            );
+            return Text(dt != null ? timeago.format(dt) : '-', maxLines: 2, overflow: TextOverflow.ellipsis);
           },
         ),
         ExpressiveTableColumn<PlaybackSession>(
@@ -120,11 +99,8 @@ class ListeningSessionTable extends StatelessWidget {
           label: 'Time',
           width: 100,
           alignment: ExpressiveTableCellAlignment.end,
-          cellBuilder: (context, session) => Text(
-            listeningSessionListeningTimeLabel(session),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+          cellBuilder: (context, session) =>
+              Text(listeningSessionListeningTimeLabel(session), maxLines: 2, overflow: TextOverflow.ellipsis),
         ),
         ExpressiveTableColumn<PlaybackSession>(
           id: 'progress',
@@ -137,11 +113,7 @@ class ListeningSessionTable extends StatelessWidget {
             if (progressLabel.isEmpty) {
               return const SizedBox.shrink();
             }
-            return Text(
-              progressLabel,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            );
+            return Text(progressLabel, maxLines: 2, overflow: TextOverflow.ellipsis);
           },
         ),
       ],

@@ -59,30 +59,22 @@ class PodcastEpisodeTile extends StatelessWidget {
         : 'Incomplete';
 
     final duration = episode.audioFile?.duration;
-    final durationLabel = duration == null
-        ? null
-        : formatDurationShort(Duration(seconds: duration.round()));
+    final durationLabel = duration == null ? null : formatDurationShort(Duration(seconds: duration.round()));
     final publishedLabel = podcastFormatEpisodeDate(episode);
     final descriptionPreview = podcastEpisodeDescriptionPreview(episode);
     final colorScheme = Theme.of(context).colorScheme;
 
     final backgroundColor = isCurrentEpisode
         ? colorScheme.primaryContainer.withValues(alpha: 0.18)
-        : (isSelected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.25)
-              : colorScheme.surfaceContainerLow);
+        : (isSelected ? colorScheme.primaryContainer.withValues(alpha: 0.25) : colorScheme.surfaceContainerLow);
     final showProgressRing = progressValue > 0 && !isFinished;
     final isPlayEnabled = onPlayPressed != null;
     final playIcon = isCurrentEpisode && isPlayingCurrentEpisode
         ? Icons.pause_rounded
         : (isFinished ? Icons.replay_rounded : Icons.play_arrow_rounded);
-    final playTooltip = isCurrentEpisode && isPlayingCurrentEpisode
-        ? 'Pause'
-        : (isFinished ? 'Replay' : 'Play');
+    final playTooltip = isCurrentEpisode && isPlayingCurrentEpisode ? 'Pause' : (isFinished ? 'Replay' : 'Play');
     final playBackgroundColor = isPlayEnabled
-        ? (isFinished
-              ? colorScheme.primary
-              : colorScheme.surface.withAlpha(230))
+        ? (isFinished ? colorScheme.primary : colorScheme.surface.withAlpha(230))
         : colorScheme.surfaceContainerHighest;
     final playIconColor = isPlayEnabled
         ? (isFinished ? colorScheme.onPrimary : colorScheme.onSurfaceVariant)
@@ -101,9 +93,7 @@ class PodcastEpisodeTile extends StatelessWidget {
       color: backgroundColor,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        onTap: selectionMode
-            ? () => onSelectedChanged?.call(!isSelected)
-            : onOpenDetails,
+        onTap: selectionMode ? () => onSelectedChanged?.call(!isSelected) : onOpenDetails,
         onLongPress: () {
           onSelectedChanged?.call(!isSelected);
         },
@@ -122,10 +112,7 @@ class PodcastEpisodeTile extends StatelessWidget {
                       child: SizedBox(
                         width: 24,
                         height: 24,
-                        child: Checkbox(
-                          value: isSelected,
-                          onChanged: onSelectedChanged,
-                        ),
+                        child: Checkbox(value: isSelected, onChanged: onSelectedChanged),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -148,11 +135,7 @@ class PodcastEpisodeTile extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ),
                         if (descriptionPreview != null)
@@ -163,11 +146,7 @@ class PodcastEpisodeTile extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                           ),
                       ],
@@ -197,9 +176,7 @@ class PodcastEpisodeTile extends StatelessWidget {
                                     value: progressValue,
                                     strokeWidth: 3,
                                     backgroundColor: Colors.white24,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      colorScheme.primary,
-                                    ),
+                                    valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
                                   ),
                                 ),
                               IconButton(
@@ -210,11 +187,7 @@ class PodcastEpisodeTile extends StatelessWidget {
                                   height: playButtonVisualSize,
                                 ),
                                 padding: EdgeInsets.zero,
-                                icon: Icon(
-                                  playIcon,
-                                  color: playIconColor,
-                                  size: isFinished ? 20 : 18,
-                                ),
+                                icon: Icon(playIcon, color: playIconColor, size: isFinished ? 20 : 18),
                                 splashRadius: 10,
                               ),
                             ],
@@ -226,11 +199,7 @@ class PodcastEpisodeTile extends StatelessWidget {
                     secondaryActionButton(
                       IconButton.filledTonal(
                         onPressed: isCurrentEpisode ? null : onQueueToggle,
-                        icon: Icon(
-                          isQueued
-                              ? Icons.playlist_remove_rounded
-                              : Icons.queue_music_rounded,
-                        ),
+                        icon: Icon(isQueued ? Icons.playlist_remove_rounded : Icons.queue_music_rounded),
                         tooltip: isCurrentEpisode
                             ? 'Currently playing'
                             : (isQueued ? 'Remove from queue' : 'Add to queue'),
@@ -240,27 +209,15 @@ class PodcastEpisodeTile extends StatelessWidget {
                     if (canDownload && !context.isMobile) ...[
                       secondaryActionButton(
                         IconButton.filledTonal(
-                          onPressed: isDownloading
-                              ? null
-                              : (isDownloaded
-                                    ? onDeletePressed
-                                    : onDownloadPressed),
+                          onPressed: isDownloading ? null : (isDownloaded ? onDeletePressed : onDownloadPressed),
                           icon: isDownloading
                               ? const SizedBox(
                                   width: 18,
                                   height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.2,
-                                  ),
+                                  child: CircularProgressIndicator(strokeWidth: 2.2),
                                 )
-                              : Icon(
-                                  isDownloaded
-                                      ? Icons.delete_outline_rounded
-                                      : Icons.download_rounded,
-                                ),
-                          tooltip: isDownloading
-                              ? 'Downloading'
-                              : (isDownloaded ? 'Delete download' : 'Download'),
+                              : Icon(isDownloaded ? Icons.delete_outline_rounded : Icons.download_rounded),
+                          tooltip: isDownloading ? 'Downloading' : (isDownloaded ? 'Delete download' : 'Download'),
                           visualDensity: VisualDensity.compact,
                         ),
                       ),
@@ -286,22 +243,19 @@ class PodcastEpisodeTile extends StatelessWidget {
                   if (publishedLabel != null)
                     Text(
                       publishedLabel,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.labelMedium
+                          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   if (durationLabel != null)
                     Text(
                       durationLabel,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.labelMedium
+                          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   Text(
                     statusLabel,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: Theme.of(context).textTheme.labelMedium
+                        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),

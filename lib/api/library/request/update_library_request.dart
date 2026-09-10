@@ -18,6 +18,5 @@ abstract class UpdateLibraryRequest with _$UpdateLibraryRequest {
     @JsonKey(name: 'folders') List<LibraryFolderPayload>? folders,
   }) = _UpdateLibraryRequest;
 
-  factory UpdateLibraryRequest.fromJson(Map<String, dynamic> json) =>
-      _$UpdateLibraryRequestFromJson(json);
+  factory UpdateLibraryRequest.fromJson(Map<String, dynamic> json) => _$UpdateLibraryRequestFromJson(json);
 }

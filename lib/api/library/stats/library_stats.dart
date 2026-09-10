@@ -12,31 +12,17 @@ part 'library_stats.g.dart';
 abstract class LibraryStats with _$LibraryStats {
   const factory LibraryStats({
     @JsonKey(name: "totalItems", fromJson: jsonIntFromDynamic) int? totalItems,
-    @JsonKey(name: "totalAuthors", fromJson: jsonIntFromDynamic)
-    int? totalAuthors,
-    @JsonKey(name: "totalGenres", fromJson: jsonIntFromDynamic)
-    int? totalGenres,
-    @JsonKey(name: "totalDuration", fromJson: jsonDoubleFromDynamic)
-    double? totalDuration,
-    @JsonKey(name: "longestItems")
-    @Default(<LibraryItemDurationStats>[])
-    List<LibraryItemDurationStats> longestItems,
-    @JsonKey(name: "numAudioTracks", fromJson: jsonIntFromDynamic)
-    int? numAudioTracks,
-    @JsonKey(name: "numAudioFiles", fromJson: jsonIntFromDynamic)
-    int? numAudioFiles,
+    @JsonKey(name: "totalAuthors", fromJson: jsonIntFromDynamic) int? totalAuthors,
+    @JsonKey(name: "totalGenres", fromJson: jsonIntFromDynamic) int? totalGenres,
+    @JsonKey(name: "totalDuration", fromJson: jsonDoubleFromDynamic) double? totalDuration,
+    @JsonKey(name: "longestItems") @Default(<LibraryItemDurationStats>[]) List<LibraryItemDurationStats> longestItems,
+    @JsonKey(name: "numAudioTracks", fromJson: jsonIntFromDynamic) int? numAudioTracks,
+    @JsonKey(name: "numAudioFiles", fromJson: jsonIntFromDynamic) int? numAudioFiles,
     @JsonKey(name: "totalSize", fromJson: jsonIntFromDynamic) int? totalSize,
-    @JsonKey(name: "largestItems")
-    @Default(<LibraryItemSizeStats>[])
-    List<LibraryItemSizeStats> largestItems,
-    @JsonKey(name: "authorsWithCount")
-    @Default(<AuthorStats>[])
-    List<AuthorStats> authorsWithCount,
-    @JsonKey(name: "genresWithCount")
-    @Default(<GenreStats>[])
-    List<GenreStats> genresWithCount,
+    @JsonKey(name: "largestItems") @Default(<LibraryItemSizeStats>[]) List<LibraryItemSizeStats> largestItems,
+    @JsonKey(name: "authorsWithCount") @Default(<AuthorStats>[]) List<AuthorStats> authorsWithCount,
+    @JsonKey(name: "genresWithCount") @Default(<GenreStats>[]) List<GenreStats> genresWithCount,
   }) = _LibraryStats;
 
-  factory LibraryStats.fromJson(Map<String, dynamic> json) =>
-      _$LibraryStatsFromJson(json);
+  factory LibraryStats.fromJson(Map<String, dynamic> json) => _$LibraryStatsFromJson(json);
 }

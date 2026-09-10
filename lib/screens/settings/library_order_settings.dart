@@ -52,65 +52,40 @@ class LibraryOrderSettings extends ConsumerWidget {
                     final library = libraries[index];
                     return Card(
                       key: ValueKey(library.id),
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       child: ListTile(
-                        leading: ReorderableDragStartListener(
-                          index: index,
-                          child: const Icon(Icons.drag_handle),
-                        ),
+                        leading: ReorderableDragStartListener(index: index, child: const Icon(Icons.drag_handle)),
                         title: Text(library.name),
                         subtitle: StreamBuilder<UserSettingEntry?>(
-                          stream: db.watchUserSetting(
-                            user.id,
-                            'music_library_${library.id}',
-                          ),
+                          stream: db.watchUserSetting(user.id, 'music_library_${library.id}'),
                           builder: (context, snapshot) {
                             final isMusic = snapshot.data?.value == 'true';
                             return Text(
                               isMusic ? 'Music' : 'Default',
                               style: TextStyle(
-                                color: isMusic
-                                    ? Theme.of(context).colorScheme.primary
-                                    : null,
+                                color: isMusic ? Theme.of(context).colorScheme.primary : null,
                                 fontWeight: isMusic ? FontWeight.w500 : null,
                               ),
                             );
                           },
                         ),
                         trailing: StreamBuilder<UserSettingEntry?>(
-                          stream: db.watchUserSetting(
-                            user.id,
-                            'music_library_${library.id}',
-                          ),
+                          stream: db.watchUserSetting(user.id, 'music_library_${library.id}'),
                           builder: (context, snapshot) {
                             final isMusic = snapshot.data?.value == 'true';
                             return IconButton(
                               icon: Icon(
-                                isMusic
-                                    ? Icons.music_note
-                                    : Icons.music_note_outlined,
+                                isMusic ? Icons.music_note : Icons.music_note_outlined,
                                 color: isMusic
                                     ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant
-                                          .withValues(alpha: 0.4),
+                                    : Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                               ),
                               onPressed: () async {
                                 await ref
                                     .read(settingsManagerProvider.notifier)
-                                    .setUserSetting<bool>(
-                                      user.id,
-                                      'music_library_${library.id}',
-                                      !isMusic,
-                                    );
+                                    .setUserSetting<bool>(user.id, 'music_library_${library.id}', !isMusic);
                               },
-                              tooltip: isMusic
-                                  ? 'Change Type to Default'
-                                  : 'Change Type to Music',
+                              tooltip: isMusic ? 'Change Type to Default' : 'Change Type to Music',
                             );
                           },
                         ),
@@ -125,11 +100,7 @@ class LibraryOrderSettings extends ConsumerWidget {
                     final nextOrder = nextList.map((lib) => lib.id).toList();
                     await ref
                         .read(settingsManagerProvider.notifier)
-                        .setUserSetting<String>(
-                          user.id,
-                          'libraries_order',
-                          jsonEncode(nextOrder),
-                        );
+                        .setUserSetting<String>(user.id, 'libraries_order', jsonEncode(nextOrder));
                   },
                 );
               },
@@ -137,20 +108,15 @@ class LibraryOrderSettings extends ConsumerWidget {
                 padding: EdgeInsets.all(16),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (error, _) => Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('Failed to load libraries: $error'),
-              ),
+              error: (error, _) =>
+                  Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load libraries: $error')),
             );
           },
           loading: () => const Padding(
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) => Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text('Failed to load user: $error'),
-          ),
+          error: (error, _) => Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load user: $error')),
         ),
       ],
     );

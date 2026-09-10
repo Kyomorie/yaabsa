@@ -18,13 +18,9 @@ List<AdminListeningSession> adminListeningSessionsFromDynamic(dynamic value) {
           return AdminListeningSession.fromJson(rawSession);
         }
         if (rawSession is Map) {
-          return AdminListeningSession.fromJson(
-            Map<String, dynamic>.from(rawSession),
-          );
+          return AdminListeningSession.fromJson(Map<String, dynamic>.from(rawSession));
         }
-        throw FormatException(
-          'Session at index ${entry.key} is not a JSON object',
-        );
+        throw FormatException('Session at index ${entry.key} is not a JSON object');
       })
       .toList(growable: false);
 }
@@ -33,10 +29,8 @@ List<AdminListeningSession> adminListeningSessionsFromDynamic(dynamic value) {
 abstract class AdminListeningSession with _$AdminListeningSession {
   const AdminListeningSession._();
 
-  const factory AdminListeningSession({
-    required PlaybackSession session,
-    SessionUserSummary? user,
-  }) = _AdminListeningSession;
+  const factory AdminListeningSession({required PlaybackSession session, SessionUserSummary? user}) =
+      _AdminListeningSession;
 
   factory AdminListeningSession.fromJson(Map<String, dynamic> json) {
     final payload = Map<String, dynamic>.from(json);

@@ -21,10 +21,7 @@ class AdminForceMetadataRefreshTool extends ConsumerWidget {
         leading: const Icon(Icons.refresh_outlined),
         title: const Text('Force metadata refresh'),
         subtitle: const Text('Recreates the metadata.json files for all items'),
-        trailing: OutlinedButton(
-          onPressed: () => _openDialog(context, ref),
-          child: const Text('Run'),
-        ),
+        trailing: OutlinedButton(onPressed: () => _openDialog(context, ref), child: const Text('Run')),
       ),
     );
   }
@@ -32,8 +29,7 @@ class AdminForceMetadataRefreshTool extends ConsumerWidget {
   Future<void> _openDialog(BuildContext context, WidgetRef ref) async {
     final api = ref.read(absApiProvider);
     if (api == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('No active API client.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No active API client.')));
       return;
     }
 
@@ -69,12 +65,10 @@ class _ForceMetadataRefreshDialog extends StatefulWidget {
   final ABSApi api;
 
   @override
-  State<_ForceMetadataRefreshDialog> createState() =>
-      _ForceMetadataRefreshDialogState();
+  State<_ForceMetadataRefreshDialog> createState() => _ForceMetadataRefreshDialogState();
 }
 
-class _ForceMetadataRefreshDialogState
-    extends State<_ForceMetadataRefreshDialog> {
+class _ForceMetadataRefreshDialogState extends State<_ForceMetadataRefreshDialog> {
   bool _isLoadingLibraries = true;
   bool _isRunning = false;
   String? _errorMessage;
@@ -186,12 +180,7 @@ class _ForceMetadataRefreshDialogState
               if (_errorMessage != null && _errorMessage!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
+                  child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ),
               if (_isLoadingLibraries)
                 const Padding(
@@ -209,23 +198,14 @@ class _ForceMetadataRefreshDialogState
                   },
                   enabled: !busy,
                 ),
-              if (_isRunning) ...[
-                const SizedBox(height: 12),
-                const LinearProgressIndicator(minHeight: 4),
-              ],
+              if (_isRunning) ...[const SizedBox(height: 12), const LinearProgressIndicator(minHeight: 4)],
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: busy ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: busy ? null : _runTool,
-          child: Text(_isRunning ? 'Running...' : 'Run Tool'),
-        ),
+        TextButton(onPressed: busy ? null : () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        FilledButton(onPressed: busy ? null : _runTool, child: Text(_isRunning ? 'Running...' : 'Run Tool')),
       ],
     );
   }

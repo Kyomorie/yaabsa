@@ -14,12 +14,10 @@ class PlayerSettingsNotification extends ConsumerStatefulWidget {
   static const String routeName = '/settings/player/notification';
 
   @override
-  ConsumerState<PlayerSettingsNotification> createState() =>
-      _PlayerSettingsNotificationState();
+  ConsumerState<PlayerSettingsNotification> createState() => _PlayerSettingsNotificationState();
 }
 
-class _PlayerSettingsNotificationState
-    extends ConsumerState<PlayerSettingsNotification> {
+class _PlayerSettingsNotificationState extends ConsumerState<PlayerSettingsNotification> {
   int _selectedPageIndex = 0;
   List<List<String>> _pages = [];
   bool _isInitialized = false;
@@ -67,9 +65,7 @@ class _PlayerSettingsNotificationState
     if (_isInitialized) return;
 
     final manager = ref.read(settingsManagerProvider.notifier);
-    final settingVal = manager.getGlobalSetting<String>(
-      SettingKeys.mediaNotificationPages,
-    );
+    final settingVal = manager.getGlobalSetting<String>(SettingKeys.mediaNotificationPages);
 
     try {
       final List<dynamic> outer = json.decode(settingVal);
@@ -105,10 +101,7 @@ class _PlayerSettingsNotificationState
   Future<void> _saveSettings() async {
     final manager = ref.read(settingsManagerProvider.notifier);
     final encoded = json.encode(_pages);
-    await manager.setGlobalSetting<String>(
-      SettingKeys.mediaNotificationPages,
-      encoded,
-    );
+    await manager.setGlobalSetting<String>(SettingKeys.mediaNotificationPages, encoded);
   }
 
   void _addPage() {
@@ -178,9 +171,7 @@ class _PlayerSettingsNotificationState
     showModalBottomSheet(
       context: context,
       backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (context) {
         return SafeArea(
           child: Column(
@@ -191,9 +182,7 @@ class _PlayerSettingsNotificationState
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
                 child: Text(
                   'Select Action for Slot ${slotIndex + 1}',
-                  style: textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               const Divider(height: 1),
@@ -202,14 +191,8 @@ class _PlayerSettingsNotificationState
                   shrinkWrap: true,
                   children: [
                     ListTile(
-                      leading: Icon(
-                        Icons.remove_circle_outline_rounded,
-                        color: colorScheme.error,
-                      ),
-                      title: Text(
-                        'Clear Slot',
-                        style: TextStyle(color: colorScheme.error),
-                      ),
+                      leading: Icon(Icons.remove_circle_outline_rounded, color: colorScheme.error),
+                      title: Text('Clear Slot', style: TextStyle(color: colorScheme.error)),
                       subtitle: const Text('Leave this button position empty'),
                       onTap: () {
                         _updateSlot(slotIndex, '');
@@ -244,11 +227,7 @@ class _PlayerSettingsNotificationState
     );
   }
 
-  Widget _buildPreviewButton(
-    List<String> actions,
-    int index,
-    ColorScheme colorScheme,
-  ) {
+  Widget _buildPreviewButton(List<String> actions, int index, ColorScheme colorScheme) {
     final action = index < actions.length ? actions[index] : '';
     final info = _actionInfos[action];
 
@@ -270,19 +249,13 @@ class _PlayerSettingsNotificationState
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainer,
           shape: BoxShape.circle,
-          border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
         ),
         child: Icon(info.icon, color: colorScheme.onSurface, size: 18),
       );
     }
 
-    return InkWell(
-      onTap: () => _showActionPicker(index),
-      borderRadius: BorderRadius.circular(18),
-      child: buttonChild,
-    );
+    return InkWell(onTap: () => _showActionPicker(index), borderRadius: BorderRadius.circular(18), child: buttonChild);
   }
 
   @override
@@ -293,12 +266,9 @@ class _PlayerSettingsNotificationState
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    final currentPageActions = _selectedPageIndex < _pages.length
-        ? _pages[_selectedPageIndex]
-        : <String>[];
+    final currentPageActions = _selectedPageIndex < _pages.length ? _pages[_selectedPageIndex] : <String>[];
     final hasMultiplePages = _pages.length > 1;
-    final isPageMissingSwitch =
-        hasMultiplePages && !currentPageActions.contains('switchPage');
+    final isPageMissingSwitch = hasMultiplePages && !currentPageActions.contains('switchPage');
 
     return SettingsPageScaffold(
       title: 'Media Notification Layout',
@@ -312,15 +282,9 @@ class _PlayerSettingsNotificationState
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.4),
-              ),
+              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 8, offset: const Offset(0, 2)),
               ],
             ),
             padding: const EdgeInsets.all(16),
@@ -335,18 +299,14 @@ class _PlayerSettingsNotificationState
                         children: [
                           Text(
                             'Book Title',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Author Name',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                            style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -361,11 +321,7 @@ class _PlayerSettingsNotificationState
                         color: colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Icon(
-                        Icons.pause_rounded,
-                        color: colorScheme.onPrimaryContainer,
-                        size: 24,
-                      ),
+                      child: Icon(Icons.pause_rounded, color: colorScheme.onPrimaryContainer, size: 24),
                     ),
                   ],
                 ),
@@ -382,9 +338,7 @@ class _PlayerSettingsNotificationState
                             Container(
                               height: 4,
                               decoration: BoxDecoration(
-                                color: colorScheme.outlineVariant.withValues(
-                                  alpha: 0.5,
-                                ),
+                                color: colorScheme.outlineVariant.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -401,10 +355,7 @@ class _PlayerSettingsNotificationState
                               child: Container(
                                 width: 10,
                                 height: 10,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary,
-                                  shape: BoxShape.circle,
-                                ),
+                                decoration: BoxDecoration(color: colorScheme.primary, shape: BoxShape.circle),
                               ),
                             ),
                           ],
@@ -427,18 +378,12 @@ class _PlayerSettingsNotificationState
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Row(
             children: [
-              Icon(
-                Icons.info_outline_rounded,
-                size: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              Icon(Icons.info_outline_rounded, size: 14, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   'This layout might look different on different versions of Android and devices.',
-                  style: textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: textTheme.labelSmall?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
               ),
             ],
@@ -459,11 +404,7 @@ class _PlayerSettingsNotificationState
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.warning_amber_rounded,
-                      color: colorScheme.onErrorContainer,
-                      size: 28,
-                    ),
+                    Icon(Icons.warning_amber_rounded, color: colorScheme.onErrorContainer, size: 28),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
@@ -479,9 +420,7 @@ class _PlayerSettingsNotificationState
                           const SizedBox(height: 4),
                           Text(
                             'Since you have multiple pages, this page needs a "Switch Page" button so you can cycle through them.',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onErrorContainer,
-                            ),
+                            style: textTheme.bodySmall?.copyWith(color: colorScheme.onErrorContainer),
                           ),
                         ],
                       ),
@@ -496,20 +435,12 @@ class _PlayerSettingsNotificationState
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Row(
             children: [
-              Text(
-                'Notification Pages',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Notification Pages', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               const Spacer(),
               if (_pages.length > 1)
                 IconButton(
                   tooltip: 'Delete Current Page',
-                  icon: Icon(
-                    Icons.delete_outline_rounded,
-                    color: colorScheme.error,
-                  ),
+                  icon: Icon(Icons.delete_outline_rounded, color: colorScheme.error),
                   onPressed: () => _deletePage(_selectedPageIndex),
                 ),
               if (_pages.length < 4)
@@ -547,9 +478,7 @@ class _PlayerSettingsNotificationState
         SettingsNavigationSection(
           title: 'Arrange Buttons (Page ${_selectedPageIndex + 1})',
           settings: List.generate(4, (index) {
-            final action = index < currentPageActions.length
-                ? currentPageActions[index]
-                : '';
+            final action = index < currentPageActions.length ? currentPageActions[index] : '';
             final info = _actionInfos[action];
 
             return ListTile(
@@ -557,18 +486,12 @@ class _PlayerSettingsNotificationState
                 backgroundColor: colorScheme.surfaceContainer,
                 child: Icon(
                   info?.icon ?? Icons.add_rounded,
-                  color: action.isNotEmpty
-                      ? colorScheme.primary
-                      : colorScheme.outline,
+                  color: action.isNotEmpty ? colorScheme.primary : colorScheme.outline,
                 ),
               ),
               title: Text('Slot ${index + 1}'),
               subtitle: Text(info?.label ?? 'Empty - Tap to assign action'),
-              trailing: Icon(
-                Icons.edit_outlined,
-                size: 20,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              trailing: Icon(Icons.edit_outlined, size: 20, color: colorScheme.onSurfaceVariant),
               onTap: () => _showActionPicker(index),
             );
           }),
@@ -604,9 +527,5 @@ class _ActionTypeInfo {
   final IconData icon;
   final String description;
 
-  const _ActionTypeInfo({
-    required this.label,
-    required this.icon,
-    required this.description,
-  });
+  const _ActionTypeInfo({required this.label, required this.icon, required this.description});
 }

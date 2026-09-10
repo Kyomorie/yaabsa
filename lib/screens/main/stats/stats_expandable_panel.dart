@@ -24,9 +24,7 @@ class StatsExpandablePanel extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: expanded
-              ? theme.colorScheme.primary.withValues(alpha: 0.35)
-              : theme.colorScheme.outlineVariant,
+          color: expanded ? theme.colorScheme.primary.withValues(alpha: 0.35) : theme.colorScheme.outlineVariant,
         ),
         color: theme.colorScheme.surface,
       ),
@@ -48,17 +46,11 @@ class StatsExpandablePanel extends StatelessWidget {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(7),
-                      child: Icon(
-                        icon,
-                        size: 18,
-                        color: theme.colorScheme.primary,
-                      ),
+                      child: Icon(icon, size: 18, color: theme.colorScheme.primary),
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(title, style: theme.textTheme.titleSmall),
-                  ),
+                  Expanded(child: Text(title, style: theme.textTheme.titleSmall)),
                   AnimatedRotation(
                     turns: expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 220),
@@ -74,13 +66,8 @@ class StatsExpandablePanel extends StatelessWidget {
             secondCurve: Curves.easeOut,
             sizeCurve: Curves.easeOut,
             firstChild: const SizedBox.shrink(),
-            secondChild: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: child,
-            ),
-            crossFadeState: expanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
+            secondChild: Padding(padding: const EdgeInsets.fromLTRB(12, 0, 12, 12), child: child),
+            crossFadeState: expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
             duration: const Duration(milliseconds: 220),
           ),
         ],

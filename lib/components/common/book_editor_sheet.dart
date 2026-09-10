@@ -134,41 +134,21 @@ class _BookEditorSheetState extends ConsumerState<_BookEditorSheet> {
   @override
   Widget build(BuildContext context) {
     final searchAsync = _searchQuery.isNotEmpty
-        ? ref.watch(
-            librarySearchProvider((
-              query: _searchQuery,
-              limit: 10,
-              libraryId: null,
-            )),
-          )
+        ? ref.watch(librarySearchProvider((query: _searchQuery, limit: 10, libraryId: null)))
         : const AsyncData<SearchLibrary?>(null);
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.of(context).pop()),
         title: Text(widget.title),
         actions: [
           if (widget.skipLabel != null)
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(<String>[]),
-              child: Text(widget.skipLabel!),
-            ),
-          if (_selectedIds.isNotEmpty)
-            TextButton(
-              onPressed: _clearSelection,
-              child: const Text('Unselect all'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(<String>[]), child: Text(widget.skipLabel!)),
+          if (_selectedIds.isNotEmpty) TextButton(onPressed: _clearSelection, child: const Text('Unselect all')),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilledButton(
-              onPressed: _canSubmit
-                  ? () =>
-                        Navigator.of(context)
-                            .pop(_selectedIds.toList(growable: false))
-                  : null,
+              onPressed: _canSubmit ? () => Navigator.of(context).pop(_selectedIds.toList(growable: false)) : null,
               child: Text(widget.confirmLabel),
             ),
           ),
@@ -257,8 +237,7 @@ class _SearchResultsList extends StatelessWidget {
       return Center(
         child: Text(
           'Search books to add',
-          style: Theme.of(context).textTheme.bodySmall
-              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       );
     }
@@ -270,9 +249,8 @@ class _SearchResultsList extends StatelessWidget {
           return Center(
             child: Text(
               'No matching books found.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           );
         }
@@ -287,21 +265,12 @@ class _SearchResultsList extends StatelessWidget {
               dense: true,
               contentPadding: EdgeInsets.zero,
               value: selected,
-              onChanged: (checked) =>
-                  onSelectionChanged(item, checked ?? false),
+              onChanged: (checked) => onSelectionChanged(item, checked ?? false),
               controlAffinity: ListTileControlAffinity.leading,
-              title: Text(
-                item.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
               subtitle: _bookItemSubtitle(item) == null
                   ? null
-                  : Text(
-                      _bookItemSubtitle(item)!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  : Text(_bookItemSubtitle(item)!, maxLines: 1, overflow: TextOverflow.ellipsis),
             );
           },
         );
@@ -311,8 +280,7 @@ class _SearchResultsList extends StatelessWidget {
         return Center(
           child: Text(
             'Search failed. Please try another query.',
-            style: Theme.of(context).textTheme.bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.error),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
           ),
         );
       },
@@ -345,19 +313,15 @@ class _SelectedBooksPane extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Selected (${selectedIds.length})',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
+            Text('Selected (${selectedIds.length})', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             Expanded(
               child: selectedIds.isEmpty
                   ? Center(
                       child: Text(
                         'No books selected.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     )
                   : ReorderableListView.builder(
@@ -376,23 +340,12 @@ class _SelectedBooksPane extends StatelessWidget {
                             index: index,
                             child: const Icon(Icons.drag_indicator_rounded),
                           ),
-                          title: Text(
-                            item?.title ?? id,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle:
-                              item == null || _bookItemSubtitle(item) == null
+                          title: Text(item?.title ?? id, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          subtitle: item == null || _bookItemSubtitle(item) == null
                               ? null
-                              : Text(
-                                  _bookItemSubtitle(item)!,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                              : Text(_bookItemSubtitle(item)!, maxLines: 1, overflow: TextOverflow.ellipsis),
                           trailing: IconButton(
-                            icon: const Icon(
-                              Icons.remove_circle_outline_rounded,
-                            ),
+                            icon: const Icon(Icons.remove_circle_outline_rounded),
                             onPressed: () => onRemove(id),
                           ),
                         );

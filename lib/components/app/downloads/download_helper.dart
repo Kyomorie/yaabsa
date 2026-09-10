@@ -11,12 +11,7 @@ import 'package:yaabsa/util/setting_key.dart';
 
 import 'download_type_dialog.dart';
 
-Future<void> triggerBookDownload(
-  BuildContext context,
-  WidgetRef ref,
-  String itemId, {
-  String? episodeId,
-}) async {
+Future<void> triggerBookDownload(BuildContext context, WidgetRef ref, String itemId, {String? episodeId}) async {
   final user = ref.read(currentUserProvider).value;
   if (user == null) return;
 
@@ -29,31 +24,19 @@ Future<void> triggerBookDownload(
 
   if (item == null) return;
 
-  final hasAudio =
-      (item.media?.bookMedia?.audioFiles?.isNotEmpty ?? false) ||
-      (item.mediaType == 'podcast');
+  final hasAudio = (item.media?.bookMedia?.audioFiles?.isNotEmpty ?? false) || (item.mediaType == 'podcast');
   bool hasEbook = item.media?.bookMedia?.ebookFile != null;
   if (!hasEbook && item.libraryFiles != null) {
-    hasEbook = item.libraryFiles!.any(
-      (file) => FileFormats.isEbook(file.metadata.ext),
-    );
+    hasEbook = item.libraryFiles!.any((file) => FileFormats.isEbook(file.metadata.ext));
   }
 
   if (hasAudio && !hasEbook) {
-    await downloadHandler.downloadFile(
-      itemId,
-      episodeId: episodeId,
-      downloadType: 'audiobook',
-    );
+    await downloadHandler.downloadFile(itemId, episodeId: episodeId, downloadType: 'audiobook');
     return;
   }
 
   if (hasEbook && !hasAudio) {
-    await downloadHandler.downloadFile(
-      itemId,
-      episodeId: episodeId,
-      downloadType: 'ebook',
-    );
+    await downloadHandler.downloadFile(itemId, episodeId: episodeId, downloadType: 'ebook');
     return;
   }
 
@@ -65,11 +48,7 @@ Future<void> triggerBookDownload(
   );
 
   if (pref != 'askEveryTime') {
-    await downloadHandler.downloadFile(
-      itemId,
-      episodeId: episodeId,
-      downloadType: pref,
-    );
+    await downloadHandler.downloadFile(itemId, episodeId: episodeId, downloadType: pref);
     return;
   }
 
@@ -85,25 +64,13 @@ Future<void> triggerBookDownload(
   }
 
   if (result.remember) {
-    await settings.setUserSetting<String>(
-      user.id,
-      SettingKeys.downloadTypePreference,
-      result.type,
-    );
+    await settings.setUserSetting<String>(user.id, SettingKeys.downloadTypePreference, result.type);
   }
 
-  await downloadHandler.downloadFile(
-    itemId,
-    episodeId: episodeId,
-    downloadType: result.type,
-  );
+  await downloadHandler.downloadFile(itemId, episodeId: episodeId, downloadType: result.type);
 }
 
-Future<void> triggerMultiBookDownload(
-  BuildContext context,
-  WidgetRef ref,
-  List<String> itemIds,
-) async {
+Future<void> triggerMultiBookDownload(BuildContext context, WidgetRef ref, List<String> itemIds) async {
   final user = ref.read(currentUserProvider).value;
   if (user == null) return;
 
@@ -126,11 +93,7 @@ Future<void> triggerMultiBookDownload(
     }
 
     if (result.remember) {
-      await settings.setUserSetting<String>(
-        user.id,
-        SettingKeys.downloadTypePreference,
-        result.type,
-      );
+      await settings.setUserSetting<String>(user.id, SettingKeys.downloadTypePreference, result.type);
     }
     downloadType = result.type;
   }
@@ -141,19 +104,12 @@ Future<void> triggerMultiBookDownload(
       await downloadHandler.downloadFile(itemId, downloadType: downloadType);
       count++;
     } catch (e) {
-      logger(
-        'Could not download $itemId: $e',
-        tag: 'DownloadHelper',
-        level: InfoLevel.error,
-      );
+      logger('Could not download $itemId: $e', tag: 'DownloadHelper', level: InfoLevel.error);
     }
   }
 
   if (context.mounted) {
-    final message = count == 1
-        ? '1 download added to queue.'
-        : '$count downloads added to queue.';
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    final message = count == 1 ? '1 download added to queue.' : '$count downloads added to queue.';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }

@@ -129,8 +129,7 @@ bool _isTruthyEnvValue(String? value) {
 }
 
 final bool _isReleaseConsoleLoggingEnabled =
-    !kIsWeb &&
-    _isTruthyEnvValue(Platform.environment[_releaseConsoleLoggingEnvKey]);
+    !kIsWeb && _isTruthyEnvValue(Platform.environment[_releaseConsoleLoggingEnvKey]);
 
 bool get _shouldPrintToConsole => kDebugMode || _isReleaseConsoleLoggingEnabled;
 
@@ -139,9 +138,7 @@ bool _isReleaseDiagnosticLog(String? tag, String message) {
     return false;
   }
 
-  return tag == 'AAOSBrowse' ||
-      tag == 'AAOS' ||
-      (tag == 'AudioHandler' && message.startsWith('[AAOS]'));
+  return tag == 'AAOSBrowse' || tag == 'AAOS' || (tag == 'AudioHandler' && message.startsWith('[AAOS]'));
 }
 
 void logger(String message, {String? tag, InfoLevel level = InfoLevel.info}) {
@@ -152,20 +149,14 @@ void logger(String message, {String? tag, InfoLevel level = InfoLevel.info}) {
 
   final now = DateTime.now();
 
-  final logEntry = LogEntry(
-    timestamp: now,
-    message: message,
-    level: level,
-    tag: tag,
-  );
+  final logEntry = LogEntry(timestamp: now, message: message, level: level, tag: tag);
 
   appLoggerService._addLogEntry(logEntry);
 
   if (_shouldPrintToConsole || releaseDiagnosticLog) {
     final formattedDate =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
-    final fallbackMessage =
-        '[$formattedDate] [${level.name.toUpperCase()}] [${tag ?? 'FALLBACK'}] $message';
+    final fallbackMessage = '[$formattedDate] [${level.name.toUpperCase()}] [${tag ?? 'FALLBACK'}] $message';
 
     switch (level) {
       case InfoLevel.debug:

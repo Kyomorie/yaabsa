@@ -23,9 +23,7 @@ class WearHomeScreen extends ConsumerWidget {
                 }
                 return const WearPairingScreen();
               },
-              loading: () => const Scaffold(
-                body: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
+              loading: () => const Scaffold(body: Center(child: CircularProgressIndicator(strokeWidth: 2))),
               error: (_, _) => const WearPairingScreen(),
             );
           },

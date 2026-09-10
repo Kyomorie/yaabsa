@@ -1,4 +1,3 @@
 import 'package:sembast/sembast.dart';
 
-Future<Database> openCacheDatabase() =>
-    throw UnsupportedError('Unsupported platform');
+Future<Database> openCacheDatabase() => throw UnsupportedError('Unsupported platform');

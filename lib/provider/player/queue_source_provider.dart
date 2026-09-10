@@ -23,11 +23,9 @@ class QueueSourceRepository {
   QueueSourceRepository(this._ref);
 
   final Ref _ref;
-  final Map<String, List<QueueCandidate>> _expandedSourceCache =
-      <String, List<QueueCandidate>>{};
+  final Map<String, List<QueueCandidate>> _expandedSourceCache = <String, List<QueueCandidate>>{};
   final Map<String, int?> _sourceRevisionCache = <String, int?>{};
-  final Map<String, Future<_ExpandedSourceResult>> _expandedSourceRequests =
-      <String, Future<_ExpandedSourceResult>>{};
+  final Map<String, Future<_ExpandedSourceResult>> _expandedSourceRequests = <String, Future<_ExpandedSourceResult>>{};
   int _cacheGeneration = 0;
 
   void clearCache() {
@@ -37,11 +35,7 @@ class QueueSourceRepository {
     _expandedSourceRequests.clear();
   }
 
-  Future<CandidatePage> page(
-    MediaSourceDescriptor source, {
-    int page = 0,
-    int pageSize = queueSourcePageSize,
-  }) async {
+  Future<CandidatePage> page(MediaSourceDescriptor source, {int page = 0, int pageSize = queueSourcePageSize}) async {
     final api = _ref.read(absApiProvider);
     if (api == null) {
       throw StateError('No API available for queue source');
@@ -52,60 +46,30 @@ class QueueSourceRepository {
         return _seriesPage(api, source, page: page, pageSize: pageSize);
       case MediaSourceType.playlist:
         final expanded = await _expandedSource(source, () async {
-          final response = await api.getListApi().getPlaylist(
-            source.sourceId,
-            extra: const {'noCache': true},
-          );
+          final response = await api.getListApi().getPlaylist(source.sourceId, extra: const {'noCache': true});
           final playlist = response.data;
           return _ExpandedSourceResult(
-            candidates: playlist == null
-                ? const <QueueCandidate>[]
-                : _playlistCandidates(playlist.items),
+            candidates: playlist == null ? const <QueueCandidate>[] : _playlistCandidates(playlist.items),
             revision: playlist?.lastUpdate,
           );
         });
-        return _slice(
-          expanded.candidates,
-          page: page,
-          pageSize: pageSize,
-          revision: expanded.revision,
-        );
+        return _slice(expanded.candidates, page: page, pageSize: pageSize, revision: expanded.revision);
       case MediaSourceType.collection:
         final expanded = await _expandedSource(source, () async {
-          final response = await api.getListApi().getCollection(
-            source.sourceId,
-            extra: const {'noCache': true},
-          );
+          final response = await api.getListApi().getCollection(source.sourceId, extra: const {'noCache': true});
           final collection = response.data;
           return _ExpandedSourceResult(
-            candidates: collection == null
-                ? const <QueueCandidate>[]
-                : _libraryCandidates(collection.items),
+            candidates: collection == null ? const <QueueCandidate>[] : _libraryCandidates(collection.items),
             revision: collection?.lastUpdate,
           );
         });
-        return _slice(
-          expanded.candidates,
-          page: page,
-          pageSize: pageSize,
-          revision: expanded.revision,
-        );
+        return _slice(expanded.candidates, page: page, pageSize: pageSize, revision: expanded.revision);
       case MediaSourceType.podcast:
         final expanded = await _expandedSource(source, () async {
-          final item = await _ref.read(
-            libraryItemProvider(source.sourceId).future,
-          );
-          return _ExpandedSourceResult(
-            candidates: _podcastCandidates(item, source),
-            revision: item.updatedAt,
-          );
+          final item = await _ref.read(libraryItemProvider(source.sourceId).future);
+          return _ExpandedSourceResult(candidates: _podcastCandidates(item, source), revision: item.updatedAt);
         });
-        return _slice(
-          expanded.candidates,
-          page: page,
-          pageSize: pageSize,
-          revision: expanded.revision,
-        );
+        return _slice(expanded.candidates, page: page, pageSize: pageSize, revision: expanded.revision);
     }
   }
 
@@ -116,10 +80,7 @@ class QueueSourceRepository {
     final key = _cacheKey(source);
     final cached = _expandedSourceCache[key];
     if (cached != null) {
-      return _ExpandedSourceResult(
-        candidates: cached,
-        revision: _sourceRevisionCache[key],
-      );
+      return _ExpandedSourceResult(candidates: cached, revision: _sourceRevisionCache[key]);
     }
 
     final pending = _expandedSourceRequests[key] ?? fetch();
@@ -150,10 +111,7 @@ class QueueSourceRepository {
       page: page,
       sort: 'sequence',
       desc: source.descending ? 1 : 0,
-      filter: LibraryFilter.grouped(
-        LibraryFilterGroup.series,
-        source.sourceId,
-      ).queryValue,
+      filter: LibraryFilter.grouped(LibraryFilterGroup.series, source.sourceId).queryValue,
       collapseseries: 0,
     );
     final response = await api.getLibraryApi().getLibraryItems(
@@ -174,29 +132,21 @@ class QueueSourceRepository {
     );
   }
 
-  List<QueueCandidate> _podcastCandidates(
-    LibraryItem item,
-    MediaSourceDescriptor source,
-  ) {
+  List<QueueCandidate> _podcastCandidates(LibraryItem item, MediaSourceDescriptor source) {
     final episodes = item.media?.podcastMedia?.episodes ?? const <Episode>[];
     final progress = _ref.read(mediaProgressProvider).asData?.value ?? const {};
     final candidates = <QueueCandidate>[];
 
     final orderedEpisodes = episodes.toList(growable: true)
       ..sort((left, right) {
-        final byTimestamp = _podcastTimestamp(right)
-            .compareTo(_podcastTimestamp(left));
+        final byTimestamp = _podcastTimestamp(right).compareTo(_podcastTimestamp(left));
         if (byTimestamp != 0) return byTimestamp;
         final byIndex = (right.index ?? -1).compareTo(left.index ?? -1);
         if (byIndex != 0) return byIndex;
-        return (right.title ?? '').toLowerCase().compareTo(
-          (left.title ?? '').toLowerCase(),
-        );
+        return (right.title ?? '').toLowerCase().compareTo((left.title ?? '').toLowerCase());
       });
     if (!source.descending) {
-      final ascendingEpisodes = orderedEpisodes.reversed.toList(
-        growable: false,
-      );
+      final ascendingEpisodes = orderedEpisodes.reversed.toList(growable: false);
       orderedEpisodes
         ..clear()
         ..addAll(ascendingEpisodes);
@@ -286,28 +236,19 @@ class QueueSourceRepository {
           addedAt: episode?.addedAt ?? item?.addedAt,
           publishedAt: episode?.publishedAt,
           estimatedBytes: episode?.size ?? item?.size,
-          isFinished:
-              progress[mediaProgressKey(itemId, episodeId)]?.isFinished ??
-              false,
+          isFinished: progress[mediaProgressKey(itemId, episodeId)]?.isFinished ?? false,
         ),
       );
     }
     return candidates;
   }
 
-  CandidatePage _slice(
-    List<QueueCandidate> candidates, {
-    required int page,
-    required int pageSize,
-    int? revision,
-  }) {
+  CandidatePage _slice(List<QueueCandidate> candidates, {required int page, required int pageSize, int? revision}) {
     final safePageSize = pageSize < 1 ? queueSourcePageSize : pageSize;
     final start = page * safePageSize;
     final end = (start + safePageSize).clamp(start, candidates.length).toInt();
     return CandidatePage(
-      candidates: start >= candidates.length
-          ? const <QueueCandidate>[]
-          : candidates.sublist(start, end),
+      candidates: start >= candidates.length ? const <QueueCandidate>[] : candidates.sublist(start, end),
       total: candidates.length,
       page: page,
       pageSize: safePageSize,
@@ -333,10 +274,7 @@ class QueueSourceRepository {
 }
 
 class _ExpandedSourceResult {
-  const _ExpandedSourceResult({
-    required this.candidates,
-    required this.revision,
-  });
+  const _ExpandedSourceResult({required this.candidates, required this.revision});
 
   final List<QueueCandidate> candidates;
   final int? revision;

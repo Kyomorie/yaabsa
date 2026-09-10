@@ -1,28 +1,20 @@
 enum SubtitleDocumentFormat { srt, webvtt }
 
 class ParsedSubtitleDocument {
-  ParsedSubtitleDocument({
-    required this.format,
-    required List<ParsedSubtitleCue> cues,
-  }) : cues = List<ParsedSubtitleCue>.unmodifiable(cues);
+  ParsedSubtitleDocument({required this.format, required List<ParsedSubtitleCue> cues})
+    : cues = List<ParsedSubtitleCue>.unmodifiable(cues);
 
   final SubtitleDocumentFormat format;
   final List<ParsedSubtitleCue> cues;
-  late final List<int> _startMicros = cues
-      .map((cue) => cue.start.inMicroseconds)
-      .toList(growable: false);
-  late final List<int> _endMicros = cues
-      .map((cue) => cue.end.inMicroseconds)
-      .toList(growable: false);
+  late final List<int> _startMicros = cues.map((cue) => cue.start.inMicroseconds).toList(growable: false);
+  late final List<int> _endMicros = cues.map((cue) => cue.end.inMicroseconds).toList(growable: false);
 
   bool get supportsSpeakerHighlighting {
-    return format == SubtitleDocumentFormat.webvtt &&
-        cues.any((cue) => cue.speaker?.isNotEmpty == true);
+    return format == SubtitleDocumentFormat.webvtt && cues.any((cue) => cue.speaker?.isNotEmpty == true);
   }
 
   bool get supportsReadAlong {
-    return format == SubtitleDocumentFormat.webvtt &&
-        cues.any((cue) => cue.segments.isNotEmpty);
+    return format == SubtitleDocumentFormat.webvtt && cues.any((cue) => cue.segments.isNotEmpty);
   }
 
   int cueIndexAt(Duration position) {
@@ -107,11 +99,7 @@ class ParsedSubtitleCue {
 }
 
 class ParsedSubtitleSegment {
-  const ParsedSubtitleSegment({
-    required this.start,
-    required this.end,
-    required this.text,
-  });
+  const ParsedSubtitleSegment({required this.start, required this.end, required this.text});
 
   final Duration start;
   final Duration end;
@@ -120,18 +108,10 @@ class ParsedSubtitleSegment {
 
 class SubtitleParser {
   static final RegExp _blankBlockPattern = RegExp(r'\n{2,}');
-  static final RegExp _vttTimestampTagPattern = RegExp(
-    r'<((?:\d{2,}:)?\d{2}:\d{2}\.\d{3})>',
-  );
-  static final RegExp _speakerTagPattern = RegExp(
-    r'<v(?:\.[^ >]+)?(?:\s+([^>]+))?>',
-    caseSensitive: false,
-  );
+  static final RegExp _vttTimestampTagPattern = RegExp(r'<((?:\d{2,}:)?\d{2}:\d{2}\.\d{3})>');
+  static final RegExp _speakerTagPattern = RegExp(r'<v(?:\.[^ >]+)?(?:\s+([^>]+))?>', caseSensitive: false);
 
-  static ParsedSubtitleDocument? parse({
-    required String rawContent,
-    required SubtitleDocumentFormat format,
-  }) {
+  static ParsedSubtitleDocument? parse({required String rawContent, required SubtitleDocumentFormat format}) {
     final normalizedContent = _normalizeContent(rawContent);
     if (normalizedContent.trim().isEmpty) {
       return null;
@@ -151,9 +131,7 @@ class SubtitleParser {
   }
 
   static String _normalizeContent(String input) {
-    final normalizedLineBreaks = input
-        .replaceAll('\r\n', '\n')
-        .replaceAll('\r', '\n');
+    final normalizedLineBreaks = input.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
     if (normalizedLineBreaks.startsWith('\uFEFF')) {
       return normalizedLineBreaks.substring(1);
     }
@@ -176,10 +154,7 @@ class SubtitleParser {
         continue;
       }
 
-      final timing = _parseTimingLine(
-        lines[timingIndex],
-        format: SubtitleDocumentFormat.srt,
-      );
+      final timing = _parseTimingLine(lines[timingIndex], format: SubtitleDocumentFormat.srt);
       if (timing == null) {
         continue;
       }
@@ -196,13 +171,7 @@ class SubtitleParser {
         continue;
       }
 
-      cues.add(
-        ParsedSubtitleCue(
-          start: timing.start,
-          end: timing.end,
-          text: displayText,
-        ),
-      );
+      cues.add(ParsedSubtitleCue(start: timing.start, end: timing.end, text: displayText));
     }
 
     return cues;
@@ -235,9 +204,7 @@ class SubtitleParser {
 
       final blockLines = block.split('\n');
       final firstLine = blockLines.first.trimLeft();
-      if (firstLine.startsWith('NOTE') ||
-          firstLine.startsWith('STYLE') ||
-          firstLine.startsWith('REGION')) {
+      if (firstLine.startsWith('NOTE') || firstLine.startsWith('STYLE') || firstLine.startsWith('REGION')) {
         continue;
       }
 
@@ -246,17 +213,12 @@ class SubtitleParser {
         continue;
       }
 
-      final timing = _parseTimingLine(
-        blockLines[timingIndex],
-        format: SubtitleDocumentFormat.webvtt,
-      );
+      final timing = _parseTimingLine(blockLines[timingIndex], format: SubtitleDocumentFormat.webvtt);
       if (timing == null) {
         continue;
       }
 
-      final payloadLines = blockLines
-          .skip(timingIndex + 1)
-          .toList(growable: false);
+      final payloadLines = blockLines.skip(timingIndex + 1).toList(growable: false);
       if (payloadLines.isEmpty) {
         continue;
       }
@@ -264,16 +226,9 @@ class SubtitleParser {
       final rawPayload = payloadLines.join('\n');
       final speaker = _extractSpeaker(rawPayload);
       final cleanedPayload = _stripVttMarkupPreservingTimestamps(rawPayload);
-      final segments = _parseWebVttSegments(
-        cleanedPayload,
-        timing.start,
-        timing.end,
-      );
+      final segments = _parseWebVttSegments(cleanedPayload, timing.start, timing.end);
 
-      final plainPayload = cleanedPayload.replaceAll(
-        _vttTimestampTagPattern,
-        '',
-      );
+      final plainPayload = cleanedPayload.replaceAll(_vttTimestampTagPattern, '');
       final displayText = _normalizeCueText(_decodeEntities(plainPayload));
       if (displayText.isEmpty) {
         continue;
@@ -293,10 +248,7 @@ class SubtitleParser {
     return cues;
   }
 
-  static _ParsedTiming? _parseTimingLine(
-    String timingLine, {
-    required SubtitleDocumentFormat format,
-  }) {
+  static _ParsedTiming? _parseTimingLine(String timingLine, {required SubtitleDocumentFormat format}) {
     final separatorIndex = timingLine.indexOf('-->');
     if (separatorIndex < 0) {
       return null;
@@ -322,10 +274,7 @@ class SubtitleParser {
     return _ParsedTiming(start: start, end: end);
   }
 
-  static Duration? _parseTimestamp(
-    String input, {
-    required SubtitleDocumentFormat format,
-  }) {
+  static Duration? _parseTimestamp(String input, {required SubtitleDocumentFormat format}) {
     final normalized = input.trim().replaceAll(',', '.');
     if (normalized.isEmpty) {
       return null;
@@ -337,9 +286,7 @@ class SubtitleParser {
     }
 
     final hasHours = parts.length == 3;
-    if (format == SubtitleDocumentFormat.webvtt &&
-        !hasHours &&
-        parts[0].length > 2) {
+    if (format == SubtitleDocumentFormat.webvtt && !hasHours && parts[0].length > 2) {
       return null;
     }
 
@@ -381,12 +328,7 @@ class SubtitleParser {
       return null;
     }
 
-    return Duration(
-      hours: hours,
-      minutes: minutes,
-      seconds: seconds,
-      milliseconds: milliseconds,
-    );
+    return Duration(hours: hours, minutes: minutes, seconds: seconds, milliseconds: milliseconds);
   }
 
   static String? _extractSpeaker(String payload) {
@@ -400,9 +342,7 @@ class SubtitleParser {
       return null;
     }
 
-    final speaker = _normalizeInlineWhitespace(
-      _decodeEntities(rawSpeaker.trim()),
-    );
+    final speaker = _normalizeInlineWhitespace(_decodeEntities(rawSpeaker.trim()));
     if (speaker.isEmpty) {
       return null;
     }
@@ -411,10 +351,7 @@ class SubtitleParser {
   }
 
   static String _stripTags(String input) {
-    final withLineBreaks = input.replaceAll(
-      RegExp(r'<br\s*/?>', caseSensitive: false),
-      '\n',
-    );
+    final withLineBreaks = input.replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
     return withLineBreaks.replaceAll(RegExp(r'<[^>]+>'), '');
   }
 
@@ -440,15 +377,10 @@ class SubtitleParser {
       final tagContent = payload.substring(cursor + 1, closeIndex).trim();
       final lowerTagContent = tagContent.toLowerCase();
 
-      final timestamp = _parseTimestamp(
-        tagContent,
-        format: SubtitleDocumentFormat.webvtt,
-      );
+      final timestamp = _parseTimestamp(tagContent, format: SubtitleDocumentFormat.webvtt);
       if (timestamp != null) {
         output.write('<$tagContent>');
-      } else if (lowerTagContent == 'br' ||
-          lowerTagContent == 'br/' ||
-          lowerTagContent == 'br /') {
+      } else if (lowerTagContent == 'br' || lowerTagContent == 'br/' || lowerTagContent == 'br /') {
         output.write('\n');
       }
 
@@ -458,14 +390,8 @@ class SubtitleParser {
     return output.toString();
   }
 
-  static List<ParsedSubtitleSegment> _parseWebVttSegments(
-    String payload,
-    Duration cueStart,
-    Duration cueEnd,
-  ) {
-    final matches = _vttTimestampTagPattern
-        .allMatches(payload)
-        .toList(growable: false);
+  static List<ParsedSubtitleSegment> _parseWebVttSegments(String payload, Duration cueStart, Duration cueEnd) {
+    final matches = _vttTimestampTagPattern.allMatches(payload).toList(growable: false);
     if (matches.isEmpty) {
       return const <ParsedSubtitleSegment>[];
     }
@@ -484,16 +410,9 @@ class SubtitleParser {
       final timestampText = match.group(1);
       final parsedTimestamp = timestampText == null
           ? null
-          : _parseTimestamp(
-              timestampText,
-              format: SubtitleDocumentFormat.webvtt,
-            );
+          : _parseTimestamp(timestampText, format: SubtitleDocumentFormat.webvtt);
       if (parsedTimestamp != null) {
-        currentStart = _clampDuration(
-          parsedTimestamp,
-          min: cueStart,
-          max: cueEnd,
-        );
+        currentStart = _clampDuration(parsedTimestamp, min: cueStart, max: cueEnd);
       }
 
       cursor = match.end;
@@ -512,9 +431,7 @@ class SubtitleParser {
     final segments = <ParsedSubtitleSegment>[];
     for (var index = 0; index < rawSegments.length; index++) {
       final segment = rawSegments[index];
-      final nextStart = index + 1 < rawSegments.length
-          ? rawSegments[index + 1].start
-          : cueEnd;
+      final nextStart = index + 1 < rawSegments.length ? rawSegments[index + 1].start : cueEnd;
 
       var start = _clampDuration(segment.start, min: cueStart, max: cueEnd);
       var end = _clampDuration(nextStart, min: cueStart, max: cueEnd);
@@ -522,19 +439,13 @@ class SubtitleParser {
         end = start + const Duration(milliseconds: 1);
       }
 
-      segments.add(
-        ParsedSubtitleSegment(start: start, end: end, text: segment.text),
-      );
+      segments.add(ParsedSubtitleSegment(start: start, end: end, text: segment.text));
     }
 
     return segments;
   }
 
-  static Duration _clampDuration(
-    Duration value, {
-    required Duration min,
-    required Duration max,
-  }) {
+  static Duration _clampDuration(Duration value, {required Duration min, required Duration max}) {
     if (value < min) {
       return min;
     }

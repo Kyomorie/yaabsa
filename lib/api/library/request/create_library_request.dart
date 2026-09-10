@@ -16,6 +16,5 @@ abstract class CreateLibraryRequest with _$CreateLibraryRequest {
     @JsonKey(name: 'settings') LibrarySettings? settings,
   }) = _CreateLibraryRequest;
 
-  factory CreateLibraryRequest.fromJson(Map<String, dynamic> json) =>
-      _$CreateLibraryRequestFromJson(json);
+  factory CreateLibraryRequest.fromJson(Map<String, dynamic> json) => _$CreateLibraryRequestFromJson(json);
 }

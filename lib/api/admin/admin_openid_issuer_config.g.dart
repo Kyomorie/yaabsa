@@ -6,9 +6,7 @@ part of 'admin_openid_issuer_config.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_AdminOpenIdIssuerConfig _$AdminOpenIdIssuerConfigFromJson(
-  Map<String, dynamic> json,
-) => _AdminOpenIdIssuerConfig(
+_AdminOpenIdIssuerConfig _$AdminOpenIdIssuerConfigFromJson(Map<String, dynamic> json) => _AdminOpenIdIssuerConfig(
   issuer: json['issuer'] as String?,
   authorizationEndpoint: json['authorization_endpoint'] as String?,
   tokenEndpoint: json['token_endpoint'] as String?,
@@ -16,15 +14,11 @@ _AdminOpenIdIssuerConfig _$AdminOpenIdIssuerConfigFromJson(
   endSessionEndpoint: json['end_session_endpoint'] as String?,
   jwksUri: json['jwks_uri'] as String?,
   signingAlgorithms:
-      (json['id_token_signing_alg_values_supported'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
+      (json['id_token_signing_alg_values_supported'] as List<dynamic>?)?.map((e) => e as String).toList() ??
       const <String>[],
 );
 
-Map<String, dynamic> _$AdminOpenIdIssuerConfigToJson(
-  _AdminOpenIdIssuerConfig instance,
-) => <String, dynamic>{
+Map<String, dynamic> _$AdminOpenIdIssuerConfigToJson(_AdminOpenIdIssuerConfig instance) => <String, dynamic>{
   'issuer': instance.issuer,
   'authorization_endpoint': instance.authorizationEndpoint,
   'token_endpoint': instance.tokenEndpoint,

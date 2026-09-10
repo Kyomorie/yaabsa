@@ -2,12 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/screens/layout_home/navigation_item_config.dart';
 
 class LayoutHomeMobileNavBar extends StatelessWidget {
-  const LayoutHomeMobileNavBar({
-    super.key,
-    required this.items,
-    required this.selectedIndex,
-    required this.onItemTap,
-  });
+  const LayoutHomeMobileNavBar({super.key, required this.items, required this.selectedIndex, required this.onItemTap});
 
   static const double height = 70.0;
   static const double horizontalMargin = 12.0;
@@ -62,9 +57,7 @@ class LayoutHomeMobileNavBar extends StatelessWidget {
                       children: [
                         Icon(
                           item.icon,
-                          color: isSelected
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
+                          color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
                           size: isSelected ? 26 : 22,
                         ),
                         const SizedBox(height: 4),
@@ -72,12 +65,8 @@ class LayoutHomeMobileNavBar extends StatelessWidget {
                           item.label,
                           style: TextStyle(
                             fontSize: 10,
-                            color: isSelected
-                                ? colorScheme.primary
-                                : colorScheme.onSurfaceVariant,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                            color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

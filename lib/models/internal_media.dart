@@ -7,11 +7,7 @@ import 'package:yaabsa/util/extensions.dart';
 import 'package:yaabsa/util/logger.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:just_audio/just_audio.dart'
-    show
-        AudioSource,
-        ProgressiveAudioSource,
-        ProgressiveAudioSourceOptions,
-        AndroidExtractorOptions;
+    show AudioSource, ProgressiveAudioSource, ProgressiveAudioSourceOptions, AndroidExtractorOptions;
 
 part 'internal_media.freezed.dart';
 part 'internal_media.g.dart';
@@ -22,8 +18,7 @@ const int notificationArtworkDecodeMaxDimension = 1024;
 
 bool _isRemoteAudiobookshelfCover(Uri coverUri) {
   final scheme = coverUri.scheme.toLowerCase();
-  return (scheme == 'http' || scheme == 'https') &&
-      RegExp(r'/api/items/[^/]+/cover/?$').hasMatch(coverUri.path);
+  return (scheme == 'http' || scheme == 'https') && RegExp(r'/api/items/[^/]+/cover/?$').hasMatch(coverUri.path);
 }
 
 Uri? libraryItemCoverUri(Uri? coverUri) {
@@ -43,11 +38,7 @@ Uri? _sizedRemoteCoverUri(Uri? coverUri, int dimension) {
   }
 
   return coverUri.replace(
-    queryParameters: <String, String>{
-      ...coverUri.queryParameters,
-      'width': '$dimension',
-      'height': '$dimension',
-    },
+    queryParameters: <String, String>{...coverUri.queryParameters, 'width': '$dimension', 'height': '$dimension'},
   );
 }
 
@@ -80,17 +71,14 @@ abstract class InternalMedia with _$InternalMedia {
     @JsonKey(name: "saf") required bool saf,
   }) = _InternalMedia;
 
-  factory InternalMedia.fromJson(Map<String, dynamic> json) =>
-      _$InternalMediaFromJson(json);
+  factory InternalMedia.fromJson(Map<String, dynamic> json) => _$InternalMediaFromJson(json);
 
   String get id => episodeId ?? itemId;
 
   MediaItem toMediaItem() {
     return MediaItem(
       id: episodeId ?? itemId,
-      album: (series != null && seriesPosition != null)
-          ? '$series #$seriesPosition'
-          : (series ?? ''),
+      album: (series != null && seriesPosition != null) ? '$series #$seriesPosition' : (series ?? ''),
       title: title,
       displayTitle: title,
       artist: author,
@@ -102,12 +90,9 @@ abstract class InternalMedia with _$InternalMedia {
     );
   }
 
-  static const ProgressiveAudioSourceOptions _progressiveSourceOptions =
-      ProgressiveAudioSourceOptions(
-        androidExtractorOptions: AndroidExtractorOptions(
-          constantBitrateSeekingEnabled: true,
-        ),
-      );
+  static const ProgressiveAudioSourceOptions _progressiveSourceOptions = ProgressiveAudioSourceOptions(
+    androidExtractorOptions: AndroidExtractorOptions(constantBitrateSeekingEnabled: true),
+  );
 
   static bool _isAdaptiveStream(Uri uri) {
     final lowerPath = uri.path.toLowerCase();
@@ -118,54 +103,35 @@ abstract class InternalMedia with _$InternalMedia {
         lowerFragment.endsWith('.mpd');
   }
 
-  AudioSource _buildNetworkAudioSource(
-    Uri uri, {
-    Map<String, String>? headers,
-  }) {
+  AudioSource _buildNetworkAudioSource(Uri uri, {Map<String, String>? headers}) {
     if (_isAdaptiveStream(uri)) {
       return AudioSource.uri(uri, headers: headers);
     }
 
-    return ProgressiveAudioSource(
-      uri,
-      headers: headers,
-      options: _progressiveSourceOptions,
-    );
+    return ProgressiveAudioSource(uri, headers: headers, options: _progressiveSourceOptions);
   }
 
   List<AudioSource> toAudioSources({Map<String, String>? headers}) {
     if (local) {
-      logger(
-        'Using local audio sources',
-        tag: 'InternalMedia',
-        level: InfoLevel.debug,
-      );
+      logger('Using local audio sources', tag: 'InternalMedia', level: InfoLevel.debug);
     }
-    final effectiveHeaders = headers == null || headers.isEmpty
-        ? null
-        : headers;
+    final effectiveHeaders = headers == null || headers.isEmpty ? null : headers;
 
     return tracks.map((track) {
       if (track.url == null) {
-        throw ArgumentError(
-          'Track URL cannot be null for track index ${track.index}',
-        );
+        throw ArgumentError('Track URL cannot be null for track index ${track.index}');
       }
       if (track.mimeType.isEmpty) {
-        throw ArgumentError(
-          'Track mimeType cannot be empty for track index ${track.index}',
-        );
+        throw ArgumentError('Track mimeType cannot be empty for track index ${track.index}');
       }
       final url = track.url!;
       if (local) {
-        final hasExplicitScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://')
-            .hasMatch(url);
+        final hasExplicitScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(url);
         final isFileUri = url.startsWith('file://');
 
         if (saf || (hasExplicitScheme && !isFileUri)) {
           final uri = Uri.parse(url);
-          final shouldAttachHeaders =
-              uri.scheme == 'http' || uri.scheme == 'https';
+          final shouldAttachHeaders = uri.scheme == 'http' || uri.scheme == 'https';
           if (shouldAttachHeaders) {
             return _buildNetworkAudioSource(uri, headers: effectiveHeaders);
           }
@@ -174,9 +140,7 @@ abstract class InternalMedia with _$InternalMedia {
 
         if (isFileUri) {
           final fileUri = Uri.parse(url);
-          return AudioSource.file(
-            fileUri.toFilePath(windows: !kIsWeb && Platform.isWindows),
-          );
+          return AudioSource.file(fileUri.toFilePath(windows: !kIsWeb && Platform.isWindows));
         }
 
         return AudioSource.file(url);
@@ -217,9 +181,7 @@ abstract class InternalMedia with _$InternalMedia {
     if (index < 0 || index >= tracks.length) {
       throw RangeError('Index out of range: $index');
     }
-    return tracks[index].start != null
-        ? Duration(microseconds: (tracks[index].start! * 1e6).round())
-        : Duration.zero;
+    return tracks[index].start != null ? Duration(microseconds: (tracks[index].start! * 1e6).round()) : Duration.zero;
   }
 
   int getIndexForDuration(Duration duration) {
@@ -228,8 +190,7 @@ abstract class InternalMedia with _$InternalMedia {
       if (tracks[i].start != null && tracks[i].end != null) {
         final isLastTrack = i == tracks.length - 1;
         if (targetDuration >= tracks[i].start! &&
-            (targetDuration < tracks[i].end! ||
-                (isLastTrack && targetDuration <= tracks[i].end!))) {
+            (targetDuration < tracks[i].end! || (isLastTrack && targetDuration <= tracks[i].end!))) {
           return i;
         }
       }
@@ -252,8 +213,7 @@ abstract class InternalMedia with _$InternalMedia {
     for (int i = 0; i < chapters!.length; i++) {
       final isLastChapter = i == chapters!.length - 1;
       if (chapters![i].start <= targetDuration &&
-          (targetDuration < chapters![i].end ||
-              (isLastChapter && targetDuration <= chapters![i].end))) {
+          (targetDuration < chapters![i].end || (isLastChapter && targetDuration <= chapters![i].end))) {
         return chapters![i];
       }
     }
@@ -326,8 +286,7 @@ abstract class InternalTrack with _$InternalTrack {
     @JsonKey(name: "end") double? end,
   }) = _InternalTrack;
 
-  factory InternalTrack.fromJson(Map<String, dynamic> json) =>
-      _$InternalTrackFromJson(json);
+  factory InternalTrack.fromJson(Map<String, dynamic> json) => _$InternalTrackFromJson(json);
 }
 
 @freezed
@@ -338,8 +297,7 @@ abstract class InternalChapter with _$InternalChapter {
     @JsonKey(name: "title") required String title,
   }) = _InternalChapter;
 
-  factory InternalChapter.fromJson(Map<String, dynamic> json) =>
-      _$InternalChapterFromJson(json);
+  factory InternalChapter.fromJson(Map<String, dynamic> json) => _$InternalChapterFromJson(json);
 }
 
 @freezed
@@ -349,6 +307,5 @@ abstract class QueueItem with _$QueueItem {
     @JsonKey(name: "episodeId") String? episodeId,
   }) = _QueueItem;
 
-  factory QueueItem.fromJson(Map<String, dynamic> json) =>
-      _$QueueItemFromJson(json);
+  factory QueueItem.fromJson(Map<String, dynamic> json) => _$QueueItemFromJson(json);
 }

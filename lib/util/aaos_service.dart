@@ -5,17 +5,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/services.dart';
-import 'package:yaabsa/util/globals.dart'
-    show audioHandler, isAudioHandlerInitialized;
+import 'package:yaabsa/util/globals.dart' show audioHandler, isAudioHandlerInitialized;
 import 'package:yaabsa/util/logger.dart';
 import 'package:yaabsa/util/router.dart';
 
 class AaosTelemetryState {
-  const AaosTelemetryState({
-    required this.isAndroid,
-    required this.isAutomotiveDevice,
-    this.statusMessage,
-  });
+  const AaosTelemetryState({required this.isAndroid, required this.isAutomotiveDevice, this.statusMessage});
 
   const AaosTelemetryState.initial()
     : isAndroid = false,
@@ -35,9 +30,7 @@ class AaosTelemetryState {
     return AaosTelemetryState(
       isAndroid: isAndroid ?? this.isAndroid,
       isAutomotiveDevice: isAutomotiveDevice ?? this.isAutomotiveDevice,
-      statusMessage: clearStatusMessage
-          ? null
-          : (statusMessage ?? this.statusMessage),
+      statusMessage: clearStatusMessage ? null : (statusMessage ?? this.statusMessage),
     );
   }
 }
@@ -47,15 +40,11 @@ class AaosService {
 
   static final AaosService instance = AaosService._();
 
-  static const String _automotiveFeatureFlag =
-      'android.hardware.type.automotive';
-  static const MethodChannel _channel = MethodChannel(
-    'de.vito0912.yaabsa/aaos',
-  );
+  static const String _automotiveFeatureFlag = 'android.hardware.type.automotive';
+  static const MethodChannel _channel = MethodChannel('de.vito0912.yaabsa/aaos');
 
   final DeviceInfoPlugin _deviceInfoPlugin = DeviceInfoPlugin();
-  final StreamController<AaosTelemetryState> _stateController =
-      StreamController<AaosTelemetryState>.broadcast();
+  final StreamController<AaosTelemetryState> _stateController = StreamController<AaosTelemetryState>.broadcast();
 
   AaosTelemetryState _state = const AaosTelemetryState.initial();
   bool _initialized = false;
@@ -71,11 +60,7 @@ class AaosService {
     _initialized = true;
 
     if (kIsWeb || !Platform.isAndroid) {
-      _emit(
-        _state.copyWith(
-          statusMessage: 'AAOS integration is only available on Android.',
-        ),
-      );
+      _emit(_state.copyWith(statusMessage: 'AAOS integration is only available on Android.'));
       return;
     }
 
@@ -84,14 +69,11 @@ class AaosService {
         return true;
       } else if (call.method == 'openSettings') {
         final currentUri = globalRouter.routeInformationProvider.value.uri;
-        if (currentUri.path == '/boot' ||
-            currentUri.path.startsWith('/add-user')) {
+        if (currentUri.path == '/boot' || currentUri.path.startsWith('/add-user')) {
           return null;
         }
 
-        final isAlreadyInSettings =
-            currentUri.path == '/' &&
-            currentUri.queryParameters['tab'] == 'settings';
+        final isAlreadyInSettings = currentUri.path == '/' && currentUri.queryParameters['tab'] == 'settings';
         if (isAlreadyInSettings) {
           return null;
         }
@@ -101,8 +83,7 @@ class AaosService {
       } else if (call.method == 'openSignIn') {
         final currentUri = globalRouter.routeInformationProvider.value.uri;
         final alreadyForcedSignIn =
-            currentUri.path.startsWith('/add-user') &&
-            currentUri.queryParameters['authRequired'] == '1';
+            currentUri.path.startsWith('/add-user') && currentUri.queryParameters['authRequired'] == '1';
         if (alreadyForcedSignIn) {
           return null;
         }
@@ -127,26 +108,16 @@ class AaosService {
     try {
       await _channel.invokeMethod<void>('ready');
     } catch (error) {
-      logger(
-        'Failed to signal AAOS Flutter readiness: $error',
-        tag: 'AAOS',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to signal AAOS Flutter readiness: $error', tag: 'AAOS', level: InfoLevel.warning);
     }
   }
 
   Future<bool> _detectAutomotiveDevice() async {
     try {
-      final androidInfo = await _deviceInfoPlugin.androidInfo.timeout(
-        const Duration(seconds: 2),
-      );
+      final androidInfo = await _deviceInfoPlugin.androidInfo.timeout(const Duration(seconds: 2));
       return androidInfo.systemFeatures.contains(_automotiveFeatureFlag);
     } catch (error) {
-      logger(
-        'Failed to detect AAOS feature flag: $error',
-        tag: 'AAOS',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to detect AAOS feature flag: $error', tag: 'AAOS', level: InfoLevel.warning);
       return false;
     }
   }
@@ -167,25 +138,15 @@ class AaosService {
           );
         }
       }
-      final result = await _channel.invokeMethod<bool>('launchMediaCenter', {
-        'finishActivity': finishActivity,
-      });
+      final result = await _channel.invokeMethod<bool>('launchMediaCenter', {'finishActivity': finishActivity});
       final launched = result ?? false;
-      logger(
-        'AAOS media center launch result: $launched',
-        tag: 'AAOS',
-        level: InfoLevel.info,
-      );
+      logger('AAOS media center launch result: $launched', tag: 'AAOS', level: InfoLevel.info);
       if (launched && isAudioHandlerInitialized) {
         audioHandler.completeAndroidAutoBrowseLaunch();
       }
       return launched;
     } catch (e) {
-      logger(
-        'Failed to launch AAOS Media Center: $e',
-        tag: 'AAOS',
-        level: InfoLevel.error,
-      );
+      logger('Failed to launch AAOS Media Center: $e', tag: 'AAOS', level: InfoLevel.error);
       return false;
     }
   }

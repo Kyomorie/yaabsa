@@ -32,10 +32,7 @@ class LibraryUpsertFormResult {
   final LibrarySettings settings;
 }
 
-Future<LibraryUpsertFormResult?> showLibraryUpsertFormDialog(
-  BuildContext context, {
-  Library? library,
-}) {
+Future<LibraryUpsertFormResult?> showLibraryUpsertFormDialog(BuildContext context, {Library? library}) {
   return showDialog<LibraryUpsertFormResult>(
     context: context,
     barrierDismissible: false,
@@ -51,30 +48,26 @@ class _LibraryUpsertFormDialog extends ConsumerStatefulWidget {
   bool get isCreate => library == null;
 
   @override
-  ConsumerState<_LibraryUpsertFormDialog> createState() =>
-      _LibraryUpsertFormDialogState();
+  ConsumerState<_LibraryUpsertFormDialog> createState() => _LibraryUpsertFormDialogState();
 }
 
-class _LibraryUpsertFormDialogState
-    extends ConsumerState<_LibraryUpsertFormDialog> {
-  static const List<YaabsaDropdownOption<String>> _mediaTypeOptions =
-      <YaabsaDropdownOption<String>>[
-        YaabsaDropdownOption<String>(value: 'book', label: 'Books'),
-        YaabsaDropdownOption<String>(value: 'podcast', label: 'Podcasts'),
-      ];
+class _LibraryUpsertFormDialogState extends ConsumerState<_LibraryUpsertFormDialog> {
+  static const List<YaabsaDropdownOption<String>> _mediaTypeOptions = <YaabsaDropdownOption<String>>[
+    YaabsaDropdownOption<String>(value: 'book', label: 'Books'),
+    YaabsaDropdownOption<String>(value: 'podcast', label: 'Podcasts'),
+  ];
 
-  static const List<YaabsaDropdownOption<String>> _podcastRegionOptions =
-      <YaabsaDropdownOption<String>>[
-        YaabsaDropdownOption<String>(value: 'us', label: 'United States'),
-        YaabsaDropdownOption<String>(value: 'gb', label: 'United Kingdom'),
-        YaabsaDropdownOption<String>(value: 'de', label: 'Germany'),
-        YaabsaDropdownOption<String>(value: 'fr', label: 'France'),
-        YaabsaDropdownOption<String>(value: 'es', label: 'Spain'),
-        YaabsaDropdownOption<String>(value: 'it', label: 'Italy'),
-        YaabsaDropdownOption<String>(value: 'jp', label: 'Japan'),
-        YaabsaDropdownOption<String>(value: 'au', label: 'Australia'),
-        YaabsaDropdownOption<String>(value: 'ca', label: 'Canada'),
-      ];
+  static const List<YaabsaDropdownOption<String>> _podcastRegionOptions = <YaabsaDropdownOption<String>>[
+    YaabsaDropdownOption<String>(value: 'us', label: 'United States'),
+    YaabsaDropdownOption<String>(value: 'gb', label: 'United Kingdom'),
+    YaabsaDropdownOption<String>(value: 'de', label: 'Germany'),
+    YaabsaDropdownOption<String>(value: 'fr', label: 'France'),
+    YaabsaDropdownOption<String>(value: 'es', label: 'Spain'),
+    YaabsaDropdownOption<String>(value: 'it', label: 'Italy'),
+    YaabsaDropdownOption<String>(value: 'jp', label: 'Japan'),
+    YaabsaDropdownOption<String>(value: 'au', label: 'Australia'),
+    YaabsaDropdownOption<String>(value: 'ca', label: 'Canada'),
+  ];
 
   static const List<String> _defaultMetadataPrecedenceIds = <String>[
     'folderStructure',
@@ -94,30 +87,21 @@ class _LibraryUpsertFormDialogState
     'absMetadata': 'Audiobookshelf metadata file',
   };
 
-  static const List<YaabsaDropdownOption<String>> _bookProviderFallback =
-      <YaabsaDropdownOption<String>>[
-        YaabsaDropdownOption<String>(value: 'google', label: 'Google Books'),
-        YaabsaDropdownOption<String>(
-          value: 'openlibrary',
-          label: 'Open Library',
-        ),
-        YaabsaDropdownOption<String>(value: 'itunes', label: 'iTunes'),
-        YaabsaDropdownOption<String>(value: 'audible', label: 'Audible'),
-        YaabsaDropdownOption<String>(value: 'fantlab', label: 'FantLab'),
-      ];
+  static const List<YaabsaDropdownOption<String>> _bookProviderFallback = <YaabsaDropdownOption<String>>[
+    YaabsaDropdownOption<String>(value: 'google', label: 'Google Books'),
+    YaabsaDropdownOption<String>(value: 'openlibrary', label: 'Open Library'),
+    YaabsaDropdownOption<String>(value: 'itunes', label: 'iTunes'),
+    YaabsaDropdownOption<String>(value: 'audible', label: 'Audible'),
+    YaabsaDropdownOption<String>(value: 'fantlab', label: 'FantLab'),
+  ];
 
-  static const List<YaabsaDropdownOption<String>> _podcastProviderFallback =
-      <YaabsaDropdownOption<String>>[
-        YaabsaDropdownOption<String>(value: 'itunes', label: 'iTunes'),
-      ];
+  static const List<YaabsaDropdownOption<String>> _podcastProviderFallback = <YaabsaDropdownOption<String>>[
+    YaabsaDropdownOption<String>(value: 'itunes', label: 'iTunes'),
+  ];
 
-  static const List<YaabsaDropdownOption<String>>
-  _iconOptions = <YaabsaDropdownOption<String>>[
+  static const List<YaabsaDropdownOption<String>> _iconOptions = <YaabsaDropdownOption<String>>[
     YaabsaDropdownOption<String>(value: 'database', label: 'database'),
-    YaabsaDropdownOption<String>(
-      value: 'audiobookshelf',
-      label: 'audiobookshelf',
-    ),
+    YaabsaDropdownOption<String>(value: 'audiobookshelf', label: 'audiobookshelf'),
     YaabsaDropdownOption<String>(value: 'books-1', label: 'books-1'),
     YaabsaDropdownOption<String>(value: 'books-2', label: 'books-2'),
     YaabsaDropdownOption<String>(value: 'book-1', label: 'book-1'),
@@ -191,29 +175,20 @@ class _LibraryUpsertFormDialogState
         );
 
     _selectedMediaType = sourceLibrary?.mediaType ?? 'book';
-    _selectedProvider =
-        (sourceLibrary?.provider ??
-                _defaultProviderForMediaType(_selectedMediaType))
-            .trim();
+    _selectedProvider = (sourceLibrary?.provider ?? _defaultProviderForMediaType(_selectedMediaType)).trim();
     if (_selectedProvider.isEmpty) {
       _selectedProvider = _defaultProviderForMediaType(_selectedMediaType);
     }
 
-    _selectedPodcastRegion =
-        sourceSettings.podcastSearchRegion?.trim().isNotEmpty == true
+    _selectedPodcastRegion = sourceSettings.podcastSearchRegion?.trim().isNotEmpty == true
         ? sourceSettings.podcastSearchRegion!.trim()
         : 'us';
 
-    _existingFoldersById = {
-      for (final folder in sourceLibrary?.folders ?? const <LibraryFolder>[])
-        folder.id: folder,
-    };
+    _existingFoldersById = {for (final folder in sourceLibrary?.folders ?? const <LibraryFolder>[]) folder.id: folder};
 
     final markAsFinishedPercent = _safeMarkAsFinishedPercent(sourceSettings);
     final markAsFinishedTime = sourceSettings.markAsFinishedTimeRemaining;
-    _markAsFinishedMode = markAsFinishedPercent == null
-        ? 'timeRemaining'
-        : 'percentComplete';
+    _markAsFinishedMode = markAsFinishedPercent == null ? 'timeRemaining' : 'percentComplete';
 
     _nameController = TextEditingController(text: sourceLibrary?.name ?? '');
     _selectedIconName = (sourceLibrary?.icon ?? 'database').trim();
@@ -221,22 +196,13 @@ class _LibraryUpsertFormDialogState
       _selectedIconName = 'database';
     }
     _newFolderPathController = TextEditingController();
-    _autoScanCronController = TextEditingController(
-      text: sourceSettings.autoScanCronExpression ?? '',
-    );
+    _autoScanCronController = TextEditingController(text: sourceSettings.autoScanCronExpression ?? '');
     _markAsFinishedValueController = TextEditingController(
-      text: _formatNumericInputValue(
-        markAsFinishedPercent ?? markAsFinishedTime ?? 10,
-      ),
+      text: _formatNumericInputValue(markAsFinishedPercent ?? markAsFinishedTime ?? 10),
     );
 
     _folders = (sourceLibrary?.folders ?? const <LibraryFolder>[])
-        .map(
-          (folder) => LibraryFolderEditorEntry(
-            id: folder.id,
-            path: folder.fullPath.trim(),
-          ),
-        )
+        .map((folder) => LibraryFolderEditorEntry(id: folder.id, path: folder.fullPath.trim()))
         .where((folder) => folder.path.isNotEmpty)
         .toList(growable: true);
 
@@ -244,10 +210,8 @@ class _LibraryUpsertFormDialogState
 
     _useSquareBookCovers = (sourceSettings.coverAspectRatio ?? 1) <= 1.01;
     _enableWatcher = !(sourceSettings.disableWatcher ?? false);
-    _skipMatchingMediaWithAsin =
-        sourceSettings.skipMatchingMediaWithAsin ?? false;
-    _skipMatchingMediaWithIsbn =
-        sourceSettings.skipMatchingMediaWithIsbn ?? false;
+    _skipMatchingMediaWithAsin = sourceSettings.skipMatchingMediaWithAsin ?? false;
+    _skipMatchingMediaWithIsbn = sourceSettings.skipMatchingMediaWithIsbn ?? false;
     _audiobooksOnly = sourceSettings.audiobooksOnly ?? false;
     _epubScriptedContent = sourceSettings.epubScriptedContent ?? false;
     _hideSingleBookSeries = sourceSettings.hideSingleBookSeries ?? false;
@@ -286,16 +250,12 @@ class _LibraryUpsertFormDialogState
     return asDouble.toString();
   }
 
-  List<LibraryMetadataSourceEntry> _buildMetadataSources(
-    List<String>? precedence,
-  ) {
+  List<LibraryMetadataSourceEntry> _buildMetadataSources(List<String>? precedence) {
     final normalizedPrecedence = (precedence ?? _defaultMetadataPrecedenceIds)
         .where((id) => _metadataSourceLabels.containsKey(id))
         .toList(growable: false);
 
-    final displayPrecedence = normalizedPrecedence.reversed.toList(
-      growable: false,
-    );
+    final displayPrecedence = normalizedPrecedence.reversed.toList(growable: false);
 
     final entries = <LibraryMetadataSourceEntry>[];
     final includedIds = <String>{};
@@ -306,9 +266,7 @@ class _LibraryUpsertFormDialogState
         continue;
       }
       includedIds.add(sourceId);
-      entries.add(
-        LibraryMetadataSourceEntry(id: sourceId, label: label, enabled: true),
-      );
+      entries.add(LibraryMetadataSourceEntry(id: sourceId, label: label, enabled: true));
     }
 
     for (final sourceId in _defaultMetadataPrecedenceIds) {
@@ -321,19 +279,14 @@ class _LibraryUpsertFormDialogState
         continue;
       }
 
-      entries.add(
-        LibraryMetadataSourceEntry(id: sourceId, label: label, enabled: false),
-      );
+      entries.add(LibraryMetadataSourceEntry(id: sourceId, label: label, enabled: false));
     }
 
     return entries;
   }
 
   String _normalizePathForComparison(String rawPath) {
-    var normalized = rawPath
-        .trim()
-        .replaceAll('\\', '/')
-        .replaceAll(RegExp(r'/+'), '/');
+    var normalized = rawPath.trim().replaceAll('\\', '/').replaceAll(RegExp(r'/+'), '/');
     final isWindowsRoot = RegExp(r'^[a-zA-Z]:/$').hasMatch(normalized);
     if (normalized.length > 1 && normalized.endsWith('/') && !isWindowsRoot) {
       normalized = normalized.substring(0, normalized.length - 1);
@@ -342,8 +295,7 @@ class _LibraryUpsertFormDialogState
   }
 
   bool _isNestedPathPair(String firstPath, String secondPath) {
-    return firstPath.startsWith('$secondPath/') ||
-        secondPath.startsWith('$firstPath/');
+    return firstPath.startsWith('$secondPath/') || secondPath.startsWith('$firstPath/');
   }
 
   String? _folderConflictError(String candidatePath) {
@@ -395,15 +347,8 @@ class _LibraryUpsertFormDialogState
 
     final normalizedEntries = normalizedByPath.entries.toList(growable: false);
     for (var index = 0; index < normalizedEntries.length; index++) {
-      for (
-        var nestedIndex = index + 1;
-        nestedIndex < normalizedEntries.length;
-        nestedIndex++
-      ) {
-        if (_isNestedPathPair(
-          normalizedEntries[index].key,
-          normalizedEntries[nestedIndex].key,
-        )) {
+      for (var nestedIndex = index + 1; nestedIndex < normalizedEntries.length; nestedIndex++) {
+        if (_isNestedPathPair(normalizedEntries[index].key, normalizedEntries[nestedIndex].key)) {
           return 'Nested folder paths are not allowed.';
         }
       }
@@ -446,28 +391,20 @@ class _LibraryUpsertFormDialogState
     return null;
   }
 
-  List<YaabsaDropdownOption<String>> _providerOptions(
-    List<SearchProviderOption> rawOptions,
-  ) {
+  List<YaabsaDropdownOption<String>> _providerOptions(List<SearchProviderOption> rawOptions) {
     final options = rawOptions
         .where((option) => option.value.trim().isNotEmpty)
         .map(
           (option) => YaabsaDropdownOption<String>(
             value: option.value.trim(),
-            label: option.text.trim().isEmpty
-                ? option.value.trim()
-                : option.text.trim(),
+            label: option.text.trim().isEmpty ? option.value.trim() : option.text.trim(),
           ),
         )
         .toList(growable: false);
 
-    final deduplicated = <String, YaabsaDropdownOption<String>>{
-      for (final option in options) option.value: option,
-    };
+    final deduplicated = <String, YaabsaDropdownOption<String>>{for (final option in options) option.value: option};
 
-    final fallback = _selectedMediaType == 'podcast'
-        ? _podcastProviderFallback
-        : _bookProviderFallback;
+    final fallback = _selectedMediaType == 'podcast' ? _podcastProviderFallback : _bookProviderFallback;
     for (final option in fallback) {
       deduplicated.putIfAbsent(option.value, () => option);
     }
@@ -483,15 +420,10 @@ class _LibraryUpsertFormDialogState
   }
 
   List<YaabsaDropdownOption<String>> _resolvedIconOptions() {
-    final options = <String, YaabsaDropdownOption<String>>{
-      for (final option in _iconOptions) option.value: option,
-    };
+    final options = <String, YaabsaDropdownOption<String>>{for (final option in _iconOptions) option.value: option};
 
     if (!options.containsKey(_selectedIconName)) {
-      options[_selectedIconName] = YaabsaDropdownOption<String>(
-        value: _selectedIconName,
-        label: _selectedIconName,
-      );
+      options[_selectedIconName] = YaabsaDropdownOption<String>(value: _selectedIconName, label: _selectedIconName);
     }
 
     return options.values.toList(growable: false);
@@ -644,48 +576,27 @@ class _LibraryUpsertFormDialogState
     final rawMarkValue = _markAsFinishedValueController.text.trim();
     final parsedTimeRemaining = int.tryParse(rawMarkValue) ?? 10;
     final parsedPercentComplete = double.tryParse(rawMarkValue) ?? 10;
-    final boundedTimeRemaining = parsedTimeRemaining < 1
-        ? 1
-        : parsedTimeRemaining;
-    final boundedPercentComplete = parsedPercentComplete
-        .clamp(0, 100)
-        .toDouble();
+    final boundedTimeRemaining = parsedTimeRemaining < 1 ? 1 : parsedTimeRemaining;
+    final boundedPercentComplete = parsedPercentComplete.clamp(0, 100).toDouble();
 
     return LibrarySettings(
       coverAspectRatio: _useSquareBookCovers ? 1 : 1.6,
       disableWatcher: !_enableWatcher,
-      skipMatchingMediaWithAsin: _selectedMediaType == 'book'
-          ? _skipMatchingMediaWithAsin
-          : null,
-      skipMatchingMediaWithIsbn: _selectedMediaType == 'book'
-          ? _skipMatchingMediaWithIsbn
-          : null,
-      autoScanCronExpression: _scheduleEnabled
-          ? _autoScanCronController.text.trim()
-          : null,
+      skipMatchingMediaWithAsin: _selectedMediaType == 'book' ? _skipMatchingMediaWithAsin : null,
+      skipMatchingMediaWithIsbn: _selectedMediaType == 'book' ? _skipMatchingMediaWithIsbn : null,
+      autoScanCronExpression: _scheduleEnabled ? _autoScanCronController.text.trim() : null,
       audiobooksOnly: _selectedMediaType == 'book' ? _audiobooksOnly : null,
-      epubScriptedContent: _selectedMediaType == 'book'
-          ? _epubScriptedContent
-          : null,
-      hideSingleBookSeries: _selectedMediaType == 'book'
-          ? _hideSingleBookSeries
-          : null,
+      epubScriptedContent: _selectedMediaType == 'book' ? _epubScriptedContent : null,
+      hideSingleBookSeries: _selectedMediaType == 'book' ? _hideSingleBookSeries : null,
       showLaterBooks: _selectedMediaType == 'book' ? _showLaterBooks : null,
-      podcastSearchRegion: _selectedMediaType == 'podcast'
-          ? _selectedPodcastRegion
-          : null,
-      markAsFinishedTimeRemaining:
-          _selectedMediaType == 'book' && _markAsFinishedMode == 'timeRemaining'
+      podcastSearchRegion: _selectedMediaType == 'podcast' ? _selectedPodcastRegion : null,
+      markAsFinishedTimeRemaining: _selectedMediaType == 'book' && _markAsFinishedMode == 'timeRemaining'
           ? boundedTimeRemaining
           : null,
-      markAsFinishedPercentComplete:
-          _selectedMediaType == 'book' &&
-              _markAsFinishedMode == 'percentComplete'
+      markAsFinishedPercentComplete: _selectedMediaType == 'book' && _markAsFinishedMode == 'percentComplete'
           ? boundedPercentComplete
           : null,
-      metadataPrecedence: _selectedMediaType == 'book'
-          ? metadataPrecedence
-          : null,
+      metadataPrecedence: _selectedMediaType == 'book' ? metadataPrecedence : null,
     );
   }
 
@@ -706,10 +617,7 @@ class _LibraryUpsertFormDialogState
     });
 
     try {
-      final response = await api.getLibraryApi().removeLibraryMetadata(
-        sourceLibrary.id,
-        extension: extension,
-      );
+      final response = await api.getLibraryApi().removeLibraryMetadata(sourceLibrary.id, extension: extension);
       final payload = response.data;
 
       if (payload == null || !payload.found) {
@@ -775,10 +683,7 @@ class _LibraryUpsertFormDialogState
     final scheduleError = _validateSchedule();
     final markError = _validateMarkAsFinished();
 
-    if (nameError != null ||
-        foldersError != null ||
-        scheduleError != null ||
-        markError != null) {
+    if (nameError != null || foldersError != null || scheduleError != null || markError != null) {
       setState(() {
         _nameError = nameError;
         _foldersError = foldersError;
@@ -791,9 +696,7 @@ class _LibraryUpsertFormDialogState
     final folderPayloads = _folders
         .map((folder) {
           final folderId = folder.id?.trim();
-          final existingFolder = folderId == null || folderId.isEmpty
-              ? null
-              : _existingFoldersById[folderId];
+          final existingFolder = folderId == null || folderId.isEmpty ? null : _existingFoldersById[folderId];
 
           return LibraryFolderPayload(
             id: folderId == null || folderId.isEmpty ? null : folderId,
@@ -816,27 +719,17 @@ class _LibraryUpsertFormDialogState
     );
   }
 
-  Widget _buildProviderField(
-    List<YaabsaDropdownOption<String>> providerOptions,
-  ) {
+  Widget _buildProviderField(List<YaabsaDropdownOption<String>> providerOptions) {
     return YaabsaExpressiveDropdownField<String>(
       value: _selectedProvider,
       options: providerOptions,
       onChanged: _onProviderChanged,
-      decoration: yaabsaFieldDecoration(
-        context,
-        label: 'Provider',
-        hintText: 'Select metadata provider',
-      ),
+      decoration: yaabsaFieldDecoration(context, label: 'Provider', hintText: 'Select metadata provider'),
     );
   }
 
-  Widget _buildLibrarySettingsTab(
-    AsyncValue<List<SearchProviderOption>> providerOptionsAsync,
-  ) {
-    final providerOptions = _providerOptions(
-      providerOptionsAsync.value ?? const <SearchProviderOption>[],
-    );
+  Widget _buildLibrarySettingsTab(AsyncValue<List<SearchProviderOption>> providerOptionsAsync) {
+    final providerOptions = _providerOptions(providerOptionsAsync.value ?? const <SearchProviderOption>[]);
     final iconOptions = _resolvedIconOptions();
 
     return SingleChildScrollView(
@@ -850,9 +743,7 @@ class _LibraryUpsertFormDialogState
             decoration: yaabsaFieldDecoration(
               context,
               label: 'Media type',
-              hintText: widget.isCreate
-                  ? null
-                  : 'Media type cannot be changed for existing libraries',
+              hintText: widget.isCreate ? null : 'Media type cannot be changed for existing libraries',
             ),
           ),
           const SizedBox(height: 10),
@@ -871,23 +762,15 @@ class _LibraryUpsertFormDialogState
             },
           ),
           const SizedBox(height: 10),
-          if (providerOptionsAsync.isLoading &&
-              providerOptionsAsync.value == null)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: LinearProgressIndicator(minHeight: 2),
-            ),
+          if (providerOptionsAsync.isLoading && providerOptionsAsync.value == null)
+            const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: LinearProgressIndicator(minHeight: 2)),
           _buildProviderField(providerOptions),
           const SizedBox(height: 10),
           YaabsaExpressiveDropdownField<String>(
             value: _selectedIconName,
             options: iconOptions,
             onChanged: _onIconChanged,
-            decoration: yaabsaFieldDecoration(
-              context,
-              label: 'Icon name',
-              hintText: 'Select library icon key',
-            ),
+            decoration: yaabsaFieldDecoration(context, label: 'Icon name', hintText: 'Select library icon key'),
           ),
           const SizedBox(height: 12),
           LibraryFolderListEditor(
@@ -900,10 +783,7 @@ class _LibraryUpsertFormDialogState
             errorText: _foldersError,
           ),
           const SizedBox(height: 12),
-          Text(
-            'Library behavior',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
+          Text('Library behavior', style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 8),
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
@@ -957,10 +837,7 @@ class _LibraryUpsertFormDialogState
               },
             ),
             const SizedBox(height: 8),
-            Text(
-              'Mark as finished threshold',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
+            Text('Mark as finished threshold', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -968,14 +845,8 @@ class _LibraryUpsertFormDialogState
                   child: YaabsaExpressiveDropdownField<String>(
                     value: _markAsFinishedMode,
                     options: const [
-                      YaabsaDropdownOption<String>(
-                        value: 'timeRemaining',
-                        label: 'Time remaining (seconds)',
-                      ),
-                      YaabsaDropdownOption<String>(
-                        value: 'percentComplete',
-                        label: 'Percent complete',
-                      ),
+                      YaabsaDropdownOption<String>(value: 'timeRemaining', label: 'Time remaining (seconds)'),
+                      YaabsaDropdownOption<String>(value: 'percentComplete', label: 'Percent complete'),
                     ],
                     onChanged: (value) {
                       if (value == null) {
@@ -993,9 +864,7 @@ class _LibraryUpsertFormDialogState
                 SizedBox(
                   width: 140,
                   child: StyledTextField(
-                    label: _markAsFinishedMode == 'percentComplete'
-                        ? 'Percent'
-                        : 'Seconds',
+                    label: _markAsFinishedMode == 'percentComplete' ? 'Percent' : 'Seconds',
                     controller: _markAsFinishedValueController,
                     keyboardType: _markAsFinishedMode == 'percentComplete'
                         ? const TextInputType.numberWithOptions(decimal: true)
@@ -1027,10 +896,7 @@ class _LibraryUpsertFormDialogState
                   _selectedPodcastRegion = value;
                 });
               },
-              decoration: yaabsaFieldDecoration(
-                context,
-                label: 'Podcast search region',
-              ),
+              decoration: yaabsaFieldDecoration(context, label: 'Podcast search region'),
             ),
           ],
         ],
@@ -1053,9 +919,7 @@ class _LibraryUpsertFormDialogState
       SwitchListTile.adaptive(
         contentPadding: EdgeInsets.zero,
         title: const Text('Enable folder watcher'),
-        subtitle: const Text(
-          'Disable if your host cannot provide reliable filesystem watch events.',
-        ),
+        subtitle: const Text('Disable if your host cannot provide reliable filesystem watch events.'),
         value: _enableWatcher,
         onChanged: (value) {
           setState(() {
@@ -1134,9 +998,7 @@ class _LibraryUpsertFormDialogState
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
             title: const Text('Enable scheduled scans'),
-            subtitle: const Text(
-              'Use cron syntax. Example: 0 0 * * 1 runs weekly on Monday at 00:00.',
-            ),
+            subtitle: const Text('Use cron syntax. Example: 0 0 * * 1 runs weekly on Monday at 00:00.'),
             value: _scheduleEnabled,
             onChanged: (value) {
               setState(() {
@@ -1164,9 +1026,8 @@ class _LibraryUpsertFormDialogState
           const SizedBox(height: 8),
           Text(
             'Disable scheduling to clear the cron expression.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -1192,16 +1053,12 @@ class _LibraryUpsertFormDialogState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Metadata file cleanup',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
+          Text('Metadata file cleanup', style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 4),
           Text(
             'Remove generated metadata files from library folders.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1209,16 +1066,12 @@ class _LibraryUpsertFormDialogState
             runSpacing: 8,
             children: [
               OutlinedButton.icon(
-                onPressed: _isRunningToolAction
-                    ? null
-                    : () => _runRemoveMetadata('json'),
+                onPressed: _isRunningToolAction ? null : () => _runRemoveMetadata('json'),
                 icon: const Icon(Icons.cleaning_services_outlined),
                 label: const Text('Remove metadata.json'),
               ),
               OutlinedButton.icon(
-                onPressed: _isRunningToolAction
-                    ? null
-                    : () => _runRemoveMetadata('abs'),
+                onPressed: _isRunningToolAction ? null : () => _runRemoveMetadata('abs'),
                 icon: const Icon(Icons.cleaning_services_outlined),
                 label: const Text('Remove metadata.abs'),
               ),
@@ -1226,31 +1079,20 @@ class _LibraryUpsertFormDialogState
           ),
           if (isBookLibrary) ...[
             const SizedBox(height: 14),
-            Divider(
-              color: Theme.of(context).colorScheme.outlineVariant
-                  .withValues(alpha: 0.35),
-            ),
+            Divider(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.35)),
             const SizedBox(height: 10),
-            Text(
-              'Match all books',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
+            Text('Match all books', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 4),
             Text(
               'Run the server match-all process for this library.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 8),
             FilledButton.icon(
               onPressed: _isRunningToolAction ? null : _runMatchAllBooks,
               icon: _isRunningToolAction
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.auto_fix_high_rounded),
               label: const Text('Start match-all'),
             ),
@@ -1262,16 +1104,10 @@ class _LibraryUpsertFormDialogState
 
   @override
   Widget build(BuildContext context) {
-    final providerOptionsAsync = ref.watch(
-      uploadMetadataProvidersProvider(_selectedMediaType),
-    );
+    final providerOptionsAsync = ref.watch(uploadMetadataProvidersProvider(_selectedMediaType));
     final mediaQuery = MediaQuery.of(context);
-    final dialogWidth = (mediaQuery.size.width - 48)
-        .clamp(280.0, 980.0)
-        .toDouble();
-    final dialogHeight = (mediaQuery.size.height - 190)
-        .clamp(120.0, 640.0)
-        .toDouble();
+    final dialogWidth = (mediaQuery.size.width - 48).clamp(280.0, 980.0).toDouble();
+    final dialogHeight = (mediaQuery.size.height - 190).clamp(120.0, 640.0).toDouble();
 
     return AlertDialog(
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -1288,29 +1124,14 @@ class _LibraryUpsertFormDialogState
               label: 'Library Settings',
               child: _buildLibrarySettingsTab(providerOptionsAsync),
             ),
-            ExpressiveTabViewItem(
-              id: 'scanner',
-              label: 'Scanner',
-              child: _buildScannerTab(),
-            ),
-            ExpressiveTabViewItem(
-              id: 'schedule',
-              label: 'Schedule',
-              child: _buildScheduleTab(),
-            ),
-            ExpressiveTabViewItem(
-              id: 'tools',
-              label: 'Tools',
-              child: _buildToolsTab(),
-            ),
+            ExpressiveTabViewItem(id: 'scanner', label: 'Scanner', child: _buildScannerTab()),
+            ExpressiveTabViewItem(id: 'schedule', label: 'Schedule', child: _buildScheduleTab()),
+            ExpressiveTabViewItem(id: 'tools', label: 'Tools', child: _buildToolsTab()),
           ],
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
         FilledButton.icon(
           onPressed: _submit,
           icon: Icon(widget.isCreate ? Icons.add_rounded : Icons.save_rounded),

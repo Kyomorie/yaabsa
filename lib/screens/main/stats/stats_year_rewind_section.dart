@@ -30,20 +30,10 @@ class StatsYearRewindSection extends StatelessWidget {
           children: [
             Expanded(
               child: YaabsaExpressiveDropdownField<int>(
-                value: availableYears.contains(selectedYear)
-                    ? selectedYear
-                    : availableYears.first,
-                decoration: const InputDecoration(
-                  labelText: 'Year',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                ),
+                value: availableYears.contains(selectedYear) ? selectedYear : availableYears.first,
+                decoration: const InputDecoration(labelText: 'Year', border: OutlineInputBorder(), isDense: true),
                 options: [
-                  for (final year in availableYears)
-                    YaabsaDropdownOption<int>(
-                      value: year,
-                      label: year.toString(),
-                    ),
+                  for (final year in availableYears) YaabsaDropdownOption<int>(value: year, label: year.toString()),
                 ],
                 onChanged: (value) {
                   if (value != null) {
@@ -53,11 +43,7 @@ class StatsYearRewindSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            IconButton(
-              tooltip: 'Refresh',
-              onPressed: onRefresh,
-              icon: const Icon(Icons.refresh_rounded),
-            ),
+            IconButton(tooltip: 'Refresh', onPressed: onRefresh, icon: const Icon(Icons.refresh_rounded)),
           ],
         ),
         const SizedBox(height: 14),
@@ -66,22 +52,15 @@ class StatsYearRewindSection extends StatelessWidget {
           skipLoadingOnReload: true,
           data: (stats) {
             if (stats == null) {
-              return const Text(
-                'No year-in-review data available for this year.',
-              );
+              return const Text('No year-in-review data available for this year.');
             }
 
-            final totalSessions =
-                stats.totalListeningSessions ?? stats.numListeningSessions ?? 0;
+            final totalSessions = stats.totalListeningSessions ?? stats.numListeningSessions ?? 0;
             final totalTime = stats.totalListeningTime ?? 0;
             final booksFinished = stats.numBooksFinished ?? 0;
             final booksListened = stats.numBooksListened ?? 0;
-            final mostListenedMonth = _monthName(
-              stats.mostListenedMonth?.month,
-            );
-            final peakMonthListening = formatListeningSeconds(
-              stats.mostListenedMonth?.time,
-            );
+            final mostListenedMonth = _monthName(stats.mostListenedMonth?.month);
+            final peakMonthListening = formatListeningSeconds(stats.mostListenedMonth?.time);
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,35 +69,21 @@ class StatsYearRewindSection extends StatelessWidget {
                   year: selectedYear,
                   totalTime: formatListeningSeconds(totalTime),
                   sessions: '$totalSessions sessions',
-                  peakMonth: mostListenedMonth == null
-                      ? null
-                      : '$mostListenedMonth • $peakMonthListening',
+                  peakMonth: mostListenedMonth == null ? null : '$mostListenedMonth • $peakMonthListening',
                 ),
                 const SizedBox(height: 14),
                 Wrap(
                   spacing: 10,
                   runSpacing: 10,
                   children: [
-                    _YearMetricChip(
-                      icon: Icons.headset_rounded,
-                      label: 'Sessions',
-                      value: '$totalSessions',
-                    ),
+                    _YearMetricChip(icon: Icons.headset_rounded, label: 'Sessions', value: '$totalSessions'),
                     _YearMetricChip(
                       icon: Icons.schedule_rounded,
                       label: 'Listening',
                       value: formatListeningSeconds(totalTime),
                     ),
-                    _YearMetricChip(
-                      icon: Icons.task_alt_rounded,
-                      label: 'Books Finished',
-                      value: '$booksFinished',
-                    ),
-                    _YearMetricChip(
-                      icon: Icons.menu_book_rounded,
-                      label: 'Books Listened',
-                      value: '$booksListened',
-                    ),
+                    _YearMetricChip(icon: Icons.task_alt_rounded, label: 'Books Finished', value: '$booksFinished'),
+                    _YearMetricChip(icon: Icons.menu_book_rounded, label: 'Books Listened', value: '$booksListened'),
                     if (mostListenedMonth != null)
                       _YearMetricChip(
                         icon: Icons.calendar_month_rounded,
@@ -184,8 +149,7 @@ class StatsYearRewindSection extends StatelessWidget {
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) =>
-              _YearErrorView(error: error, onRefresh: onRefresh),
+          error: (error, _) => _YearErrorView(error: error, onRefresh: onRefresh),
         ),
       ],
     );
@@ -216,11 +180,7 @@ class StatsYearRewindSection extends StatelessWidget {
 }
 
 class _YearMetricChip extends StatelessWidget {
-  const _YearMetricChip({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
+  const _YearMetricChip({required this.icon, required this.label, required this.value});
 
   final IconData icon;
 
@@ -290,12 +250,7 @@ class _YearSpotlightCard extends StatelessWidget {
           children: [
             Text('$year in rewind', style: theme.textTheme.labelLarge),
             const SizedBox(height: 4),
-            Text(
-              totalTime,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            Text(totalTime, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 2),
             Text(sessions, style: theme.textTheme.bodyMedium),
             if (peakMonth != null) ...[
@@ -310,11 +265,7 @@ class _YearSpotlightCard extends StatelessWidget {
 }
 
 class _YearRankSectionCard extends StatelessWidget {
-  const _YearRankSectionCard({
-    required this.title,
-    required this.icon,
-    required this.child,
-  });
+  const _YearRankSectionCard({required this.title, required this.icon, required this.child});
 
   final String title;
   final IconData icon;
@@ -361,10 +312,7 @@ class _YearErrorView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Failed to load year-in-review stats.',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        Text('Failed to load year-in-review stats.', style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 6),
         Text(
           error.toString(),
@@ -373,11 +321,7 @@ class _YearErrorView extends StatelessWidget {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 10),
-        OutlinedButton.icon(
-          onPressed: onRefresh,
-          icon: const Icon(Icons.refresh_rounded),
-          label: const Text('Retry'),
-        ),
+        OutlinedButton.icon(onPressed: onRefresh, icon: const Icon(Icons.refresh_rounded), label: const Text('Retry')),
       ],
     );
   }

@@ -12,19 +12,16 @@ part of 'library_provider.dart';
 @ProviderFor(userLibrariesOrder)
 final userLibrariesOrderProvider = UserLibrariesOrderFamily._();
 
-final class UserLibrariesOrderProvider
-    extends $FunctionalProvider<AsyncValue<String?>, String?, Stream<String?>>
+final class UserLibrariesOrderProvider extends $FunctionalProvider<AsyncValue<String?>, String?, Stream<String?>>
     with $FutureModifier<String?>, $StreamProvider<String?> {
-  UserLibrariesOrderProvider._({
-    required UserLibrariesOrderFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'userLibrariesOrderProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+  UserLibrariesOrderProvider._({required UserLibrariesOrderFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'userLibrariesOrderProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$userLibrariesOrderHash();
@@ -38,8 +35,7 @@ final class UserLibrariesOrderProvider
 
   @$internal
   @override
-  $StreamProviderElement<String?> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
+  $StreamProviderElement<String?> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
 
   @override
   Stream<String?> create(Ref ref) {
@@ -58,11 +54,9 @@ final class UserLibrariesOrderProvider
   }
 }
 
-String _$userLibrariesOrderHash() =>
-    r'ba6006cf2f08cb7368348291e1e78ad0d0316848';
+String _$userLibrariesOrderHash() => r'ba6006cf2f08cb7368348291e1e78ad0d0316848';
 
-final class UserLibrariesOrderFamily extends $Family
-    with $FunctionalFamilyOverride<Stream<String?>, String> {
+final class UserLibrariesOrderFamily extends $Family with $FunctionalFamilyOverride<Stream<String?>, String> {
   UserLibrariesOrderFamily._()
     : super(
         retry: null,
@@ -72,8 +66,7 @@ final class UserLibrariesOrderFamily extends $Family
         isAutoDispose: true,
       );
 
-  UserLibrariesOrderProvider call(String userId) =>
-      UserLibrariesOrderProvider._(argument: userId, from: this);
+  UserLibrariesOrderProvider call(String userId) => UserLibrariesOrderProvider._(argument: userId, from: this);
 
   @override
   String toString() => r'userLibrariesOrderProvider';
@@ -87,12 +80,7 @@ final userLibrariesProvider = UserLibrariesProvider._();
 /// Provider to fetch all libraries for the current user.
 
 final class UserLibrariesProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Library>>,
-          List<Library>,
-          FutureOr<List<Library>>
-        >
+    extends $FunctionalProvider<AsyncValue<List<Library>>, List<Library>, FutureOr<List<Library>>>
     with $FutureModifier<List<Library>>, $FutureProvider<List<Library>> {
   /// Provider to fetch all libraries for the current user.
   UserLibrariesProvider._()
@@ -111,9 +99,7 @@ final class UserLibrariesProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<Library>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<List<Library>> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<Library>> create(Ref ref) {
@@ -126,8 +112,7 @@ String _$userLibrariesHash() => r'1ff8db25b7c1cb0464a9f413ad57ff2e4b6ddd05';
 @ProviderFor(SelectedLibraryId)
 final selectedLibraryIdProvider = SelectedLibraryIdProvider._();
 
-final class SelectedLibraryIdProvider
-    extends $StreamNotifierProvider<SelectedLibraryId, String?> {
+final class SelectedLibraryIdProvider extends $StreamNotifierProvider<SelectedLibraryId, String?> {
   SelectedLibraryIdProvider._()
     : super(
         from: null,
@@ -157,12 +142,7 @@ abstract class _$SelectedLibraryId extends $StreamNotifier<String?> {
     final ref = this.ref as $Ref<AsyncValue<String?>, String?>;
     final element =
         ref.element
-            as $ClassProviderElement<
-              AnyNotifier<AsyncValue<String?>, String?>,
-              AsyncValue<String?>,
-              Object?,
-              Object?
-            >;
+            as $ClassProviderElement<AnyNotifier<AsyncValue<String?>, String?>, AsyncValue<String?>, Object?, Object?>;
     return element.handleCreate(ref, build);
   }
 }
@@ -170,9 +150,7 @@ abstract class _$SelectedLibraryId extends $StreamNotifier<String?> {
 @ProviderFor(selectedLibrary)
 final selectedLibraryProvider = SelectedLibraryProvider._();
 
-final class SelectedLibraryProvider
-    extends $FunctionalProvider<Library?, Library?, Library?>
-    with $Provider<Library?> {
+final class SelectedLibraryProvider extends $FunctionalProvider<Library?, Library?, Library?> with $Provider<Library?> {
   SelectedLibraryProvider._()
     : super(
         from: null,
@@ -189,8 +167,7 @@ final class SelectedLibraryProvider
 
   @$internal
   @override
-  $ProviderElement<Library?> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<Library?> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
 
   @override
   Library? create(Ref ref) {
@@ -199,10 +176,7 @@ final class SelectedLibraryProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(Library? value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<Library?>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<Library?>(value));
   }
 }
 

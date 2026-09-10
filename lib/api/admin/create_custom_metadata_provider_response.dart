@@ -16,14 +16,11 @@ CustomMetadataProvider? _providerFromJson(dynamic value) {
 }
 
 @freezed
-abstract class CreateCustomMetadataProviderResponse
-    with _$CreateCustomMetadataProviderResponse {
+abstract class CreateCustomMetadataProviderResponse with _$CreateCustomMetadataProviderResponse {
   const factory CreateCustomMetadataProviderResponse({
-    @JsonKey(name: 'provider', fromJson: _providerFromJson)
-    CustomMetadataProvider? provider,
+    @JsonKey(name: 'provider', fromJson: _providerFromJson) CustomMetadataProvider? provider,
   }) = _CreateCustomMetadataProviderResponse;
 
-  factory CreateCustomMetadataProviderResponse.fromJson(
-    Map<String, dynamic> json,
-  ) => _$CreateCustomMetadataProviderResponseFromJson(json);
+  factory CreateCustomMetadataProviderResponse.fromJson(Map<String, dynamic> json) =>
+      _$CreateCustomMetadataProviderResponseFromJson(json);
 }

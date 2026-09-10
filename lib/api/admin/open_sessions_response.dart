@@ -13,12 +13,8 @@ abstract class OpenSessionsResponse with _$OpenSessionsResponse {
 
   factory OpenSessionsResponse.fromJson(Map<String, dynamic> json) {
     return OpenSessionsResponse(
-      sessions: adminListeningSessionsFromDynamic(
-        json['sessions'] ?? const <dynamic>[],
-      ),
-      shareSessions: openShareSessionsFromDynamic(
-        json['shareSessions'] ?? const <dynamic>[],
-      ),
+      sessions: adminListeningSessionsFromDynamic(json['sessions'] ?? const <dynamic>[]),
+      shareSessions: openShareSessionsFromDynamic(json['shareSessions'] ?? const <dynamic>[]),
     );
   }
 }

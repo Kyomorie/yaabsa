@@ -35,12 +35,7 @@ Future<LoadedSubtitleDocument?> loadSubtitleDocumentForItem({
     return existing;
   }
 
-  final future = _loadSubtitleDocumentInternal(
-    ref: ref,
-    itemId: itemId,
-    episodeId: episodeId,
-    userId: userId,
-  );
+  final future = _loadSubtitleDocumentInternal(ref: ref, itemId: itemId, episodeId: episodeId, userId: userId);
   _mediaCache[mediaCacheKey] = future;
   _trimFutureCache(_mediaCache, _maxMediaCacheEntries);
   return future;
@@ -58,24 +53,13 @@ Future<LoadedSubtitleDocument?> _loadSubtitleDocumentInternal({
     episodeId: episodeId,
     userId: userId,
   );
-  final loadedFromLocal = await _loadFirstParsableFromSources(
-    ref: ref,
-    itemId: itemId,
-    sources: localSources,
-  );
+  final loadedFromLocal = await _loadFirstParsableFromSources(ref: ref, itemId: itemId, sources: localSources);
   if (loadedFromLocal != null) {
     return loadedFromLocal;
   }
 
-  final remoteSources = await _collectRemoteSubtitleSources(
-    ref: ref,
-    itemId: itemId,
-  );
-  return _loadFirstParsableFromSources(
-    ref: ref,
-    itemId: itemId,
-    sources: remoteSources,
-  );
+  final remoteSources = await _collectRemoteSubtitleSources(ref: ref, itemId: itemId);
+  return _loadFirstParsableFromSources(ref: ref, itemId: itemId, sources: remoteSources);
 }
 
 Future<LoadedSubtitleDocument?> _loadFirstParsableFromSources({
@@ -99,10 +83,7 @@ Future<LoadedSubtitleDocument?> _loadFirstParsableFromSources({
       continue;
     }
 
-    final document = SubtitleParser.parse(
-      rawContent: content,
-      format: source.format,
-    );
+    final document = SubtitleParser.parse(rawContent: content, format: source.format);
     if (document == null || document.cues.isEmpty) {
       continue;
     }
@@ -136,9 +117,7 @@ Future<List<SubtitleSourceCandidate>> _collectLocalSubtitleSources({
     return candidates;
   }
 
-  final localDownload = await ref
-      .read(appDatabaseProvider)
-      .getStoredDownload(itemId, userId, episodeId: episodeId);
+  final localDownload = await ref.read(appDatabaseProvider).getStoredDownload(itemId, userId, episodeId: episodeId);
   if (localDownload == null) {
     return candidates;
   }
@@ -150,11 +129,7 @@ Future<List<SubtitleSourceCandidate>> _collectLocalSubtitleSources({
     }
 
     addCandidate(
-      SubtitleSourceCandidate.local(
-        format: format,
-        label: _filenameFromPath(localPath),
-        localPathOrUri: localPath,
-      ),
+      SubtitleSourceCandidate.local(format: format, label: _filenameFromPath(localPath), localPathOrUri: localPath),
     );
   }
 
@@ -186,10 +161,7 @@ Future<List<SubtitleSourceCandidate>> _collectRemoteSubtitleSources({
     candidates.add(candidate);
   }
 
-  LibraryItem? libraryItem = ref
-      .read(libraryItemProvider(itemId))
-      .asData
-      ?.value;
+  LibraryItem? libraryItem = ref.read(libraryItemProvider(itemId)).asData?.value;
   if (libraryItem == null) {
     try {
       libraryItem = await ref.read(libraryItemProvider(itemId).future);
@@ -208,18 +180,13 @@ Future<List<SubtitleSourceCandidate>> _collectRemoteSubtitleSources({
 
   for (final libraryFile in libraryItem.libraryFiles ?? const []) {
     final format =
-        _formatForExtension(libraryFile.metadata.ext) ??
-        _formatForFallbackFilename(libraryFile.metadata.filename);
+        _formatForExtension(libraryFile.metadata.ext) ?? _formatForFallbackFilename(libraryFile.metadata.filename);
     if (format == null) {
       continue;
     }
 
     addCandidate(
-      SubtitleSourceCandidate.remote(
-        format: format,
-        label: libraryFile.metadata.filename,
-        fileInode: libraryFile.ino,
-      ),
+      SubtitleSourceCandidate.remote(format: format, label: libraryFile.metadata.filename, fileInode: libraryFile.ino),
     );
   }
 
@@ -322,11 +289,7 @@ Future<String?> _readRemoteSource({
         responseType: ResponseType.plain,
         extra: const <String, dynamic>{
           'secure': <Map<String, String>>[
-            <String, String>{
-              'type': 'http',
-              'scheme': 'bearer',
-              'name': 'BearerAuth',
-            },
+            <String, String>{'type': 'http', 'scheme': 'bearer', 'name': 'BearerAuth'},
           ],
         },
       ),
@@ -352,8 +315,7 @@ Future<String?> _readRemoteSource({
 }
 
 SubtitleDocumentFormat? _formatForPath(String pathOrUri) {
-  return _formatForExtension(_extractExtension(pathOrUri)) ??
-      _formatForFallbackFilename(_filenameFromPath(pathOrUri));
+  return _formatForExtension(_extractExtension(pathOrUri)) ?? _formatForFallbackFilename(_filenameFromPath(pathOrUri));
 }
 
 SubtitleDocumentFormat? _formatForExtension(String? rawExtension) {
@@ -366,9 +328,7 @@ SubtitleDocumentFormat? _formatForExtension(String? rawExtension) {
     return null;
   }
 
-  final extension = normalized.startsWith('.')
-      ? normalized.substring(1)
-      : normalized;
+  final extension = normalized.startsWith('.') ? normalized.substring(1) : normalized;
   return switch (extension) {
     'vtt' => SubtitleDocumentFormat.webvtt,
     'srt' => SubtitleDocumentFormat.srt,
@@ -394,9 +354,7 @@ String _extractExtension(String value) {
   }
 
   final parsedUri = Uri.tryParse(normalized);
-  final asPath = parsedUri == null || parsedUri.scheme.isEmpty
-      ? normalized
-      : parsedUri.path;
+  final asPath = parsedUri == null || parsedUri.scheme.isEmpty ? normalized : parsedUri.path;
   final filename = asPath.split('/').last;
   final extensionIndex = filename.lastIndexOf('.');
   if (extensionIndex < 0 || extensionIndex == filename.length - 1) {
@@ -413,9 +371,7 @@ String _filenameFromPath(String value) {
   }
 
   final parsedUri = Uri.tryParse(trimmed);
-  final asPath = parsedUri == null || parsedUri.scheme.isEmpty
-      ? trimmed
-      : parsedUri.path;
+  final asPath = parsedUri == null || parsedUri.scheme.isEmpty ? trimmed : parsedUri.path;
   final filename = asPath.split('/').last;
   if (filename.isEmpty) {
     return trimmed;
@@ -457,29 +413,23 @@ class SubtitleSourceCandidate {
     this.fileInode,
   });
 
-  SubtitleSourceCandidate.local({
-    required SubtitleDocumentFormat format,
-    String? label,
-    required String localPathOrUri,
-  }) : this._(
-         type: SubtitleSourceType.local,
-         format: format,
-         label: label,
-         localPathOrUri: localPathOrUri,
-         cacheKey: 'local::${format.name}::$localPathOrUri',
-       );
+  SubtitleSourceCandidate.local({required SubtitleDocumentFormat format, String? label, required String localPathOrUri})
+    : this._(
+        type: SubtitleSourceType.local,
+        format: format,
+        label: label,
+        localPathOrUri: localPathOrUri,
+        cacheKey: 'local::${format.name}::$localPathOrUri',
+      );
 
-  SubtitleSourceCandidate.remote({
-    required SubtitleDocumentFormat format,
-    String? label,
-    required String fileInode,
-  }) : this._(
-         type: SubtitleSourceType.remote,
-         format: format,
-         label: label,
-         fileInode: fileInode,
-         cacheKey: 'remote::${format.name}::$fileInode',
-       );
+  SubtitleSourceCandidate.remote({required SubtitleDocumentFormat format, String? label, required String fileInode})
+    : this._(
+        type: SubtitleSourceType.remote,
+        format: format,
+        label: label,
+        fileInode: fileInode,
+        cacheKey: 'remote::${format.name}::$fileInode',
+      );
 
   final SubtitleSourceType type;
   final SubtitleDocumentFormat format;

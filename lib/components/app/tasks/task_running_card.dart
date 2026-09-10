@@ -25,11 +25,7 @@ class TaskRunningCard extends StatelessWidget {
           SizedBox(
             width: 22,
             height: 22,
-            child: _buildLeadingIcon(
-              context,
-              isFinished: isFinished,
-              isFailed: isFailed,
-            ),
+            child: _buildLeadingIcon(context, isFinished: isFinished, isFailed: isFailed),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -42,9 +38,8 @@ class TaskRunningCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 if (scanSummary != null)
@@ -52,32 +47,25 @@ class TaskRunningCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       scanSummary,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
-                if (!isFinished &&
-                    progressLabel != null &&
-                    progressLabel!.trim().isNotEmpty)
+                if (!isFinished && progressLabel != null && progressLabel!.trim().isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       progressLabel!,
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
-                if (isFailed &&
-                    failureMessage != null &&
-                    failureMessage.isNotEmpty)
+                if (isFailed && failureMessage != null && failureMessage.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       failureMessage,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: Theme.of(context).colorScheme.error),
                     ),
                   ),
               ],
@@ -88,34 +76,16 @@ class TaskRunningCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLeadingIcon(
-    BuildContext context, {
-    required bool isFinished,
-    required bool isFailed,
-  }) {
+  Widget _buildLeadingIcon(BuildContext context, {required bool isFinished, required bool isFailed}) {
     if (!isFinished) {
-      return const Center(
-        child: SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2.2),
-        ),
-      );
+      return const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2)));
     }
 
     if (isFailed) {
-      return Icon(
-        Icons.error_outline_rounded,
-        color: Theme.of(context).colorScheme.error,
-        size: 20,
-      );
+      return Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error, size: 20);
     }
 
-    return Icon(
-      Icons.check_circle_outline_rounded,
-      color: Theme.of(context).colorScheme.primary,
-      size: 20,
-    );
+    return Icon(Icons.check_circle_outline_rounded, color: Theme.of(context).colorScheme.primary, size: 20);
   }
 }
 

@@ -1,12 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 class AdminUserBadge extends StatelessWidget {
-  const AdminUserBadge({
-    super.key,
-    required this.label,
-    required this.color,
-    this.icon,
-  });
+  const AdminUserBadge({super.key, required this.label, required this.color, this.icon});
 
   final String label;
   final Color color;
@@ -27,10 +22,7 @@ class AdminUserBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            Icon(icon, size: 11, color: color),
-            const SizedBox(width: 4),
-          ],
+          if (icon != null) ...[Icon(icon, size: 11, color: color), const SizedBox(width: 4)],
           Text(label, style: textStyle),
         ],
       ),

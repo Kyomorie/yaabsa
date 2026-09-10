@@ -18,11 +18,8 @@ List<String> _stringListFromJson(dynamic value) {
 @freezed
 abstract class GenresResponse with _$GenresResponse {
   const factory GenresResponse({
-    @JsonKey(name: 'genres', fromJson: _stringListFromJson)
-    @Default(<String>[])
-    List<String> genres,
+    @JsonKey(name: 'genres', fromJson: _stringListFromJson) @Default(<String>[]) List<String> genres,
   }) = _GenresResponse;
 
-  factory GenresResponse.fromJson(Map<String, dynamic> json) =>
-      _$GenresResponseFromJson(json);
+  factory GenresResponse.fromJson(Map<String, dynamic> json) => _$GenresResponseFromJson(json);
 }

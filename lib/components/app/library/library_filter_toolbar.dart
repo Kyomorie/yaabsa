@@ -26,18 +26,14 @@ class LibraryFilterToolbar extends StatelessWidget {
   final int? activeSortDesc;
   final AsyncValue<LibraryFilterData?> filterDataAsync;
   final Future<void> Function(String filterQuery) onFilterSelected;
-  final Future<void> Function(LibrarySortSelection sortSelection)
-  onSortSelected;
+  final Future<void> Function(LibrarySortSelection sortSelection) onSortSelected;
   final Future<void> Function() onClearFilter;
 
   static const double _maxButtonWidth = 180.0;
 
   @override
   Widget build(BuildContext context) {
-    final activeFilterLabel = resolveActiveFilterLabel(
-      activeFilter,
-      filterDataAsync.value,
-    );
+    final activeFilterLabel = resolveActiveFilterLabel(activeFilter, filterDataAsync.value);
     final activeSortLabel = buildLibrarySortLabel(
       libraryMediaType: libraryMediaType,
       activeFilter: activeFilter,
@@ -45,9 +41,7 @@ class LibraryFilterToolbar extends StatelessWidget {
       activeDesc: activeSortDesc,
     );
 
-    final filterButtonLabel = activeFilterLabel == null
-        ? 'Filter'
-        : _truncateLabel(activeFilterLabel);
+    final filterButtonLabel = activeFilterLabel == null ? 'Filter' : _truncateLabel(activeFilterLabel);
     final sortButtonLabel = _truncateLabel(activeSortLabel);
 
     return Padding(
@@ -65,11 +59,7 @@ class LibraryFilterToolbar extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () => _openFilterSheet(context),
                 icon: filterDataAsync.isLoading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.filter_alt_rounded),
                 label: Text(filterButtonLabel, overflow: TextOverflow.ellipsis),
               ),
@@ -140,10 +130,7 @@ class LibraryFilterToolbar extends StatelessWidget {
     await onSortSelected(result);
   }
 
-  static String? resolveActiveFilterLabel(
-    String? filter,
-    LibraryFilterData? filterData,
-  ) {
+  static String? resolveActiveFilterLabel(String? filter, LibraryFilterData? filterData) {
     if (filter == null || filter.isEmpty) {
       return null;
     }
@@ -162,15 +149,9 @@ class LibraryFilterToolbar extends StatelessWidget {
     }
 
     final valueLabel = switch (parsed.group) {
-      LibraryFilterGroup.authors => _resolveNamedValue(
-        parsed.value,
-        filterData?.authors,
-      ),
+      LibraryFilterGroup.authors => _resolveNamedValue(parsed.value, filterData?.authors),
       LibraryFilterGroup.series when parsed.value == 'no-series' => 'No series',
-      LibraryFilterGroup.series => _resolveNamedValue(
-        parsed.value,
-        filterData?.series,
-      ),
+      LibraryFilterGroup.series => _resolveNamedValue(parsed.value, filterData?.series),
       LibraryFilterGroup.progress => _humanizeValue(parsed.value),
       LibraryFilterGroup.missing => _humanizeValue(parsed.value),
       LibraryFilterGroup.tracks => _humanizeValue(parsed.value),
@@ -180,10 +161,7 @@ class LibraryFilterToolbar extends StatelessWidget {
     return '${parsed.group.displayName}: $valueLabel';
   }
 
-  static String _resolveNamedValue(
-    String fallbackValue,
-    List<LibraryFilterNamedEntity>? values,
-  ) {
+  static String _resolveNamedValue(String fallbackValue, List<LibraryFilterNamedEntity>? values) {
     if (values == null) {
       return fallbackValue;
     }
@@ -208,8 +186,6 @@ class LibraryFilterToolbar extends StatelessWidget {
       return value;
     }
 
-    return split
-        .map((segment) => '${segment[0].toUpperCase()}${segment.substring(1)}')
-        .join(' ');
+    return split.map((segment) => '${segment[0].toUpperCase()}${segment.substring(1)}').join(' ');
   }
 }

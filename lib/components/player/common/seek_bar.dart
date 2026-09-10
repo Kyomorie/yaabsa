@@ -45,13 +45,8 @@ class SeekBar extends ConsumerWidget {
     return duration.toPlaybackTimeString();
   }
 
-  InternalChapter? _getCurrentChapter(
-    List<InternalChapter> chapters,
-    Duration currentPosition,
-  ) {
-    final mediaChapter = audioHandler.currentMediaItem?.getChapterForDuration(
-      currentPosition,
-    );
+  InternalChapter? _getCurrentChapter(List<InternalChapter> chapters, Duration currentPosition) {
+    final mediaChapter = audioHandler.currentMediaItem?.getChapterForDuration(currentPosition);
     if (mediaChapter != null) {
       return mediaChapter;
     }
@@ -80,10 +75,7 @@ class SeekBar extends ConsumerWidget {
     return null;
   }
 
-  String _buildSeekPreviewTooltip(
-    Duration position,
-    List<InternalChapter> chapters,
-  ) {
+  String _buildSeekPreviewTooltip(Duration position, List<InternalChapter> chapters) {
     final chapter = _getCurrentChapter(chapters, position);
     final chapterTitle = chapter?.title.trim() ?? '';
     if (chapterTitle.isEmpty) {
@@ -100,8 +92,7 @@ class SeekBar extends ConsumerWidget {
 
     return <int>{
       for (final bookmark in bookmarks)
-        if (bookmark.libraryItemId == itemId && bookmark.time > 0)
-          bookmark.time,
+        if (bookmark.libraryItemId == itemId && bookmark.time > 0) bookmark.time,
     }.toList(growable: false);
   }
 
@@ -116,10 +107,7 @@ class SeekBar extends ConsumerWidget {
     if (markerMode.showChapterMarkers) {
       markers.addAll(
         chapters.map((chapter) {
-          return SeekTimelineMarker(
-            position: chapter.start.toDuration,
-            type: SeekTimelineMarkerType.chapter,
-          );
+          return SeekTimelineMarker(position: chapter.start.toDuration, type: SeekTimelineMarkerType.chapter);
         }),
       );
     }
@@ -140,20 +128,11 @@ class SeekBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final seekBarModeSetting = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.playerSeekBarMode),
-    );
-    final markerModeSetting = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.playerSeekBarMarkerMode),
-    );
-    final bookmarks =
-        ref.watch(userBookmarksProvider).value ?? const <Bookmark>[];
-    final showRemainingSetting = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.playerShowRemainingTime),
-    );
-    final showSleepTimerMarkerSetting = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.sleepTimerShowMarker),
-    );
+    final seekBarModeSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.playerSeekBarMode));
+    final markerModeSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.playerSeekBarMarkerMode));
+    final bookmarks = ref.watch(userBookmarksProvider).value ?? const <Bookmark>[];
+    final showRemainingSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.playerShowRemainingTime));
+    final showSleepTimerMarkerSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.sleepTimerShowMarker));
     final sleepTimerDisplay = ref.watch(
       sleepTimerHandlerProvider.select(
         (data) => (
@@ -165,14 +144,9 @@ class SeekBar extends ConsumerWidget {
       ),
     );
 
-    final configuredMode =
-        modeOverride ??
-        PlayerSeekBarMode.fromSettingValue(seekBarModeSetting.asData?.value);
-    final configuredMarkerMode = SeekBarMarkerMode.fromSettingValue(
-      markerModeSetting.asData?.value,
-    );
-    final markerMode =
-        ensureChapterMarkers && !configuredMarkerMode.showChapterMarkers
+    final configuredMode = modeOverride ?? PlayerSeekBarMode.fromSettingValue(seekBarModeSetting.asData?.value);
+    final configuredMarkerMode = SeekBarMarkerMode.fromSettingValue(markerModeSetting.asData?.value);
+    final markerMode = ensureChapterMarkers && !configuredMarkerMode.showChapterMarkers
         ? configuredMarkerMode == SeekBarMarkerMode.bookmarks
               ? SeekBarMarkerMode.both
               : SeekBarMarkerMode.chapters
@@ -186,24 +160,17 @@ class SeekBar extends ConsumerWidget {
     void toggleRemaining() {
       ref
           .read(settingsManagerProvider.notifier)
-          .setGlobalSetting<bool>(
-            SettingKeys.playerShowRemainingTime,
-            !showRemaining,
-          );
+          .setGlobalSetting<bool>(SettingKeys.playerShowRemainingTime, !showRemaining);
     }
 
-    final positionStream = audioHandler.positionStream.sampleTime(
-      _seekBarUiUpdateInterval,
-    );
+    final positionStream = audioHandler.positionStream.sampleTime(_seekBarUiUpdateInterval);
     final totalDurationStream = audioHandler.durationStream;
     final chaptersStream = audioHandler.chaptersStream;
 
     return RepaintBoundary(
       child: StreamBuilder<List<InternalChapter>>(
         stream: chaptersStream,
-        initialData:
-            audioHandler.currentMediaItem?.chapters ??
-            const <InternalChapter>[],
+        initialData: audioHandler.currentMediaItem?.chapters ?? const <InternalChapter>[],
         builder: (context, chaptersSnapshot) {
           final chapters = chaptersSnapshot.data ?? const <InternalChapter>[];
           final currentItemId = audioHandler.currentMediaItem?.itemId;
@@ -214,16 +181,10 @@ class SeekBar extends ConsumerWidget {
                   (sleepTimerDisplay.showPin || sleepTimerDisplay.showRange) &&
                   sleepTimerMarker != null &&
                   currentItemId != null &&
-                  sleepTimerMarker.matches(
-                    itemId: currentItemId,
-                    episodeId: currentEpisodeId,
-                  )
+                  sleepTimerMarker.matches(itemId: currentItemId, episodeId: currentEpisodeId)
               ? sleepTimerMarker
               : null;
-          final bookmarkSeconds = _bookmarkSecondsForItem(
-            bookmarks,
-            currentItemId,
-          );
+          final bookmarkSeconds = _bookmarkSecondsForItem(bookmarks, currentItemId);
           final fullTimelineMarkers = _buildTimelineMarkers(
             markerMode: markerMode,
             chapters: chapters,
@@ -241,16 +202,11 @@ class SeekBar extends ConsumerWidget {
                 stream: positionStream,
                 initialData: audioHandler.position,
                 builder: (context, positionSnapshot) {
-                  final currentPosition =
-                      positionSnapshot.data ?? Duration.zero;
-                  final currentChapter = _getCurrentChapter(
-                    chapters,
-                    currentPosition,
-                  );
+                  final currentPosition = positionSnapshot.data ?? Duration.zero;
+                  final currentChapter = _getCurrentChapter(chapters, currentPosition);
 
                   final shouldShowChapter =
-                      (configuredMode == PlayerSeekBarMode.chapter ||
-                          configuredMode == PlayerSeekBarMode.both) &&
+                      (configuredMode == PlayerSeekBarMode.chapter || configuredMode == PlayerSeekBarMode.both) &&
                       currentChapter != null;
                   final shouldShowFull =
                       ensureFullTimeline ||
@@ -288,17 +244,13 @@ class SeekBar extends ConsumerWidget {
                         rightTime: chapterDuration,
                         showRemaining: showRemaining,
                         onToggleRemaining: toggleRemaining,
-                        onSeek: (seekPosition) =>
-                            audioHandler.seekAbsolute(seekPosition),
+                        onSeek: (seekPosition) => audioHandler.seekAbsolute(seekPosition),
                         markers: const <SeekTimelineMarker>[],
                         markerMode: SeekBarMarkerMode.none,
-                        buildPreviewLabel: (position) =>
-                            _buildSeekPreviewTooltip(position, chapters),
+                        buildPreviewLabel: (position) => _buildSeekPreviewTooltip(position, chapters),
                         formatDuration: _formatDuration,
                         sleepTimerMarker: null,
-                        centerLabel:
-                            showCurrentChapterBetweenTimeLabels &&
-                                !shouldShowFull
+                        centerLabel: showCurrentChapterBetweenTimeLabels && !shouldShowFull
                             ? currentChapter.title.trim()
                             : null,
                       ),
@@ -324,35 +276,21 @@ class SeekBar extends ConsumerWidget {
                         rightTime: totalDuration,
                         showRemaining: showRemaining,
                         onToggleRemaining: toggleRemaining,
-                        onSeek: (seekPosition) =>
-                            audioHandler.seekAbsolute(seekPosition),
+                        onSeek: (seekPosition) => audioHandler.seekAbsolute(seekPosition),
                         markers: fullTimelineMarkers,
                         markerMode: markerMode,
-                        buildPreviewLabel: (position) =>
-                            _buildSeekPreviewTooltip(position, chapters),
+                        buildPreviewLabel: (position) => _buildSeekPreviewTooltip(position, chapters),
                         formatDuration: _formatDuration,
                         sleepTimerMarker: visibleSleepTimerMarker,
-                        showSleepTimerPin:
-                            visibleSleepTimerMarker != null &&
-                            sleepTimerDisplay.showPin,
-                        showSleepTimerRange:
-                            visibleSleepTimerMarker != null &&
-                            sleepTimerDisplay.showRange,
-                        onSleepTimerMarkerTap:
-                            visibleSleepTimerMarker == null ||
-                                !sleepTimerDisplay.showPin
+                        showSleepTimerPin: visibleSleepTimerMarker != null && sleepTimerDisplay.showPin,
+                        showSleepTimerRange: visibleSleepTimerMarker != null && sleepTimerDisplay.showRange,
+                        onSleepTimerMarkerTap: visibleSleepTimerMarker == null || !sleepTimerDisplay.showPin
                             ? null
                             : () async {
-                                ref
-                                    .read(sleepTimerHandlerProvider.notifier)
-                                    .dismissMarkerPin();
-                                await audioHandler.seekAbsolute(
-                                  visibleSleepTimerMarker.startPosition,
-                                );
+                                ref.read(sleepTimerHandlerProvider.notifier).dismissMarkerPin();
+                                await audioHandler.seekAbsolute(visibleSleepTimerMarker.startPosition);
                               },
-                        centerLabel: showCurrentChapterBetweenTimeLabels
-                            ? currentChapter?.title.trim()
-                            : null,
+                        centerLabel: showCurrentChapterBetweenTimeLabels ? currentChapter?.title.trim() : null,
                       ),
                     );
                   }

@@ -14,16 +14,9 @@ class CachingRouteSettings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cachingSetting = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.caching))
-        .asData
-        ?.value;
-    final cachingDefault =
-        defaultSettings[SettingKeys.caching] as bool? ?? true;
-    final isCachingEnabled = SettingsParser.decodeValue<bool>(
-      cachingSetting,
-      cachingDefault,
-    );
+    final cachingSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.caching)).asData?.value;
+    final cachingDefault = defaultSettings[SettingKeys.caching] as bool? ?? true;
+    final isCachingEnabled = SettingsParser.decodeValue<bool>(cachingSetting, cachingDefault);
 
     return SettingsPageScaffold(
       title: 'Caching - Routes',

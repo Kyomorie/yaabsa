@@ -6,11 +6,7 @@ import 'package:yaabsa/screens/main/stats/stats_formatters.dart';
 import 'package:yaabsa/util/globals.dart';
 
 class StatsActivityHeatmap extends StatefulWidget {
-  const StatsActivityHeatmap({
-    super.key,
-    required this.activity,
-    this.days = 365,
-  });
+  const StatsActivityHeatmap({super.key, required this.activity, this.days = 365});
 
   final ListeningActivityStats activity;
   final int days;
@@ -42,13 +38,7 @@ class _StatsActivityHeatmapState extends State<StatsActivityHeatmap> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (context.isMobile)
-          _MobileMonthlyHeatmap(
-            activity: widget.activity,
-            start: start,
-            end: end,
-            maxValue: maxValue,
-            palette: palette,
-          )
+          _MobileMonthlyHeatmap(activity: widget.activity, start: start, end: end, maxValue: maxValue, palette: palette)
         else
           _DesktopHeatmap(
             activity: widget.activity,
@@ -94,8 +84,7 @@ class _MobileMonthlyHeatmap extends StatelessWidget {
       builder: (context, constraints) {
         final columns = constraints.maxWidth >= 560 ? 2 : 1;
         const spacing = 12.0;
-        final width =
-            (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
+        final width = (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
 
         return Wrap(
           spacing: spacing,
@@ -147,10 +136,7 @@ class _MonthHeatmap extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(18),
-      ),
+      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainer, borderRadius: BorderRadius.circular(18)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -160,11 +146,7 @@ class _MonthHeatmap extends StatelessWidget {
             children: [
               for (final label in const ['M', 'T', 'W', 'T', 'F', 'S', 'S'])
                 Expanded(
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.labelSmall,
-                  ),
+                  child: Text(label, textAlign: TextAlign.center, style: theme.textTheme.labelSmall),
                 ),
             ],
           ),
@@ -178,12 +160,7 @@ class _MonthHeatmap extends StatelessWidget {
                       padding: const EdgeInsets.all(2),
                       child: AspectRatio(
                         aspectRatio: 1.7,
-                        child: _monthCell(
-                          firstDayOffset,
-                          row,
-                          weekday,
-                          daysInMonth,
-                        ),
+                        child: _monthCell(firstDayOffset, row, weekday, daysInMonth),
                       ),
                     ),
                   ),
@@ -207,11 +184,7 @@ class _MonthHeatmap extends StatelessWidget {
     }
 
     final value = activity.dailyListeningSeconds[dayKeyFromDate(day)] ?? 0;
-    return _HeatmapCell(
-      day: day,
-      value: value,
-      color: palette[_levelFor(value, maxValue)],
-    );
+    return _HeatmapCell(day: day, value: value, color: palette[_levelFor(value, maxValue)]);
   }
 }
 
@@ -253,26 +226,17 @@ class _DesktopHeatmap extends StatelessWidget {
         const labelWidth = 34.0;
         const gap = 10.0;
         const spacing = 3.0;
-        final gridViewport = math.max(
-          0.0,
-          constraints.maxWidth - labelWidth - gap,
-        );
-        final idealCell =
-            (gridViewport - ((weeks.length - 1) * spacing)) / weeks.length;
+        final gridViewport = math.max(0.0, constraints.maxWidth - labelWidth - gap);
+        final idealCell = (gridViewport - ((weeks.length - 1) * spacing)) / weeks.length;
         final cellSize = idealCell.clamp(11.0, 15.0).toDouble();
-        final gridWidth =
-            (weeks.length * cellSize) + ((weeks.length - 1) * spacing);
+        final gridWidth = (weeks.length * cellSize) + ((weeks.length - 1) * spacing);
         final needsScroll = gridWidth > gridViewport + 0.5;
 
         final grid = SizedBox(
           width: gridWidth,
           child: Row(
             children: [
-              for (
-                var weekIndex = 0;
-                weekIndex < weeks.length;
-                weekIndex++
-              ) ...[
+              for (var weekIndex = 0; weekIndex < weeks.length; weekIndex++) ...[
                 Column(
                   children: [
                     for (var weekday = 0; weekday < 7; weekday++) ...[
@@ -282,19 +246,9 @@ class _DesktopHeatmap extends StatelessWidget {
                         child: switch (weeks[weekIndex][weekday]) {
                           final day? => _HeatmapCell(
                             day: day,
-                            value:
-                                activity.dailyListeningSeconds[dayKeyFromDate(
-                                  day,
-                                )] ??
-                                0,
+                            value: activity.dailyListeningSeconds[dayKeyFromDate(day)] ?? 0,
                             color:
-                                palette[_levelFor(
-                                  activity.dailyListeningSeconds[dayKeyFromDate(
-                                        day,
-                                      )] ??
-                                      0,
-                                  maxValue,
-                                )],
+                                palette[_levelFor(activity.dailyListeningSeconds[dayKeyFromDate(day)] ?? 0, maxValue)],
                           ),
                           null => const SizedBox.shrink(),
                         },
@@ -303,8 +257,7 @@ class _DesktopHeatmap extends StatelessWidget {
                     ],
                   ],
                 ),
-                if (weekIndex != weeks.length - 1)
-                  const SizedBox(width: spacing),
+                if (weekIndex != weeks.length - 1) const SizedBox(width: spacing),
               ],
             ],
           ),
@@ -346,11 +299,7 @@ class _DesktopHeatmap extends StatelessWidget {
             const SizedBox(width: gap),
             Expanded(
               child: needsScroll
-                  ? Scrollbar(
-                      controller: scrollController,
-                      thumbVisibility: true,
-                      child: scrollView,
-                    )
+                  ? Scrollbar(controller: scrollController, thumbVisibility: true, child: scrollView)
                   : Align(alignment: Alignment.centerRight, child: scrollView),
             ),
           ],
@@ -361,11 +310,7 @@ class _DesktopHeatmap extends StatelessWidget {
 }
 
 class _HeatmapCell extends StatelessWidget {
-  const _HeatmapCell({
-    required this.day,
-    required this.value,
-    required this.color,
-  });
+  const _HeatmapCell({required this.day, required this.value, required this.color});
 
   final DateTime day;
   final double value;
@@ -377,10 +322,7 @@ class _HeatmapCell extends StatelessWidget {
       message: '${_fullDate(day)} • ${formatListeningSeconds(value)}',
       excludeFromSemantics: true,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(3),
-        ),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
       ),
     );
   }
@@ -402,10 +344,7 @@ class _HeatmapLegend extends StatelessWidget {
           Container(
             width: 12,
             height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(3),
-            ),
+            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
           ),
         Text('More', style: Theme.of(context).textTheme.labelSmall),
       ],

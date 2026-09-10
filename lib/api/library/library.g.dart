@@ -18,12 +18,8 @@ _Library _$LibraryFromJson(Map<String, dynamic> json) => _Library(
   createdAt: (json['createdAt'] as num).toInt(),
   lastUpdate: (json['lastUpdate'] as num?)?.toInt(),
   settings: LibrarySettings.fromJson(json['settings'] as Map<String, dynamic>),
-  folders: (json['folders'] as List<dynamic>?)
-      ?.map((e) => LibraryFolder.fromJson(e as Map<String, dynamic>))
-      .toList(),
-  stats: json['stats'] == null
-      ? null
-      : LibraryStats.fromJson(json['stats'] as Map<String, dynamic>),
+  folders: (json['folders'] as List<dynamic>?)?.map((e) => LibraryFolder.fromJson(e as Map<String, dynamic>)).toList(),
+  stats: json['stats'] == null ? null : LibraryStats.fromJson(json['stats'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$LibraryToJson(_Library instance) => <String, dynamic>{

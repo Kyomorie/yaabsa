@@ -17,11 +17,7 @@ bool _supportsAndroidCronet() {
     engine.close();
     _androidCronetSupported = true;
   } catch (_) {
-    logger(
-      'Cronet is not supported on this Android device',
-      tag: 'DioFactory',
-      level: InfoLevel.warning,
-    );
+    logger('Cronet is not supported on this Android device', tag: 'DioFactory', level: InfoLevel.warning);
     _androidCronetSupported = false;
   }
 

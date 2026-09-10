@@ -26,8 +26,7 @@ class MagicConfigServerKeyRequiredException implements Exception {
   const MagicConfigServerKeyRequiredException();
 
   @override
-  String toString() =>
-      'The server key for this Authentication Code is unavailable.';
+  String toString() => 'The server key for this Authentication Code is unavailable.';
 }
 
 class MagicConfigKeyMarker {
@@ -52,18 +51,12 @@ class MagicConfigKeyMarker {
 
   factory MagicConfigKeyMarker.generate() {
     final random = Random.secure();
-    final bytes = List<int>.generate(
-      32,
-      (_) => random.nextInt(256),
-      growable: false,
-    );
+    final bytes = List<int>.generate(32, (_) => random.nextInt(256), growable: false);
     return MagicConfigKeyMarker(keyId: 'current', keyBytes: bytes);
   }
 
   static MagicConfigKeyMarker? extract(String? html) {
-    final matches = _markerPattern
-        .allMatches(html ?? '')
-        .toList(growable: false);
+    final matches = _markerPattern.allMatches(html ?? '').toList(growable: false);
     final match = matches.isEmpty ? null : matches.last;
     if (match == null) {
       return null;
@@ -172,9 +165,7 @@ class MagicConfigCodec {
     final normalizedServerUrl = _normalizeServerUrl(serverUrl);
     final normalizedUsername = username.trim();
     if (normalizedUsername.isEmpty) {
-      throw const FormatException(
-        'Authentication Code username cannot be empty.',
-      );
+      throw const FormatException('Authentication Code username cannot be empty.');
     }
 
     final claims = <String, dynamic>{
@@ -189,9 +180,7 @@ class MagicConfigCodec {
 
     final requiresServerKey = password != null || headers.isNotEmpty;
     if (requiresServerKey && marker == null) {
-      throw const FormatException(
-        'This Authentication Code requires a server key.',
-      );
+      throw const FormatException('This Authentication Code requires a server key.');
     }
 
     final inner = requiresServerKey
@@ -199,25 +188,17 @@ class MagicConfigCodec {
             claims: <String, dynamic>{
               ...claims,
               'mode': password == null ? 'login-protected' : 'login-password',
-              ...?(password == null
-                  ? null
-                  : <String, dynamic>{'pwd': password}),
+              ...?(password == null ? null : <String, dynamic>{'pwd': password}),
             },
             marker: marker!,
           )
-        : _createSignedJwt(
-            claims: <String, dynamic>{...claims, 'mode': 'login'},
-            keyBytes: _obfuscationKey,
-          );
+        : _createSignedJwt(claims: <String, dynamic>{...claims, 'mode': 'login'}, keyBytes: _obfuscationKey);
 
     final outerBuilder = JsonWebEncryptionBuilder()
       ..encryptionAlgorithm = 'A256GCM'
       ..setProtectedHeader('typ', _outerType)
       ..setProtectedHeader('v', formatVersion)
-      ..jsonContent = <String, dynamic>{
-        'srv': normalizedServerUrl,
-        'inner': inner,
-      };
+      ..jsonContent = <String, dynamic>{'srv': normalizedServerUrl, 'inner': inner};
     outerBuilder.addRecipient(_jwk(_obfuscationKey), algorithm: 'dir');
     return outerBuilder.build().toCompactSerialization();
   }
@@ -228,17 +209,13 @@ class MagicConfigCodec {
       throw const FormatException('Authentication Code is too large.');
     }
     if (trimmed.isEmpty || trimmed.contains(RegExp(r'[\s#?/\\]'))) {
-      throw const FormatException(
-        'Authentication Code contains invalid characters.',
-      );
+      throw const FormatException('Authentication Code contains invalid characters.');
     }
     return trimmed;
   }
 
   static Future<String> serverUrlFromInput(String input) async {
-    final outer = JsonWebEncryption.fromCompactSerialization(
-      extractToken(input),
-    );
+    final outer = JsonWebEncryption.fromCompactSerialization(extractToken(input));
     final header = outer.commonProtectedHeader.toJson();
     _requireHeader(header, 'typ', _outerType);
     _requireHeader(header, 'v', formatVersion);
@@ -246,10 +223,7 @@ class MagicConfigCodec {
     return _normalizeServerUrl(payload['srv'] as String? ?? '');
   }
 
-  static Future<MagicConfig> decode({
-    required String input,
-    MagicConfigKeyMarker? marker,
-  }) async {
+  static Future<MagicConfig> decode({required String input, MagicConfigKeyMarker? marker}) async {
     final token = extractToken(input);
     final outer = JsonWebEncryption.fromCompactSerialization(token);
     final outerHeader = outer.commonProtectedHeader.toJson();
@@ -276,15 +250,10 @@ class MagicConfigCodec {
       if (content is! Map) {
         throw const FormatException('Authentication Code payload is invalid.');
       }
-      final claims = _validateClaims(
-        Map<String, dynamic>.from(content),
-        expectedMode: 'login',
-      );
+      final claims = _validateClaims(Map<String, dynamic>.from(content), expectedMode: 'login');
       final headers = _readHeaders(claims['headers']);
       if (headers.isNotEmpty) {
-        throw const FormatException(
-          'This Authentication Code requires a server key.',
-        );
+        throw const FormatException('This Authentication Code requires a server key.');
       }
       return MagicConfig(
         serverUrl: serverUrl,
@@ -310,9 +279,7 @@ class MagicConfigCodec {
         allowedAlgorithms: const <String>['dir'],
       );
     } on JoseException {
-      throw const FormatException(
-        'The Authentication Code is damaged or its server key was rotated.',
-      );
+      throw const FormatException('The Authentication Code is damaged or its server key was rotated.');
     }
     final content = passwordPayload.jsonContent;
     if (content is! Map) {
@@ -325,14 +292,11 @@ class MagicConfigCodec {
     }
     final claims = _validateClaims(rawClaims, expectedMode: mode as String);
     final rawPassword = claims['pwd'];
-    if (rawPassword != null &&
-        (rawPassword is! String || rawPassword.isEmpty)) {
+    if (rawPassword != null && (rawPassword is! String || rawPassword.isEmpty)) {
       throw const FormatException('Authentication Code password is invalid.');
     }
     if (mode == 'login-password' && rawPassword == null) {
-      throw const FormatException(
-        'Authentication Code does not contain a password.',
-      );
+      throw const FormatException('Authentication Code does not contain a password.');
     }
     final password = rawPassword as String?;
 
@@ -345,33 +309,21 @@ class MagicConfigCodec {
     );
   }
 
-  static Future<Map<String, dynamic>> _readOuterPayload(
-    JsonWebEncryption outer,
-  ) async {
-    final payload = await outer.getPayload(
-      _keyStore(_obfuscationKey),
-      allowedAlgorithms: const <String>['dir'],
-    );
+  static Future<Map<String, dynamic>> _readOuterPayload(JsonWebEncryption outer) async {
+    final payload = await outer.getPayload(_keyStore(_obfuscationKey), allowedAlgorithms: const <String>['dir']);
     final content = payload.jsonContent;
     if (content is! Map) {
-      throw const FormatException(
-        'Authentication Code outer payload is invalid.',
-      );
+      throw const FormatException('Authentication Code outer payload is invalid.');
     }
     final inner = content['inner'];
     final serverUrl = content['srv'];
     if (inner is! String || serverUrl is! String) {
-      throw const FormatException(
-        'Authentication Code outer payload is invalid.',
-      );
+      throw const FormatException('Authentication Code outer payload is invalid.');
     }
     return <String, dynamic>{'srv': serverUrl, 'inner': inner};
   }
 
-  static String _createSignedJwt({
-    required Map<String, dynamic> claims,
-    required List<int> keyBytes,
-  }) {
+  static String _createSignedJwt({required Map<String, dynamic> claims, required List<int> keyBytes}) {
     final builder = JsonWebSignatureBuilder()
       ..setProtectedHeader('typ', 'JWT')
       ..setProtectedHeader('v', formatVersion)
@@ -380,10 +332,7 @@ class MagicConfigCodec {
     return builder.build().toCompactSerialization();
   }
 
-  static String _createProtectedJwe({
-    required Map<String, dynamic> claims,
-    required MagicConfigKeyMarker marker,
-  }) {
+  static String _createProtectedJwe({required Map<String, dynamic> claims, required MagicConfigKeyMarker marker}) {
     final builder = JsonWebEncryptionBuilder()
       ..encryptionAlgorithm = 'A256GCM'
       ..setProtectedHeader('typ', 'JWT')
@@ -394,10 +343,7 @@ class MagicConfigCodec {
   }
 
   static JsonWebKey _jwk(List<int> bytes) {
-    return JsonWebKey.fromJson(<String, dynamic>{
-      'kty': 'oct',
-      'k': _base64UrlEncode(bytes),
-    });
+    return JsonWebKey.fromJson(<String, dynamic>{'kty': 'oct', 'k': _base64UrlEncode(bytes)});
   }
 
   static JsonWebKeyStore _keyStore(List<int> bytes) {
@@ -406,22 +352,15 @@ class MagicConfigCodec {
     return store;
   }
 
-  static Map<String, dynamic> _validateClaims(
-    Map<String, dynamic> claims, {
-    required String expectedMode,
-  }) {
-    if (claims['iss'] != _issuer ||
-        claims['aud'] != _audience ||
-        claims['v'] != formatVersion) {
+  static Map<String, dynamic> _validateClaims(Map<String, dynamic> claims, {required String expectedMode}) {
+    if (claims['iss'] != _issuer || claims['aud'] != _audience || claims['v'] != formatVersion) {
       throw const FormatException('Authentication Code claims are invalid.');
     }
     if (claims['mode'] != expectedMode) {
       throw const FormatException('Authentication Code mode is invalid.');
     }
     final username = claims['sub'];
-    if (username is! String ||
-        username.trim().isEmpty ||
-        username.length > 256) {
+    if (username is! String || username.trim().isEmpty || username.length > 256) {
       throw const FormatException('Authentication Code username is invalid.');
     }
     return claims;
@@ -441,10 +380,7 @@ class MagicConfigCodec {
       }
       final name = (entry.key as String).trim();
       final headerValue = entry.value as String;
-      if (name.isEmpty ||
-          name.length > 256 ||
-          headerValue.length > 8192 ||
-          headerValue.contains(RegExp(r'[\r\n]'))) {
+      if (name.isEmpty || name.length > 256 || headerValue.length > 8192 || headerValue.contains(RegExp(r'[\r\n]'))) {
         throw const FormatException('Authentication Code headers are invalid.');
       }
       headers[name] = headerValue;
@@ -455,37 +391,23 @@ class MagicConfigCodec {
   static String _normalizeServerUrl(String raw) {
     final trimmed = raw.trim();
     final uri = Uri.tryParse(trimmed);
-    if (uri == null ||
-        (uri.scheme != 'http' && uri.scheme != 'https') ||
-        uri.host.isEmpty) {
+    if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https') || uri.host.isEmpty) {
       throw const FormatException('Authentication Code server URL is invalid.');
     }
-    if (uri.userInfo.isNotEmpty ||
-        uri.query.isNotEmpty ||
-        uri.fragment.isNotEmpty) {
-      throw const FormatException(
-        'Authentication Code server URL contains unsupported components.',
-      );
+    if (uri.userInfo.isNotEmpty || uri.query.isNotEmpty || uri.fragment.isNotEmpty) {
+      throw const FormatException('Authentication Code server URL contains unsupported components.');
     }
-    final normalizedPath = uri.pathSegments
-        .where((segment) => segment.isNotEmpty)
-        .join('/');
+    final normalizedPath = uri.pathSegments.where((segment) => segment.isNotEmpty).join('/');
     final normalized = Uri(
       scheme: uri.scheme,
       host: uri.host,
       port: uri.hasPort ? uri.port : null,
       path: normalizedPath.isEmpty ? null : '/$normalizedPath',
     ).toString();
-    return normalized.endsWith('/')
-        ? normalized.substring(0, normalized.length - 1)
-        : normalized;
+    return normalized.endsWith('/') ? normalized.substring(0, normalized.length - 1) : normalized;
   }
 
-  static void _requireHeader(
-    Map<String, dynamic> header,
-    String name,
-    Object expected,
-  ) {
+  static void _requireHeader(Map<String, dynamic> header, String name, Object expected) {
     if (header[name] != expected) {
       throw FormatException('Authentication Code header $name is invalid.');
     }
@@ -497,12 +419,9 @@ class MagicConfigCodec {
   }
 }
 
-String _base64UrlEncode(List<int> bytes) =>
-    base64Url.encode(bytes).replaceAll('=', '');
+String _base64UrlEncode(List<int> bytes) => base64Url.encode(bytes).replaceAll('=', '');
 
 List<int> _base64UrlDecode(String value) {
   final normalized = value.replaceAll('-', '+').replaceAll('_', '/');
-  return base64Decode(
-    normalized.padRight((normalized.length + 3) ~/ 4 * 4, '='),
-  );
+  return base64Decode(normalized.padRight((normalized.length + 3) ~/ 4 * 4, '='));
 }

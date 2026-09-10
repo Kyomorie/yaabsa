@@ -26,6 +26,5 @@ abstract class DownloadSidecar with _$DownloadSidecar {
     @JsonKey(name: 'createdAt') required int createdAtEpochMs,
   }) = _DownloadSidecar;
 
-  factory DownloadSidecar.fromJson(Map<String, dynamic> json) =>
-      _$DownloadSidecarFromJson(json);
+  factory DownloadSidecar.fromJson(Map<String, dynamic> json) => _$DownloadSidecarFromJson(json);
 }

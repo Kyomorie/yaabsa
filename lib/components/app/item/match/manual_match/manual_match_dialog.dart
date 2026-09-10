@@ -31,18 +31,10 @@ Future<bool> showLibraryItemManualMatchDialog({
   LibraryFilterData? filterData,
 }) {
   if (context.isMobile) {
-    return _showLibraryItemManualMatchDialogMobile(
-      context: context,
-      item: item,
-      filterData: filterData,
-    );
+    return _showLibraryItemManualMatchDialogMobile(context: context, item: item, filterData: filterData);
   }
 
-  return _showLibraryItemManualMatchDialogDesktop(
-    context: context,
-    item: item,
-    filterData: filterData,
-  );
+  return _showLibraryItemManualMatchDialogDesktop(context: context, item: item, filterData: filterData);
 }
 
 Future<bool> _showLibraryItemManualMatchDialogMobile({
@@ -57,11 +49,7 @@ Future<bool> _showLibraryItemManualMatchDialogMobile({
     builder: (context) {
       return FractionallySizedBox(
         heightFactor: 0.97,
-        child: LibraryItemManualMatchDialog(
-          item: item,
-          filterData: filterData,
-          isFullScreen: true,
-        ),
+        child: LibraryItemManualMatchDialog(item: item, filterData: filterData, isFullScreen: true),
       );
     },
   );
@@ -80,10 +68,7 @@ Future<bool> _showLibraryItemManualMatchDialogDesktop({
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1180, maxHeight: 880),
-          child: LibraryItemManualMatchDialog(
-            item: item,
-            filterData: filterData,
-          ),
+          child: LibraryItemManualMatchDialog(item: item, filterData: filterData),
         ),
       );
     },
@@ -111,11 +96,7 @@ class LibraryItemManualMatchDialog extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerHigh,
-            border: Border(
-              bottom: BorderSide(
-                color: Theme.of(context).colorScheme.outlineVariant,
-              ),
-            ),
+            border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
           ),
           child: Row(
             children: [
@@ -129,11 +110,7 @@ class LibraryItemManualMatchDialog extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: LibraryItemManualMatchView(
-            item: item,
-            filterData: filterData,
-            isFullScreen: isFullScreen,
-          ),
+          child: LibraryItemManualMatchView(item: item, filterData: filterData, isFullScreen: isFullScreen),
         ),
       ],
     );
@@ -157,12 +134,10 @@ class LibraryItemManualMatchView extends ConsumerStatefulWidget {
   final VoidCallback? onCancel;
 
   @override
-  ConsumerState<LibraryItemManualMatchView> createState() =>
-      _LibraryItemManualMatchViewState();
+  ConsumerState<LibraryItemManualMatchView> createState() => _LibraryItemManualMatchViewState();
 }
 
-class _LibraryItemManualMatchViewState
-    extends ConsumerState<LibraryItemManualMatchView> {
+class _LibraryItemManualMatchViewState extends ConsumerState<LibraryItemManualMatchView> {
   final Random _random = Random();
 
   late final TextEditingController _titleController;
@@ -170,12 +145,9 @@ class _LibraryItemManualMatchViewState
   late final String _searchMediaType;
 
   final Set<String> _selectedProviders = <String>{};
-  final Map<ManualMatchField, TextEditingController> _fieldControllers =
-      <ManualMatchField, TextEditingController>{};
-  final Map<ManualMatchField, bool?> _boolFieldValues =
-      <ManualMatchField, bool?>{};
-  final Map<ManualMatchField, ManualListApplyMode> _listModes =
-      <ManualMatchField, ManualListApplyMode>{};
+  final Map<ManualMatchField, TextEditingController> _fieldControllers = <ManualMatchField, TextEditingController>{};
+  final Map<ManualMatchField, bool?> _boolFieldValues = <ManualMatchField, bool?>{};
+  final Map<ManualMatchField, ManualListApplyMode> _listModes = <ManualMatchField, ManualListApplyMode>{};
   Set<ManualMatchField> _enabledFields = <ManualMatchField>{};
 
   List<ManualMatchResult> _results = const <ManualMatchResult>[];
@@ -191,10 +163,7 @@ class _LibraryItemManualMatchViewState
 
     final metadata = widget.item.media?.bookMedia?.metadata;
     final initialTitle = metadata?.title ?? widget.item.title;
-    final initialAuthor =
-        metadata?.authors?.map((author) => author.name).join(', ') ??
-        widget.item.authorString ??
-        '';
+    final initialAuthor = metadata?.authors?.map((author) => author.name).join(', ') ?? widget.item.authorString ?? '';
 
     _titleController = TextEditingController(text: initialTitle.trim());
     _authorController = TextEditingController(text: initialAuthor.trim());
@@ -212,18 +181,14 @@ class _LibraryItemManualMatchViewState
     super.dispose();
   }
 
-  void _syncInitialProviderSelection(
-    List<String> providerValues, {
-    String? preferredProvider,
-  }) {
+  void _syncInitialProviderSelection(List<String> providerValues, {String? preferredProvider}) {
     if (_selectedProviders.isNotEmpty || providerValues.isEmpty) {
       return;
     }
 
     var initialProvider = providerValues.first;
     final normalizedPreferredProvider = preferredProvider?.trim().toLowerCase();
-    if (normalizedPreferredProvider != null &&
-        normalizedPreferredProvider.isNotEmpty) {
+    if (normalizedPreferredProvider != null && normalizedPreferredProvider.isNotEmpty) {
       for (final providerValue in providerValues) {
         if (providerValue.trim().toLowerCase() != normalizedPreferredProvider) {
           continue;
@@ -295,26 +260,19 @@ class _LibraryItemManualMatchViewState
 
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Please enter a title.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a title.')));
       return;
     }
 
-    final selectedProviders = providers
-        .where((provider) => _selectedProviders.contains(provider.value))
-        .toList();
+    final selectedProviders = providers.where((provider) => _selectedProviders.contains(provider.value)).toList();
     if (selectedProviders.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one provider.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select at least one provider.')));
       return;
     }
 
     final api = ref.read(absApiProvider);
     if (api == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No API session available.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No API session available.')));
       return;
     }
 
@@ -350,11 +308,7 @@ class _LibraryItemManualMatchViewState
         final rawResults = extractManualMatchResultMaps(response.data);
         final parsed = rawResults
             .map(
-              (entry) => ManualMatchResult.fromMap(
-                entry,
-                providerValue: provider.value,
-                providerLabel: provider.text,
-              ),
+              (entry) => ManualMatchResult.fromMap(entry, providerValue: provider.value, providerLabel: provider.text),
             )
             .where((entry) => entry.hasMeaningfulData)
             .toList(growable: false);
@@ -383,9 +337,7 @@ class _LibraryItemManualMatchViewState
     });
 
     if (collected.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No match results found.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No match results found.')));
     }
   }
 
@@ -394,12 +346,8 @@ class _LibraryItemManualMatchViewState
     final savedConfiguration = ManualMatchLastConfiguration.current;
     final preferredEnabled = savedConfiguration == null
         ? availableFields
-        : savedConfiguration.enabledFields
-              .where(availableFields.contains)
-              .toSet();
-    final initialEnabled = preferredEnabled.isEmpty
-        ? availableFields
-        : preferredEnabled;
+        : savedConfiguration.enabledFields.where(availableFields.contains).toSet();
+    final initialEnabled = preferredEnabled.isEmpty ? availableFields : preferredEnabled;
 
     _seedEditableValues(result, availableFields);
 
@@ -414,9 +362,7 @@ class _LibraryItemManualMatchViewState
         ..addAll(<ManualMatchField, ManualListApplyMode>{
           for (final field in manualListFields)
             if (availableFields.contains(field))
-              field:
-                  savedConfiguration?.listModes[field] ??
-                  ManualListApplyMode.overwrite,
+              field: savedConfiguration?.listModes[field] ?? ManualListApplyMode.overwrite,
         });
     });
   }
@@ -431,29 +377,20 @@ class _LibraryItemManualMatchViewState
     }
 
     if (_enabledFields.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one field to apply.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select at least one field to apply.')));
       return;
     }
 
     final request = _buildUpdateRequest();
     if (request == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No writable values were selected from this match result.',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('No writable values were selected from this match result.')));
       return;
     }
 
     final api = ref.read(absApiProvider);
     if (api == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No API session available.')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No API session available.')));
       return;
     }
 
@@ -462,10 +399,7 @@ class _LibraryItemManualMatchViewState
     });
 
     try {
-      final response = await api.getLibraryItemApi().updateLibraryItemMedia(
-        widget.item.id,
-        request: request,
-      );
+      final response = await api.getLibraryItemApi().updateLibraryItemMedia(widget.item.id, request: request);
 
       if (!mounted) {
         return;
@@ -473,17 +407,11 @@ class _LibraryItemManualMatchViewState
 
       final updated = response.data?.updated ?? false;
       ref.invalidate(libraryItemProvider(widget.item.id));
-      ManualMatchLastConfiguration.save(
-        enabledFields: _enabledFields,
-        listModes: _listModes,
-      );
+      ManualMatchLastConfiguration.save(enabledFields: _enabledFields, listModes: _listModes);
       await _persistSavedConfiguration();
 
-      final message = updated
-          ? 'Item metadata updated from manual match.'
-          : 'No updates were necessary.';
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      final message = updated ? 'Item metadata updated from manual match.' : 'No updates were necessary.';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       if (widget.onMatched != null) {
         widget.onMatched!(updated);
       } else {
@@ -494,9 +422,7 @@ class _LibraryItemManualMatchViewState
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save manual match: $error')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save manual match: $error')));
     } finally {
       if (mounted) {
         setState(() {
@@ -528,95 +454,54 @@ class _LibraryItemManualMatchViewState
       title = _normalizeText(_fieldControllers[ManualMatchField.title]?.text);
     }
     if (_enabledFields.contains(ManualMatchField.subtitle)) {
-      subtitle = _normalizeText(
-        _fieldControllers[ManualMatchField.subtitle]?.text,
-      );
+      subtitle = _normalizeText(_fieldControllers[ManualMatchField.subtitle]?.text);
     }
     if (_enabledFields.contains(ManualMatchField.authors)) {
-      final parsedAuthors = extractStringList(
-        _fieldControllers[ManualMatchField.authors]?.text,
-      );
+      final parsedAuthors = extractStringList(_fieldControllers[ManualMatchField.authors]?.text);
       if (parsedAuthors.isNotEmpty) {
-        final mode =
-            _listModes[ManualMatchField.authors] ??
-            ManualListApplyMode.overwrite;
+        final mode = _listModes[ManualMatchField.authors] ?? ManualListApplyMode.overwrite;
         authors = _buildAuthorPatch(parsedAuthors, mode: mode);
       }
     }
     if (_enabledFields.contains(ManualMatchField.narrators)) {
-      final parsedNarrators = extractStringList(
-        _fieldControllers[ManualMatchField.narrators]?.text,
-      );
+      final parsedNarrators = extractStringList(_fieldControllers[ManualMatchField.narrators]?.text);
       if (parsedNarrators.isNotEmpty) {
-        final mode =
-            _listModes[ManualMatchField.narrators] ??
-            ManualListApplyMode.overwrite;
-        narrators = _mergeStringLists(
-          _currentListForField(ManualMatchField.narrators),
-          parsedNarrators,
-          mode: mode,
-        );
+        final mode = _listModes[ManualMatchField.narrators] ?? ManualListApplyMode.overwrite;
+        narrators = _mergeStringLists(_currentListForField(ManualMatchField.narrators), parsedNarrators, mode: mode);
       }
     }
     if (_enabledFields.contains(ManualMatchField.description)) {
-      description = _normalizeText(
-        _fieldControllers[ManualMatchField.description]?.text,
-      );
+      description = _normalizeText(_fieldControllers[ManualMatchField.description]?.text);
     }
     if (_enabledFields.contains(ManualMatchField.publisher)) {
-      publisher = _normalizeText(
-        _fieldControllers[ManualMatchField.publisher]?.text,
-      );
+      publisher = _normalizeText(_fieldControllers[ManualMatchField.publisher]?.text);
     }
     if (_enabledFields.contains(ManualMatchField.publishedYear)) {
-      publishedYear = _normalizeText(
-        _fieldControllers[ManualMatchField.publishedYear]?.text,
-      );
+      publishedYear = _normalizeText(_fieldControllers[ManualMatchField.publishedYear]?.text);
     }
     if (_enabledFields.contains(ManualMatchField.series)) {
-      final parsedSeries = _parseSeriesInput(
-        _fieldControllers[ManualMatchField.series]?.text,
-      );
+      final parsedSeries = _parseSeriesInput(_fieldControllers[ManualMatchField.series]?.text);
       if (parsedSeries.isNotEmpty) {
-        final mode =
-            _listModes[ManualMatchField.series] ??
-            ManualListApplyMode.overwrite;
+        final mode = _listModes[ManualMatchField.series] ?? ManualListApplyMode.overwrite;
         series = _buildSeriesPatch(parsedSeries, mode: mode);
       }
     }
     if (_enabledFields.contains(ManualMatchField.genres)) {
-      final parsedGenres = extractStringList(
-        _fieldControllers[ManualMatchField.genres]?.text,
-      );
+      final parsedGenres = extractStringList(_fieldControllers[ManualMatchField.genres]?.text);
       if (parsedGenres.isNotEmpty) {
-        final mode =
-            _listModes[ManualMatchField.genres] ??
-            ManualListApplyMode.overwrite;
-        genres = _mergeStringLists(
-          _currentListForField(ManualMatchField.genres),
-          parsedGenres,
-          mode: mode,
-        );
+        final mode = _listModes[ManualMatchField.genres] ?? ManualListApplyMode.overwrite;
+        genres = _mergeStringLists(_currentListForField(ManualMatchField.genres), parsedGenres, mode: mode);
       }
     }
     if (_enabledFields.contains(ManualMatchField.tags)) {
-      final parsedTags = extractStringList(
-        _fieldControllers[ManualMatchField.tags]?.text,
-      );
+      final parsedTags = extractStringList(_fieldControllers[ManualMatchField.tags]?.text);
       if (parsedTags.isNotEmpty) {
-        final mode =
-            _listModes[ManualMatchField.tags] ?? ManualListApplyMode.overwrite;
-        tags = _mergeStringLists(
-          _currentListForField(ManualMatchField.tags),
-          parsedTags,
-          mode: mode,
-        );
+        final mode = _listModes[ManualMatchField.tags] ?? ManualListApplyMode.overwrite;
+        tags = _mergeStringLists(_currentListForField(ManualMatchField.tags), parsedTags, mode: mode);
       }
     }
     if (_enabledFields.contains(ManualMatchField.language)) {
-      language = _normalizeText(
-        _fieldControllers[ManualMatchField.language]?.text,
-      );
+      language = _normalizeText(_fieldControllers[ManualMatchField.language]?.text);
     }
     if (_enabledFields.contains(ManualMatchField.isbn)) {
       isbn = _normalizeText(_fieldControllers[ManualMatchField.isbn]?.text);
@@ -652,31 +537,21 @@ class _LibraryItemManualMatchViewState
     );
 
     final metadata = metadataPatch.toJson().isEmpty ? null : metadataPatch;
-    final request = UpdateLibraryItemMediaRequest(
-      metadata: metadata,
-      tags: tags,
-      url: url,
-    );
+    final request = UpdateLibraryItemMediaRequest(metadata: metadata, tags: tags, url: url);
     if (request.toJson().isEmpty) {
       return null;
     }
     return request;
   }
 
-  List<Author>? _buildAuthorPatch(
-    List<String> incomingAuthors, {
-    required ManualListApplyMode mode,
-  }) {
+  List<Author>? _buildAuthorPatch(List<String> incomingAuthors, {required ManualListApplyMode mode}) {
     if (incomingAuthors.isEmpty) {
       return null;
     }
 
-    final currentAuthors =
-        widget.item.media?.bookMedia?.metadata.authors ?? const <Author>[];
+    final currentAuthors = widget.item.media?.bookMedia?.metadata.authors ?? const <Author>[];
     if (mode == ManualListApplyMode.overwrite) {
-      return incomingAuthors
-          .map((name) => Author(id: _generateId(), name: name))
-          .toList(growable: false);
+      return incomingAuthors.map((name) => Author(id: _generateId(), name: name)).toList(growable: false);
     }
 
     final normalizedCurrentNames = currentAuthors
@@ -685,46 +560,27 @@ class _LibraryItemManualMatchViewState
         .toList();
     final currentByLower = <String, Author>{
       for (final author in currentAuthors)
-        if (author.name.trim().isNotEmpty)
-          author.name.trim().toLowerCase(): author,
+        if (author.name.trim().isNotEmpty) author.name.trim().toLowerCase(): author,
     };
 
-    final mergedNames = _mergeStringLists(
-      normalizedCurrentNames,
-      incomingAuthors,
-      mode: ManualListApplyMode.add,
-    );
+    final mergedNames = _mergeStringLists(normalizedCurrentNames, incomingAuthors, mode: ManualListApplyMode.add);
     return mergedNames
-        .map(
-          (name) =>
-              currentByLower[name.toLowerCase()] ??
-              Author(id: _generateId(), name: name),
-        )
+        .map((name) => currentByLower[name.toLowerCase()] ?? Author(id: _generateId(), name: name))
         .toList(growable: false);
   }
 
-  List<Series>? _buildSeriesPatch(
-    List<ManualMatchSeriesEntry> incomingSeries, {
-    required ManualListApplyMode mode,
-  }) {
+  List<Series>? _buildSeriesPatch(List<ManualMatchSeriesEntry> incomingSeries, {required ManualListApplyMode mode}) {
     if (incomingSeries.isEmpty) {
       return null;
     }
 
     if (mode == ManualListApplyMode.overwrite) {
       return incomingSeries
-          .map(
-            (entry) => Series(
-              id: _generateId(),
-              name: entry.name,
-              sequence: _normalizeText(entry.sequence),
-            ),
-          )
+          .map((entry) => Series(id: _generateId(), name: entry.name, sequence: _normalizeText(entry.sequence)))
           .toList(growable: false);
     }
 
-    final currentSeries =
-        widget.item.media?.bookMedia?.metadata.series ?? const <Series>[];
+    final currentSeries = widget.item.media?.bookMedia?.metadata.series ?? const <Series>[];
     final seen = <String>{};
     final merged = <Series>[];
 
@@ -740,23 +596,13 @@ class _LibraryItemManualMatchViewState
       if (!seen.add(key)) {
         continue;
       }
-      merged.add(
-        Series(
-          id: _generateId(),
-          name: incoming.name,
-          sequence: _normalizeText(incoming.sequence),
-        ),
-      );
+      merged.add(Series(id: _generateId(), name: incoming.name, sequence: _normalizeText(incoming.sequence)));
     }
 
     return merged;
   }
 
-  List<String> _mergeStringLists(
-    List<String> current,
-    List<String> incoming, {
-    required ManualListApplyMode mode,
-  }) {
+  List<String> _mergeStringLists(List<String> current, List<String> incoming, {required ManualListApplyMode mode}) {
     if (mode == ManualListApplyMode.overwrite) {
       return _normalizeStringList(incoming);
     }
@@ -802,8 +648,7 @@ class _LibraryItemManualMatchViewState
     return '$normalizedName#$normalizedSequence';
   }
 
-  String _generateId() =>
-      'new-${DateTime.now().microsecondsSinceEpoch}-${_random.nextInt(1000000)}';
+  String _generateId() => 'new-${DateTime.now().microsecondsSinceEpoch}-${_random.nextInt(1000000)}';
 
   String? _normalizeText(String? value) {
     final normalized = value?.trim();
@@ -813,20 +658,13 @@ class _LibraryItemManualMatchViewState
     return normalized;
   }
 
-  void _seedEditableValues(
-    ManualMatchResult result,
-    Set<ManualMatchField> availableFields,
-  ) {
-    final staleControllerFields = _fieldControllers.keys
-        .where((field) => !availableFields.contains(field))
-        .toList();
+  void _seedEditableValues(ManualMatchResult result, Set<ManualMatchField> availableFields) {
+    final staleControllerFields = _fieldControllers.keys.where((field) => !availableFields.contains(field)).toList();
     for (final field in staleControllerFields) {
       _fieldControllers.remove(field)?.dispose();
     }
 
-    _boolFieldValues.removeWhere(
-      (field, _) => !availableFields.contains(field),
-    );
+    _boolFieldValues.removeWhere((field, _) => !availableFields.contains(field));
 
     for (final field in availableFields) {
       if (_isBooleanField(field)) {
@@ -834,23 +672,16 @@ class _LibraryItemManualMatchViewState
         continue;
       }
 
-      final controller = _fieldControllers.putIfAbsent(
-        field,
-        TextEditingController.new,
-      );
+      final controller = _fieldControllers.putIfAbsent(field, TextEditingController.new);
       controller.text = _defaultTextValueForField(result, field);
     }
   }
 
   bool _isBooleanField(ManualMatchField field) {
-    return field == ManualMatchField.explicit ||
-        field == ManualMatchField.abridged;
+    return field == ManualMatchField.explicit || field == ManualMatchField.abridged;
   }
 
-  String _defaultTextValueForField(
-    ManualMatchResult result,
-    ManualMatchField field,
-  ) {
+  String _defaultTextValueForField(ManualMatchResult result, ManualMatchField field) {
     switch (field) {
       case ManualMatchField.cover:
         return result.coverUrl ?? '';
@@ -870,11 +701,7 @@ class _LibraryItemManualMatchViewState
         return result.publishedYear ?? '';
       case ManualMatchField.series:
         return result.seriesEntries
-            .map(
-              (entry) => entry.sequence?.isNotEmpty == true
-                  ? '${entry.name} #${entry.sequence}'
-                  : entry.name,
-            )
+            .map((entry) => entry.sequence?.isNotEmpty == true ? '${entry.name} #${entry.sequence}' : entry.name)
             .join(', ');
       case ManualMatchField.genres:
         return result.genres.join(', ');
@@ -892,10 +719,7 @@ class _LibraryItemManualMatchViewState
     }
   }
 
-  bool? _defaultBoolValueForField(
-    ManualMatchResult result,
-    ManualMatchField field,
-  ) {
+  bool? _defaultBoolValueForField(ManualMatchResult result, ManualMatchField field) {
     switch (field) {
       case ManualMatchField.explicit:
         return result.explicit;
@@ -949,18 +773,12 @@ class _LibraryItemManualMatchViewState
       }
 
       final normalizedSequence = _normalizeText(sequence);
-      final key =
-          '${normalizedName.toLowerCase()}#${(normalizedSequence ?? '').toLowerCase()}';
+      final key = '${normalizedName.toLowerCase()}#${(normalizedSequence ?? '').toLowerCase()}';
       if (!seen.add(key)) {
         continue;
       }
 
-      entries.add(
-        ManualMatchSeriesEntry(
-          name: normalizedName,
-          sequence: normalizedSequence,
-        ),
-      );
+      entries.add(ManualMatchSeriesEntry(name: normalizedName, sequence: normalizedSequence));
     }
 
     return entries;
@@ -976,10 +794,7 @@ class _LibraryItemManualMatchViewState
       return null;
     }
 
-    return api
-        .getLibraryItemApi()
-        .getCoverUri(widget.item.id, item: widget.item)
-        .toString();
+    return api.getLibraryItemApi().getCoverUri(widget.item.id, item: widget.item).toString();
   }
 
   Widget _buildCurrentCoverPreview() {
@@ -1013,11 +828,7 @@ class _LibraryItemManualMatchViewState
         borderRadius: BorderRadius.circular(8),
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
-      child: Icon(
-        icon,
-        size: 22,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      child: Icon(icon, size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 
@@ -1025,20 +836,13 @@ class _LibraryItemManualMatchViewState
     final metadata = widget.item.media?.bookMedia?.metadata;
     switch (field) {
       case ManualMatchField.authors:
-        return metadata?.authors
-                ?.map((author) => author.name)
-                .whereType<String>()
-                .toList(growable: false) ??
+        return metadata?.authors?.map((author) => author.name).whereType<String>().toList(growable: false) ??
             const <String>[];
       case ManualMatchField.narrators:
         return metadata?.narrators ?? const <String>[];
       case ManualMatchField.series:
         return metadata?.series
-                ?.map(
-                  (entry) => entry.sequence?.isNotEmpty == true
-                      ? '${entry.name} #${entry.sequence}'
-                      : entry.name,
-                )
+                ?.map((entry) => entry.sequence?.isNotEmpty == true ? '${entry.name} #${entry.sequence}' : entry.name)
                 .toList(growable: false) ??
             const <String>[];
       case ManualMatchField.genres:
@@ -1096,11 +900,7 @@ class _LibraryItemManualMatchViewState
           return null;
         }
         return series
-            .map(
-              (entry) => entry.sequence?.isNotEmpty == true
-                  ? '${entry.name} #${entry.sequence}'
-                  : entry.name,
-            )
+            .map((entry) => entry.sequence?.isNotEmpty == true ? '${entry.name} #${entry.sequence}' : entry.name)
             .join(', ');
       case ManualMatchField.genres:
         final genres = metadata?.genres;
@@ -1121,13 +921,9 @@ class _LibraryItemManualMatchViewState
       case ManualMatchField.asin:
         return _normalizeText(metadata?.asin);
       case ManualMatchField.explicit:
-        return metadata?.explicit == null
-            ? null
-            : (metadata!.explicit! ? 'Yes' : 'No');
+        return metadata?.explicit == null ? null : (metadata!.explicit! ? 'Yes' : 'No');
       case ManualMatchField.abridged:
-        return metadata?.abridged == null
-            ? null
-            : (metadata!.abridged! ? 'Yes' : 'No');
+        return metadata?.abridged == null ? null : (metadata!.abridged! ? 'Yes' : 'No');
     }
   }
 
@@ -1145,15 +941,10 @@ class _LibraryItemManualMatchViewState
   Widget build(BuildContext context) {
     final selectedLibrary = ref.watch(selectedLibraryProvider);
     final userLibraries = ref.watch(userLibrariesProvider).value;
-    final providersAsync = ref.watch(
-      uploadMetadataProvidersProvider(_searchMediaType),
-    );
+    final providersAsync = ref.watch(uploadMetadataProvidersProvider(_searchMediaType));
 
     final providerValues =
-        providersAsync.asData?.value
-            .map((provider) => provider.value)
-            .toList(growable: false) ??
-        const <String>[];
+        providersAsync.asData?.value.map((provider) => provider.value).toList(growable: false) ?? const <String>[];
 
     String? defaultProviderValue;
     final itemLibraryId = widget.item.libraryId;
@@ -1162,8 +953,7 @@ class _LibraryItemManualMatchViewState
         defaultProviderValue = selectedLibrary?.provider;
       }
 
-      if ((defaultProviderValue == null || defaultProviderValue.isEmpty) &&
-          userLibraries != null) {
+      if ((defaultProviderValue == null || defaultProviderValue.isEmpty) && userLibraries != null) {
         for (final library in userLibraries) {
           if (library.id != itemLibraryId) {
             continue;
@@ -1176,22 +966,12 @@ class _LibraryItemManualMatchViewState
     }
 
     defaultProviderValue ??= selectedLibrary?.provider;
-    _syncInitialProviderSelection(
-      providerValues,
-      preferredProvider: defaultProviderValue,
-    );
+    _syncInitialProviderSelection(providerValues, preferredProvider: defaultProviderValue);
 
     final selectedResult = _selectedResult;
-    final availableFields =
-        selectedResult?.availableFields ?? const <ManualMatchField>[];
-    final allFieldsSelected =
-        availableFields.isNotEmpty &&
-        _enabledFields.length == availableFields.length;
-    final showCollapsedSearch =
-        context.isMobile &&
-        _searchCollapsedOnMobile &&
-        _results.isNotEmpty &&
-        !_searching;
+    final availableFields = selectedResult?.availableFields ?? const <ManualMatchField>[];
+    final allFieldsSelected = availableFields.isNotEmpty && _enabledFields.length == availableFields.length;
+    final showCollapsedSearch = context.isMobile && _searchCollapsedOnMobile && _results.isNotEmpty && !_searching;
     final searchSection = showCollapsedSearch
         ? ManualMatchCollapsedSearchBar(
             title: _titleController.text,
@@ -1216,18 +996,11 @@ class _LibraryItemManualMatchViewState
                   ..addAll(nextSelection);
               });
             },
-            onSearch: () => _runSearch(
-              providersAsync.value ?? const <SearchProviderOption>[],
-            ),
+            onSearch: () => _runSearch(providersAsync.value ?? const <SearchProviderOption>[]),
           );
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        12,
-        context.isMobile ? 8 : 12,
-        12,
-        context.isMobile ? 10 : 14,
-      ),
+      padding: EdgeInsets.fromLTRB(12, context.isMobile ? 8 : 12, 12, context.isMobile ? 10 : 14),
       child: Column(
         children: [
           searchSection,
@@ -1283,30 +1056,19 @@ class _LibraryItemManualMatchViewState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ToggleButtons(
-                        isSelected: <bool>[
-                          _mobilePaneIndex == 0,
-                          _mobilePaneIndex == 1,
-                        ],
+                        isSelected: <bool>[_mobilePaneIndex == 0, _mobilePaneIndex == 1],
                         onPressed: (index) {
                           setState(() {
                             _mobilePaneIndex = index;
                           });
                         },
                         children: const [
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12),
-                            child: Text('Candidates'),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12),
-                            child: Text('Selection'),
-                          ),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('Candidates')),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('Selection')),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Expanded(
-                        child: _mobilePaneIndex == 0 ? resultsPane : editorPane,
-                      ),
+                      Expanded(child: _mobilePaneIndex == 0 ? resultsPane : editorPane),
                     ],
                   );
                 }
@@ -1337,23 +1099,14 @@ class _LibraryItemManualMatchViewState
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: _saving
-                    ? null
-                    : (widget.onCancel ??
-                          () => Navigator.of(context).pop(false)),
+                onPressed: _saving ? null : (widget.onCancel ?? () => Navigator.of(context).pop(false)),
                 child: const Text('Cancel'),
               ),
               const SizedBox(width: 8),
               FilledButton.icon(
-                onPressed: _saving || _selectedResult == null
-                    ? null
-                    : _saveSelection,
+                onPressed: _saving || _selectedResult == null ? null : _saveSelection,
                 icon: _saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2.2),
-                      )
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2))
                     : const Icon(Icons.save_rounded),
                 label: Text(_saving ? 'Saving...' : 'Save matched fields'),
               ),

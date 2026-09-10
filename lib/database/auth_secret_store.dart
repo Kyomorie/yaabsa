@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -7,32 +6,20 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'auth_secret_store.g.dart';
 
 class AuthSecrets {
-  const AuthSecrets({
-    this.legacyToken,
-    this.accessToken,
-    this.refreshToken,
-    this.apiKey,
-  });
+  const AuthSecrets({this.legacyToken, this.accessToken, this.refreshToken, this.apiKey});
 
   final String? legacyToken;
   final String? accessToken;
   final String? refreshToken;
   final String? apiKey;
 
-  bool get hasAny =>
-      legacyToken != null ||
-      accessToken != null ||
-      refreshToken != null ||
-      apiKey != null;
+  bool get hasAny => legacyToken != null || accessToken != null || refreshToken != null || apiKey != null;
 
   String? get preferredAuthToken => apiKey ?? accessToken ?? legacyToken;
 }
 
 class AuthSecretsUnavailableException implements Exception {
-  const AuthSecretsUnavailableException({
-    required this.error,
-    required this.stackTrace,
-  });
+  const AuthSecretsUnavailableException({required this.error, required this.stackTrace});
 
   final Object error;
   final StackTrace stackTrace;
@@ -50,30 +37,18 @@ bool isAuthSecretsUnavailableError(Object? error) {
   return error is AuthSecretsUnavailableException || error is PlatformException;
 }
 
-String authSecretsUnavailableMessage({
-  required String operation,
-  required bool keyringLocked,
-}) {
-  final reason = keyringLocked
-      ? 'the system keyring is locked'
-      : 'secure credential storage is unavailable';
+String authSecretsUnavailableMessage({required String operation, required bool keyringLocked}) {
+  final reason = keyringLocked ? 'the system keyring is locked' : 'secure credential storage is unavailable';
   return 'The user could not be $operation because $reason. Unlock your keyring or wallet (for example, GNOME Keyring or KDE Wallet), then try again';
 }
 
 class AuthSecretStore {
-  AuthSecretStore({
-    FlutterSecureStorage? storage,
-    FlutterSecureStorage? legacyStorage,
-  }) : _storage =
-           storage ??
-           const FlutterSecureStorage(
-             iOptions: IOSOptions(
-               accessibility: KeychainAccessibility.first_unlock,
-             ),
-           ),
-       _legacyStorage =
-           legacyStorage ?? storage ?? const FlutterSecureStorage(),
-       _usesSystemStorage = storage == null && legacyStorage == null;
+  AuthSecretStore({FlutterSecureStorage? storage, FlutterSecureStorage? legacyStorage})
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock)),
+      _legacyStorage = legacyStorage ?? storage ?? const FlutterSecureStorage(),
+      _usesSystemStorage = storage == null && legacyStorage == null;
 
   final FlutterSecureStorage _storage;
   final FlutterSecureStorage _legacyStorage;
@@ -83,9 +58,7 @@ class AuthSecretStore {
   static const String _accessTokenKey = 'accessToken';
   static const String _refreshTokenKey = 'refreshToken';
   static const String _apiKeyKey = 'apiKey';
-  static const MethodChannel _iosKeychainMigrationChannel = MethodChannel(
-    'de.vito0912.yaabsa/auth_secret_migration',
-  );
+  static const MethodChannel _iosKeychainMigrationChannel = MethodChannel('de.vito0912.yaabsa/auth_secret_migration');
 
   String _key(String userId, String field) => 'auth.$userId.$field';
 
@@ -98,17 +71,9 @@ class AuthSecretStore {
         _readField(_key(userId, _apiKeyKey)),
       ]);
 
-      return AuthSecrets(
-        legacyToken: values[0],
-        accessToken: values[1],
-        refreshToken: values[2],
-        apiKey: values[3],
-      );
+      return AuthSecrets(legacyToken: values[0], accessToken: values[1], refreshToken: values[2], apiKey: values[3]);
     } catch (error, stackTrace) {
-      throw AuthSecretsUnavailableException(
-        error: error,
-        stackTrace: stackTrace,
-      );
+      throw AuthSecretsUnavailableException(error: error, stackTrace: stackTrace);
     }
   }
 
@@ -126,10 +91,7 @@ class AuthSecretStore {
       await _writeField(userId, _refreshTokenKey, refreshToken, clearMissing);
       await _writeField(userId, _apiKeyKey, apiKey, clearMissing);
     } catch (error, stackTrace) {
-      throw AuthSecretsUnavailableException(
-        error: error,
-        stackTrace: stackTrace,
-      );
+      throw AuthSecretsUnavailableException(error: error, stackTrace: stackTrace);
     }
   }
 
@@ -142,26 +104,15 @@ class AuthSecretStore {
         _storage.delete(key: _key(userId, _apiKeyKey)),
       ]);
     } catch (error, stackTrace) {
-      throw AuthSecretsUnavailableException(
-        error: error,
-        stackTrace: stackTrace,
-      );
+      throw AuthSecretsUnavailableException(error: error, stackTrace: stackTrace);
     }
   }
 
-  Future<void> _writeField(
-    String userId,
-    String field,
-    String? value,
-    bool clearMissing,
-  ) async {
+  Future<void> _writeField(String userId, String field, String? value, bool clearMissing) async {
     final fieldKey = _key(userId, field);
     if (value != null) {
       final migrated = await _migrateLegacyValueIfNeeded(fieldKey);
-      await (migrated ? _storage : _legacyStorage).write(
-        key: fieldKey,
-        value: value,
-      );
+      await (migrated ? _storage : _legacyStorage).write(key: fieldKey, value: value);
       return;
     }
 
@@ -204,17 +155,12 @@ class AuthSecretStore {
   }
 
   Future<bool> _migrateLegacyValue(String key) async {
-    if (!_usesSystemStorage ||
-        kIsWeb ||
-        defaultTargetPlatform != TargetPlatform.iOS) {
+    if (!_usesSystemStorage || kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) {
       return true;
     }
 
     try {
-      await _iosKeychainMigrationChannel.invokeMethod<void>(
-        'migrateAccessibility',
-        <String, String>{'key': key},
-      );
+      await _iosKeychainMigrationChannel.invokeMethod<void>('migrateAccessibility', <String, String>{'key': key});
       return true;
     } catch (_) {
       return false;

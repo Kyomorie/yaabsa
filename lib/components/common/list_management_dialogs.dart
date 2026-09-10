@@ -43,14 +43,8 @@ Future<bool> showListManagementDeleteDialog({
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(confirmLabel),
-          ),
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: Text(confirmLabel)),
         ],
       );
     },
@@ -98,8 +92,7 @@ class _ListManagementFormDialog extends StatefulWidget {
   final String? helperText;
 
   @override
-  State<_ListManagementFormDialog> createState() =>
-      _ListManagementFormDialogState();
+  State<_ListManagementFormDialog> createState() => _ListManagementFormDialogState();
 }
 
 class _ListManagementFormDialogState extends State<_ListManagementFormDialog> {
@@ -113,9 +106,7 @@ class _ListManagementFormDialogState extends State<_ListManagementFormDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName ?? '');
-    _descriptionController = TextEditingController(
-      text: widget.initialDescription ?? '',
-    );
+    _descriptionController = TextEditingController(text: widget.initialDescription ?? '');
     _nameController.addListener(_handleFormFieldChanged);
   }
 
@@ -160,13 +151,11 @@ class _ListManagementFormDialogState extends State<_ListManagementFormDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (widget.helperText != null &&
-                  widget.helperText!.trim().isNotEmpty) ...[
+              if (widget.helperText != null && widget.helperText!.trim().isNotEmpty) ...[
                 Text(
                   widget.helperText!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -176,9 +165,7 @@ class _ListManagementFormDialogState extends State<_ListManagementFormDialog> {
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
                   labelText: 'Name',
-                  errorText: _showValidationErrors && !_isNameValid
-                      ? 'Name is required.'
-                      : null,
+                  errorText: _showValidationErrors && !_isNameValid ? 'Name is required.' : null,
                 ),
               ),
               const SizedBox(height: 12),
@@ -187,24 +174,15 @@ class _ListManagementFormDialogState extends State<_ListManagementFormDialog> {
                 minLines: 2,
                 maxLines: 4,
                 textInputAction: TextInputAction.newline,
-                decoration: const InputDecoration(
-                  labelText: 'Description',
-                  hintText: 'Optional',
-                ),
+                decoration: const InputDecoration(labelText: 'Description', hintText: 'Optional'),
               ),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _isNameValid ? _submit : null,
-          child: Text(widget.confirmLabel),
-        ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        FilledButton(onPressed: _isNameValid ? _submit : null, child: Text(widget.confirmLabel)),
       ],
     );
   }

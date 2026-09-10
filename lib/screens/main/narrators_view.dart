@@ -21,17 +21,11 @@ class NarratorsView extends HookConsumerWidget {
     final serverReachable = ref.watch(serverStatusProvider).value ?? false;
 
     if (selectedLibrary == null) {
-      return const Center(
-        child: Text(
-          'No library selected. Please select a library via the switcher.',
-        ),
-      );
+      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
     }
 
     if (selectedLibrary.mediaType != 'book') {
-      return const Center(
-        child: Text('Narrators are available only for book libraries.'),
-      );
+      return const Center(child: Text('Narrators are available only for book libraries.'));
     }
 
     final libraryId = selectedLibrary.id;
@@ -48,13 +42,10 @@ class NarratorsView extends HookConsumerWidget {
                 .toSet()
                 .toList(growable: false) ??
             const [];
-        final sortedNarrators = [...narrators]
-          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        final sortedNarrators = [...narrators]..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
         if (sortedNarrators.isEmpty) {
-          return const Center(
-            child: Text('No narrators found in this library.'),
-          );
+          return const Center(child: Text('No narrators found in this library.'));
         }
 
         final horizontalPadding = context.isDesktop
@@ -72,17 +63,11 @@ class NarratorsView extends HookConsumerWidget {
           children: [
             Positioned.fill(
               child: RefreshIndicator(
-                onRefresh: () =>
-                    ref.refresh(libraryFilterDataProvider(libraryId).future),
+                onRefresh: () => ref.refresh(libraryFilterDataProvider(libraryId).future),
                 child: GridView.builder(
                   controller: scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    12,
-                    horizontalPadding,
-                    16,
-                  ),
+                  padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 16),
                   itemCount: sortedNarrators.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,

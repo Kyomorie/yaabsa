@@ -22,9 +22,7 @@ class AdminEmailDevicesTable extends StatelessWidget {
   final Widget? topActions;
 
   String _accessLabel(AdminEmailEreaderDevice device) {
-    final normalizedAvailability = normalizeAdminEmailAvailabilityOption(
-      device.availabilityOption,
-    );
+    final normalizedAvailability = normalizeAdminEmailAvailabilityOption(device.availabilityOption);
     if (normalizedAvailability == adminEmailAvailabilitySpecificUsers) {
       return '${adminEmailAvailabilityLabel(normalizedAvailability)} (${device.users.length})';
     }
@@ -40,25 +38,19 @@ class AdminEmailDevicesTable extends StatelessWidget {
           id: 'name',
           label: 'Device',
           width: 180,
-          cellBuilder: (context, device) =>
-              Text(device.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          cellBuilder: (context, device) => Text(device.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
         ExpressiveTableColumn<AdminEmailEreaderDevice>(
           id: 'email',
           label: 'Email',
           width: 240,
-          cellBuilder: (context, device) =>
-              Text(device.email, maxLines: 1, overflow: TextOverflow.ellipsis),
+          cellBuilder: (context, device) => Text(device.email, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
         ExpressiveTableColumn<AdminEmailEreaderDevice>(
           id: 'access',
           label: 'Accessible By',
           width: 160,
-          cellBuilder: (context, device) => Text(
-            _accessLabel(device),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          cellBuilder: (context, device) => Text(_accessLabel(device), maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
         ExpressiveTableColumn<AdminEmailEreaderDevice>(
           id: 'users',
@@ -72,8 +64,7 @@ class AdminEmailDevicesTable extends StatelessWidget {
       topActions: topActions,
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
-      rowId: (device) =>
-          '${device.name.trim().toLowerCase()}::${device.email.trim().toLowerCase()}',
+      rowId: (device) => '${device.name.trim().toLowerCase()}::${device.email.trim().toLowerCase()}',
       busyRowIds: busyDeviceIds,
       actions: [
         ExpressiveTableAction<AdminEmailEreaderDevice>(

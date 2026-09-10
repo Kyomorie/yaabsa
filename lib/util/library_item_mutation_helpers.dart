@@ -19,16 +19,8 @@ bool mutationAffectsSeriesList(LibraryItemMutation mutation) {
 }
 
 bool mutationAffectsSeries(LibraryItemMutation mutation, String seriesId) {
-  final oldHasSeries =
-      mutation.previousItem?.media?.bookMedia?.metadata.series?.any(
-        (s) => s.id == seriesId,
-      ) ??
-      false;
-  final newHasSeries =
-      mutation.item?.media?.bookMedia?.metadata.series?.any(
-        (s) => s.id == seriesId,
-      ) ??
-      false;
+  final oldHasSeries = mutation.previousItem?.media?.bookMedia?.metadata.series?.any((s) => s.id == seriesId) ?? false;
+  final newHasSeries = mutation.item?.media?.bookMedia?.metadata.series?.any((s) => s.id == seriesId) ?? false;
 
   if (oldHasSeries || newHasSeries) {
     return true;
@@ -56,16 +48,8 @@ bool mutationAffectsAuthorsList(LibraryItemMutation mutation) {
 }
 
 bool mutationAffectsAuthor(LibraryItemMutation mutation, String authorId) {
-  final oldHasAuthor =
-      mutation.previousItem?.media?.bookMedia?.metadata.authors?.any(
-        (a) => a.id == authorId,
-      ) ??
-      false;
-  final newHasAuthor =
-      mutation.item?.media?.bookMedia?.metadata.authors?.any(
-        (a) => a.id == authorId,
-      ) ??
-      false;
+  final oldHasAuthor = mutation.previousItem?.media?.bookMedia?.metadata.authors?.any((a) => a.id == authorId) ?? false;
+  final newHasAuthor = mutation.item?.media?.bookMedia?.metadata.authors?.any((a) => a.id == authorId) ?? false;
 
   if (oldHasAuthor || newHasAuthor) {
     return true;

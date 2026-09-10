@@ -6,56 +6,37 @@ part of 'internal_download.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_InternalDownload _$InternalDownloadFromJson(Map<String, dynamic> json) =>
-    _InternalDownload(
-      item: json['item'] == null
-          ? null
-          : LibraryItem.fromJson(json['item'] as Map<String, dynamic>),
-      episode: json['episode'] == null
-          ? null
-          : Episode.fromJson(json['episode'] as Map<String, dynamic>),
-      tracks: (json['tracks'] as List<dynamic>)
-          .map((e) => InternalTrack.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      expectedFileCount: (json['expectedFileCount'] as num?)?.toInt(),
-      auxiliaryFilePaths:
-          (json['auxiliaryFilePaths'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const <String>[],
-      saf: json['saf'] as bool? ?? false,
-      coverPath: json['coverPath'] as String?,
-      sidecarPaths:
-          (json['sidecarPaths'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const <String>[],
-      downloadType: json['downloadType'] as String? ?? 'both',
-      downloadBasePath: json['downloadBasePath'] as String?,
-      downloadOrigin: json['downloadOrigin'] as String? ?? 'manual',
-      smartProfileIds:
-          (json['smartProfileIds'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
-          const <String>[],
-      managedBytes: (json['managedBytes'] as num?)?.toInt(),
-      completedAt: (json['completedAt'] as num?)?.toInt(),
-    );
+_InternalDownload _$InternalDownloadFromJson(Map<String, dynamic> json) => _InternalDownload(
+  item: json['item'] == null ? null : LibraryItem.fromJson(json['item'] as Map<String, dynamic>),
+  episode: json['episode'] == null ? null : Episode.fromJson(json['episode'] as Map<String, dynamic>),
+  tracks: (json['tracks'] as List<dynamic>).map((e) => InternalTrack.fromJson(e as Map<String, dynamic>)).toList(),
+  expectedFileCount: (json['expectedFileCount'] as num?)?.toInt(),
+  auxiliaryFilePaths:
+      (json['auxiliaryFilePaths'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
+  saf: json['saf'] as bool? ?? false,
+  coverPath: json['coverPath'] as String?,
+  sidecarPaths: (json['sidecarPaths'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
+  downloadType: json['downloadType'] as String? ?? 'both',
+  downloadBasePath: json['downloadBasePath'] as String?,
+  downloadOrigin: json['downloadOrigin'] as String? ?? 'manual',
+  smartProfileIds: (json['smartProfileIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
+  managedBytes: (json['managedBytes'] as num?)?.toInt(),
+  completedAt: (json['completedAt'] as num?)?.toInt(),
+);
 
-Map<String, dynamic> _$InternalDownloadToJson(_InternalDownload instance) =>
-    <String, dynamic>{
-      'item': instance.item,
-      'episode': instance.episode,
-      'tracks': instance.tracks,
-      'expectedFileCount': instance.expectedFileCount,
-      'auxiliaryFilePaths': instance.auxiliaryFilePaths,
-      'saf': instance.saf,
-      'coverPath': instance.coverPath,
-      'sidecarPaths': instance.sidecarPaths,
-      'downloadType': instance.downloadType,
-      'downloadBasePath': instance.downloadBasePath,
-      'downloadOrigin': instance.downloadOrigin,
-      'smartProfileIds': instance.smartProfileIds,
-      'managedBytes': instance.managedBytes,
-      'completedAt': instance.completedAt,
-    };
+Map<String, dynamic> _$InternalDownloadToJson(_InternalDownload instance) => <String, dynamic>{
+  'item': instance.item,
+  'episode': instance.episode,
+  'tracks': instance.tracks,
+  'expectedFileCount': instance.expectedFileCount,
+  'auxiliaryFilePaths': instance.auxiliaryFilePaths,
+  'saf': instance.saf,
+  'coverPath': instance.coverPath,
+  'sidecarPaths': instance.sidecarPaths,
+  'downloadType': instance.downloadType,
+  'downloadBasePath': instance.downloadBasePath,
+  'downloadOrigin': instance.downloadOrigin,
+  'smartProfileIds': instance.smartProfileIds,
+  'managedBytes': instance.managedBytes,
+  'completedAt': instance.completedAt,
+};

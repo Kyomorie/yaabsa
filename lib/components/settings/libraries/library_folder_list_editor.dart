@@ -48,14 +48,11 @@ class LibraryFolderListEditor extends StatelessWidget {
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.34),
-              ),
+              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.34)),
             ),
             child: Text(
               'No folders added yet.',
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           )
         else
@@ -68,35 +65,24 @@ class LibraryFolderListEditor extends StatelessWidget {
                     color: colorScheme.surfaceContainerLow,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(
-                        color: colorScheme.outlineVariant.withValues(
-                          alpha: 0.3,
-                        ),
-                      ),
+                      side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: ListTile(
                       dense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 2,
-                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                       leading: const Icon(Icons.folder_outlined),
                       title: Text(folder.path, overflow: TextOverflow.ellipsis),
                       subtitle: folder.isExisting
                           ? Text(
                               'Existing folder',
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
+                                  ?.copyWith(color: colorScheme.onSurfaceVariant),
                             )
                           : null,
                       trailing: IconButton(
                         tooltip: 'Remove folder',
-                        onPressed: enabled
-                            ? () => onRemoveFolderPressed(folder)
-                            : null,
+                        onPressed: enabled ? () => onRemoveFolderPressed(folder) : null,
                         icon: const Icon(Icons.close_rounded),
                       ),
                     ),
@@ -124,11 +110,7 @@ class LibraryFolderListEditor extends StatelessWidget {
                   ? () => onBrowseFolderPressed!.call()
                   : null,
               icon: isBrowsing
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.folder_open_rounded),
               label: const Text('Browse server folders'),
             ),
@@ -142,11 +124,7 @@ class LibraryFolderListEditor extends StatelessWidget {
         ),
         if (errorText != null && errorText!.trim().isNotEmpty) ...[
           const SizedBox(height: 6),
-          Text(
-            errorText!,
-            style: Theme.of(context).textTheme.bodySmall
-                ?.copyWith(color: colorScheme.error),
-          ),
+          Text(errorText!, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.error)),
         ],
       ],
     );

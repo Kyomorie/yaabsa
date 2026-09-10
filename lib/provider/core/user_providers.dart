@@ -29,23 +29,15 @@ Stream<String?> activeUserId(Ref ref) {
 @Riverpod(keepAlive: true)
 Stream<User?> currentUser(Ref ref) async* {
   final db = ref.watch(appDatabaseProvider);
-  final activeUserIdStream = db
-      .watchGlobalSetting('activeUserId')
-      .map((e) => e?.value);
+  final activeUserIdStream = db.watchGlobalSetting('activeUserId').map((e) => e?.value);
 
   await for (final userId in activeUserIdStream) {
     if (userId == null) {
-      logger(
-        'Active user ID is null, yielding null User.',
-        tag: 'currentUserProvider',
-      );
+      logger('Active user ID is null, yielding null User.', tag: 'currentUserProvider');
       yield null;
       continue;
     }
-    logger(
-      'Active user ID changed to: $userId. Fetching local user.',
-      tag: 'currentUserProvider',
-    );
+    logger('Active user ID changed to: $userId. Fetching local user.', tag: 'currentUserProvider');
     User? user;
     try {
       user = await db.getStoredUser(userId);
@@ -59,10 +51,7 @@ Stream<User?> currentUser(Ref ref) async* {
     }
 
     if (user == null || user.server == null) {
-      logger(
-        'User or user server is null, cannot proceed with server sync.',
-        tag: 'currentUserProvider',
-      );
+      logger('User or user server is null, cannot proceed with server sync.', tag: 'currentUserProvider');
       yield user;
       continue;
     }
@@ -70,10 +59,7 @@ Stream<User?> currentUser(Ref ref) async* {
     // Serve cached user immediately, then refresh auth/session in the background path.
     yield user;
 
-    final refreshedUser = await _refreshCurrentUserFromServer(
-      db: db,
-      user: user,
-    );
+    final refreshedUser = await _refreshCurrentUserFromServer(db: db, user: user);
     if (refreshedUser != null &&
         refreshedUser.id == userId &&
         _shouldEmitRefreshedUser(previous: user, next: refreshedUser)) {
@@ -126,34 +112,17 @@ bool _stringMapEquals(Map<String, dynamic>? a, Map<String, dynamic>? b) {
   return true;
 }
 
-Future<User?> _refreshCurrentUserFromServer({
-  required AppDatabase db,
-  required User user,
-}) async {
-  if (user.preferredAuthToken != null &&
-      AuthRefreshInterceptor.isJwtExpired(user.preferredAuthToken!)) {
-    logger(
-      'Current user token is already expired. Refreshing session directly.',
-      tag: 'currentUserProvider',
-    );
-    return AuthRefreshInterceptor.refreshSession(
-      containerRef,
-      onAuthFailed: _handleAuthFailed,
-    );
+Future<User?> _refreshCurrentUserFromServer({required AppDatabase db, required User user}) async {
+  if (user.preferredAuthToken != null && AuthRefreshInterceptor.isJwtExpired(user.preferredAuthToken!)) {
+    logger('Current user token is already expired. Refreshing session directly.', tag: 'currentUserProvider');
+    return AuthRefreshInterceptor.refreshSession(containerRef, onAuthFailed: _handleAuthFailed);
   }
 
   ABSApi tmp = ABSApi(
     dio: createNativeDio(
-      options: BaseOptions(
-        baseUrl: user.server!.url,
-        headers: user.server!.headers,
-      ),
+      options: BaseOptions(baseUrl: user.server!.url, headers: user.server!.headers),
     ),
-    interceptors: [
-      OAuthInterceptor(),
-      BearerAuthInterceptor(),
-      AuthRefreshInterceptor(containerRef),
-    ],
+    interceptors: [OAuthInterceptor(), BearerAuthInterceptor(), AuthRefreshInterceptor(containerRef)],
     basePathOverride: user.server!.url,
   );
 
@@ -168,14 +137,10 @@ Future<User?> _refreshCurrentUserFromServer({
       return null;
     }
 
-    logger(
-      'Fetched user from server: ${serverUser.username}. Updating local database.',
-      tag: 'currentUserProvider',
-    );
+    logger('Fetched user from server: ${serverUser.username}. Updating local database.', tag: 'currentUserProvider');
     final mergedUser = serverUser.copyWith(
       server: user.server,
-      setting:
-          result.data?.serverSettings ?? serverUser.setting ?? user.setting,
+      setting: result.data?.serverSettings ?? serverUser.setting ?? user.setting,
     );
     await db.addOrUpdateStoredUser(mergedUser);
     return mergedUser;
@@ -189,8 +154,7 @@ Future<User?> _refreshCurrentUserFromServer({
       rethrow;
     }
     // Check if 401 Unauthorized or 403 Forbidden
-    if (e is DioException &&
-        (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
+    if (e is DioException && (e.response?.statusCode == 401 || e.response?.statusCode == 403)) {
       final latestUser = await db.getStoredUser(user.id);
       final authHeader = e.requestOptions.headers['Authorization']?.toString();
       final failedToken = authHeader != null && authHeader.startsWith('Bearer ')
@@ -210,10 +174,7 @@ Future<User?> _refreshCurrentUserFromServer({
         'checkLogin returned ${e.response?.statusCode}. Triggering shared refreshSession.',
         tag: 'currentUserProvider',
       );
-      return AuthRefreshInterceptor.refreshSession(
-        containerRef,
-        onAuthFailed: _handleAuthFailed,
-      );
+      return AuthRefreshInterceptor.refreshSession(containerRef, onAuthFailed: _handleAuthFailed);
     }
 
     return null;
@@ -270,22 +231,14 @@ class CacheStartupSettings {
 
 final cacheStartupSettingsProvider = Provider<CacheStartupSettings>((ref) {
   final settingsManager = ref.read(settingsManagerProvider.notifier);
-  final cachingEnabled = settingsManager.getGlobalSetting<bool>(
-    SettingKeys.caching,
-    defaultValue: true,
-  );
-  final boostLoading = settingsManager.getGlobalSetting<bool>(
-    SettingKeys.boostLoading,
-    defaultValue: true,
-  );
+  final cachingEnabled = settingsManager.getGlobalSetting<bool>(SettingKeys.caching, defaultValue: true);
+  final boostLoading = settingsManager.getGlobalSetting<bool>(SettingKeys.boostLoading, defaultValue: true);
 
   final routeEnabledBySettingKey = <String, bool>{
     for (final route in cacheRouteDefinitions)
       route.settingKey: settingsManager.getGlobalSetting<bool>(
         route.settingKey,
-        defaultValue:
-            (defaultSettings[route.settingKey] as bool?) ??
-            !route.aggressiveCache,
+        defaultValue: (defaultSettings[route.settingKey] as bool?) ?? !route.aggressiveCache,
       ),
   };
 
@@ -348,11 +301,7 @@ ABSApi? absApi(Ref ref) {
   );
 
   if (token != null) {
-    logger(
-      'Setting BearerAuth token for user ${currentUser.username}.',
-      tag: 'absApiProvider',
-      level: InfoLevel.debug,
-    );
+    logger('Setting BearerAuth token for user ${currentUser.username}.', tag: 'absApiProvider', level: InfoLevel.debug);
     api.setBearerAuth('BearerAuth', token);
   }
 

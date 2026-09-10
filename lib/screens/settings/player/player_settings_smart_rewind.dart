@@ -15,16 +15,9 @@ class PlayerSettingsSmartRewind extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final smartRewindSetting = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.smartRewindEnabled))
-        .asData
-        ?.value;
-    final smartRewindDefault =
-        defaultSettings[SettingKeys.smartRewindEnabled] as bool? ?? false;
-    final smartRewindEnabled = SettingsParser.decodeValue<bool>(
-      smartRewindSetting,
-      smartRewindDefault,
-    );
+    final smartRewindSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.smartRewindEnabled)).asData?.value;
+    final smartRewindDefault = defaultSettings[SettingKeys.smartRewindEnabled] as bool? ?? false;
+    final smartRewindEnabled = SettingsParser.decodeValue<bool>(smartRewindSetting, smartRewindDefault);
 
     return SettingsPageScaffold(
       title: 'Player - Smart Rewind',
@@ -46,16 +39,7 @@ class PlayerSettingsSmartRewind extends ConsumerWidget {
               description: 'If paused up to this amount, the short smart rewind value is used',
               disabledReason: 'Enable Smart rewind to configure this option',
               values: const [15, 30, 45, 60, 90, 120, 180, 300],
-              valueLabels: const [
-                '15 s',
-                '30 s',
-                '45 s',
-                '1 min',
-                '1.5 min',
-                '2 min',
-                '3 min',
-                '5 min',
-              ],
+              valueLabels: const ['15 s', '30 s', '45 s', '1 min', '1.5 min', '2 min', '3 min', '5 min'],
               settingKey: SettingKeys.smartRewindShortPauseThresholdSeconds,
               enabled: smartRewindEnabled,
             ),
@@ -64,15 +48,7 @@ class PlayerSettingsSmartRewind extends ConsumerWidget {
               description: 'If paused longer than the short threshold and up to this amount, the medium smart rewind value is used (longer pauses use the long smart rewind value)',
               disabledReason: 'Enable Smart rewind to configure this option',
               values: const [300, 600, 900, 1200, 1800, 2700, 3600],
-              valueLabels: const [
-                '5 min',
-                '10 min',
-                '15 min',
-                '20 min',
-                '30 min',
-                '45 min',
-                '60 min',
-              ],
+              valueLabels: const ['5 min', '10 min', '15 min', '20 min', '30 min', '45 min', '60 min'],
               settingKey: SettingKeys.smartRewindLongPauseThresholdSeconds,
               enabled: smartRewindEnabled,
             ),
@@ -90,14 +66,7 @@ class PlayerSettingsSmartRewind extends ConsumerWidget {
               description: 'Rewind amount used for medium pauses',
               disabledReason: 'Enable Smart rewind to configure this option',
               values: const [10, 15, 20, 30, 45, 60],
-              valueLabels: const [
-                '10 s',
-                '15 s',
-                '20 s',
-                '30 s',
-                '45 s',
-                '60 s',
-              ],
+              valueLabels: const ['10 s', '15 s', '20 s', '30 s', '45 s', '60 s'],
               settingKey: SettingKeys.smartRewindMediumRewindSeconds,
               enabled: smartRewindEnabled,
             ),
@@ -106,14 +75,7 @@ class PlayerSettingsSmartRewind extends ConsumerWidget {
               description: 'Rewind amount used for long pauses',
               disabledReason: 'Enable Smart rewind to configure this option',
               values: const [20, 30, 45, 60, 90, 120],
-              valueLabels: const [
-                '20 s',
-                '30 s',
-                '45 s',
-                '60 s',
-                '90 s',
-                '120 s',
-              ],
+              valueLabels: const ['20 s', '30 s', '45 s', '60 s', '90 s', '120 s'],
               settingKey: SettingKeys.smartRewindLongRewindSeconds,
               enabled: smartRewindEnabled,
             ),

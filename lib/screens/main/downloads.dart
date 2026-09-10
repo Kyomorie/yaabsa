@@ -77,18 +77,10 @@ class _DownloadsState extends ConsumerState<Downloads> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete download'),
-        content: Text(
-          'Delete $label from local storage and remove it from Downloads?',
-        ),
+        content: Text('Delete $label from local storage and remove it from Downloads?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
         ],
       ),
     );
@@ -96,10 +88,7 @@ class _DownloadsState extends ConsumerState<Downloads> {
     return confirmed ?? false;
   }
 
-  Future<void> _deleteDownloads({
-    required String userId,
-    required List<InternalDownload> downloads,
-  }) async {
+  Future<void> _deleteDownloads({required String userId, required List<InternalDownload> downloads}) async {
     if (_isDeleting || downloads.isEmpty) {
       return;
     }
@@ -120,10 +109,7 @@ class _DownloadsState extends ConsumerState<Downloads> {
 
     for (final download in downloads) {
       try {
-        final result = await downloadHandler.deleteDownloadedItem(
-          download,
-          userId: userId,
-        );
+        final result = await downloadHandler.deleteDownloadedItem(download, userId: userId);
         deletedItems++;
         deletedFiles += result.deletedFiles;
         failedFiles += result.failedFiles;
@@ -142,8 +128,7 @@ class _DownloadsState extends ConsumerState<Downloads> {
       _selectedDownloadKeys.clear();
     });
 
-    final message = StringBuffer()
-      ..write('Deleted $deletedItems item(s), removed $deletedFiles file(s).');
+    final message = StringBuffer()..write('Deleted $deletedItems item(s), removed $deletedFiles file(s).');
     if (failedFiles > 0) {
       message.write(' $failedFiles file(s) could not be removed.');
     }
@@ -151,8 +136,7 @@ class _DownloadsState extends ConsumerState<Downloads> {
       message.write(' $failedItems item(s) failed to delete.');
     }
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message.toString())));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString())));
   }
 
   @override
@@ -169,8 +153,7 @@ class _DownloadsState extends ConsumerState<Downloads> {
         return StreamBuilder<List<InternalDownload>>(
           stream: appDatabase.watchStoredDownloadsByUser(user.id),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting &&
-                !snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -186,19 +169,14 @@ class _DownloadsState extends ConsumerState<Downloads> {
               return const Center(child: Text('No downloads available.'));
             }
 
-            final validKeys = downloads
-                .map(_downloadKeyFor)
-                .whereType<String>()
-                .toSet();
+            final validKeys = downloads.map(_downloadKeyFor).whereType<String>().toSet();
             if (_selectedDownloadKeys.any((key) => !validKeys.contains(key))) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (!mounted) {
                   return;
                 }
                 setState(() {
-                  _selectedDownloadKeys.removeWhere(
-                    (key) => !validKeys.contains(key),
-                  );
+                  _selectedDownloadKeys.removeWhere((key) => !validKeys.contains(key));
                   if (_selectedDownloadKeys.isEmpty) {
                     _selectionMode = false;
                   }
@@ -206,9 +184,7 @@ class _DownloadsState extends ConsumerState<Downloads> {
               });
             }
 
-            final selectedDownloads = downloads
-                .where(_isSelected)
-                .toList(growable: false);
+            final selectedDownloads = downloads.where(_isSelected).toList(growable: false);
             final horizontalPadding = context.isMobile ? 12.0 : 24.0;
 
             return Column(
@@ -218,12 +194,7 @@ class _DownloadsState extends ConsumerState<Downloads> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1120),
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        horizontalPadding,
-                        8,
-                        horizontalPadding,
-                        6,
-                      ),
+                      padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 6),
                       child: Row(
                         children: [
                           Expanded(
@@ -236,29 +207,21 @@ class _DownloadsState extends ConsumerState<Downloads> {
                           ),
                           if (!_selectionMode)
                             TextButton.icon(
-                              onPressed: _isDeleting
-                                  ? null
-                                  : () => _setSelectionMode(true),
+                              onPressed: _isDeleting ? null : () => _setSelectionMode(true),
                               icon: const Icon(Icons.checklist_rtl),
                               label: const Text('Select'),
                             ),
                           if (_selectionMode)
                             TextButton(
-                              onPressed: _isDeleting
-                                  ? null
-                                  : () => _setSelectionMode(false),
+                              onPressed: _isDeleting ? null : () => _setSelectionMode(false),
                               child: const Text('Cancel'),
                             ),
                           if (_selectionMode) const SizedBox(width: 8),
                           if (_selectionMode)
                             FilledButton.icon(
-                              onPressed:
-                                  _isDeleting || selectedDownloads.isEmpty
+                              onPressed: _isDeleting || selectedDownloads.isEmpty
                                   ? null
-                                  : () => _deleteDownloads(
-                                      userId: user.id,
-                                      downloads: selectedDownloads,
-                                    ),
+                                  : () => _deleteDownloads(userId: user.id, downloads: selectedDownloads),
                               icon: const Icon(Icons.delete_outline),
                               label: const Text('Delete'),
                             ),
@@ -269,39 +232,25 @@ class _DownloadsState extends ConsumerState<Downloads> {
                 ),
                 Expanded(
                   child: ListView.builder(
-                    padding: EdgeInsets.fromLTRB(
-                      horizontalPadding,
-                      4,
-                      horizontalPadding,
-                      32,
-                    ),
+                    padding: EdgeInsets.fromLTRB(horizontalPadding, 4, horizontalPadding, 32),
                     itemCount: downloads.length,
                     itemBuilder: (context, index) {
                       final download = downloads[index];
-                      final targetItemId =
-                          download.item?.id ?? download.episode?.libraryItemId;
+                      final targetItemId = download.item?.id ?? download.episode?.libraryItemId;
 
                       return Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 1120),
                           child: Padding(
-                            padding: EdgeInsets.only(
-                              bottom: context.isMobile ? 8 : 10,
-                            ),
+                            padding: EdgeInsets.only(bottom: context.isMobile ? 8 : 10),
                             child: DownloadListTile(
                               download: download,
                               selectionMode: _selectionMode,
                               isDeleting: _isDeleting,
                               isSelected: _isSelected(download),
-                              onToggleSelection: () =>
-                                  _toggleSelection(download),
-                              onDelete: () => _deleteDownloads(
-                                userId: user.id,
-                                downloads: [download],
-                              ),
-                              onOpen: targetItemId == null
-                                  ? null
-                                  : () => context.push('/item/$targetItemId'),
+                              onToggleSelection: () => _toggleSelection(download),
+                              onDelete: () => _deleteDownloads(userId: user.id, downloads: [download]),
+                              onOpen: targetItemId == null ? null : () => context.push('/item/$targetItemId'),
                             ),
                           ),
                         ),
@@ -315,10 +264,7 @@ class _DownloadsState extends ConsumerState<Downloads> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => ConnectionIssueView.requestFailed(
-        error: error,
-        title: 'Unable to load downloads',
-      ),
+      error: (error, _) => ConnectionIssueView.requestFailed(error: error, title: 'Unable to load downloads'),
     );
   }
 }

@@ -50,10 +50,7 @@ int jsonIntRequiredFromDynamic(Object? value, [int defaultValue = 0]) {
   return jsonIntFromDynamic(value) ?? defaultValue;
 }
 
-double jsonDoubleRequiredFromDynamic(
-  Object? value, [
-  double defaultValue = 0.0,
-]) {
+double jsonDoubleRequiredFromDynamic(Object? value, [double defaultValue = 0.0]) {
   return jsonDoubleFromDynamic(value) ?? defaultValue;
 }
 
@@ -76,17 +73,11 @@ bool? jsonBoolFromDynamic(Object? value) {
       return null;
     }
 
-    if (normalized == 'true' ||
-        normalized == '1' ||
-        normalized == 'yes' ||
-        normalized == 'on') {
+    if (normalized == 'true' || normalized == '1' || normalized == 'yes' || normalized == 'on') {
       return true;
     }
 
-    if (normalized == 'false' ||
-        normalized == '0' ||
-        normalized == 'no' ||
-        normalized == 'off') {
+    if (normalized == 'false' || normalized == '0' || normalized == 'no' || normalized == 'off') {
       return false;
     }
   }
@@ -115,8 +106,5 @@ List<String> jsonStringListFromDynamic(Object? value) {
     return const <String>[];
   }
 
-  return value
-      .map((entry) => jsonStringFromDynamic(entry))
-      .whereType<String>()
-      .toList(growable: false);
+  return value.map((entry) => jsonStringFromDynamic(entry)).whereType<String>().toList(growable: false);
 }

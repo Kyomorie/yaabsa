@@ -8,11 +8,8 @@ part 'filesystem_paths_response.g.dart';
 abstract class FilesystemPathsResponse with _$FilesystemPathsResponse {
   const factory FilesystemPathsResponse({
     @JsonKey(name: 'posix') required bool posix,
-    @JsonKey(name: 'directories')
-    @Default(<FilesystemDirectory>[])
-    List<FilesystemDirectory> directories,
+    @JsonKey(name: 'directories') @Default(<FilesystemDirectory>[]) List<FilesystemDirectory> directories,
   }) = _FilesystemPathsResponse;
 
-  factory FilesystemPathsResponse.fromJson(Map<String, dynamic> json) =>
-      _$FilesystemPathsResponseFromJson(json);
+  factory FilesystemPathsResponse.fromJson(Map<String, dynamic> json) => _$FilesystemPathsResponseFromJson(json);
 }

@@ -35,27 +35,19 @@ class PlayerTransportControlsComponent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final loopModeAsync = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.loopMode),
-    );
+    final loopModeAsync = ref.watch(globalSettingByKeyProvider(SettingKeys.loopMode));
     final loopMode = loopModeAsync.value ?? 'off';
     final isLoopOn = loopMode == 'on';
 
-    final mixQueueAsync = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.mixQueue),
-    );
+    final mixQueueAsync = ref.watch(globalSettingByKeyProvider(SettingKeys.mixQueue));
     final mixQueue = mixQueueAsync.value == 'true';
 
-    final showLoopShuffleAsync = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.showPlayerLoopShuffle),
-    );
+    final showLoopShuffleAsync = ref.watch(globalSettingByKeyProvider(SettingKeys.showPlayerLoopShuffle));
     final showLoopShuffle = showLoopShuffleAsync.value ?? 'music_only';
 
     final theme = Theme.of(context);
     final activeColor = theme.colorScheme.primary;
-    final inactiveColor = theme.colorScheme.onSurfaceVariant.withValues(
-      alpha: 0.4,
-    );
+    final inactiveColor = theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4);
 
     final db = ref.watch(appDatabaseProvider);
     final activeUserId = ref.watch(currentUserProvider).value?.id;
@@ -93,10 +85,7 @@ class PlayerTransportControlsComponent extends ConsumerWidget {
             final controls = <Widget>[
               if (showControls)
                 IconButton(
-                  icon: Icon(
-                    Icons.shuffle,
-                    color: mixQueue ? activeColor : inactiveColor,
-                  ),
+                  icon: Icon(Icons.shuffle, color: mixQueue ? activeColor : inactiveColor),
                   onPressed: () {
                     audioHandler.toggleMix();
                   },
@@ -105,15 +94,13 @@ class PlayerTransportControlsComponent extends ConsumerWidget {
               if (showSkip)
                 SkipButton(
                   previous: true,
-                  iconSize:
-                      skipIconSize ?? (useProminentSkipButtons ? 30 : null),
+                  iconSize: skipIconSize ?? (useProminentSkipButtons ? 30 : null),
                   buttonSize: useProminentSkipButtons ? 56 : 48,
                 ),
               if (showJump)
                 JumpButton(
                   rewind: true,
-                  iconSize:
-                      jumpIconSize ?? (useProminentJumpButtons ? 34 : null),
+                  iconSize: jumpIconSize ?? (useProminentJumpButtons ? 34 : null),
                   buttonSize: useProminentJumpButtons ? 62 : 48,
                 ),
               ControlButton(
@@ -124,23 +111,18 @@ class PlayerTransportControlsComponent extends ConsumerWidget {
               if (showJump)
                 JumpButton(
                   rewind: false,
-                  iconSize:
-                      jumpIconSize ?? (useProminentJumpButtons ? 34 : null),
+                  iconSize: jumpIconSize ?? (useProminentJumpButtons ? 34 : null),
                   buttonSize: useProminentJumpButtons ? 62 : 48,
                 ),
               if (showSkip)
                 SkipButton(
                   previous: false,
-                  iconSize:
-                      skipIconSize ?? (useProminentSkipButtons ? 30 : null),
+                  iconSize: skipIconSize ?? (useProminentSkipButtons ? 30 : null),
                   buttonSize: useProminentSkipButtons ? 56 : 48,
                 ),
               if (showControls)
                 IconButton(
-                  icon: Icon(
-                    Icons.repeat,
-                    color: isLoopOn ? activeColor : inactiveColor,
-                  ),
+                  icon: Icon(Icons.repeat, color: isLoopOn ? activeColor : inactiveColor),
                   onPressed: () {
                     audioHandler.cycleLoopMode();
                   },
@@ -154,11 +136,7 @@ class PlayerTransportControlsComponent extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    for (
-                      var index = 0;
-                      index < controls.length;
-                      index++
-                    ) ...<Widget>[
+                    for (var index = 0; index < controls.length; index++) ...<Widget>[
                       if (index > 0) const SizedBox(width: 4),
                       controls[index],
                     ],

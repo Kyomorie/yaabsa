@@ -27,13 +27,9 @@ class ManagementSettingsSection extends StatelessWidget {
             icon: Icons.admin_panel_settings_outlined,
             title: 'Admin Server Settings',
             enabled: isAdminUser,
-            onTap: isAdminUser
-                ? () => context.push(AdminServerSettings.routeName)
-                : null,
+            onTap: isAdminUser ? () => context.push(AdminServerSettings.routeName) : null,
           ),
-        if (currentUser.permissions.update ||
-            currentUser.permissions.delete ||
-            currentUser.permissions.upload)
+        if (currentUser.permissions.update || currentUser.permissions.delete || currentUser.permissions.upload)
           SettingsNavigationItem(
             icon: Icons.handyman_outlined,
             title: 'Tools',

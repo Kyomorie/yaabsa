@@ -12,5 +12,6 @@ _LoggerData _$LoggerDataFromJson(Map<String, dynamic> json) => _LoggerData(
       : _serverLogEntriesFromJson(json['currentDailyLogs']),
 );
 
-Map<String, dynamic> _$LoggerDataToJson(_LoggerData instance) =>
-    <String, dynamic>{'currentDailyLogs': instance.currentDailyLogs};
+Map<String, dynamic> _$LoggerDataToJson(_LoggerData instance) => <String, dynamic>{
+  'currentDailyLogs': instance.currentDailyLogs,
+};

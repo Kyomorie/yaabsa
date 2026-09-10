@@ -31,6 +31,5 @@ abstract class DownloadTaskMetadata with _$DownloadTaskMetadata {
     int? estimatedBytes,
   }) = _DownloadTaskMetadata;
 
-  factory DownloadTaskMetadata.fromJson(Map<String, dynamic> json) =>
-      _$DownloadTaskMetadataFromJson(json);
+  factory DownloadTaskMetadata.fromJson(Map<String, dynamic> json) => _$DownloadTaskMetadataFromJson(json);
 }

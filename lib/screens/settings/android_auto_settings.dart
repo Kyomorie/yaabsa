@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,8 +19,7 @@ class AndroidAutoSettings extends ConsumerStatefulWidget {
   static const String routeName = '/settings/android-auto';
 
   @override
-  ConsumerState<AndroidAutoSettings> createState() =>
-      _AndroidAutoSettingsState();
+  ConsumerState<AndroidAutoSettings> createState() => _AndroidAutoSettingsState();
 }
 
 class _AndroidAutoSettingsState extends ConsumerState<AndroidAutoSettings> {
@@ -42,8 +40,7 @@ class _AndroidAutoSettingsState extends ConsumerState<AndroidAutoSettings> {
             SettingSwitchTile(
               userId: userId,
               label: 'Group Large Lists By First Letter',
-              subtitle:
-                  'Group entries alphabetically for faster rotary browsing in long $integrationLabel lists',
+              subtitle: 'Group entries alphabetically for faster rotary browsing in long $integrationLabel lists',
               settingKey: SettingKeys.androidAutoGroupByLetters,
               defaultValue: true,
             ),
@@ -56,17 +53,14 @@ class _AndroidAutoSettingsState extends ConsumerState<AndroidAutoSettings> {
             SettingsNavigationItem(
               icon: Icons.library_books_outlined,
               title: 'Library',
-              subtitle:
-                  'Configure sorting for audiobook library browsing in $integrationLabel',
+              subtitle: 'Configure sorting for audiobook library browsing in $integrationLabel',
               onTap: () => context.push(AndroidAutoLibrarySettings.routeName),
             ),
             SettingsNavigationItem(
               icon: Icons.podcasts_outlined,
               title: 'Podcast Library',
-              subtitle:
-                  'Configure sorting for podcast library browsing in $integrationLabel',
-              onTap: () =>
-                  context.push(AndroidAutoPodcastLibrarySettings.routeName),
+              subtitle: 'Configure sorting for podcast library browsing in $integrationLabel',
+              onTap: () => context.push(AndroidAutoPodcastLibrarySettings.routeName),
             ),
           ],
         ),
@@ -107,10 +101,8 @@ class _AndroidAutoSettingsState extends ConsumerState<AndroidAutoSettings> {
                 padding: EdgeInsets.all(16),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (error, _) => Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text('Failed to load user settings: $error'),
-              ),
+              error: (error, _) =>
+                  Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load user settings: $error')),
             ),
           ],
         );

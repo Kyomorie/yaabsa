@@ -1,8 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -123,14 +122,14 @@ final List<SettingsSearchItem> searchableSettings = [
   ),
   const SettingsSearchItem(
     title: 'Short-pause threshold',
-    description:
-        'If paused up to this amount, the short smart rewind value is used',
+    description: 'If paused up to this amount, the short smart rewind value is used',
     categoryPath: 'Settings > Player > Smart rewind',
     route: '/settings/player/smart-rewind',
   ),
   const SettingsSearchItem(
     title: 'Long-pause threshold',
-    description: 'If paused longer than the short threshold and up to this amount, the medium smart rewind value is used',
+    description:
+        'If paused longer than the short threshold and up to this amount, the medium smart rewind value is used',
     categoryPath: 'Settings > Player > Smart rewind',
     route: '/settings/player/smart-rewind',
   ),
@@ -172,8 +171,7 @@ final List<SettingsSearchItem> searchableSettings = [
   ),
   const SettingsSearchItem(
     title: 'Show sleep timer marker',
-    description:
-        'Shows sleep timer on the player timeline after the timer ends',
+    description: 'Shows sleep timer on the player timeline after the timer ends',
     categoryPath: 'Settings > Player > Sleep timer',
     route: '/settings/player/sleep-timer',
   ),
@@ -203,8 +201,7 @@ final List<SettingsSearchItem> searchableSettings = [
   ),
   const SettingsSearchItem(
     title: 'Enable subtitles',
-    description:
-        'Show subtitle tracks (.srt and .vtt) during playback when available',
+    description: 'Show subtitle tracks (.srt and .vtt) during playback when available',
     categoryPath: 'Settings > Player > Subtitles',
     route: '/settings/player/subtitles',
   ),
@@ -222,15 +219,13 @@ final List<SettingsSearchItem> searchableSettings = [
   ),
   const SettingsSearchItem(
     title: 'Shake to reset sleep timer',
-    description:
-        'Shake to reset an active sleep timer back to its full duration',
+    description: 'Shake to reset an active sleep timer back to its full duration',
     categoryPath: 'Settings > Player > Shake controls',
     route: '/settings/player/shake-controls',
   ),
   const SettingsSearchItem(
     title: 'Shake to rewind',
-    description:
-        'Shake while playing to rewind by the configured rewind interval',
+    description: 'Shake while playing to rewind by the configured rewind interval',
     categoryPath: 'Settings > Player > Shake controls',
     route: '/settings/player/shake-controls',
   ),
@@ -272,15 +267,13 @@ final List<SettingsSearchItem> searchableSettings = [
   ),
   const SettingsSearchItem(
     title: 'Show Shelf Play Button',
-    description:
-        'Adds a play-all button on Continue Listening and Newest shelves',
+    description: 'Adds a play-all button on Continue Listening and Newest shelves',
     categoryPath: 'Settings > Library',
     route: '/settings/library',
   ),
   const SettingsSearchItem(
     title: 'Show Shuffle Button',
-    description:
-        'Adds a shuffle button to collections, playlists, and podcasts',
+    description: 'Adds a shuffle button to collections, playlists, and podcasts',
     categoryPath: 'Settings > Library',
     route: '/settings/library',
   ),
@@ -310,8 +303,7 @@ final List<SettingsSearchItem> searchableSettings = [
   ),
   const SettingsSearchItem(
     title: 'Smart Downloads',
-    description:
-        'Automatically download and remove items according to download rules',
+    description: 'Automatically download and remove items according to download rules',
     categoryPath: 'Settings > Downloads',
     route: '/settings/library/smart-downloads',
   ),
@@ -366,15 +358,13 @@ final List<SettingsSearchItem> searchableSettings = [
     ),
   const SettingsSearchItem(
     title: 'Auto-play last played on app start',
-    description:
-        'Resume the last played item on app launch if it is not finished',
+    description: 'Resume the last played item on app launch if it is not finished',
     categoryPath: 'Settings > Global Player',
     route: '/settings/global-player',
   ),
   const SettingsSearchItem(
     title: 'Always show mini player',
-    description:
-        'Keep the mini player visible for your most recently played item',
+    description: 'Keep the mini player visible for your most recently played item',
     categoryPath: 'Settings > Global Player',
     route: '/settings/global-player',
   ),
@@ -398,8 +388,7 @@ final List<SettingsSearchItem> searchableSettings = [
   ),
   const SettingsSearchItem(
     title: 'Remove authors without books',
-    description:
-        'Add a button in the author section to delete authors without books',
+    description: 'Add a button in the author section to delete authors without books',
     categoryPath: 'Settings > Tools',
     route: '/settings/tools',
   ),
@@ -417,8 +406,7 @@ final List<SettingsSearchItem> searchableSettings = [
   ),
   const SettingsSearchItem(
     title: 'Split genres/tags',
-    description:
-        'Add a button to split genres and tags in Admin Server Settings',
+    description: 'Add a button to split genres and tags in Admin Server Settings',
     categoryPath: 'Settings > Tools',
     route: '/settings/tools',
   ),
@@ -476,15 +464,9 @@ class MainSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
-  static final Uri _githubRepoUri = Uri.parse(
-    'https://github.com/Vito0912/yaabsa/',
-  );
-  static final Uri _githubIssueUri = Uri.parse(
-    'https://github.com/Vito0912/yaabsa/issues',
-  );
-  static final Uri _githubSponsorUri = Uri.parse(
-    'https://github.com/sponsors/Vito0912',
-  );
+  static final Uri _githubRepoUri = Uri.parse('https://github.com/Vito0912/yaabsa/');
+  static final Uri _githubIssueUri = Uri.parse('https://github.com/Vito0912/yaabsa/issues');
+  static final Uri _githubSponsorUri = Uri.parse('https://github.com/sponsors/Vito0912');
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -523,48 +505,33 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
     return Icons.settings_outlined;
   }
 
-  Future<void> _openSupportLink(
-    BuildContext context,
-    Uri uri,
-    String label,
-  ) async {
+  Future<void> _openSupportLink(BuildContext context, Uri uri, String label) async {
     try {
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (opened || !context.mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Could not open $label')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open $label')));
     } catch (_) {
       if (!context.mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Could not open $label')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not open $label')));
     }
   }
 
-  Future<void> _deleteUser(
-    BuildContext context,
-    WidgetRef ref,
-    User user,
-  ) async {
+  Future<void> _deleteUser(BuildContext context, WidgetRef ref, User user) async {
     final db = ref.read(appDatabaseProvider);
 
     try {
       final refreshToken = user.refreshToken;
-      if (user.server != null &&
-          refreshToken != null &&
-          refreshToken.isNotEmpty) {
+      if (user.server != null && refreshToken != null && refreshToken.isNotEmpty) {
         try {
           final api = ABSApi(
             dio: createNativeDio(
-              options: BaseOptions(
-                baseUrl: user.server!.url,
-                headers: user.server!.headers,
-              ),
+              options: BaseOptions(baseUrl: user.server!.url, headers: user.server!.headers),
             ),
             basePathOverride: user.server!.url,
           );
@@ -572,10 +539,7 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
           if (authToken != null && authToken.isNotEmpty) {
             api.setBearerAuth('BearerAuth', authToken);
           }
-          await api.getMeApi().logout(
-            refreshToken: refreshToken,
-            extra: const {'skip_auth_refresh': true},
-          );
+          await api.getMeApi().logout(refreshToken: refreshToken, extra: const {'skip_auth_refresh': true});
         } catch (e, s) {
           logger(
             'Failed to notify server logout before deleting user ${user.username}: $e. Stack: $s',
@@ -604,14 +568,10 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
       invalidateUserScopedProviders(ref);
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Deleted user ${user.username}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted user ${user.username}')));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete user ${user.username}: $e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete user ${user.username}: $e')));
     }
   }
 
@@ -630,9 +590,7 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
       final status = (await api.getMeApi().getStatus()).data;
       final customMessage = status?.authFormData?.authLoginCustomMessage;
       return MagicConfigKeyMarker.extract(customMessage) ??
-          MagicConfigKeyMarker.fromSerializedName(
-            MagicConfigKeyMarker.extractFromSanitizedHtml(customMessage),
-          );
+          MagicConfigKeyMarker.fromSerializedName(MagicConfigKeyMarker.extractFromSanitizedHtml(customMessage));
     } catch (error, stackTrace) {
       logger(
         'Could not read the Authentication Code key from server status: $error\n$stackTrace',
@@ -646,11 +604,8 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
   Future<void> _showOwnMagicConfig(BuildContext context, User user) async {
     final server = user.server;
     if (server == null || server.url.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('This account has no configured server address.'),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('This account has no configured server address.')));
       return;
     }
 
@@ -660,19 +615,13 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
       localServerUrl: server.localUrl,
       username: user.username,
       password: null,
-      headers: Map<String, String>.from(
-        server.headers ?? const <String, String>{},
-      ),
+      headers: Map<String, String>.from(server.headers ?? const <String, String>{}),
       allowPassword: false,
       ensureMarker: _readAuthenticationCodeKey,
     );
   }
 
-  Future<void> _switchActiveUser(
-    BuildContext context,
-    WidgetRef ref,
-    User user,
-  ) async {
+  Future<void> _switchActiveUser(BuildContext context, WidgetRef ref, User user) async {
     final db = ref.read(appDatabaseProvider);
 
     await db.setActiveUserId(user.id);
@@ -698,36 +647,21 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('Switched to ${user.username}')));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Switched to ${user.username}')));
   }
 
-  void _showDeleteUserConfirmationDialog(
-    BuildContext context,
-    User user,
-    WidgetRef ref,
-  ) {
+  void _showDeleteUserConfirmationDialog(BuildContext context, User user, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Delete User?'),
-          content: Text(
-            'Are you sure you want to delete "${user.username}"? This action cannot be undone.',
-          ),
+          content: Text('Are you sure you want to delete "${user.username}"? This action cannot be undone.'),
           actions: <Widget>[
+            TextButton(child: const Text('Cancel'), onPressed: () => Navigator.of(dialogContext).pop()),
             TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(dialogContext).pop(),
-            ),
-            TextButton(
-              child: Text(
-                'Delete',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
+              child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 await _deleteUser(context, ref, user);
@@ -739,30 +673,18 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
     );
   }
 
-  void _showSignOutCurrentUserConfirmationDialog(
-    BuildContext context,
-    User user,
-    WidgetRef ref,
-  ) {
+  void _showSignOutCurrentUserConfirmationDialog(BuildContext context, User user, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Sign Out Current Account?'),
           content: Text('Sign out from "${user.username}" on this device?'),
           actions: <Widget>[
+            TextButton(child: const Text('Cancel'), onPressed: () => Navigator.of(dialogContext).pop()),
             TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(dialogContext).pop(),
-            ),
-            TextButton(
-              child: Text(
-                'Sign Out',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
+              child: Text('Sign Out', style: TextStyle(color: Theme.of(context).colorScheme.error)),
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 await _deleteUser(context, ref, user);
@@ -803,9 +725,7 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Card(
                 elevation: 0.5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24.0),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
                 color: Theme.of(context).colorScheme.primaryContainer,
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
@@ -814,19 +734,10 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                           children: [
                             CircleAvatar(
                               radius: 28,
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .primary,
+                              backgroundColor: Theme.of(context).colorScheme.primary,
                               child: Text(
-                                currentUser.username
-                                    .substring(0, 1)
-                                    .toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onPrimary,
-                                ),
+                                currentUser.username.substring(0, 1).toUpperCase(),
+                                style: TextStyle(fontSize: 24, color: Theme.of(context).colorScheme.onPrimary),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -836,28 +747,16 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                                 children: [
                                   Text(
                                     currentUser.username,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onPrimaryContainer,
-                                        ),
+                                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                    ),
                                   ),
                                   Text(
-                                    currentUser.server?.url ??
-                                        'No server connected',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onPrimaryContainer
-                                              .withValues(alpha: 0.8),
-                                        ),
+                                    currentUser.server?.url ?? 'No server connected',
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
@@ -865,8 +764,7 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                             ),
                             const SizedBox(width: 8),
                             IconButton(
-                              onPressed: () =>
-                                  _showOwnMagicConfig(context, currentUser),
+                              onPressed: () => _showOwnMagicConfig(context, currentUser),
                               icon: const Icon(Icons.qr_code_2_rounded),
                               tooltip: 'Create Authentication Code',
                             ),
@@ -874,12 +772,8 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                             IconButton(
                               tooltip: 'Server connection',
                               icon: const Icon(Icons.dns_outlined),
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
-                              onPressed: () => context.push(
-                                ServerConnectionSettings.routeName,
-                              ),
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              onPressed: () => context.push(ServerConnectionSettings.routeName),
                             ),
                           ],
                         )
@@ -887,21 +781,14 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                           child: Text(
                             'No active user.',
                             style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer,
-                                ),
+                                ?.copyWith(color: Theme.of(context).colorScheme.onPrimaryContainer),
                           ),
                         ),
                 ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 12.0,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               child: Row(
                 children: [
                   Expanded(
@@ -911,20 +798,11 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         foregroundColor: Theme.of(context).colorScheme.primary,
-                        side: BorderSide(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
+                        side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                       ),
                       onPressed: () {
-                        _showManageAccountsBottomSheet(
-                          context,
-                          ref,
-                          currentUser,
-                          otherUsers,
-                        );
+                        _showManageAccountsBottomSheet(context, ref, currentUser, otherUsers);
                       },
                     ),
                   ),
@@ -936,18 +814,11 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context)
-                            .colorScheme
-                            .onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
+                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                       ),
                       onPressed: () {
-                        if (AaosService
-                            .instance
-                            .currentState
-                            .isAutomotiveDevice) {
+                        if (AaosService.instance.currentState.isAutomotiveDevice) {
                           context.go('/add-user');
                           return;
                         }
@@ -968,8 +839,7 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                     SettingsNavigationItem(
                       icon: Icons.admin_panel_settings_outlined,
                       title: 'Server Management',
-                      onTap: () =>
-                          context.push(ServerManagementSettings.routeName),
+                      onTap: () => context.push(ServerManagementSettings.routeName),
                     ),
                   SettingsNavigationItem(
                     icon: Icons.play_circle_outline_rounded,
@@ -994,27 +864,17 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
       ),
       error: (e, st) => Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Text(
-          'Error loading user data: $e',
-          style: TextStyle(color: Theme.of(context).colorScheme.error),
-        ),
+        child: Text('Error loading user data: $e', style: TextStyle(color: Theme.of(context).colorScheme.error)),
       ),
     );
   }
 
-  void _showManageAccountsBottomSheet(
-    BuildContext context,
-    WidgetRef ref,
-    User? currentUser,
-    List<User> otherUsers,
-  ) {
+  void _showManageAccountsBottomSheet(BuildContext context, WidgetRef ref, User? currentUser, List<User> otherUsers) {
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (BuildContext bottomSheetContext) {
         return DraggableScrollableSheet(
           expand: false,
@@ -1024,18 +884,13 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
             return Container(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Manage Accounts',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
+                    child: Text('Manage Accounts', style: Theme.of(context).textTheme.titleLarge),
                   ),
                   Expanded(
                     child: ListView(
@@ -1044,40 +899,22 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                         if (currentUser != null)
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                            child: Text(
-                              'Current Account',
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
+                            child: Text('Current Account', style: Theme.of(context).textTheme.labelLarge),
                           ),
                         if (currentUser != null)
                           ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .primaryContainer,
-                              child: Text(
-                                currentUser.username
-                                    .substring(0, 1)
-                                    .toUpperCase(),
-                              ),
+                              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                              child: Text(currentUser.username.substring(0, 1).toUpperCase()),
                             ),
                             title: Text(currentUser.username),
-                            subtitle: Text(
-                              currentUser.server?.url ?? 'No server',
-                            ),
+                            subtitle: Text(currentUser.server?.url ?? 'No server'),
                             trailing: IconButton(
-                              icon: Icon(
-                                Icons.logout_rounded,
-                                color: Theme.of(context).colorScheme.error,
-                              ),
+                              icon: Icon(Icons.logout_rounded, color: Theme.of(context).colorScheme.error),
                               tooltip: 'Sign out this account',
                               onPressed: () {
                                 Navigator.pop(bottomSheetContext);
-                                _showSignOutCurrentUserConfirmationDialog(
-                                  context,
-                                  currentUser,
-                                  ref,
-                                );
+                                _showSignOutCurrentUserConfirmationDialog(context, currentUser, ref);
                               },
                             ),
                           ),
@@ -1085,10 +922,7 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                         if (otherUsers.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                            child: Text(
-                              'Other Accounts',
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
+                            child: Text('Other Accounts', style: Theme.of(context).textTheme.labelLarge),
                           ),
                         if (otherUsers.isEmpty)
                           Padding(
@@ -1102,12 +936,8 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                         ...otherUsers.map((user) {
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: Theme.of(context)
-                                  .colorScheme
-                                  .secondaryContainer,
-                              child: Text(
-                                user.username.substring(0, 1).toUpperCase(),
-                              ),
+                              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                              child: Text(user.username.substring(0, 1).toUpperCase()),
                             ),
                             title: Text(user.username),
                             subtitle: Text(user.server?.url ?? 'No server'),
@@ -1115,12 +945,7 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
-                                  icon: Icon(
-                                    Icons.swap_horiz_rounded,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .primary,
-                                  ),
+                                  icon: Icon(Icons.swap_horiz_rounded, color: Theme.of(context).colorScheme.primary),
                                   tooltip: 'Switch to this user',
                                   onPressed: () async {
                                     Navigator.pop(bottomSheetContext);
@@ -1128,18 +953,11 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                                   },
                                 ),
                                 IconButton(
-                                  icon: Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
+                                  icon: Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
                                   tooltip: 'Delete this user',
                                   onPressed: () {
                                     Navigator.pop(bottomSheetContext);
-                                    _showDeleteUserConfirmationDialog(
-                                      context,
-                                      user,
-                                      ref,
-                                    );
+                                    _showDeleteUserConfirmationDialog(context, user, ref);
                                   },
                                 ),
                               ],
@@ -1160,16 +978,14 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isAndroid =
-        !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
     final isIOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
     final showCarIntegrationSettings = isAndroid || isIOS;
 
     final filteredSettings = searchableSettings.where((item) {
       final query = _searchQuery.trim().toLowerCase();
       if (query.isEmpty) return false;
-      return item.title.toLowerCase().contains(query) ||
-          item.description.toLowerCase().contains(query);
+      return item.title.toLowerCase().contains(query) || item.description.toLowerCase().contains(query);
     }).toList();
 
     return Column(
@@ -1218,32 +1034,20 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                           children: [
                             if (filteredSettings.isEmpty)
                               Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 40,
-                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
                                 child: Center(
                                   child: Column(
                                     children: [
                                       Icon(
                                         Icons.search_off_rounded,
                                         size: 48,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant
-                                            .withValues(alpha: 0.6),
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
                                         "No settings found for '$_searchQuery'",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
+                                        style: Theme.of(context).textTheme.titleMedium
+                                            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                                         textAlign: TextAlign.center,
                                       ),
                                     ],
@@ -1258,16 +1062,12 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                                   return SettingsNavigationItem(
                                     icon: _getIconForRoute(item.route),
                                     title: item.title,
-                                    subtitle:
-                                        '${item.categoryPath}\n${item.description}',
+                                    subtitle: '${item.categoryPath}\n${item.description}',
                                     onTap: () {
                                       if (item.route == '/settings/logs') {
                                         Navigator.push(
                                           context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                const LogView(),
-                                          ),
+                                          MaterialPageRoute(builder: (context) => const LogView()),
                                         );
                                       } else {
                                         context.push(item.route);
@@ -1286,14 +1086,11 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                               stream: AaosService.instance.stream,
                               initialData: AaosService.instance.currentState,
                               builder: (context, snapshot) {
-                                final aaosState =
-                                    snapshot.data ??
-                                    AaosService.instance.currentState;
+                                final aaosState = snapshot.data ?? AaosService.instance.currentState;
                                 final isAaos = aaosState.isAutomotiveDevice;
 
                                 return Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
                                     if (isAaos)
                                       SettingsNavigationSection(
@@ -1304,10 +1101,7 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                                             title: 'Open Car Library',
                                             subtitle: 'Switch to the system Media Center',
                                             onTap: () async {
-                                              await AaosService.instance
-                                                  .launchMediaCenter(
-                                                    finishActivity: true,
-                                                  );
+                                              await AaosService.instance.launchMediaCenter(finishActivity: true);
                                             },
                                           ),
                                         ],
@@ -1318,59 +1112,40 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                                         SettingsNavigationItem(
                                           icon: Icons.library_books_outlined,
                                           title: 'Library',
-                                          onTap: () => context.push(
-                                            LibrarySettings.routeName,
-                                          ),
+                                          onTap: () => context.push(LibrarySettings.routeName),
                                         ),
                                         SettingsNavigationItem(
-                                          icon: Icons
-                                              .download_for_offline_outlined,
+                                          icon: Icons.download_for_offline_outlined,
                                           title: 'Downloads',
-                                          onTap: () => context.push(
-                                            DownloadSettings.routeName,
-                                          ),
+                                          onTap: () => context.push(DownloadSettings.routeName),
                                         ),
                                         SettingsNavigationItem(
                                           icon: Icons.palette_outlined,
                                           title: 'Appearance',
-                                          onTap: () => context.push(
-                                            AppearanceSettings.routeName,
-                                          ),
+                                          onTap: () => context.push(AppearanceSettings.routeName),
                                         ),
                                         SettingsNavigationItem(
-                                          icon: Icons
-                                              .play_circle_outline_outlined,
+                                          icon: Icons.play_circle_outline_outlined,
                                           title: 'Global Player',
-                                          onTap: () => context.push(
-                                            GlobalPlayerSettings.routeName,
-                                          ),
+                                          onTap: () => context.push(GlobalPlayerSettings.routeName),
                                         ),
                                         if (showCarIntegrationSettings)
                                           SettingsNavigationItem(
-                                            icon: Icons
-                                                .directions_car_filled_outlined,
+                                            icon: Icons.directions_car_filled_outlined,
                                             title: aaosState.isAutomotiveDevice
                                                 ? 'AAOS'
-                                                : (isIOS
-                                                      ? 'CarPlay'
-                                                      : 'Android Auto'),
-                                            onTap: () => context.push(
-                                              AndroidAutoSettings.routeName,
-                                            ),
+                                                : (isIOS ? 'CarPlay' : 'Android Auto'),
+                                            onTap: () => context.push(AndroidAutoSettings.routeName),
                                           ),
                                         SettingsNavigationItem(
                                           icon: Icons.cached_outlined,
                                           title: 'Caching',
-                                          onTap: () => context.push(
-                                            CachingSettings.routeName,
-                                          ),
+                                          onTap: () => context.push(CachingSettings.routeName),
                                         ),
                                         SettingsNavigationItem(
                                           icon: Icons.menu_book_outlined,
                                           title: 'Ebook Reader',
-                                          onTap: () => context.push(
-                                            ReaderSettings.routeName,
-                                          ),
+                                          onTap: () => context.push(ReaderSettings.routeName),
                                         ),
                                       ],
                                     ),
@@ -1382,21 +1157,14 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                                 .watch(currentUserProvider)
                                 .when(
                                   data: (currentUser) {
-                                    if (currentUser == null ||
-                                        AaosService
-                                            .instance
-                                            .currentState
-                                            .isAutomotiveDevice) {
+                                    if (currentUser == null || AaosService.instance.currentState.isAutomotiveDevice) {
                                       return const SizedBox.shrink();
                                     }
 
-                                    return ManagementSettingsSection(
-                                      currentUser: currentUser,
-                                    );
+                                    return ManagementSettingsSection(currentUser: currentUser);
                                   },
                                   loading: () => const SizedBox.shrink(),
-                                  error: (error, stackTrace) =>
-                                      const SizedBox.shrink(),
+                                  error: (error, stackTrace) => const SizedBox.shrink(),
                                 ),
                             SettingsNavigationSection(
                               title: 'About & Support',
@@ -1404,48 +1172,30 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                                 SettingsNavigationItem(
                                   icon: Icons.code_rounded,
                                   title: 'View on GitHub',
-                                  onTap: () => _openSupportLink(
-                                    context,
-                                    _githubRepoUri,
-                                    'GitHub repository',
-                                  ),
+                                  onTap: () => _openSupportLink(context, _githubRepoUri, 'GitHub repository'),
                                 ),
                                 SettingsNavigationItem(
                                   icon: Icons.bug_report_outlined,
                                   title: 'Report bug or enhancement',
-                                  onTap: () => _openSupportLink(
-                                    context,
-                                    _githubIssueUri,
-                                    'issue tracker',
-                                  ),
+                                  onTap: () => _openSupportLink(context, _githubIssueUri, 'issue tracker'),
                                 ),
                                 SettingsNavigationItem(
                                   icon: Icons.favorite_outline,
                                   title: 'Sponsor',
                                   subtitle: 'Help covering active costs and support development',
-                                  onTap: () => _openSupportLink(
-                                    context,
-                                    _githubSponsorUri,
-                                    'GitHub Sponsors page',
-                                  ),
+                                  onTap: () => _openSupportLink(context, _githubSponsorUri, 'GitHub Sponsors page'),
                                 ),
                                 SettingsNavigationItem(
                                   icon: Icons.article_outlined,
                                   title: 'Logs',
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const LogView(),
-                                    ),
-                                  ),
+                                  onTap: () =>
+                                      Navigator.push(context, MaterialPageRoute(builder: (context) => const LogView())),
                                 ),
                                 SettingsNavigationItem(
                                   icon: Icons.info_outline_rounded,
                                   title: 'Information & Attribution',
                                   subtitle: 'Licenses, app version, licenses, and more',
-                                  onTap: () => LicenseSettings.showLicensePage(
-                                    context: context,
-                                  ),
+                                  onTap: () => LicenseSettings.showLicensePage(context: context),
                                 ),
                               ],
                             ),

@@ -23,49 +23,24 @@ class ThemeAppearanceSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appThemeModeSetting = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.appThemeMode))
-        .asData
-        ?.value;
-    final appThemePresetSetting = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.appThemePreset))
-        .asData
-        ?.value;
-    final customRedSetting = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomRed))
-        .asData
-        ?.value;
-    final customGreenSetting = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomGreen))
-        .asData
-        ?.value;
-    final customBlueSetting = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomBlue))
-        .asData
-        ?.value;
+    final appThemeModeSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemeMode)).asData?.value;
+    final appThemePresetSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemePreset)).asData?.value;
+    final customRedSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomRed)).asData?.value;
+    final customGreenSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomGreen)).asData?.value;
+    final customBlueSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appThemeCustomBlue)).asData?.value;
 
     final appThemeMode = AppThemeMode.fromSettingValue(appThemeModeSetting);
-    final appThemePreset = AppThemePreset.fromSettingValue(
-      appThemePresetSetting,
-    );
+    final appThemePreset = AppThemePreset.fromSettingValue(appThemePresetSetting);
 
-    final defaultRed =
-        defaultSettings[SettingKeys.appThemeCustomRed] as int? ?? 15;
-    final defaultGreen =
-        defaultSettings[SettingKeys.appThemeCustomGreen] as int? ?? 118;
-    final defaultBlue =
-        defaultSettings[SettingKeys.appThemeCustomBlue] as int? ?? 110;
+    final defaultRed = defaultSettings[SettingKeys.appThemeCustomRed] as int? ?? 15;
+    final defaultGreen = defaultSettings[SettingKeys.appThemeCustomGreen] as int? ?? 118;
+    final defaultBlue = defaultSettings[SettingKeys.appThemeCustomBlue] as int? ?? 110;
 
     final customRed = parseColorChannel(customRedSetting, defaultRed);
     final customGreen = parseColorChannel(customGreenSetting, defaultGreen);
     final customBlue = parseColorChannel(customBlueSetting, defaultBlue);
 
-    final customSeedColor = Color.fromARGB(
-      0xFF,
-      customRed,
-      customGreen,
-      customBlue,
-    );
+    final customSeedColor = Color.fromARGB(0xFF, customRed, customGreen, customBlue);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -81,8 +56,7 @@ class ThemeAppearanceSection extends ConsumerWidget {
                 children: [
                   Text(
                     'Theme Mode',
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 10),
                   Wrap(
@@ -96,8 +70,7 @@ class ThemeAppearanceSection extends ConsumerWidget {
                               AppThemeMode.light => Icons.light_mode_rounded,
                               AppThemeMode.dark => Icons.dark_mode_rounded,
                               AppThemeMode.amoled => Icons.brightness_2_rounded,
-                              AppThemeMode.system =>
-                                Icons.brightness_auto_rounded,
+                              AppThemeMode.system => Icons.brightness_auto_rounded,
                             }, size: 18),
                             selected: appThemeMode == mode,
                             onSelected: (selected) {
@@ -108,10 +81,7 @@ class ThemeAppearanceSection extends ConsumerWidget {
                               unawaited(
                                 ref
                                     .read(settingsManagerProvider.notifier)
-                                    .setGlobalSetting<String>(
-                                      SettingKeys.appThemeMode,
-                                      mode.toString(),
-                                    ),
+                                    .setGlobalSetting<String>(SettingKeys.appThemeMode, mode.toString()),
                               );
                             },
                           ),
@@ -146,8 +116,7 @@ class ThemeAppearanceSection extends ConsumerWidget {
                   : 1;
               final double spacing = 12;
               final double totalSpacing = spacing * (columns - 1);
-              final double cardWidth =
-                  (constraints.maxWidth - totalSpacing) / columns;
+              final double cardWidth = (constraints.maxWidth - totalSpacing) / columns;
 
               return Wrap(
                 spacing: spacing,
@@ -160,18 +129,12 @@ class ThemeAppearanceSection extends ConsumerWidget {
                           title: preset.label,
                           description: preset.description,
                           selected: appThemePreset == preset,
-                          accentColor: appThemeSeedColor(
-                            preset: preset,
-                            customSeedColor: customSeedColor,
-                          ),
+                          accentColor: appThemeSeedColor(preset: preset, customSeedColor: customSeedColor),
                           onTap: () {
                             unawaited(
                               ref
                                   .read(settingsManagerProvider.notifier)
-                                  .setGlobalSetting<String>(
-                                    SettingKeys.appThemePreset,
-                                    preset.toString(),
-                                  ),
+                                  .setGlobalSetting<String>(SettingKeys.appThemePreset, preset.toString()),
                             );
                           },
                         ),
@@ -193,22 +156,16 @@ class ThemeAppearanceSection extends ConsumerWidget {
                   children: [
                     Text(
                       'Custom Theme',
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 14),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         color: customSeedColor.withValues(alpha: 0.17),
-                        border: Border.all(
-                          color: customSeedColor.withValues(alpha: 0.45),
-                        ),
+                        border: Border.all(color: customSeedColor.withValues(alpha: 0.45)),
                       ),
                       child: Row(
                         children: [
@@ -218,27 +175,20 @@ class ThemeAppearanceSection extends ConsumerWidget {
                             decoration: BoxDecoration(
                               color: customSeedColor,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                              ),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'Accent ${toHex(customSeedColor)}',
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(fontWeight: FontWeight.w600),
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
                             ),
                           ),
                           Text(
                             'R$customRed G$customGreen B$customBlue',
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
+                                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -252,10 +202,7 @@ class ThemeAppearanceSection extends ConsumerWidget {
                         unawaited(
                           ref
                               .read(settingsManagerProvider.notifier)
-                              .setGlobalSetting<int>(
-                                SettingKeys.appThemeCustomRed,
-                                value,
-                              ),
+                              .setGlobalSetting<int>(SettingKeys.appThemeCustomRed, value),
                         );
                       },
                     ),
@@ -267,10 +214,7 @@ class ThemeAppearanceSection extends ConsumerWidget {
                         unawaited(
                           ref
                               .read(settingsManagerProvider.notifier)
-                              .setGlobalSetting<int>(
-                                SettingKeys.appThemeCustomGreen,
-                                value,
-                              ),
+                              .setGlobalSetting<int>(SettingKeys.appThemeCustomGreen, value),
                         );
                       },
                     ),
@@ -282,19 +226,15 @@ class ThemeAppearanceSection extends ConsumerWidget {
                         unawaited(
                           ref
                               .read(settingsManagerProvider.notifier)
-                              .setGlobalSetting<int>(
-                                SettingKeys.appThemeCustomBlue,
-                                value,
-                              ),
+                              .setGlobalSetting<int>(SettingKeys.appThemeCustomBlue, value),
                         );
                       },
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Quick Colors',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 10),
                     Wrap(
@@ -307,26 +247,15 @@ class ThemeAppearanceSection extends ConsumerWidget {
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(999),
                                 onTap: () {
-                                  final settings = ref.read(
-                                    settingsManagerProvider.notifier,
+                                  final settings = ref.read(settingsManagerProvider.notifier);
+                                  unawaited(
+                                    settings.setGlobalSetting<int>(SettingKeys.appThemeCustomRed, colorRed(color)),
                                   );
                                   unawaited(
-                                    settings.setGlobalSetting<int>(
-                                      SettingKeys.appThemeCustomRed,
-                                      colorRed(color),
-                                    ),
+                                    settings.setGlobalSetting<int>(SettingKeys.appThemeCustomGreen, colorGreen(color)),
                                   );
                                   unawaited(
-                                    settings.setGlobalSetting<int>(
-                                      SettingKeys.appThemeCustomGreen,
-                                      colorGreen(color),
-                                    ),
-                                  );
-                                  unawaited(
-                                    settings.setGlobalSetting<int>(
-                                      SettingKeys.appThemeCustomBlue,
-                                      colorBlue(color),
-                                    ),
+                                    settings.setGlobalSetting<int>(SettingKeys.appThemeCustomBlue, colorBlue(color)),
                                   );
                                 },
                                 child: Container(
@@ -335,12 +264,7 @@ class ThemeAppearanceSection extends ConsumerWidget {
                                   decoration: BoxDecoration(
                                     color: color,
                                     shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      width: 1,
-                                    ),
+                                    border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1),
                                     boxShadow: [
                                       BoxShadow(
                                         blurRadius: 8,
@@ -371,14 +295,8 @@ class ThemeAppearanceSection extends ConsumerWidget {
 
   String toHex(Color color) {
     final red = colorRed(color).toRadixString(16).padLeft(2, '0').toUpperCase();
-    final green = colorGreen(color)
-        .toRadixString(16)
-        .padLeft(2, '0')
-        .toUpperCase();
-    final blue = colorBlue(color)
-        .toRadixString(16)
-        .padLeft(2, '0')
-        .toUpperCase();
+    final green = colorGreen(color).toRadixString(16).padLeft(2, '0').toUpperCase();
+    final blue = colorBlue(color).toRadixString(16).padLeft(2, '0').toUpperCase();
     return '#$red$green$blue';
   }
 

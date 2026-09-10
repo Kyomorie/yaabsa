@@ -51,8 +51,7 @@ class SettingSwitchTile extends ConsumerWidget {
   final bool enabled;
   final bool? defaultValue;
   final ValueChanged<bool>? onChanged;
-  final FutureOr<bool> Function(BuildContext context, bool newValue)?
-  onBeforeChanged;
+  final FutureOr<bool> Function(BuildContext context, bool newValue)? onBeforeChanged;
   final bool? value;
   final ValueChanged<bool>? onValueChanged;
   final bool isLoading;
@@ -79,9 +78,7 @@ class SettingSwitchTile extends ConsumerWidget {
               label,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w500,
-                color: isEnabled
-                    ? colorScheme.onSurface
-                    : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                color: isEnabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
               ),
             ),
           ),
@@ -90,11 +87,7 @@ class SettingSwitchTile extends ConsumerWidget {
               padding: const EdgeInsets.only(left: 6.0),
               child: Tooltip(
                 message: tooltip!,
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                child: Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
               ),
             ),
         ],
@@ -113,15 +106,9 @@ class SettingSwitchTile extends ConsumerWidget {
             )
           : null,
       secondary: isLoading
-          ? const SizedBox(
-              height: 18,
-              width: 18,
-              child: CircularProgressIndicator(strokeWidth: 2.2),
-            )
+          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
           : null,
-      thumbIcon: WidgetStateProperty.resolveWith<Icon?>((
-        Set<WidgetState> states,
-      ) {
+      thumbIcon: WidgetStateProperty.resolveWith<Icon?>((Set<WidgetState> states) {
         if (states.contains(WidgetState.selected)) {
           return const Icon(Icons.check, size: 16);
         }
@@ -134,12 +121,9 @@ class SettingSwitchTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final subtitleParts = <String>[
       if (subtitle != null && subtitle!.isNotEmpty) subtitle!,
-      if (!enabled && disabledReason != null && disabledReason!.isNotEmpty)
-        disabledReason!,
+      if (!enabled && disabledReason != null && disabledReason!.isNotEmpty) disabledReason!,
     ];
-    final subtitleText = subtitleParts.isEmpty
-        ? null
-        : subtitleParts.join('\n');
+    final subtitleText = subtitleParts.isEmpty ? null : subtitleParts.join('\n');
 
     if (settingKey == null) {
       if (value == null) {
@@ -147,18 +131,12 @@ class SettingSwitchTile extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
           child: Text(
             'Error: remote switch value for $label is null.',
-            style: Theme.of(context).textTheme.bodyMedium
-                ?.copyWith(color: Theme.of(context).colorScheme.error),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
           ),
         );
       }
 
-      return _buildTile(
-        context,
-        value!,
-        enabled && !isLoading ? onValueChanged : null,
-        subtitleText,
-      );
+      return _buildTile(context, value!, enabled && !isLoading ? onValueChanged : null, subtitleText);
     }
 
     final settingKeyValue = settingKey!;
@@ -168,53 +146,35 @@ class SettingSwitchTile extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
         child: Text(
           'Error: Default value for $settingKeyValue must be bool.',
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: Theme.of(context).colorScheme.error),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
         ),
       );
     }
 
-    final bool resolvedDefaultValue =
-        defaultValue ?? (defaultValueDynamic as bool? ?? false);
+    final bool resolvedDefaultValue = defaultValue ?? (defaultValueDynamic as bool? ?? false);
     final String? activeUserId = userId;
 
     if (activeUserId == null) {
-      final settingAsync = ref.watch(
-        globalSettingByKeyProvider(settingKeyValue),
-      );
+      final settingAsync = ref.watch(globalSettingByKeyProvider(settingKeyValue));
 
       return settingAsync.when(
         data: (stringValue) {
-          final currentValue = SettingsParser.decodeValue<bool>(
-            stringValue,
-            resolvedDefaultValue,
-          );
+          final currentValue = SettingsParser.decodeValue<bool>(stringValue, resolvedDefaultValue);
           return _buildTile(
             context,
             currentValue,
             enabled && !isLoading
                 ? onBeforeChanged == null
                       ? (newValue) {
-                          ref
-                              .read(settingsManagerProvider.notifier)
-                              .setGlobalSetting<bool>(
-                                settingKeyValue,
-                                newValue,
-                              );
+                          ref.read(settingsManagerProvider.notifier).setGlobalSetting<bool>(settingKeyValue, newValue);
                           onChanged?.call(newValue);
                         }
                       : (newValue) async {
-                          final shouldChange = await onBeforeChanged!(
-                            context,
-                            newValue,
-                          );
+                          final shouldChange = await onBeforeChanged!(context, newValue);
                           if (!shouldChange) return;
                           await ref
                               .read(settingsManagerProvider.notifier)
-                              .setGlobalSetting<bool>(
-                                settingKeyValue,
-                                newValue,
-                              );
+                              .setGlobalSetting<bool>(settingKeyValue, newValue);
                           onChanged?.call(newValue);
                         }
                 : null,
@@ -223,18 +183,13 @@ class SettingSwitchTile extends ConsumerWidget {
         },
         loading: () => const Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          child: SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2.5),
-          ),
+          child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5)),
         ),
         error: (error, _) => Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
           child: Text(
             'Failed to load $label setting: $error',
-            style: Theme.of(context).textTheme.bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.error),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
           ),
         ),
       );
@@ -247,15 +202,8 @@ class SettingSwitchTile extends ConsumerWidget {
       builder: (context, snapshot) {
         final bool fallbackValue = ref
             .read(settingsManagerProvider.notifier)
-            .getUserSetting<bool>(
-              activeUserId,
-              settingKeyValue,
-              defaultValue: resolvedDefaultValue,
-            );
-        final bool currentValue = SettingsParser.decodeValue<bool>(
-          snapshot.data?.value,
-          fallbackValue,
-        );
+            .getUserSetting<bool>(activeUserId, settingKeyValue, defaultValue: resolvedDefaultValue);
+        final bool currentValue = SettingsParser.decodeValue<bool>(snapshot.data?.value, fallbackValue);
 
         return _buildTile(
           context,
@@ -265,26 +213,15 @@ class SettingSwitchTile extends ConsumerWidget {
                     ? (newValue) {
                         ref
                             .read(settingsManagerProvider.notifier)
-                            .setUserSetting<bool>(
-                              activeUserId,
-                              settingKeyValue,
-                              newValue,
-                            );
+                            .setUserSetting<bool>(activeUserId, settingKeyValue, newValue);
                         onChanged?.call(newValue);
                       }
                     : (newValue) async {
-                        final shouldChange = await onBeforeChanged!(
-                          context,
-                          newValue,
-                        );
+                        final shouldChange = await onBeforeChanged!(context, newValue);
                         if (!shouldChange) return;
                         await ref
                             .read(settingsManagerProvider.notifier)
-                            .setUserSetting<bool>(
-                              activeUserId,
-                              settingKeyValue,
-                              newValue,
-                            );
+                            .setUserSetting<bool>(activeUserId, settingKeyValue, newValue);
                         onChanged?.call(newValue);
                       }
               : null,

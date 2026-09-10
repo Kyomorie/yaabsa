@@ -1,19 +1,14 @@
 import 'package:material_ui/material_ui.dart';
 
 class LibraryTargetPickerOption {
-  const LibraryTargetPickerOption({
-    required this.id,
-    required this.title,
-    this.subtitle,
-  });
+  const LibraryTargetPickerOption({required this.id, required this.title, this.subtitle});
 
   final String id;
   final String title;
   final String? subtitle;
 }
 
-typedef LibraryTargetOptionsLoader =
-    Future<List<LibraryTargetPickerOption>> Function();
+typedef LibraryTargetOptionsLoader = Future<List<LibraryTargetPickerOption>> Function();
 
 Future<LibraryTargetPickerOption?> showLibraryTargetPickerSheet({
   required BuildContext context,
@@ -23,10 +18,7 @@ Future<LibraryTargetPickerOption?> showLibraryTargetPickerSheet({
   required String emptyMessage,
   String loadErrorMessage = 'Could not load options.',
 }) {
-  assert(
-    options.isNotEmpty || loadOptions != null,
-    'Provide either options or loadOptions.',
-  );
+  assert(options.isNotEmpty || loadOptions != null, 'Provide either options or loadOptions.');
 
   final maxHeight = MediaQuery.of(context).size.height * 0.7;
 
@@ -42,16 +34,14 @@ Future<LibraryTargetPickerOption?> showLibraryTargetPickerSheet({
                   title: title,
                   options: options,
                   emptyMessage: emptyMessage,
-                  onSelected: (option) =>
-                      Navigator.of(sheetContext).pop(option),
+                  onSelected: (option) => Navigator.of(sheetContext).pop(option),
                 )
               : _LibraryTargetPickerAsyncContent(
                   title: title,
                   emptyMessage: emptyMessage,
                   loadErrorMessage: loadErrorMessage,
                   loadOptions: loadOptions,
-                  onSelected: (option) =>
-                      Navigator.of(sheetContext).pop(option),
+                  onSelected: (option) => Navigator.of(sheetContext).pop(option),
                 ),
         ),
       );
@@ -75,12 +65,10 @@ class _LibraryTargetPickerAsyncContent extends StatefulWidget {
   final ValueChanged<LibraryTargetPickerOption> onSelected;
 
   @override
-  State<_LibraryTargetPickerAsyncContent> createState() =>
-      _LibraryTargetPickerAsyncContentState();
+  State<_LibraryTargetPickerAsyncContent> createState() => _LibraryTargetPickerAsyncContentState();
 }
 
-class _LibraryTargetPickerAsyncContentState
-    extends State<_LibraryTargetPickerAsyncContent> {
+class _LibraryTargetPickerAsyncContentState extends State<_LibraryTargetPickerAsyncContent> {
   late Future<List<LibraryTargetPickerOption>> _optionsFuture;
 
   @override
@@ -139,9 +127,7 @@ class _LibraryTargetPickerListContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.max,
       children: [
-        ListTile(
-          title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        ),
+        ListTile(title: Text(title, style: Theme.of(context).textTheme.titleMedium)),
         const Divider(height: 1),
         Expanded(
           child: options.isEmpty
@@ -155,18 +141,10 @@ class _LibraryTargetPickerListContent extends StatelessWidget {
                     final subtitle = option.subtitle?.trim();
 
                     return ListTile(
-                      title: Text(
-                        option.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      title: Text(option.title, maxLines: 1, overflow: TextOverflow.ellipsis),
                       subtitle: subtitle == null || subtitle.isEmpty
                           ? null
-                          : Text(
-                              subtitle,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          : Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
                       onTap: () => onSelected(option),
                     );
                   },
@@ -187,9 +165,7 @@ class _LibraryTargetPickerLoadingContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.max,
       children: [
-        ListTile(
-          title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        ),
+        ListTile(title: Text(title, style: Theme.of(context).textTheme.titleMedium)),
         const Divider(height: 1),
         Expanded(
           child: _LibraryTargetShimmer(
@@ -206,11 +182,7 @@ class _LibraryTargetPickerLoadingContent extends StatelessWidget {
 }
 
 class _LibraryTargetPickerErrorContent extends StatelessWidget {
-  const _LibraryTargetPickerErrorContent({
-    required this.title,
-    required this.message,
-    required this.onRetry,
-  });
+  const _LibraryTargetPickerErrorContent({required this.title, required this.message, required this.onRetry});
 
   final String title;
   final String message;
@@ -221,9 +193,7 @@ class _LibraryTargetPickerErrorContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.max,
       children: [
-        ListTile(
-          title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        ),
+        ListTile(title: Text(title, style: Theme.of(context).textTheme.titleMedium)),
         const Divider(height: 1),
         Expanded(
           child: Center(
@@ -258,8 +228,7 @@ class _LibraryTargetShimmer extends StatefulWidget {
   State<_LibraryTargetShimmer> createState() => _LibraryTargetShimmerState();
 }
 
-class _LibraryTargetShimmerState extends State<_LibraryTargetShimmer>
-    with SingleTickerProviderStateMixin {
+class _LibraryTargetShimmerState extends State<_LibraryTargetShimmer> with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1300),
@@ -313,10 +282,7 @@ class _LibraryTargetShimmerTile extends StatelessWidget {
         child: Container(
           width: 180,
           height: 12,
-          decoration: BoxDecoration(
-            color: base,
-            borderRadius: BorderRadius.circular(8),
-          ),
+          decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(8)),
         ),
       ),
       subtitle: Align(
@@ -324,10 +290,7 @@ class _LibraryTargetShimmerTile extends StatelessWidget {
         child: Container(
           width: 120,
           height: 10,
-          decoration: BoxDecoration(
-            color: base,
-            borderRadius: BorderRadius.circular(8),
-          ),
+          decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );

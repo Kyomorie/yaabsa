@@ -11,8 +11,7 @@ class StatsActivityRangeChart extends StatefulWidget {
   final ListeningActivityStats activity;
 
   @override
-  State<StatsActivityRangeChart> createState() =>
-      _StatsActivityRangeChartState();
+  State<StatsActivityRangeChart> createState() => _StatsActivityRangeChartState();
 }
 
 class _StatsActivityRangeChartState extends State<StatsActivityRangeChart> {
@@ -23,10 +22,7 @@ class _StatsActivityRangeChartState extends State<StatsActivityRangeChart> {
     final now = DateTime.now();
     final end = DateTime(now.year, now.month, now.day);
     final start = end.subtract(Duration(days: _selectedRange - 1));
-    final values = widget.activity.valuesForLastDays(
-      _selectedRange,
-      reference: end,
-    );
+    final values = widget.activity.valuesForLastDays(_selectedRange, reference: end);
     final total = values.fold<double>(0, (sum, value) => sum + value);
     final average = values.isEmpty ? 0.0 : total / values.length;
     final peak = values.fold<double>(0, math.max);
@@ -44,15 +40,11 @@ class _StatsActivityRangeChartState extends State<StatsActivityRangeChart> {
                 children: [
                   Text(
                     formatListeningSeconds(total),
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   Text(
                     'Total over the last $_selectedRange days',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -76,10 +68,7 @@ class _StatsActivityRangeChartState extends State<StatsActivityRangeChart> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(8, 18, 12, 8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainer,
-            borderRadius: BorderRadius.circular(20),
-          ),
+          decoration: BoxDecoration(color: theme.colorScheme.surfaceContainer, borderRadius: BorderRadius.circular(20)),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final preferredWidth = _selectedRange == 7 ? 620.0 : 840.0;
@@ -90,16 +79,8 @@ class _StatsActivityRangeChartState extends State<StatsActivityRangeChart> {
                   width: chartWidth,
                   height: 220,
                   child: _selectedRange == 7
-                      ? _SevenDayBarChart(
-                          values: values,
-                          start: start,
-                          peak: peak,
-                        )
-                      : _ListeningLineChart(
-                          values: values,
-                          start: start,
-                          peak: peak,
-                        ),
+                      ? _SevenDayBarChart(values: values, start: start, peak: peak)
+                      : _ListeningLineChart(values: values, start: start, peak: peak),
                 ),
               );
             },
@@ -110,18 +91,9 @@ class _StatsActivityRangeChartState extends State<StatsActivityRangeChart> {
           spacing: 18,
           runSpacing: 6,
           children: [
-            _ChartCaption(
-              label: 'Daily average',
-              value: formatListeningSeconds(average),
-            ),
-            _ChartCaption(
-              label: 'Peak day',
-              value: formatListeningSeconds(peak),
-            ),
-            _ChartCaption(
-              label: 'Range',
-              value: '${_shortDate(start)} – ${_shortDate(end)}',
-            ),
+            _ChartCaption(label: 'Daily average', value: formatListeningSeconds(average)),
+            _ChartCaption(label: 'Peak day', value: formatListeningSeconds(peak)),
+            _ChartCaption(label: 'Range', value: '${_shortDate(start)} – ${_shortDate(end)}'),
           ],
         ),
       ],
@@ -130,11 +102,7 @@ class _StatsActivityRangeChartState extends State<StatsActivityRangeChart> {
 }
 
 class _SevenDayBarChart extends StatelessWidget {
-  const _SevenDayBarChart({
-    required this.values,
-    required this.start,
-    required this.peak,
-  });
+  const _SevenDayBarChart({required this.values, required this.start, required this.peak});
 
   final List<double> values;
   final DateTime start;
@@ -159,9 +127,7 @@ class _SevenDayBarChart extends StatelessWidget {
                 BarChartRodData(
                   toY: values[index],
                   width: 22,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(8),
-                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
                   color: colors.primary,
                 ),
               ],
@@ -171,10 +137,7 @@ class _SevenDayBarChart extends StatelessWidget {
         gridData: FlGridData(
           drawVerticalLine: false,
           horizontalInterval: _axisInterval(chartPeak),
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: colors.outlineVariant.withValues(alpha: 0.45),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) => FlLine(color: colors.outlineVariant.withValues(alpha: 0.45), strokeWidth: 1),
         ),
         titlesData: _chartTitles(
           context,
@@ -205,11 +168,7 @@ class _SevenDayBarChart extends StatelessWidget {
 }
 
 class _ListeningLineChart extends StatelessWidget {
-  const _ListeningLineChart({
-    required this.values,
-    required this.start,
-    required this.peak,
-  });
+  const _ListeningLineChart({required this.values, required this.start, required this.peak});
 
   final List<double> values;
   final DateTime start;
@@ -229,10 +188,7 @@ class _ListeningLineChart extends StatelessWidget {
         maxY: chartPeak,
         lineBarsData: [
           LineChartBarData(
-            spots: [
-              for (var index = 0; index < values.length; index++)
-                FlSpot(index.toDouble(), values[index]),
-            ],
+            spots: [for (var index = 0; index < values.length; index++) FlSpot(index.toDouble(), values[index])],
             isCurved: values.length <= 30,
             curveSmoothness: 0.18,
             color: colors.primary,
@@ -244,10 +200,7 @@ class _ListeningLineChart extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  colors.primary.withValues(alpha: 0.28),
-                  colors.primary.withValues(alpha: 0.02),
-                ],
+                colors: [colors.primary.withValues(alpha: 0.28), colors.primary.withValues(alpha: 0.02)],
               ),
             ),
           ),
@@ -256,10 +209,7 @@ class _ListeningLineChart extends StatelessWidget {
         gridData: FlGridData(
           drawVerticalLine: false,
           horizontalInterval: _axisInterval(chartPeak),
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: colors.outlineVariant.withValues(alpha: 0.45),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) => FlLine(color: colors.outlineVariant.withValues(alpha: 0.45), strokeWidth: 1),
         ),
         titlesData: _chartTitles(
           context,
@@ -308,10 +258,7 @@ FlTitlesData _chartTitles(
         getTitlesWidget: (value, meta) => SideTitleWidget(
           meta: meta,
           space: 6,
-          child: Text(
-            _axisLabel(value),
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
+          child: Text(_axisLabel(value), style: Theme.of(context).textTheme.labelSmall),
         ),
       ),
     ),
@@ -326,9 +273,7 @@ FlTitlesData _chartTitles(
             return const SizedBox.shrink();
           }
           final date = start.add(Duration(days: index));
-          final label = showWeekday
-              ? _weekdayLabel(date.weekday)
-              : '${date.month}/${date.day}';
+          final label = showWeekday ? _weekdayLabel(date.weekday) : '${date.month}/${date.day}';
           return SideTitleWidget(
             meta: meta,
             space: 8,
@@ -352,9 +297,7 @@ class _ChartCaption extends StatelessWidget {
     return Text.rich(
       TextSpan(
         text: '$label  ',
-        style: theme.textTheme.labelMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
+        style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         children: [
           TextSpan(
             text: value,
@@ -381,8 +324,7 @@ String _axisLabel(double seconds) {
   return '${(seconds / 3600).round()}h';
 }
 
-String _weekdayLabel(int weekday) =>
-    const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekday - 1];
+String _weekdayLabel(int weekday) => const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekday - 1];
 
 String _shortDate(DateTime value) => '${value.month}/${value.day}';
 

@@ -30,11 +30,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
       return activeFallback;
     }
 
-    final fallback = _performTranscodeFallback(
-      error,
-      initialPosition: initialPosition,
-      resumePlayback: resumePlayback,
-    );
+    final fallback = _performTranscodeFallback(error, initialPosition: initialPosition, resumePlayback: resumePlayback);
     _transcodeFallbackFuture = fallback;
     unawaited(
       fallback.whenComplete(() {
@@ -71,10 +67,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
 
     final resumePosition = initialPosition ?? position;
     final shouldResume = resumePlayback && playerControlState.playing;
-    bool isCurrentRequest() =>
-        !_isDisposing &&
-        identical(_currentMediaItem, media) &&
-        !isCastControlActive;
+    bool isCurrentRequest() => !_isDisposing && identical(_currentMediaItem, media) && !isCastControlActive;
 
     try {
       logger(
@@ -84,48 +77,28 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
         level: InfoLevel.warning,
       );
 
-      await _syncService.flush(
-        positionOverride: resumePosition,
-        sessionClosing: true,
-      );
+      await _syncService.flush(positionOverride: resumePosition, sessionClosing: true);
       if (!isCurrentRequest()) return false;
 
-      final transcodedMedia = await repository.reopenSessionWithTranscode(
-        media.itemId,
-        episodeId: media.episodeId,
-      );
+      final transcodedMedia = await repository.reopenSessionWithTranscode(media.itemId, episodeId: media.episodeId);
       if (!isCurrentRequest() || transcodedMedia == null) {
         return false;
       }
       if (repository.currentSession?.playMethod != 2) {
-        logger(
-          'Server did not return a transcoded session.',
-          tag: 'AudioHandler',
-          level: InfoLevel.error,
-        );
+        logger('Server did not return a transcoded session.', tag: 'AudioHandler', level: InfoLevel.error);
         return false;
       }
 
       _currentMediaItem = transcodedMedia;
-      await _setSource(
-        initialPosition: resumePosition,
-        ignoreSavedProgress: true,
-      );
+      await _setSource(initialPosition: resumePosition, ignoreSavedProgress: true);
 
-      if (shouldResume &&
-          identical(_currentMediaItem, transcodedMedia) &&
-          !_isDisposing &&
-          !isCastControlActive) {
+      if (shouldResume && identical(_currentMediaItem, transcodedMedia) && !_isDisposing && !isCastControlActive) {
         await _syncedPlay();
       }
 
       return true;
     } catch (e, s) {
-      logger(
-        'Transcode fallback failed: $e\n$s',
-        tag: 'AudioHandler',
-        level: InfoLevel.error,
-      );
+      logger('Transcode fallback failed: $e\n$s', tag: 'AudioHandler', level: InfoLevel.error);
       return false;
     } finally {
       _transcodeFallbackInFlight = false;
@@ -133,8 +106,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
   }
 
   bool _isSameControlState(PlayerState left, PlayerState right) {
-    return left.playing == right.playing &&
-        left.processingState == right.processingState;
+    return left.playing == right.playing && left.processingState == right.processingState;
   }
 
   void _clearCastControlTracking() {
@@ -148,10 +120,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     }
   }
 
-  bool _isSameLastPlayedMiniPlayerSnapshot(
-    LastPlayedMiniPlayerSnapshot? left,
-    LastPlayedMiniPlayerSnapshot? right,
-  ) {
+  bool _isSameLastPlayedMiniPlayerSnapshot(LastPlayedMiniPlayerSnapshot? left, LastPlayedMiniPlayerSnapshot? right) {
     if (left == null && right == null) {
       return true;
     }
@@ -168,9 +137,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
         left.cover == right.cover;
   }
 
-  void _setLastPlayedMiniPlayerSnapshot(
-    LastPlayedMiniPlayerSnapshot? snapshot,
-  ) {
+  void _setLastPlayedMiniPlayerSnapshot(LastPlayedMiniPlayerSnapshot? snapshot) {
     if (_lastPlayedMiniPlayerSnapshotSubject.isClosed) {
       return;
     }
@@ -184,10 +151,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     _emitShouldShowPlayer();
   }
 
-  void _setAndroidAutoMoreMenuVisible(
-    bool visible, {
-    Duration? autoCloseAfter,
-  }) {
+  void _setAndroidAutoMoreMenuVisible(bool visible, {Duration? autoCloseAfter}) {
     if (_androidAutoMoreMenuVisible == visible && autoCloseAfter == null) {
       return;
     }
@@ -211,10 +175,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     unawaited(_updatePlaybackState());
   }
 
-  void _setQueueTransitionLoading(
-    bool value, {
-    bool emitMediaWhenEmpty = false,
-  }) {
+  void _setQueueTransitionLoading(bool value, {bool emitMediaWhenEmpty = false}) {
     if (!value) {
       _queueTransitionItemId = null;
       _queueTransitionEpisodeId = null;
@@ -230,10 +191,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     }
     _emitShouldShowPlayer();
 
-    if (emitMediaWhenEmpty &&
-        !value &&
-        _currentMediaItem == null &&
-        !mediaItemStream.isClosed) {
+    if (emitMediaWhenEmpty && !value && _currentMediaItem == null && !mediaItemStream.isClosed) {
       mediaItemStream.add(null);
     }
 
@@ -246,23 +204,18 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
   }
 
   void _recordPlayerHistoryForState(PlayerState state) {
-    final isPlayingReady =
-        state.playing && state.processingState == ProcessingState.ready;
+    final isPlayingReady = state.playing && state.processingState == ProcessingState.ready;
     final isCompleted = state.processingState == ProcessingState.completed;
 
     if (isCompleted && !_historyWasCompleted) {
-      unawaited(
-        PlayerHistoryHandler.addPlayerHistory(PlayerHistoryType.completed),
-      );
+      unawaited(PlayerHistoryHandler.addPlayerHistory(PlayerHistoryType.completed));
     }
 
     if (isPlayingReady && !_historyWasPlayingReady) {
       unawaited(PlayerHistoryHandler.addPlayerHistory(PlayerHistoryType.play));
     }
 
-    if (!state.playing &&
-        state.processingState == ProcessingState.ready &&
-        _historyWasPlayingReady) {
+    if (!state.playing && state.processingState == ProcessingState.ready && _historyWasPlayingReady) {
       unawaited(PlayerHistoryHandler.addPlayerHistory(PlayerHistoryType.pause));
     }
 
@@ -304,16 +257,14 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     }
 
     final currentState = _player.playerState;
-    if (currentState.playing &&
-        currentState.processingState == ProcessingState.ready) {
+    if (currentState.playing && currentState.processingState == ProcessingState.ready) {
       _resetStreamRecoveryState(clearWindow: true);
       return;
     }
 
     final now = DateTime.now();
     final lastAttemptAt = _lastStreamRecoveryAttemptAt;
-    if (lastAttemptAt == null ||
-        now.difference(lastAttemptAt) > _streamRecoveryResetWindow) {
+    if (lastAttemptAt == null || now.difference(lastAttemptAt) > _streamRecoveryResetWindow) {
       _streamRecoveryAttempts = 0;
     }
 
@@ -342,10 +293,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     _streamRecoveryRetryTimer = Timer(delay, () async {
       _streamRecoveryRetryTimer = null;
 
-      if (_isDisposing ||
-          _currentMediaItem == null ||
-          isCastControlActive ||
-          _streamRecoveryInFlight) {
+      if (_isDisposing || _currentMediaItem == null || isCastControlActive || _streamRecoveryInFlight) {
         return;
       }
 

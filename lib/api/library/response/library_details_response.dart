@@ -14,6 +14,5 @@ abstract class LibraryDetailsResponse with _$LibraryDetailsResponse {
     @JsonKey(name: 'library') Library? library,
   }) = _LibraryDetailsResponse;
 
-  factory LibraryDetailsResponse.fromJson(Map<String, dynamic> json) =>
-      _$LibraryDetailsResponseFromJson(json);
+  factory LibraryDetailsResponse.fromJson(Map<String, dynamic> json) => _$LibraryDetailsResponseFromJson(json);
 }

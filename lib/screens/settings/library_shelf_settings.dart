@@ -31,14 +31,8 @@ class LibraryShelfSettings extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                PersonalizedShelfSectionsEditor(
-                  userId: user.id,
-                  mediaType: HomeLibraryMediaType.book,
-                ),
-                PersonalizedShelfSectionsEditor(
-                  userId: user.id,
-                  mediaType: HomeLibraryMediaType.podcast,
-                ),
+                PersonalizedShelfSectionsEditor(userId: user.id, mediaType: HomeLibraryMediaType.book),
+                PersonalizedShelfSectionsEditor(userId: user.id, mediaType: HomeLibraryMediaType.podcast),
               ],
             );
           },
@@ -46,10 +40,8 @@ class LibraryShelfSettings extends ConsumerWidget {
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) => Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text('Failed to load shelf settings: $error'),
-          ),
+          error: (error, _) =>
+              Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load shelf settings: $error')),
         ),
       ],
     );

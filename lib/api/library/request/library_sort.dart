@@ -116,10 +116,7 @@ const List<LibrarySortValue> _podcastSortOptions = <LibrarySortValue>[
   LibrarySortValue.random,
 ];
 
-List<LibrarySortValue> getLibrarySortOptions({
-  required String libraryMediaType,
-  required String? activeFilter,
-}) {
+List<LibrarySortValue> getLibrarySortOptions({required String libraryMediaType, required String? activeFilter}) {
   final isPodcast = libraryMediaType == 'podcast';
   final hasSeriesFilter = isSeriesLibraryFilter(activeFilter);
 
@@ -141,16 +138,10 @@ LibrarySortSelection resolveLibrarySortSelection({
   required String? activeSort,
   required int? activeDesc,
 }) {
-  final options = getLibrarySortOptions(
-    libraryMediaType: libraryMediaType,
-    activeFilter: activeFilter,
-  );
+  final options = getLibrarySortOptions(libraryMediaType: libraryMediaType, activeFilter: activeFilter);
   final selectedSort = _resolveSortValue(activeSort, options);
 
-  return LibrarySortSelection(
-    sort: selectedSort.wireValue,
-    desc: _resolveSortDesc(activeDesc, selectedSort),
-  );
+  return LibrarySortSelection(sort: selectedSort.wireValue, desc: _resolveSortDesc(activeDesc, selectedSort));
 }
 
 String buildLibrarySortLabel({
@@ -179,10 +170,7 @@ String buildLibrarySortLabel({
   return '${sortValue.displayName} ($directionLabel)';
 }
 
-LibrarySortValue _resolveSortValue(
-  String? rawSort,
-  List<LibrarySortValue> options,
-) {
+LibrarySortValue _resolveSortValue(String? rawSort, List<LibrarySortValue> options) {
   if (rawSort != null) {
     final parsedSort = LibrarySortValueX.tryParse(rawSort);
     if (parsedSort != null && options.contains(parsedSort)) {

@@ -14,10 +14,7 @@ class LogExportResult {
   final bool usedSaveDialog;
 }
 
-final RegExp _sensitiveUrlPattern = RegExp(
-  r'(?:(?:https?|wss?)://)[^\s\]\)>,]+',
-  caseSensitive: false,
-);
+final RegExp _sensitiveUrlPattern = RegExp(r'(?:(?:https?|wss?)://)[^\s\]\)>,]+', caseSensitive: false);
 
 String redactSensitiveUrls(String value) {
   return value.replaceAll(_sensitiveUrlPattern, '[REDACTED_URL]');
@@ -58,8 +55,7 @@ Future<LogExportResult> exportLogsAsLogFile(List<LogEntry> logs) async {
     selectedPath = null;
   }
 
-  final hasSelectedPath =
-      selectedPath != null && selectedPath.trim().isNotEmpty;
+  final hasSelectedPath = selectedPath != null && selectedPath.trim().isNotEmpty;
   if (hasSelectedPath) {
     return LogExportResult(filePath: selectedPath.trim(), usedSaveDialog: true);
   }
@@ -75,9 +71,7 @@ Future<LogExportResult> exportLogsAsLogFile(List<LogEntry> logs) async {
 
 Future<String> _buildFallbackPath(String fileName) async {
   final configDirectory = await resolveDefaultConfigDirectory();
-  final exportDirectory = Directory(
-    p.join(configDirectory.path, 'logs', 'exports'),
-  );
+  final exportDirectory = Directory(p.join(configDirectory.path, 'logs', 'exports'));
   return p.join(exportDirectory.path, fileName);
 }
 

@@ -19,8 +19,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
       return null;
     }
 
-    final initialPage =
-        autoQueueStart.globalIndex != null && autoQueueStart.globalIndex! >= 0
+    final initialPage = autoQueueStart.globalIndex != null && autoQueueStart.globalIndex! >= 0
         ? autoQueueStart.globalIndex! ~/ _autoQueuePageSize
         : 0;
 
@@ -28,17 +27,9 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
       case AutoQueueStartType.none:
         return null;
       case AutoQueueStartType.series:
-        return _AutoQueueRequestContext.series(
-          libraryId: libraryId,
-          seriesId: sourceId,
-          initialPage: initialPage,
-        );
+        return _AutoQueueRequestContext.series(libraryId: libraryId, seriesId: sourceId, initialPage: initialPage);
       case AutoQueueStartType.playlist:
-        return _AutoQueueRequestContext.playlist(
-          libraryId: libraryId,
-          playlistId: sourceId,
-          initialPage: initialPage,
-        );
+        return _AutoQueueRequestContext.playlist(libraryId: libraryId, playlistId: sourceId, initialPage: initialPage);
       case AutoQueueStartType.collection:
         return _AutoQueueRequestContext.collection(
           libraryId: libraryId,
@@ -48,15 +39,10 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     }
   }
 
-  Future<_AutoQueueRequestContext?> _buildSeriesFallbackAutoQueueContext(
-    LibraryItem item,
-  ) async {
+  Future<_AutoQueueRequestContext?> _buildSeriesFallbackAutoQueueContext(LibraryItem item) async {
     final seriesId = await _resolvePrimarySeriesId(item);
     final libraryId = await _resolveLibraryId(item);
-    if (seriesId == null ||
-        seriesId.isEmpty ||
-        libraryId == null ||
-        libraryId.isEmpty) {
+    if (seriesId == null || seriesId.isEmpty || libraryId == null || libraryId.isEmpty) {
       logger(
         'Skipping fallback series auto-queue for ${item.id}: unresolved seriesId=$seriesId, libraryId=$libraryId',
         tag: 'AudioHandler',
@@ -112,13 +98,8 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
               final sourceItem = displayItemById[id];
               return _AutoQueueItemCandidate(
                 queueItem: queueItem,
-                referenceKey: _queueItemReferenceKey(
-                  itemId: queueItem.itemId,
-                  episodeId: queueItem.episodeId,
-                ),
-                displayInfo: sourceItem == null
-                    ? QueueDisplayInfo.empty
-                    : _displayInfoFromLibraryItem(sourceItem),
+                referenceKey: _queueItemReferenceKey(itemId: queueItem.itemId, episodeId: queueItem.episodeId),
+                displayInfo: sourceItem == null ? QueueDisplayInfo.empty : _displayInfoFromLibraryItem(sourceItem),
               );
             })
             .toList(growable: false);
@@ -183,9 +164,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     }
 
     final currentMedia = _currentMediaItem;
-    if (currentMedia != null &&
-        currentMedia.itemId == item.id &&
-        currentMedia.libraryId.isNotEmpty) {
+    if (currentMedia != null && currentMedia.itemId == item.id && currentMedia.libraryId.isNotEmpty) {
       return currentMedia.libraryId;
     }
 
@@ -215,10 +194,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     }
   }
 
-  Future<void> _startAutoQueue(
-    _AutoQueueRequestContext context,
-    QueueItem currentQueueItem,
-  ) async {
+  Future<void> _startAutoQueue(_AutoQueueRequestContext context, QueueItem currentQueueItem) async {
     if (_autoQueueDisabledForCurrentSession) {
       logger(
         'Auto queue start skipped because it is disabled for the current playback session.',
@@ -230,8 +206,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
 
     final previousState = _autoQueueState;
     if (previousState != null &&
-        _sourceDescriptorFromContext(previousState.context) !=
-            _sourceDescriptorFromContext(context)) {
+        _sourceDescriptorFromContext(previousState.context) != _sourceDescriptorFromContext(context)) {
       _autoQueueSuppressedReferences.clear();
     }
     final currentItemReferenceKey = _queueItemReferenceKey(
@@ -252,16 +227,9 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     _emitQueueState();
 
     try {
-      var locatedStart = await _locateAutoQueueStart(
-        context,
-        currentItemReferenceKey,
-      );
-      if (locatedStart == null &&
-          context.sourceType == _AutoQueueSourceType.series) {
-        locatedStart = await _locateSeriesAutoQueueStartFromSeriesDetails(
-          context,
-          currentItemReferenceKey,
-        );
+      var locatedStart = await _locateAutoQueueStart(context, currentItemReferenceKey);
+      if (locatedStart == null && context.sourceType == _AutoQueueSourceType.series) {
+        locatedStart = await _locateSeriesAutoQueueStartFromSeriesDetails(context, currentItemReferenceKey);
       }
       if (!_isAutoQueueStillValid(generation, currentItemReferenceKey)) {
         return;
@@ -282,9 +250,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
       final autoState = _AutoQueueState(
         context: context,
         currentItemReferenceKey: currentItemReferenceKey,
-        currentItemAbsoluteIndex:
-            (currentPageResult.page * currentPageResult.pageSize) +
-            currentIndexInPage,
+        currentItemAbsoluteIndex: (currentPageResult.page * currentPageResult.pageSize) + currentIndexInPage,
         totalItems: currentPageResult.total,
         pageSize: currentPageResult.pageSize,
         highestLoadedPage: currentPageResult.page,
@@ -293,13 +259,8 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
       _autoQueueState = autoState;
       _persistQueueIntentSoon();
 
-      final samePageQueueItems = currentPageResult.items
-          .skip(currentIndexInPage + 1)
-          .toList(growable: false);
-      final appendedSamePage = _appendAutoQueueItems(
-        samePageQueueItems,
-        page: currentPageResult.page,
-      );
+      final samePageQueueItems = currentPageResult.items.skip(currentIndexInPage + 1).toList(growable: false);
+      final appendedSamePage = _appendAutoQueueItems(samePageQueueItems, page: currentPageResult.page);
       logger(
         'Auto queue initialized: page=${currentPageResult.page}, indexInPage=$currentIndexInPage, '
         'total=${currentPageResult.total}, appendedSamePage=$appendedSamePage, queueLength=${queueList.length}.',
@@ -307,23 +268,17 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
         level: InfoLevel.debug,
       );
 
-      if (_remainingAutoQueueItems(autoState) > 0 &&
-          samePageQueueItems.length < 5) {
+      if (_remainingAutoQueueItems(autoState) > 0 && samePageQueueItems.length < 5) {
         await _loadMoreAutoQueue();
       } else {
         _emitQueueState();
       }
     } catch (e) {
-      logger(
-        'Failed to start auto queue: $e',
-        tag: 'AudioHandler',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to start auto queue: $e', tag: 'AudioHandler', level: InfoLevel.warning);
     }
   }
 
-  Future<({_AutoQueuePageResult pageResult, int itemIndex})?>
-  _locateAutoQueueStart(
+  Future<({_AutoQueuePageResult pageResult, int itemIndex})?> _locateAutoQueueStart(
     _AutoQueueRequestContext context,
     String currentItemReferenceKey,
   ) async {
@@ -333,13 +288,8 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
       level: InfoLevel.debug,
     );
 
-    final initialResult = await _fetchAutoQueuePage(
-      context,
-      context.initialPage,
-    );
-    final initialIndex = initialResult.items.indexWhere(
-      (item) => item.referenceKey == currentItemReferenceKey,
-    );
+    final initialResult = await _fetchAutoQueuePage(context, context.initialPage);
+    final initialIndex = initialResult.items.indexWhere((item) => item.referenceKey == currentItemReferenceKey);
     if (initialIndex >= 0) {
       logger(
         'Auto-queue start found on initial page ${initialResult.page} at index $initialIndex.',
@@ -359,15 +309,9 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
         continue;
       }
 
-      logger(
-        'Auto-queue start lookup scanning page $page.',
-        tag: 'AudioHandler',
-        level: InfoLevel.debug,
-      );
+      logger('Auto-queue start lookup scanning page $page.', tag: 'AudioHandler', level: InfoLevel.debug);
       final result = await _fetchAutoQueuePage(context, page);
-      final index = result.items.indexWhere(
-        (item) => item.referenceKey == currentItemReferenceKey,
-      );
+      final index = result.items.indexWhere((item) => item.referenceKey == currentItemReferenceKey);
       if (index >= 0) {
         logger(
           'Auto-queue start found on scanned page ${result.page} at index $index.',
@@ -381,8 +325,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     return null;
   }
 
-  Future<({_AutoQueuePageResult pageResult, int itemIndex})?>
-  _locateSeriesAutoQueueStartFromSeriesDetails(
+  Future<({_AutoQueuePageResult pageResult, int itemIndex})?> _locateSeriesAutoQueueStartFromSeriesDetails(
     _AutoQueueRequestContext context,
     String currentItemReferenceKey,
   ) async {
@@ -414,10 +357,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
         }
 
         final queueItem = QueueItem(itemId: book.id);
-        final referenceKey = _queueItemReferenceKey(
-          itemId: queueItem.itemId,
-          episodeId: queueItem.episodeId,
-        );
+        final referenceKey = _queueItemReferenceKey(itemId: queueItem.itemId, episodeId: queueItem.episodeId);
         if (!seen.add(referenceKey)) {
           continue;
         }
@@ -437,10 +377,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
         }
 
         final queueItem = QueueItem(itemId: id);
-        final referenceKey = _queueItemReferenceKey(
-          itemId: queueItem.itemId,
-          episodeId: queueItem.episodeId,
-        );
+        final referenceKey = _queueItemReferenceKey(itemId: queueItem.itemId, episodeId: queueItem.episodeId);
         if (!seen.add(referenceKey)) {
           continue;
         }
@@ -458,9 +395,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
         return null;
       }
 
-      final itemIndex = candidates.indexWhere(
-        (candidate) => candidate.referenceKey == currentItemReferenceKey,
-      );
+      final itemIndex = candidates.indexWhere((candidate) => candidate.referenceKey == currentItemReferenceKey);
       if (itemIndex < 0) {
         return null;
       }
@@ -502,29 +437,17 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
   bool _isAutoQueueStillValid(int generation, String currentItemReferenceKey) {
     final activeReference = _currentMediaItem == null
         ? null
-        : _queueItemReferenceKey(
-            itemId: _currentMediaItem!.itemId,
-            episodeId: _currentMediaItem!.episodeId,
-          );
-    return generation == _autoQueueGeneration &&
-        activeReference == currentItemReferenceKey;
+        : _queueItemReferenceKey(itemId: _currentMediaItem!.itemId, episodeId: _currentMediaItem!.episodeId);
+    return generation == _autoQueueGeneration && activeReference == currentItemReferenceKey;
   }
 
-  int _appendAutoQueueItems(
-    List<_AutoQueueItemCandidate> items, {
-    required int page,
-  }) {
+  int _appendAutoQueueItems(List<_AutoQueueItemCandidate> items, {required int page}) {
     var addedCount = 0;
     for (final item in items) {
       if (_autoQueueSuppressedReferences.contains(item.referenceKey)) {
         continue;
       }
-      final didAdd = _enqueueItem(
-        item.queueItem,
-        displayInfo: item.displayInfo,
-        autoQueued: true,
-        autoQueuePage: page,
-      );
+      final didAdd = _enqueueItem(item.queueItem, displayInfo: item.displayInfo, autoQueued: true, autoQueuePage: page);
       if (didAdd) {
         addedCount += 1;
       }
@@ -552,37 +475,25 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     _emitQueueState();
 
     try {
-      while (_autoQueueState == autoState &&
-          _remainingAutoQueueItems(autoState) > 0) {
+      while (_autoQueueState == autoState && _remainingAutoQueueItems(autoState) > 0) {
         final nextPage = autoState.highestLoadedPage + 1;
-        final pageResult = await _fetchAutoQueuePage(
-          autoState.context,
-          nextPage,
-        );
+        final pageResult = await _fetchAutoQueuePage(autoState.context, nextPage);
         if (_autoQueueState != autoState) {
           return;
         }
 
         autoState.highestLoadedPage = math.max(nextPage, pageResult.page);
         if (pageResult.items.isNotEmpty) {
-          autoState.firstItemReferenceByPage[pageResult.page] =
-              pageResult.items.first.referenceKey;
+          autoState.firstItemReferenceByPage[pageResult.page] = pageResult.items.first.referenceKey;
         }
 
-        final appended = _appendAutoQueueItems(
-          pageResult.items,
-          page: pageResult.page,
-        );
+        final appended = _appendAutoQueueItems(pageResult.items, page: pageResult.page);
         if (appended > 0) {
           break;
         }
       }
     } catch (e) {
-      logger(
-        'Failed to load more auto queue items: $e',
-        tag: 'AudioHandler',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to load more auto queue items: $e', tag: 'AudioHandler', level: InfoLevel.warning);
     } finally {
       if (_autoQueueState == autoState) {
         autoState.isLoading = false;
@@ -597,9 +508,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     }
 
     final autoState = _autoQueueState;
-    if (autoState == null ||
-        autoState.isLoading ||
-        _remainingAutoQueueItems(autoState) <= 0) {
+    if (autoState == null || autoState.isLoading || _remainingAutoQueueItems(autoState) <= 0) {
       return;
     }
     if (queueList.length > 5) {
@@ -608,10 +517,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     unawaited(_loadMoreAutoQueue());
   }
 
-  Future<_AutoQueuePageResult> _fetchAutoQueuePage(
-    _AutoQueueRequestContext context,
-    int page,
-  ) async {
+  Future<_AutoQueuePageResult> _fetchAutoQueuePage(_AutoQueueRequestContext context, int page) async {
     final sourceRepository = _ref.read(queueSourceRepositoryProvider);
     final source = switch (context.sourceType) {
       _AutoQueueSourceType.series => MediaSourceDescriptor(
@@ -638,27 +544,13 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     };
 
     if (source.sourceId.isNotEmpty) {
-      final result = await sourceRepository.page(
-        source,
-        page: page,
-        pageSize: context.pageSize,
-      );
+      final result = await sourceRepository.page(source, page: page, pageSize: context.pageSize);
       final candidates = result.candidates
-          .where(
-            (candidate) =>
-                context.sourceType != _AutoQueueSourceType.podcast ||
-                !candidate.isFinished,
-          )
+          .where((candidate) => context.sourceType != _AutoQueueSourceType.podcast || !candidate.isFinished)
           .map(
             (candidate) => _AutoQueueItemCandidate(
-              queueItem: QueueItem(
-                itemId: candidate.ref.itemId,
-                episodeId: candidate.ref.episodeId,
-              ),
-              referenceKey: _queueItemReferenceKey(
-                itemId: candidate.ref.itemId,
-                episodeId: candidate.ref.episodeId,
-              ),
+              queueItem: QueueItem(itemId: candidate.ref.itemId, episodeId: candidate.ref.episodeId),
+              referenceKey: _queueItemReferenceKey(itemId: candidate.ref.itemId, episodeId: candidate.ref.episodeId),
               displayInfo: QueueDisplayInfo(
                 title: candidate.title,
                 subtitle: candidate.subtitle,
@@ -683,11 +575,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     switch (context.sourceType) {
       case _AutoQueueSourceType.series:
         if (context.cachedCandidates != null) {
-          return _sliceAutoQueuePage(
-            items: context.cachedCandidates!,
-            page: page,
-            pageSize: context.pageSize,
-          );
+          return _sliceAutoQueuePage(items: context.cachedCandidates!, page: page, pageSize: context.pageSize);
         }
 
         final request = LibraryItemsRequest(
@@ -697,10 +585,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
           collapseseries: context.collapseseries,
         );
 
-        final response = await api.getLibraryApi().getLibraryItems(
-          context.libraryId,
-          request,
-        );
+        final response = await api.getLibraryApi().getLibraryItems(context.libraryId, request);
         final data = response.data;
         if (data == null) {
           throw Exception('No page data received for auto queue');
@@ -714,40 +599,23 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
         );
       case _AutoQueueSourceType.playlist:
         context.cachedCandidates ??= await _resolvePlaylistItems(context);
-        return _sliceAutoQueuePage(
-          items: context.cachedCandidates!,
-          page: page,
-          pageSize: context.pageSize,
-        );
+        return _sliceAutoQueuePage(items: context.cachedCandidates!, page: page, pageSize: context.pageSize);
       case _AutoQueueSourceType.collection:
         context.cachedCandidates ??= await _resolveCollectionItems(context);
-        return _sliceAutoQueuePage(
-          items: context.cachedCandidates!,
-          page: page,
-          pageSize: context.pageSize,
-        );
+        return _sliceAutoQueuePage(items: context.cachedCandidates!, page: page, pageSize: context.pageSize);
       case _AutoQueueSourceType.podcast:
         context.cachedCandidates ??= await _resolvePodcastEpisodeItems(context);
-        return _sliceAutoQueuePage(
-          items: context.cachedCandidates!,
-          page: page,
-          pageSize: context.pageSize,
-        );
+        return _sliceAutoQueuePage(items: context.cachedCandidates!, page: page, pageSize: context.pageSize);
     }
   }
 
-  List<_AutoQueueItemCandidate> _queueCandidatesFromLibraryItems(
-    List<LibraryItem> items,
-  ) {
+  List<_AutoQueueItemCandidate> _queueCandidatesFromLibraryItems(List<LibraryItem> items) {
     final seen = <String>{};
     final candidates = <_AutoQueueItemCandidate>[];
 
     for (final item in items) {
       final queueItem = QueueItem(itemId: item.id);
-      final referenceKey = _queueItemReferenceKey(
-        itemId: queueItem.itemId,
-        episodeId: queueItem.episodeId,
-      );
+      final referenceKey = _queueItemReferenceKey(itemId: queueItem.itemId, episodeId: queueItem.episodeId);
       if (!seen.add(referenceKey)) {
         continue;
       }
@@ -780,9 +648,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
       );
     }
 
-    final end = (start + safePageSize) > items.length
-        ? items.length
-        : (start + safePageSize);
+    final end = (start + safePageSize) > items.length ? items.length : (start + safePageSize);
     return _AutoQueuePageResult(
       items: items.sublist(start, end),
       total: items.length,
@@ -791,9 +657,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     );
   }
 
-  Future<List<_AutoQueueItemCandidate>> _resolvePlaylistItems(
-    _AutoQueueRequestContext context,
-  ) async {
+  Future<List<_AutoQueueItemCandidate>> _resolvePlaylistItems(_AutoQueueRequestContext context) async {
     final api = _ref.read(absApiProvider);
     if (api == null) {
       throw Exception('No API available for playlist auto queue');
@@ -819,20 +683,13 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
         if (libraryItem == null || libraryItem.id.isEmpty) {
           continue;
         }
-        if (libraryItem.libraryId != null &&
-            libraryItem.libraryId != context.libraryId) {
+        if (libraryItem.libraryId != null && libraryItem.libraryId != context.libraryId) {
           continue;
         }
 
         final episode = playlistItem.episode;
-        final queueItem = QueueItem(
-          itemId: libraryItem.id,
-          episodeId: playlistItem.episodeId ?? episode?.id,
-        );
-        final referenceKey = _queueItemReferenceKey(
-          itemId: queueItem.itemId,
-          episodeId: queueItem.episodeId,
-        );
+        final queueItem = QueueItem(itemId: libraryItem.id, episodeId: playlistItem.episodeId ?? episode?.id);
+        final referenceKey = _queueItemReferenceKey(itemId: queueItem.itemId, episodeId: queueItem.episodeId);
         if (!seen.add(referenceKey)) {
           continue;
         }
@@ -841,13 +698,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
             ? _displayInfoFromLibraryItem(libraryItem)
             : _displayInfoFromPodcastEpisode(libraryItem, episode);
 
-        items.add(
-          _AutoQueueItemCandidate(
-            queueItem: queueItem,
-            referenceKey: referenceKey,
-            displayInfo: displayInfo,
-          ),
-        );
+        items.add(_AutoQueueItemCandidate(queueItem: queueItem, referenceKey: referenceKey, displayInfo: displayInfo));
       }
 
       return items;
@@ -856,9 +707,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     return const <_AutoQueueItemCandidate>[];
   }
 
-  Future<List<_AutoQueueItemCandidate>> _resolveCollectionItems(
-    _AutoQueueRequestContext context,
-  ) async {
+  Future<List<_AutoQueueItemCandidate>> _resolveCollectionItems(_AutoQueueRequestContext context) async {
     final api = _ref.read(absApiProvider);
     if (api == null) {
       throw Exception('No API available for collection auto queue');
@@ -888,10 +737,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
         }
 
         final queueItem = QueueItem(itemId: item.id);
-        final referenceKey = _queueItemReferenceKey(
-          itemId: queueItem.itemId,
-          episodeId: queueItem.episodeId,
-        );
+        final referenceKey = _queueItemReferenceKey(itemId: queueItem.itemId, episodeId: queueItem.episodeId);
         if (seen.add(referenceKey)) {
           items.add(
             _AutoQueueItemCandidate(
@@ -909,9 +755,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     return const <_AutoQueueItemCandidate>[];
   }
 
-  Future<List<_AutoQueueItemCandidate>> _resolvePodcastEpisodeItems(
-    _AutoQueueRequestContext context,
-  ) async {
+  Future<List<_AutoQueueItemCandidate>> _resolvePodcastEpisodeItems(_AutoQueueRequestContext context) async {
     final podcastItemId = context.podcastItemId;
     if (podcastItemId == null || podcastItemId.isEmpty) {
       throw Exception('Missing podcast item id for auto queue');
@@ -924,9 +768,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     }
 
     final episodes =
-        (context.seededPodcastEpisodes ??
-                baseItem.media?.podcastMedia?.episodes ??
-                const <Episode>[])
+        (context.seededPodcastEpisodes ?? baseItem.media?.podcastMedia?.episodes ?? const <Episode>[])
             .where((episode) => episode.audioFile != null)
             .toList(growable: true)
           ..sort(_podcastEpisodeOldestFirstComparator);
@@ -943,10 +785,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
       }
 
       final queueItem = QueueItem(itemId: baseItem.id, episodeId: episode.id);
-      final referenceKey = _queueItemReferenceKey(
-        itemId: queueItem.itemId,
-        episodeId: queueItem.episodeId,
-      );
+      final referenceKey = _queueItemReferenceKey(itemId: queueItem.itemId, episodeId: queueItem.episodeId);
       if (!seen.add(referenceKey)) {
         continue;
       }
@@ -963,36 +802,19 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     return items;
   }
 
-  Future<_AutoQueueRequestContext?> _buildRestoredQueueContext(
-    LibraryItem item,
-    MediaSourceDescriptor source,
-  ) async {
-    final libraryId = source.libraryId.isNotEmpty
-        ? source.libraryId
-        : await _resolveLibraryId(item);
+  Future<_AutoQueueRequestContext?> _buildRestoredQueueContext(LibraryItem item, MediaSourceDescriptor source) async {
+    final libraryId = source.libraryId.isNotEmpty ? source.libraryId : await _resolveLibraryId(item);
     if (libraryId == null || libraryId.isEmpty || source.sourceId.isEmpty) {
       return null;
     }
 
     switch (source.type) {
       case MediaSourceType.series:
-        return _AutoQueueRequestContext.series(
-          libraryId: libraryId,
-          seriesId: source.sourceId,
-          initialPage: 0,
-        );
+        return _AutoQueueRequestContext.series(libraryId: libraryId, seriesId: source.sourceId, initialPage: 0);
       case MediaSourceType.playlist:
-        return _AutoQueueRequestContext.playlist(
-          libraryId: libraryId,
-          playlistId: source.sourceId,
-          initialPage: 0,
-        );
+        return _AutoQueueRequestContext.playlist(libraryId: libraryId, playlistId: source.sourceId, initialPage: 0);
       case MediaSourceType.collection:
-        return _AutoQueueRequestContext.collection(
-          libraryId: libraryId,
-          collectionId: source.sourceId,
-          initialPage: 0,
-        );
+        return _AutoQueueRequestContext.collection(libraryId: libraryId, collectionId: source.sourceId, initialPage: 0);
       case MediaSourceType.podcast:
         final episodes = await _androidAutoOrderedPlayablePodcastEpisodes(item);
         return _AutoQueueRequestContext.podcast(
@@ -1005,16 +827,10 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
     }
   }
 
-  Future<bool> _restoreGeneratedQueueAroundCurrentItem(
-    LibraryItem item, {
-    required String? episodeId,
-  }) async {
+  Future<bool> _restoreGeneratedQueueAroundCurrentItem(LibraryItem item, {required String? episodeId}) async {
     final source = _restoredQueueSource;
     final anchor = _restoredQueueAnchor;
-    if (source == null ||
-        anchor == null ||
-        anchor.itemId != item.id ||
-        anchor.episodeId != episodeId) {
+    if (source == null || anchor == null || anchor.itemId != item.id || anchor.episodeId != episodeId) {
       return false;
     }
 
@@ -1025,19 +841,11 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
       return false;
     }
 
-    unawaited(
-      _startAutoQueue(
-        context,
-        QueueItem(itemId: item.id, episodeId: episodeId),
-      ),
-    );
+    unawaited(_startAutoQueue(context, QueueItem(itemId: item.id, episodeId: episodeId)));
     return true;
   }
 
-  Future<void> _setupAutoQueueOnResume({
-    required String itemId,
-    required String? episodeId,
-  }) async {
+  Future<void> _setupAutoQueueOnResume({required String itemId, required String? episodeId}) async {
     if (!_isAutoQueueEnabled) {
       return;
     }
@@ -1047,26 +855,18 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
       return;
     }
 
-    if (await _restoreGeneratedQueueAroundCurrentItem(
-      libraryItem,
-      episodeId: episodeId,
-    )) {
+    if (await _restoreGeneratedQueueAroundCurrentItem(libraryItem, episodeId: episodeId)) {
       return;
     }
 
     if (episodeId == null) {
-      final libraryId =
-          libraryItem.libraryId ?? await _resolveLibraryId(libraryItem);
+      final libraryId = libraryItem.libraryId ?? await _resolveLibraryId(libraryItem);
       final activeUserId = _ref.read(currentUserProvider).value?.id;
       final isMusic =
           libraryId != null &&
           _ref
               .read(settingsManagerProvider.notifier)
-              .getUserSetting<bool>(
-                activeUserId,
-                'music_library_$libraryId',
-                defaultValue: false,
-              );
+              .getUserSetting<bool>(activeUserId, 'music_library_$libraryId', defaultValue: false);
 
       if (isMusic) {
         _clearAutoQueueState();
@@ -1087,16 +887,12 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
         return;
       }
 
-      final fallbackContext = await _buildSeriesFallbackAutoQueueContext(
-        libraryItem,
-      );
+      final fallbackContext = await _buildSeriesFallbackAutoQueueContext(libraryItem);
       if (fallbackContext != null) {
         unawaited(_startAutoQueue(fallbackContext, QueueItem(itemId: itemId)));
       }
     } else {
-      final episodes = await _androidAutoOrderedPlayablePodcastEpisodes(
-        libraryItem,
-      );
+      final episodes = await _androidAutoOrderedPlayablePodcastEpisodes(libraryItem);
       final episodeIndex = episodes.indexWhere((ep) => ep.id == episodeId);
       final libraryId = libraryItem.libraryId;
       if (libraryId != null && episodeIndex >= 0) {
@@ -1107,12 +903,7 @@ extension _BGAudioHandlerAutoQueueExtension on BGAudioHandler {
           episodeId: episodeId,
           seededPodcastEpisodes: episodes,
         );
-        unawaited(
-          _startAutoQueue(
-            autoQueueContext,
-            QueueItem(itemId: itemId, episodeId: episodeId),
-          ),
-        );
+        unawaited(_startAutoQueue(autoQueueContext, QueueItem(itemId: itemId, episodeId: episodeId)));
       }
     }
   }

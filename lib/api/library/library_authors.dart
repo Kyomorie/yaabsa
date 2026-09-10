@@ -7,9 +7,7 @@ part 'library_authors.g.dart';
 @freezed
 abstract class LibraryAuthors with _$LibraryAuthors {
   const factory LibraryAuthors({
-    @JsonKey(name: 'results')
-    @Default(<LibraryAuthor>[])
-    List<LibraryAuthor> results,
+    @JsonKey(name: 'results') @Default(<LibraryAuthor>[]) List<LibraryAuthor> results,
     @JsonKey(name: 'total') @Default(0) int total,
     @JsonKey(name: 'limit') int? limit,
     @JsonKey(name: 'page') int? page,
@@ -20,6 +18,5 @@ abstract class LibraryAuthors with _$LibraryAuthors {
     @JsonKey(name: 'include') String? include,
   }) = _LibraryAuthors;
 
-  factory LibraryAuthors.fromJson(Map<String, dynamic> json) =>
-      _$LibraryAuthorsFromJson(json);
+  factory LibraryAuthors.fromJson(Map<String, dynamic> json) => _$LibraryAuthorsFromJson(json);
 }

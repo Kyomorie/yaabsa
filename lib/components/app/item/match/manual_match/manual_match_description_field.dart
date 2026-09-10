@@ -18,12 +18,10 @@ class ManualMatchDescriptionField extends StatefulWidget {
   final ValueChanged<String> onChanged;
 
   @override
-  State<ManualMatchDescriptionField> createState() =>
-      _ManualMatchDescriptionFieldState();
+  State<ManualMatchDescriptionField> createState() => _ManualMatchDescriptionFieldState();
 }
 
-class _ManualMatchDescriptionFieldState
-    extends State<ManualMatchDescriptionField> {
+class _ManualMatchDescriptionFieldState extends State<ManualMatchDescriptionField> {
   late QuillController _quillController;
   String _lastSerializedHtml = '';
   bool _syncingFromExternalText = false;
@@ -113,8 +111,7 @@ class _ManualMatchDescriptionFieldState
     _lastSerializedHtml = htmlText;
     _syncingFromQuill = true;
 
-    if (widget.textController != null &&
-        widget.textController!.text != htmlText) {
+    if (widget.textController != null && widget.textController!.text != htmlText) {
       widget.textController!.text = htmlText;
     }
 

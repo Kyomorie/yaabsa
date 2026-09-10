@@ -5,11 +5,7 @@ import 'package:yaabsa/models/listening_activity_stats.dart';
 import 'package:yaabsa/screens/main/stats/stats_formatters.dart';
 
 class StatsActivityTotalsCard extends StatelessWidget {
-  const StatsActivityTotalsCard({
-    super.key,
-    required this.activityAsync,
-    required this.onRefresh,
-  });
+  const StatsActivityTotalsCard({super.key, required this.activityAsync, required this.onRefresh});
 
   final AsyncValue<ListeningActivityStats> activityAsync;
   final VoidCallback onRefresh;

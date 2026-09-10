@@ -1,6 +1,5 @@
 extension DurationExtensions on Duration {
-  double get inSecondsPrecise =>
-      inMicroseconds / Duration.microsecondsPerSecond;
+  double get inSecondsPrecise => inMicroseconds / Duration.microsecondsPerSecond;
 
   String _twoDigits(int value) => value.toString().padLeft(2, '0');
 
@@ -62,6 +61,5 @@ extension DurationExtensions on Duration {
 }
 
 extension DoubleExtensions on double {
-  Duration get toDuration =>
-      Duration(microseconds: (this * Duration.microsecondsPerSecond).toInt());
+  Duration get toDuration => Duration(microseconds: (this * Duration.microsecondsPerSecond).toInt());
 }

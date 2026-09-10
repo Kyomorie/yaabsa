@@ -12,18 +12,15 @@ part of 'latest_episodes_provider.dart';
 @ProviderFor(LatestEpisodes)
 final latestEpisodesProvider = LatestEpisodesFamily._();
 
-final class LatestEpisodesProvider
-    extends $AsyncNotifierProvider<LatestEpisodes, LatestEpisodesState> {
-  LatestEpisodesProvider._({
-    required LatestEpisodesFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'latestEpisodesProvider',
-         isAutoDispose: true,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+final class LatestEpisodesProvider extends $AsyncNotifierProvider<LatestEpisodes, LatestEpisodesState> {
+  LatestEpisodesProvider._({required LatestEpisodesFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'latestEpisodesProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$latestEpisodesHash();
@@ -70,8 +67,7 @@ final class LatestEpisodesFamily extends $Family
         isAutoDispose: true,
       );
 
-  LatestEpisodesProvider call(String libraryId) =>
-      LatestEpisodesProvider._(argument: libraryId, from: this);
+  LatestEpisodesProvider call(String libraryId) => LatestEpisodesProvider._(argument: libraryId, from: this);
 
   @override
   String toString() => r'latestEpisodesProvider';
@@ -85,8 +81,7 @@ abstract class _$LatestEpisodes extends $AsyncNotifier<LatestEpisodesState> {
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref =
-        this.ref as $Ref<AsyncValue<LatestEpisodesState>, LatestEpisodesState>;
+    final ref = this.ref as $Ref<AsyncValue<LatestEpisodesState>, LatestEpisodesState>;
     final element =
         ref.element
             as $ClassProviderElement<

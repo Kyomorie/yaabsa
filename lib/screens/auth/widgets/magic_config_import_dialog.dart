@@ -1,21 +1,16 @@
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 Future<String?> showMagicConfigImportDialog(BuildContext context) {
-  return showDialog<String>(
-    context: context,
-    builder: (context) => const _MagicConfigImportDialog(),
-  );
+  return showDialog<String>(context: context, builder: (context) => const _MagicConfigImportDialog());
 }
 
 class _MagicConfigImportDialog extends StatefulWidget {
   const _MagicConfigImportDialog();
 
   @override
-  State<_MagicConfigImportDialog> createState() =>
-      _MagicConfigImportDialogState();
+  State<_MagicConfigImportDialog> createState() => _MagicConfigImportDialogState();
 }
 
 class _MagicConfigImportDialogState extends State<_MagicConfigImportDialog> {
@@ -74,10 +69,7 @@ class _MagicConfigImportDialogState extends State<_MagicConfigImportDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
         FilledButton(
           onPressed: () {
             final value = _controller.text.trim();
@@ -134,11 +126,7 @@ class _MagicQrScannerDialogState extends State<_MagicQrScannerDialog> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
-                          Icons.no_photography_outlined,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
+                        Icon(Icons.no_photography_outlined, size: 48, color: Theme.of(context).colorScheme.error),
                         const SizedBox(height: 12),
                         Text(
                           'Camera access is unavailable. Allow camera access in the device settings, or paste the raw code instead.',
@@ -146,10 +134,7 @@ class _MagicQrScannerDialogState extends State<_MagicQrScannerDialog> {
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         const SizedBox(height: 16),
-                        FilledButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Close scanner'),
-                        ),
+                        FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Close scanner')),
                       ],
                     ),
                   ),
@@ -170,8 +155,7 @@ class _MagicQrScannerDialogState extends State<_MagicQrScannerDialog> {
                     const SizedBox(width: 12),
                     Text(
                       'Scan Authentication Code',
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(color: Colors.white),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
                     ),
                   ],
                 ),
@@ -219,12 +203,10 @@ class _MagicPasswordChangeDialog extends StatefulWidget {
   const _MagicPasswordChangeDialog();
 
   @override
-  State<_MagicPasswordChangeDialog> createState() =>
-      _MagicPasswordChangeDialogState();
+  State<_MagicPasswordChangeDialog> createState() => _MagicPasswordChangeDialogState();
 }
 
-class _MagicPasswordChangeDialogState
-    extends State<_MagicPasswordChangeDialog> {
+class _MagicPasswordChangeDialogState extends State<_MagicPasswordChangeDialog> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmationController = TextEditingController();
   String? _error;
@@ -257,43 +239,29 @@ class _MagicPasswordChangeDialogState
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'For your security, the initial password from this Authentication Code can only be used once.',
-          ),
+          const Text('For your security, the initial password from this Authentication Code can only be used once.'),
           const SizedBox(height: 14),
           TextField(
             controller: _newPasswordController,
             obscureText: true,
             autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'New password',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'New password', border: OutlineInputBorder()),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _confirmationController,
             obscureText: true,
             onSubmitted: (_) => _submit(),
-            decoration: const InputDecoration(
-              labelText: 'Confirm new password',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Confirm new password', border: OutlineInputBorder()),
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),
-            Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
+            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ],
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
         FilledButton(onPressed: _submit, child: const Text('Change password')),
       ],
     );

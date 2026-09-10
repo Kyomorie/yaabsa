@@ -3,9 +3,7 @@ part of 'reader.dart';
 extension _ReaderCoreHelpers on _ReaderState {
   Future<void> _refreshStoredProgress() async {
     final requestToken = ++_progressRefreshToken;
-    final progress = await ref
-        .read(mediaProgressProvider.notifier)
-        .fetchOrRefreshIndividualProgress(widget.itemId);
+    final progress = await ref.read(mediaProgressProvider.notifier).fetchOrRefreshIndividualProgress(widget.itemId);
     if (!mounted || requestToken != _progressRefreshToken) {
       return;
     }
@@ -74,19 +72,13 @@ extension _ReaderCoreHelpers on _ReaderState {
 
   String _colorToHex(Color color, {bool allowNone = false}) {
     if (allowNone && color == Colors.transparent) return 'none';
-    final argb = color
-        .toARGB32()
-        .toRadixString(16)
-        .padLeft(8, '0')
-        .toUpperCase();
+    final argb = color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase();
     return '#${argb.substring(2)}';
   }
 
   void _showSnackBar(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: _kSnackBarDuration),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), duration: _kSnackBarDuration));
   }
 
   bool _isPdfAnnotation(InternalAnnotation annotation) {
@@ -135,9 +127,7 @@ extension _ReaderCoreHelpers on _ReaderState {
       throw Exception('API not available');
     }
 
-    if (!serverSupportsMediaProgressAndBookmarkRoutes(
-      ref.read(serverVersionProvider),
-    )) {
+    if (!serverSupportsMediaProgressAndBookmarkRoutes(ref.read(serverVersionProvider))) {
       final userResponse = await api.getMeApi().getUser();
       return userResponse.data?.bookmarks
               ?.where((bookmark) => bookmark.libraryItemId == widget.itemId)
@@ -145,9 +135,7 @@ extension _ReaderCoreHelpers on _ReaderState {
           const <Bookmark>[];
     }
 
-    final bookmarksResponse = await api.getMeApi().getBookmarksForLibraryItem(
-      widget.itemId,
-    );
+    final bookmarksResponse = await api.getMeApi().getBookmarksForLibraryItem(widget.itemId);
     return bookmarksResponse.data?.bookmarks ?? const <Bookmark>[];
   }
 
@@ -173,20 +161,14 @@ extension _ReaderCoreHelpers on _ReaderState {
 
     _autoAnnotationLoadStarted = true;
     unawaited(() async {
-      final loaded = await _loadAnnotationsFromApi(
-        isEpubMode: isEpubMode,
-        showFeedback: false,
-      );
+      final loaded = await _loadAnnotationsFromApi(isEpubMode: isEpubMode, showFeedback: false);
       if (!loaded && mounted && isEpubMode) {
         _autoAnnotationLoadStarted = false;
       }
     }());
   }
 
-  Future<void> _syncEpubProgress({
-    required String location,
-    required double progress,
-  }) async {
+  Future<void> _syncEpubProgress({required String location, required double progress}) async {
     if (!mounted) return;
     if (location.trim().isEmpty) {
       return;
@@ -194,11 +176,7 @@ extension _ReaderCoreHelpers on _ReaderState {
 
     ref
         .read(mediaProgressProvider.notifier)
-        .applyLocalEbookProgressUpdate(
-          libraryItemId: widget.itemId,
-          ebookLocation: location,
-          ebookProgress: progress,
-        );
+        .applyLocalEbookProgressUpdate(libraryItemId: widget.itemId, ebookLocation: location, ebookProgress: progress);
 
     _throttleProgressSync(location: location, progress: progress);
   }
@@ -214,9 +192,7 @@ extension _ReaderCoreHelpers on _ReaderState {
     }
 
     final pageCount = _pdfController.pageCount;
-    final progress = pageCount <= 0
-        ? 0.0
-        : (pageNumber / pageCount).clamp(0.0, 1.0).toDouble();
+    final progress = pageCount <= 0 ? 0.0 : (pageNumber / pageCount).clamp(0.0, 1.0).toDouble();
     _lastSyncedPdfPageNumber = pageNumber;
 
     _readerSetState(() {
@@ -248,9 +224,7 @@ extension _ReaderCoreHelpers on _ReaderState {
     });
 
     _triggerAutoAnnotationLoadIfNeeded(isEpubMode: true);
-    unawaited(
-      _syncEpubProgress(location: currentLocation, progress: location.fraction),
-    );
+    unawaited(_syncEpubProgress(location: currentLocation, progress: location.fraction));
 
     if (_waitingForTtsPageLoad) {
       _waitingForTtsPageLoad = false;

@@ -105,24 +105,16 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
   @override
   void initState() {
     super.initState();
-    _usernameController = TextEditingController(
-      text: widget.initialValue.username,
-    );
-    _emailController = TextEditingController(
-      text: widget.initialValue.email ?? '',
-    );
+    _usernameController = TextEditingController(text: widget.initialValue.username);
+    _emailController = TextEditingController(text: widget.initialValue.email ?? '');
     _passwordController = TextEditingController();
 
     _type = widget.initialValue.type.trim().toLowerCase();
     _isActive = _type == 'root' ? true : widget.initialValue.isActive;
     _hasLinkedOpenId = widget.initialValue.hasLinkedOpenId;
     _permissions = widget.initialValue.permissions;
-    _selectedLibraries = widget.initialValue.librariesAccessible
-        .map((entry) => entry.trim())
-        .toSet();
-    _selectedTags = widget.initialValue.itemTagsSelected
-        .map((entry) => entry.trim())
-        .toSet();
+    _selectedLibraries = widget.initialValue.librariesAccessible.map((entry) => entry.trim()).toSet();
+    _selectedTags = widget.initialValue.itemTagsSelected.map((entry) => entry.trim()).toSet();
   }
 
   @override
@@ -135,47 +127,23 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
 
   List<AdminUserSelectableOption> _libraryOptions() {
     final libraries = List<Library>.from(widget.availableLibraries)
-      ..sort(
-        (left, right) =>
-            left.name.toLowerCase().compareTo(right.name.toLowerCase()),
-      );
+      ..sort((left, right) => left.name.toLowerCase().compareTo(right.name.toLowerCase()));
 
     return libraries
-        .map(
-          (library) => AdminUserSelectableOption(
-            id: library.id,
-            label: library.name,
-            subtitle: library.mediaType,
-          ),
-        )
+        .map((library) => AdminUserSelectableOption(id: library.id, label: library.name, subtitle: library.mediaType))
         .toList(growable: false);
   }
 
   List<AdminUserSelectableOption> _tagOptions() {
-    final tags =
-        widget.availableTags
-            .map((entry) => entry.trim())
-            .where((entry) => entry.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort(
-            (left, right) => left.toLowerCase().compareTo(right.toLowerCase()),
-          );
+    final tags = widget.availableTags.map((entry) => entry.trim()).where((entry) => entry.isNotEmpty).toSet().toList()
+      ..sort((left, right) => left.toLowerCase().compareTo(right.toLowerCase()));
 
-    return tags
-        .map((tag) => AdminUserSelectableOption(id: tag, label: tag))
-        .toList(growable: false);
+    return tags.map((tag) => AdminUserSelectableOption(id: tag, label: tag)).toList(growable: false);
   }
 
   List<String> _normalizedSelection(Set<String> selection) {
-    final values = selection
-        .map((entry) => entry.trim())
-        .where((entry) => entry.isNotEmpty)
-        .toSet()
-        .toList();
-    values.sort(
-      (left, right) => left.toLowerCase().compareTo(right.toLowerCase()),
-    );
+    final values = selection.map((entry) => entry.trim()).where((entry) => entry.isNotEmpty).toSet().toList();
+    values.sort((left, right) => left.toLowerCase().compareTo(right.toLowerCase()));
     return values;
   }
 
@@ -234,10 +202,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
     });
   }
 
-  void _updatePermissions(
-    AdminUserPermissions nextValue, {
-    bool touched = true,
-  }) {
+  void _updatePermissions(AdminUserPermissions nextValue, {bool touched = true}) {
     setState(() {
       _permissions = nextValue;
       if (touched) {
@@ -296,13 +261,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
 
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger != null) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            success ? 'OpenID link removed.' : 'Could not unlink OpenID.',
-          ),
-        ),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(success ? 'OpenID link removed.' : 'Could not unlink OpenID.')));
     }
   }
 
@@ -347,10 +306,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
       email: email.isEmpty ? null : email,
       type: _type,
       isActive: resolvedIsActive,
-      permissions: _permissions.copyWith(
-        librariesAccessible: libraries,
-        itemTagsSelected: tags,
-      ),
+      permissions: _permissions.copyWith(librariesAccessible: libraries, itemTagsSelected: tags),
       librariesAccessible: libraries,
       itemTagsSelected: tags,
     );
@@ -364,8 +320,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
 
   Widget _buildAccountAndPermissionsSection(BuildContext context) {
     final accountTypeOptions = <String>{'admin', 'user', 'guest'};
-    if (_type == 'root' ||
-        widget.initialValue.type.trim().toLowerCase() == 'root') {
+    if (_type == 'root' || widget.initialValue.type.trim().toLowerCase() == 'root') {
       accountTypeOptions.add('root');
     }
 
@@ -379,11 +334,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Account',
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
+                Text('Account', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 10),
                 TextField(
                   controller: _usernameController,
@@ -415,31 +366,23 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   decoration: InputDecoration(
                     labelText: 'Account type',
                     border: const OutlineInputBorder(),
-                    helperText: _canEditType
-                        ? null
-                        : 'Root account type cannot be changed.',
+                    helperText: _canEditType ? null : 'Root account type cannot be changed.',
                   ),
                   options: accountTypeOptions
                       .toList()
                       .map(
-                        (type) => YaabsaDropdownOption<String>(
-                          value: type,
-                          label: type == 'root' ? 'root (reserved)' : type,
-                        ),
+                        (type) =>
+                            YaabsaDropdownOption<String>(value: type, label: type == 'root' ? 'root (reserved)' : type),
                       )
                       .toList(growable: false),
-                  onChanged: (_isSubmitting || !_canEditType)
-                      ? null
-                      : _onTypeChanged,
+                  onChanged: (_isSubmitting || !_canEditType) ? null : _onTypeChanged,
                 ),
                 const SizedBox(height: 8),
                 SwitchListTile.adaptive(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('User is active'),
                   subtitle: Text(
-                    _isRootType
-                        ? 'Root account is always active.'
-                        : 'Disabled users cannot log in or access content.',
+                    _isRootType ? 'Root account is always active.' : 'Disabled users cannot log in or access content.',
                   ),
                   value: _isRootType ? true : _isActive,
                   onChanged: (_isSubmitting || _isRootType)
@@ -458,9 +401,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: _isCreateMode ? 'Password' : 'New password',
-                    helperText: _isCreateMode
-                        ? null
-                        : 'Leave empty to keep current password.',
+                    helperText: _isCreateMode ? null : 'Leave empty to keep current password.',
                     border: const OutlineInputBorder(),
                     errorText: _passwordError,
                   ),
@@ -489,8 +430,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
           children: [
             Text(
               'Library and Tag Access',
-              style: Theme.of(context).textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 4),
             SwitchListTile.adaptive(
@@ -501,10 +441,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
               onChanged: _isSubmitting
                   ? null
                   : (value) {
-                      _updatePermissions(
-                        _permissions.copyWith(accessAllLibraries: value),
-                        touched: true,
-                      );
+                      _updatePermissions(_permissions.copyWith(accessAllLibraries: value), touched: true);
                       if (value) {
                         setState(() {
                           _selectedLibraries.clear();
@@ -534,10 +471,7 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
               onChanged: _isSubmitting
                   ? null
                   : (value) {
-                      _updatePermissions(
-                        _permissions.copyWith(accessAllTags: value),
-                        touched: true,
-                      );
+                      _updatePermissions(_permissions.copyWith(accessAllTags: value), touched: true);
                       if (value) {
                         setState(() {
                           _selectedTags.clear();
@@ -550,19 +484,12 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Invert selected tags'),
-                subtitle: const Text(
-                  'When enabled, selected tags are blocked instead of allowed.',
-                ),
+                subtitle: const Text('When enabled, selected tags are blocked instead of allowed.'),
                 value: _permissions.selectedTagsNotAccessible,
                 onChanged: _isSubmitting
                     ? null
                     : (value) {
-                        _updatePermissions(
-                          _permissions.copyWith(
-                            selectedTagsNotAccessible: value,
-                          ),
-                          touched: true,
-                        );
+                        _updatePermissions(_permissions.copyWith(selectedTagsNotAccessible: value), touched: true);
                       },
               ),
             if (!_permissions.accessAllTags)
@@ -608,15 +535,12 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                   Expanded(
                     child: Text(
                       _isCreateMode ? 'Add User' : 'Edit User',
-                      style: Theme.of(context).textTheme.titleLarge
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                   IconButton(
                     tooltip: 'Close',
-                    onPressed: (_isSubmitting || _isUnlinking)
-                        ? null
-                        : () => Navigator.of(context).pop(),
+                    onPressed: (_isSubmitting || _isUnlinking) ? null : () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close_rounded),
                   ),
                 ],
@@ -639,35 +563,21 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                     ] else
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          final panelWidth = ((constraints.maxWidth - 16) / 2)
-                              .clamp(360.0, 520.0);
+                          final panelWidth = ((constraints.maxWidth - 16) / 2).clamp(360.0, 520.0);
 
                           return Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              SizedBox(
-                                width: panelWidth,
-                                child: _buildAccountAndPermissionsSection(
-                                  context,
-                                ),
-                              ),
+                              SizedBox(width: panelWidth, child: _buildAccountAndPermissionsSection(context)),
                               const SizedBox(width: 16),
-                              SizedBox(
-                                width: panelWidth,
-                                child: _buildAccessSection(context),
-                              ),
+                              SizedBox(width: panelWidth, child: _buildAccessSection(context)),
                             ],
                           );
                         },
                       ),
                     if (_validationError?.isNotEmpty == true) ...[
                       const SizedBox(height: 10),
-                      Text(
-                        _validationError ?? '',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
+                      Text(_validationError ?? '', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ],
                   ],
                 ),
@@ -679,37 +589,24 @@ class _AdminUserFormDialogState extends State<_AdminUserFormDialog> {
                 children: [
                   if (!_isCreateMode && _hasLinkedOpenId)
                     OutlinedButton.icon(
-                      onPressed:
-                          (_isSubmitting ||
-                              _isUnlinking ||
-                              widget.onUnlinkOpenId == null)
+                      onPressed: (_isSubmitting || _isUnlinking || widget.onUnlinkOpenId == null)
                           ? null
                           : _unlinkOpenId,
                       icon: _isUnlinking
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
+                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.link_off_rounded),
                       label: const Text('Unlink OpenID'),
                     ),
                   const Spacer(),
                   TextButton(
-                    onPressed: (_isSubmitting || _isUnlinking)
-                        ? null
-                        : () => Navigator.of(context).pop(),
+                    onPressed: (_isSubmitting || _isUnlinking) ? null : () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
                     onPressed: (_isSubmitting || _isUnlinking) ? null : _submit,
                     icon: _isSubmitting
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.save_outlined),
                     label: Text(_isCreateMode ? 'Create user' : 'Save changes'),
                   ),

@@ -40,21 +40,14 @@ Future<bool> playRandomLibraryItemOrEpisode(
   AutoQueueStartType sourceType = AutoQueueStartType.none,
   String? sourceId,
 }) async {
-  final playableItems = items
-      .where(_hasRandomPlaybackTarget)
-      .toList(growable: false);
+  final playableItems = items.where(_hasRandomPlaybackTarget).toList(growable: false);
 
   if (playableItems.isEmpty) {
     return false;
   }
 
   final item = playableItems[Random().nextInt(playableItems.length)];
-  return _playItemOrEpisode(
-    item,
-    sourceType: sourceType,
-    sourceId: sourceId,
-    sourceIndex: items.indexOf(item),
-  );
+  return _playItemOrEpisode(item, sourceType: sourceType, sourceId: sourceId, sourceIndex: items.indexOf(item));
 }
 
 Future<bool> playRandomPlaylistItemOrEpisode(
@@ -115,9 +108,7 @@ Future<bool> _playItemOrEpisode(
   required int sourceIndex,
   Random? random,
 }) async {
-  final podcastEpisodes = isPodcastLibraryItem(item)
-      ? playablePodcastEpisodes(item)
-      : const <Episode>[];
+  final podcastEpisodes = isPodcastLibraryItem(item) ? playablePodcastEpisodes(item) : const <Episode>[];
 
   if (podcastEpisodes.isNotEmpty) {
     final episodeIndex = (random ?? Random()).nextInt(podcastEpisodes.length);
@@ -132,11 +123,7 @@ Future<bool> _playItemOrEpisode(
 
   final autoQueueStart = sourceType == AutoQueueStartType.none
       ? const AutoQueueStart.none()
-      : AutoQueueStart(
-          type: sourceType,
-          sourceId: sourceId,
-          globalIndex: sourceIndex,
-        );
+      : AutoQueueStart(type: sourceType, sourceId: sourceId, globalIndex: sourceIndex);
   await audioHandler.playLibraryItem(item, autoQueueStart: autoQueueStart);
   return true;
 }

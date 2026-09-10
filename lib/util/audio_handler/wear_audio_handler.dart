@@ -26,9 +26,7 @@ class WearAudioHandler extends BaseAudioHandler {
     _syncService = PlaybackSyncService(
       containerRef,
       playerStateStream: _player.playerStateStream.distinct(
-        (previous, next) =>
-            previous.playing == next.playing &&
-            previous.processingState == next.processingState,
+        (previous, next) => previous.playing == next.playing && previous.processingState == next.processingState,
       ),
       position: () => position,
     );
@@ -48,15 +46,11 @@ class WearAudioHandler extends BaseAudioHandler {
   Duration get position {
     final media = _media;
     final index = _player.currentIndex;
-    if (media == null || index == null || index >= media.tracks.length)
-      return _player.position;
+    if (media == null || index == null || index >= media.tracks.length) return _player.position;
     return media.offsetForTrack(index) + _player.position;
   }
 
-  Future<void> loadInternalMedia(
-    InternalMedia media, {
-    Duration initialPosition = Duration.zero,
-  }) async {
+  Future<void> loadInternalMedia(InternalMedia media, {Duration initialPosition = Duration.zero}) async {
     final sources = media.toAudioSources();
     if (sources.isEmpty) return;
 
@@ -100,9 +94,7 @@ class WearAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> skipToPrevious() async {
-    _player.hasPrevious
-        ? await _player.seekToPrevious()
-        : await _player.seek(Duration.zero);
+    _player.hasPrevious ? await _player.seekToPrevious() : await _player.seek(Duration.zero);
   }
 
   AudioPlayer get player => _player;

@@ -12,6 +12,5 @@ abstract class CreateAdminApiKeyRequest with _$CreateAdminApiKeyRequest {
     @JsonKey(name: 'isActive') @Default(true) bool isActive,
   }) = _CreateAdminApiKeyRequest;
 
-  factory CreateAdminApiKeyRequest.fromJson(Map<String, dynamic> json) =>
-      _$CreateAdminApiKeyRequestFromJson(json);
+  factory CreateAdminApiKeyRequest.fromJson(Map<String, dynamic> json) => _$CreateAdminApiKeyRequestFromJson(json);
 }

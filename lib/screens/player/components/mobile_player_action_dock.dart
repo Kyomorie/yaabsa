@@ -24,8 +24,7 @@ class MobilePlayerActionDock extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final compactLandscape =
-        MediaQuery.orientationOf(context) == Orientation.landscape;
+    final compactLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
     return Padding(
       padding: EdgeInsets.fromLTRB(28, 0, 28, compactLandscape ? 4 : 8),
       child: SizedBox(
@@ -35,10 +34,7 @@ class MobilePlayerActionDock extends ConsumerWidget {
             Expanded(
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: _QuickActionControl(
-                  action: leftAction,
-                  hasChapters: hasChapters,
-                ),
+                child: _QuickActionControl(action: leftAction, hasChapters: hasChapters),
               ),
             ),
             IconButton(
@@ -49,10 +45,7 @@ class MobilePlayerActionDock extends ConsumerWidget {
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
-                child: _QuickActionControl(
-                  action: rightAction,
-                  hasChapters: hasChapters,
-                ),
+                child: _QuickActionControl(action: rightAction, hasChapters: hasChapters),
               ),
             ),
           ],
@@ -65,11 +58,7 @@ class MobilePlayerActionDock extends ConsumerWidget {
     return action != PlayerActionType.chapter || hasChapters;
   }
 
-  void _showAction(
-    BuildContext context,
-    WidgetRef ref,
-    PlayerActionType action,
-  ) {
+  void _showAction(BuildContext context, WidgetRef ref, PlayerActionType action) {
     if (!_isEnabled(action)) {
       return;
     }
@@ -111,11 +100,7 @@ class MobilePlayerActionDock extends ConsumerWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 color: colors.surfaceContainer.withValues(alpha: 0.45),
-                border: Border(
-                  top: BorderSide(
-                    color: colors.outlineVariant.withValues(alpha: 0.7),
-                  ),
-                ),
+                border: Border(top: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.7))),
               ),
               child: _MobilePlayerActionsSheet(
                 actions: sheetActions,
@@ -151,15 +136,11 @@ class _QuickActionControl extends StatelessWidget {
     }
 
     final colors = Theme.of(context).colorScheme;
-    final cardShaped =
-        action == PlayerActionType.speed ||
-        action == PlayerActionType.sleepTimer;
+    final cardShaped = action == PlayerActionType.speed || action == PlayerActionType.sleepTimer;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surfaceContainerHighest.withValues(alpha: 0.42),
-        borderRadius: cardShaped
-            ? BorderRadius.circular(16)
-            : BorderRadius.circular(999),
+        borderRadius: cardShaped ? BorderRadius.circular(16) : BorderRadius.circular(999),
       ),
       child: switch (action) {
         PlayerActionType.speed => const SpeedSlider(),
@@ -174,11 +155,7 @@ class _QuickActionControl extends StatelessWidget {
 }
 
 class _MobilePlayerActionsSheet extends StatelessWidget {
-  const _MobilePlayerActionsSheet({
-    required this.actions,
-    required this.hasChapters,
-    required this.onSelected,
-  });
+  const _MobilePlayerActionsSheet({required this.actions, required this.hasChapters, required this.onSelected});
 
   final List<PlayerActionType> actions;
   final bool hasChapters;
@@ -186,10 +163,8 @@ class _MobilePlayerActionsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLandscape =
-        MediaQuery.orientationOf(context) == Orientation.landscape;
-    final maxHeight =
-        MediaQuery.sizeOf(context).height * (isLandscape ? 0.82 : 0.7);
+    final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
+    final maxHeight = MediaQuery.sizeOf(context).height * (isLandscape ? 0.82 : 0.7);
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
@@ -205,8 +180,7 @@ class _MobilePlayerActionsSheet extends StatelessWidget {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 14),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant
-                      .withValues(alpha: 0.55),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -217,9 +191,8 @@ class _MobilePlayerActionsSheet extends StatelessWidget {
                 child: Text(
                   'No additional actions are enabled.',
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodyLarge
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               )
             else
@@ -236,31 +209,19 @@ class _MobilePlayerActionsSheet extends StatelessWidget {
                   ),
                   itemBuilder: (context, index) {
                     final action = actions[index];
-                    final enabled =
-                        action != PlayerActionType.chapter || hasChapters;
+                    final enabled = action != PlayerActionType.chapter || hasChapters;
                     return Material(
-                      color: Theme.of(context).colorScheme.surfaceContainerLow
-                          .withValues(alpha: 0.58),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                      color: Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.58),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         onTap: enabled ? () => onSelected(action) : null,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 6,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              Icon(
-                                action.icon,
-                                color: enabled
-                                    ? null
-                                    : Theme.of(context).disabledColor,
-                              ),
+                              Icon(action.icon, color: enabled ? null : Theme.of(context).disabledColor),
                               const SizedBox(height: 4),
                               Text(
                                 action.label,
@@ -270,10 +231,7 @@ class _MobilePlayerActionsSheet extends StatelessWidget {
                                 style: enabled
                                     ? Theme.of(context).textTheme.labelLarge
                                     : Theme.of(context).textTheme.labelLarge
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .disabledColor,
-                                          ),
+                                          ?.copyWith(color: Theme.of(context).disabledColor),
                               ),
                             ],
                           ),

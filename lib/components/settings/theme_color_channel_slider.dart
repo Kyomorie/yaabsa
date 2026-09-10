@@ -21,9 +21,7 @@ class ThemeColorChannelSlider extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(
-              child: Text(label, style: Theme.of(context).textTheme.titleSmall),
-            ),
+            Expanded(child: Text(label, style: Theme.of(context).textTheme.titleSmall)),
             Text(
               value.toString(),
               style: Theme.of(context).textTheme.labelLarge?.copyWith(

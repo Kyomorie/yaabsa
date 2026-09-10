@@ -15,16 +15,9 @@ class CachingSettings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cachingSetting = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.caching))
-        .asData
-        ?.value;
-    final cachingDefault =
-        defaultSettings[SettingKeys.caching] as bool? ?? true;
-    final isCachingEnabled = SettingsParser.decodeValue<bool>(
-      cachingSetting,
-      cachingDefault,
-    );
+    final cachingSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.caching)).asData?.value;
+    final cachingDefault = defaultSettings[SettingKeys.caching] as bool? ?? true;
+    final isCachingEnabled = SettingsParser.decodeValue<bool>(cachingSetting, cachingDefault);
 
     return SettingsPageScaffold(
       title: 'Caching Settings',
@@ -37,8 +30,7 @@ class CachingSettings extends ConsumerWidget {
             SettingsNavigationItem(
               icon: Icons.tune_rounded,
               title: 'General',
-              subtitle:
-                  'Enable/disable caching and configure speedup mode behavior',
+              subtitle: 'Enable/disable caching and configure speedup mode behavior',
               onTap: () => context.push(CachingGeneralSettings.routeName),
             ),
             SettingsNavigationItem(

@@ -49,9 +49,7 @@ class SignInAuthSection extends StatelessWidget {
             decoration: InputDecoration(
               labelText: 'API Key',
               prefixIcon: const Icon(Icons.key_rounded),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
           const SizedBox(height: 14),
@@ -61,10 +59,7 @@ class SignInAuthSection extends StatelessWidget {
                 ? SizedBox(
                     height: 18,
                     width: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.onPrimary,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.onPrimary),
                   )
                 : const Icon(Icons.vpn_key_rounded),
             label: Text(isLoading ? 'Signing in...' : 'Connect with API Key'),
@@ -79,16 +74,11 @@ class SignInAuthSection extends StatelessWidget {
                   controller: usernameController,
                   enabled: !isLoading && !lockImportedIdentity,
                   textInputAction: TextInputAction.next,
-                  autofillHints: const [
-                    AutofillHints.username,
-                    AutofillHints.email,
-                  ],
+                  autofillHints: const [AutofillHints.username, AutofillHints.email],
                   decoration: InputDecoration(
                     labelText: 'Username',
                     prefixIcon: const Icon(Icons.person_outline_rounded),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -108,9 +98,7 @@ class SignInAuthSection extends StatelessWidget {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.password_rounded),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ],
@@ -128,10 +116,7 @@ class SignInAuthSection extends StatelessWidget {
                 ? SizedBox(
                     height: 18,
                     width: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.onPrimary,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.onPrimary),
                   )
                 : const Icon(Icons.login_rounded),
             label: Text(isLoading ? 'Signing in...' : 'Sign In'),

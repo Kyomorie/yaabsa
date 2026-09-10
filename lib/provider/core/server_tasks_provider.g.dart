@@ -12,8 +12,7 @@ part of 'server_tasks_provider.dart';
 @ProviderFor(ServerTasks)
 final serverTasksProvider = ServerTasksProvider._();
 
-final class ServerTasksProvider
-    extends $NotifierProvider<ServerTasks, ServerTasksState> {
+final class ServerTasksProvider extends $NotifierProvider<ServerTasks, ServerTasksState> {
   ServerTasksProvider._()
     : super(
         from: null,
@@ -34,10 +33,7 @@ final class ServerTasksProvider
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ServerTasksState value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ServerTasksState>(value),
-    );
+    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ServerTasksState>(value));
   }
 }
 

@@ -19,12 +19,7 @@ List<InlineSpan> buildSubtitleSegmentSpans({
   var cursor = 0;
   for (final match in RegExp(r'\S+').allMatches(normalizedText)) {
     if (match.start > cursor) {
-      spans.add(
-        TextSpan(
-          text: normalizedText.substring(cursor, match.start),
-          style: inactiveStyle,
-        ),
-      );
+      spans.add(TextSpan(text: normalizedText.substring(cursor, match.start), style: inactiveStyle));
     }
 
     spans.add(TextSpan(text: match.group(0), style: activeStyle));
@@ -32,9 +27,7 @@ List<InlineSpan> buildSubtitleSegmentSpans({
   }
 
   if (cursor < normalizedText.length) {
-    spans.add(
-      TextSpan(text: normalizedText.substring(cursor), style: inactiveStyle),
-    );
+    spans.add(TextSpan(text: normalizedText.substring(cursor), style: inactiveStyle));
   }
 
   return spans;

@@ -6,11 +6,7 @@ import 'package:yaabsa/components/app/library/explicit_badge.dart';
 import 'package:yaabsa/components/common/tables/expressive_action_table.dart';
 
 class PodcastAddResultEntry {
-  const PodcastAddResultEntry({
-    required this.id,
-    required this.result,
-    required this.existing,
-  });
+  const PodcastAddResultEntry({required this.id, required this.result, required this.existing});
 
   final String id;
   final PodcastSearchResult result;
@@ -92,10 +88,7 @@ class PodcastAddResultsExpressiveTable extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
-                    if (entry.result.explicit == true) ...[
-                      const SizedBox(width: 6),
-                      const ExplicitBadge(),
-                    ],
+                    if (entry.result.explicit == true) ...[const SizedBox(width: 6), const ExplicitBadge()],
                   ],
                 ),
                 if (entry.trackCount != null && entry.trackCount! > 0) ...[
@@ -108,8 +101,7 @@ class PodcastAddResultsExpressiveTable extends StatelessWidget {
                     entry.author!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ],
@@ -131,20 +123,14 @@ class PodcastAddResultsExpressiveTable extends StatelessWidget {
           'Missing RSS feed URL',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: colorScheme.error),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.error),
         ),
       );
     }
 
     return Opacity(
       opacity: _entryOpacity(entry),
-      child: Text(
-        feedUrl,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.bodyMedium,
-      ),
+      child: Text(feedUrl, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodyMedium),
     );
   }
 
@@ -209,14 +195,12 @@ class PodcastAddResultsExpressiveTable extends StatelessWidget {
             }
             return 'Add podcast';
           },
-          isEnabled: (entry) =>
-              enabled && !entry.isAlreadyInLibrary && entry.hasFeed,
+          isEnabled: (entry) => enabled && !entry.isAlreadyInLibrary && entry.hasFeed,
           onPressed: _handleRowTap,
         ),
       ],
       emptyTitle: 'No podcast search results yet',
-      emptySubtitle:
-          'Search by title/creator or paste a RSS feed URL to start.',
+      emptySubtitle: 'Search by title/creator or paste a RSS feed URL to start.',
     );
   }
 }
@@ -230,9 +214,7 @@ class _PodcastResultCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalized = url?.trim();
-    final coverUrl = normalized == null || normalized.isEmpty
-        ? null
-        : normalized;
+    final coverUrl = normalized == null || normalized.isEmpty ? null : normalized;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
@@ -241,24 +223,15 @@ class _PodcastResultCover extends StatelessWidget {
         height: size,
         child: coverUrl == null
             ? _fallbackCover(context)
-            : Image.network(
-                coverUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _fallbackCover(context),
-              ),
+            : Image.network(coverUrl, fit: BoxFit.cover, errorBuilder: (_, _, _) => _fallbackCover(context)),
       ),
     );
   }
 
   Widget _fallbackCover(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      ),
-      child: Icon(
-        Icons.podcasts_rounded,
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+      child: Icon(Icons.podcasts_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 }

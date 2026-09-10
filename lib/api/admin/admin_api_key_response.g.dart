@@ -7,10 +7,8 @@ part of 'admin_api_key_response.dart';
 // **************************************************************************
 
 _AdminApiKeyResponse _$AdminApiKeyResponseFromJson(Map<String, dynamic> json) =>
-    _AdminApiKeyResponse(
-      apiKey: AdminApiKey.fromJson(json['apiKey'] as Map<String, dynamic>),
-    );
+    _AdminApiKeyResponse(apiKey: AdminApiKey.fromJson(json['apiKey'] as Map<String, dynamic>));
 
-Map<String, dynamic> _$AdminApiKeyResponseToJson(
-  _AdminApiKeyResponse instance,
-) => <String, dynamic>{'apiKey': instance.apiKey};
+Map<String, dynamic> _$AdminApiKeyResponseToJson(_AdminApiKeyResponse instance) => <String, dynamic>{
+  'apiKey': instance.apiKey,
+};

@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yaabsa/components/settings/settings_dropdown.dart';
@@ -25,24 +24,12 @@ class PlayerSettingsGeneral extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final autoQueueSetting = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.autoQueue))
-        .asData
-        ?.value;
-    final autoQueueDefault =
-        defaultSettings[SettingKeys.autoQueue] as bool? ?? true;
-    final autoQueueEnabled = SettingsParser.decodeValue<bool>(
-      autoQueueSetting,
-      autoQueueDefault,
-    );
-    final isAndroid =
-        !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    final autoQueueSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.autoQueue)).asData?.value;
+    final autoQueueDefault = defaultSettings[SettingKeys.autoQueue] as bool? ?? true;
+    final autoQueueEnabled = SettingsParser.decodeValue<bool>(autoQueueSetting, autoQueueDefault);
+    final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
     final autoResumeSetting = ref
-        .watch(
-          globalSettingByKeyProvider(
-            SettingKeys.autoResumeOnBluetoothConnection,
-          ),
-        )
+        .watch(globalSettingByKeyProvider(SettingKeys.autoResumeOnBluetoothConnection))
         .asData
         ?.value;
     final autoResumeEnabled = SettingsParser.decodeValue<bool>(
@@ -50,84 +37,44 @@ class PlayerSettingsGeneral extends ConsumerWidget {
       defaultSettings[SettingKeys.autoResumeOnBluetoothConnection] as bool,
     );
     final restrictAutoResumeSetting = ref
-        .watch(
-          globalSettingByKeyProvider(
-            SettingKeys.restrictAutoResumeToSelectedBluetoothDevices,
-          ),
-        )
+        .watch(globalSettingByKeyProvider(SettingKeys.restrictAutoResumeToSelectedBluetoothDevices))
         .asData
         ?.value;
-    final restrictAutoResumeToSelectedDevices =
-        SettingsParser.decodeValue<bool>(
-          restrictAutoResumeSetting,
-          defaultSettings[SettingKeys
-                  .restrictAutoResumeToSelectedBluetoothDevices]
-              as bool,
-        );
-    final selectedBluetoothDeviceAddressesSetting = ref
-        .watch(
-          globalSettingByKeyProvider(
-            SettingKeys.autoResumeBluetoothDeviceAddresses,
-          ),
-        )
-        .asData
-        ?.value;
-    final selectedBluetoothDeviceAddresses = decodeBluetoothDeviceAddresses(
-      selectedBluetoothDeviceAddressesSetting,
+    final restrictAutoResumeToSelectedDevices = SettingsParser.decodeValue<bool>(
+      restrictAutoResumeSetting,
+      defaultSettings[SettingKeys.restrictAutoResumeToSelectedBluetoothDevices] as bool,
     );
-    final bluetoothAudioDevices =
-        isAndroid && autoResumeEnabled && restrictAutoResumeToSelectedDevices
+    final selectedBluetoothDeviceAddressesSetting = ref
+        .watch(globalSettingByKeyProvider(SettingKeys.autoResumeBluetoothDeviceAddresses))
+        .asData
+        ?.value;
+    final selectedBluetoothDeviceAddresses = decodeBluetoothDeviceAddresses(selectedBluetoothDeviceAddressesSetting);
+    final bluetoothAudioDevices = isAndroid && autoResumeEnabled && restrictAutoResumeToSelectedDevices
         ? ref.watch(bluetoothAudioDevicesProvider)
         : null;
-    final rawLayoutMode = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerLayoutMode))
-        .asData
-        ?.value;
+    final rawLayoutMode = ref.watch(globalSettingByKeyProvider(SettingKeys.playerLayoutMode)).asData?.value;
     final rawLayoutModeExplicit = ref
         .watch(globalSettingByKeyProvider(SettingKeys.playerLayoutModeExplicit))
         .asData
         ?.value;
-    final rawLayoutConfig = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerLayoutConfig))
-        .asData
-        ?.value;
+    final rawLayoutConfig = ref.watch(globalSettingByKeyProvider(SettingKeys.playerLayoutConfig)).asData?.value;
     final layoutMode = PlayerLayoutMode.fromSettingValue(
       rawLayoutMode,
       hasSavedCustomLayout: hasCustomLayoutChanges(rawLayoutConfig),
       hasExplicitSelection: rawLayoutModeExplicit == 'true',
     );
-    final rawAdaptivePreset = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerAdaptivePreset))
-        .asData
-        ?.value;
-    final adaptivePreset = PlayerAdaptivePreset.fromSettingValue(
-      rawAdaptivePreset,
-    );
-    final rawCoverSize = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.playerCoverSize))
-        .asData
-        ?.value;
+    final rawAdaptivePreset = ref.watch(globalSettingByKeyProvider(SettingKeys.playerAdaptivePreset)).asData?.value;
+    final adaptivePreset = PlayerAdaptivePreset.fromSettingValue(rawAdaptivePreset);
+    final rawCoverSize = ref.watch(globalSettingByKeyProvider(SettingKeys.playerCoverSize)).asData?.value;
     final coverSize = PlayerCoverSize.fromSettingValue(rawCoverSize);
-    final rawFullTransport = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.fullPlayerTransportMode))
-        .asData
-        ?.value;
-    final rawMiniTransport = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.miniPlayerTransportMode))
-        .asData
-        ?.value;
-    final rawMobileLeftAction = ref
-        .watch(globalSettingByKeyProvider(SettingKeys.mobilePlayerLeftAction))
-        .asData
-        ?.value;
+    final rawFullTransport = ref.watch(globalSettingByKeyProvider(SettingKeys.fullPlayerTransportMode)).asData?.value;
+    final rawMiniTransport = ref.watch(globalSettingByKeyProvider(SettingKeys.miniPlayerTransportMode)).asData?.value;
+    final rawMobileLeftAction = ref.watch(globalSettingByKeyProvider(SettingKeys.mobilePlayerLeftAction)).asData?.value;
     final rawMobileRightAction = ref
         .watch(globalSettingByKeyProvider(SettingKeys.mobilePlayerRightAction))
         .asData
         ?.value;
-    final mobileLeftAction = decodeOptionalPlayerAction(
-      rawMobileLeftAction,
-      fallback: defaultMobilePlayerLeftAction,
-    );
+    final mobileLeftAction = decodeOptionalPlayerAction(rawMobileLeftAction, fallback: defaultMobilePlayerLeftAction);
     final mobileRightAction = decodeOptionalPlayerAction(
       rawMobileRightAction,
       fallback: defaultMobilePlayerRightAction,
@@ -149,12 +96,8 @@ class PlayerSettingsGeneral extends ConsumerWidget {
             SettingDropdown<String>(
               label: 'Timeline mode',
               description: 'Choose whether the seek bar tracks a chapter, the full audiobook, or both',
-              values: PlayerSeekBarMode.values
-                  .map((mode) => mode.name)
-                  .toList(),
-              valueLabels: PlayerSeekBarMode.values
-                  .map((mode) => mode.label)
-                  .toList(),
+              values: PlayerSeekBarMode.values.map((mode) => mode.name).toList(),
+              valueLabels: PlayerSeekBarMode.values.map((mode) => mode.label).toList(),
               valueDescriptions: const [
                 'Track currently playing chapter',
                 'Track full audiobook timeline',
@@ -165,12 +108,8 @@ class PlayerSettingsGeneral extends ConsumerWidget {
             SettingDropdown<String>(
               label: 'Timeline markers',
               description: 'Choose whether the full timeline displays chapter markers, bookmark markers, both, or none',
-              values: SeekBarMarkerMode.values
-                  .map((mode) => mode.name)
-                  .toList(),
-              valueLabels: SeekBarMarkerMode.values
-                  .map((mode) => mode.label)
-                  .toList(),
+              values: SeekBarMarkerMode.values.map((mode) => mode.name).toList(),
+              valueLabels: SeekBarMarkerMode.values.map((mode) => mode.label).toList(),
               valueDescriptions: const [
                 'Display chapter tick marks',
                 'Display bookmark markers',
@@ -187,20 +126,13 @@ class PlayerSettingsGeneral extends ConsumerWidget {
             SettingDropdown<String>.remote(
               label: 'Full player transport buttons',
               description: 'Choose whether the full player shows timed jumps, item/chapter skips, or both',
-              values: PlayerTransportMode.values
-                  .map((mode) => mode.name)
-                  .toList(growable: false),
-              valueLabels: PlayerTransportMode.values
-                  .map((mode) => mode.label)
-                  .toList(growable: false),
+              values: PlayerTransportMode.values.map((mode) => mode.name).toList(growable: false),
+              valueLabels: PlayerTransportMode.values.map((mode) => mode.label).toList(growable: false),
               value: resolveTransport(rawFullTransport).name,
               onValueChanged: (value) {
                 ref
                     .read(settingsManagerProvider.notifier)
-                    .setGlobalSetting<String>(
-                      SettingKeys.fullPlayerTransportMode,
-                      value,
-                    );
+                    .setGlobalSetting<String>(SettingKeys.fullPlayerTransportMode, value);
               },
             ),
             const PlayerActionSettingsEditor(
@@ -211,16 +143,9 @@ class PlayerSettingsGeneral extends ConsumerWidget {
             ),
             SettingDropdown<String>.remote(
               label: 'Left quick action',
-              description:
-                  'Action shown at the lower left of the Minimalistic player',
-              values: <String>[
-                'none',
-                ...PlayerActionType.values.map((action) => action.name),
-              ],
-              valueLabels: <String>[
-                'None',
-                ...PlayerActionType.values.map((action) => action.label),
-              ],
+              description: 'Action shown at the lower left of the Minimalistic player',
+              values: <String>['none', ...PlayerActionType.values.map((action) => action.name)],
+              valueLabels: <String>['None', ...PlayerActionType.values.map((action) => action.label)],
               value: mobileLeftAction?.name ?? 'none',
               onValueChanged: (value) async {
                 final settings = ref.read(settingsManagerProvider.notifier);
@@ -230,24 +155,14 @@ class PlayerSettingsGeneral extends ConsumerWidget {
                     mobileLeftAction?.name ?? 'none',
                   );
                 }
-                await settings.setGlobalSetting<String>(
-                  SettingKeys.mobilePlayerLeftAction,
-                  value,
-                );
+                await settings.setGlobalSetting<String>(SettingKeys.mobilePlayerLeftAction, value);
               },
             ),
             SettingDropdown<String>.remote(
               label: 'Right quick action',
-              description:
-                  'Action shown at the lower right of the Minimalistic player',
-              values: <String>[
-                'none',
-                ...PlayerActionType.values.map((action) => action.name),
-              ],
-              valueLabels: <String>[
-                'None',
-                ...PlayerActionType.values.map((action) => action.label),
-              ],
+              description: 'Action shown at the lower right of the Minimalistic player',
+              values: <String>['none', ...PlayerActionType.values.map((action) => action.name)],
+              valueLabels: <String>['None', ...PlayerActionType.values.map((action) => action.label)],
               value: mobileRightAction?.name ?? 'none',
               onValueChanged: (value) async {
                 final settings = ref.read(settingsManagerProvider.notifier);
@@ -257,29 +172,19 @@ class PlayerSettingsGeneral extends ConsumerWidget {
                     mobileRightAction?.name ?? 'none',
                   );
                 }
-                await settings.setGlobalSetting<String>(
-                  SettingKeys.mobilePlayerRightAction,
-                  value,
-                );
+                await settings.setGlobalSetting<String>(SettingKeys.mobilePlayerRightAction, value);
               },
             ),
             SettingDropdown<String>.remote(
               label: 'Mini player transport buttons',
               description: 'Choose whether the mini player shows timed jumps, item/chapter skips, or both',
-              values: PlayerTransportMode.values
-                  .map((mode) => mode.name)
-                  .toList(growable: false),
-              valueLabels: PlayerTransportMode.values
-                  .map((mode) => mode.label)
-                  .toList(growable: false),
+              values: PlayerTransportMode.values.map((mode) => mode.name).toList(growable: false),
+              valueLabels: PlayerTransportMode.values.map((mode) => mode.label).toList(growable: false),
               value: resolveTransport(rawMiniTransport).name,
               onValueChanged: (value) {
                 ref
                     .read(settingsManagerProvider.notifier)
-                    .setGlobalSetting<String>(
-                      SettingKeys.miniPlayerTransportMode,
-                      value,
-                    );
+                    .setGlobalSetting<String>(SettingKeys.miniPlayerTransportMode, value);
               },
             ),
             const PlayerActionSettingsEditor(
@@ -297,30 +202,14 @@ class PlayerSettingsGeneral extends ConsumerWidget {
               label: 'Fast forward interval',
               description: 'How many seconds to skip when jumping forward',
               values: const [5, 10, 15, 20, 30, 45, 60],
-              valueLabels: const [
-                '5 s',
-                '10 s',
-                '15 s',
-                '20 s',
-                '30 s',
-                '45 s',
-                '60 s',
-              ],
+              valueLabels: const ['5 s', '10 s', '15 s', '20 s', '30 s', '45 s', '60 s'],
               settingKey: SettingKeys.fastForwardInterval,
             ),
             SettingSlider<int>(
               label: 'Rewind interval',
               description: 'How many seconds to skip when rewinding',
               values: const [5, 10, 15, 20, 30, 45, 60],
-              valueLabels: const [
-                '5 s',
-                '10 s',
-                '15 s',
-                '20 s',
-                '30 s',
-                '45 s',
-                '60 s',
-              ],
+              valueLabels: const ['5 s', '10 s', '15 s', '20 s', '30 s', '45 s', '60 s'],
               settingKey: SettingKeys.rewindInterval,
             ),
           ],
@@ -350,14 +239,8 @@ class PlayerSettingsGeneral extends ConsumerWidget {
                           'Buttons inside Yaabsa keep their normal skip behavior. This setting affects only Yaabsa.',
                         ),
                         actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
-                          ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Enable'),
-                          ),
+                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Enable')),
                         ],
                       ),
                     ) ??
@@ -411,10 +294,8 @@ class PlayerSettingsGeneral extends ConsumerWidget {
               SettingSwitchTile(
                 label: 'Only selected Bluetooth devices',
                 subtitle: 'Choose which paired Bluetooth audio devices can resume playback',
-                disabledReason:
-                    'Enable Auto-resume on Bluetooth to choose devices',
-                settingKey:
-                    SettingKeys.restrictAutoResumeToSelectedBluetoothDevices,
+                disabledReason: 'Enable Auto-resume on Bluetooth to choose devices',
+                settingKey: SettingKeys.restrictAutoResumeToSelectedBluetoothDevices,
                 enabled: autoResumeEnabled,
                 onChanged: (enabled) {
                   if (enabled) {
@@ -427,12 +308,8 @@ class PlayerSettingsGeneral extends ConsumerWidget {
                   data: (devices) => SettingMultiSelectDropdown<String>(
                     label: 'Bluetooth audio devices',
                     description: 'Only selected paired Bluetooth audio devices will resume playback when connected.',
-                    values: devices
-                        .map((device) => device.address)
-                        .toList(growable: false),
-                    valueLabels: devices
-                        .map((device) => device.name)
-                        .toList(growable: false),
+                    values: devices.map((device) => device.address).toList(growable: false),
+                    valueLabels: devices.map((device) => device.name).toList(growable: false),
                     selectedValues: selectedBluetoothDeviceAddresses,
                     emptyValueLabel: 'No paired Bluetooth audio devices found',
                     onValueChanged: (addresses) {
@@ -455,15 +332,14 @@ class PlayerSettingsGeneral extends ConsumerWidget {
                     isLoading: true,
                     onValueChanged: _ignoreBluetoothAudioDeviceSelection,
                   ),
-                  error: (error, stackTrace) =>
-                      const SettingMultiSelectDropdown<String>(
-                        label: 'Bluetooth audio devices',
-                        values: [],
-                        valueLabels: [],
-                        selectedValues: [],
-                        emptyValueLabel: 'Bluetooth permission is required to list audio devices',
-                        onValueChanged: _ignoreBluetoothAudioDeviceSelection,
-                      ),
+                  error: (error, stackTrace) => const SettingMultiSelectDropdown<String>(
+                    label: 'Bluetooth audio devices',
+                    values: [],
+                    valueLabels: [],
+                    selectedValues: [],
+                    emptyValueLabel: 'Bluetooth permission is required to list audio devices',
+                    onValueChanged: _ignoreBluetoothAudioDeviceSelection,
+                  ),
                 ),
             ],
           ),
@@ -472,11 +348,8 @@ class PlayerSettingsGeneral extends ConsumerWidget {
           settings: [
             SettingDropdown<String>.remote(
               label: 'Full player layout',
-              description:
-                  'Selects how the full player arranges its components',
-              values: PlayerLayoutMode.values
-                  .map((mode) => mode.name)
-                  .toList(growable: false),
+              description: 'Selects how the full player arranges its components',
+              values: PlayerLayoutMode.values.map((mode) => mode.name).toList(growable: false),
               valueLabels: const <String>['Adaptive', 'Custom'],
               valueDescriptions: const <String>[
                 'Adapts the selected preset to the available screen space',
@@ -486,27 +359,17 @@ class PlayerSettingsGeneral extends ConsumerWidget {
               onValueChanged: (value) {
                 ref
                     .read(settingsManagerProvider.notifier)
-                    .setGlobalSetting<bool>(
-                      SettingKeys.playerLayoutModeExplicit,
-                      true,
-                    );
+                    .setGlobalSetting<bool>(SettingKeys.playerLayoutModeExplicit, true);
                 ref
                     .read(settingsManagerProvider.notifier)
-                    .setGlobalSetting<String>(
-                      SettingKeys.playerLayoutMode,
-                      value,
-                    );
+                    .setGlobalSetting<String>(SettingKeys.playerLayoutMode, value);
               },
             ),
             SettingDropdown<String>.remote(
               label: 'Adaptive preset',
               description: 'Selects the controls shown by the adaptive player',
-              values: PlayerAdaptivePreset.values
-                  .map((preset) => preset.name)
-                  .toList(growable: false),
-              valueLabels: PlayerAdaptivePreset.values
-                  .map((preset) => preset.label)
-                  .toList(growable: false),
+              values: PlayerAdaptivePreset.values.map((preset) => preset.name).toList(growable: false),
+              valueLabels: PlayerAdaptivePreset.values.map((preset) => preset.label).toList(growable: false),
               valueDescriptions: const <String>[
                 'Shows configured actions in a bottom action bar on mobile',
                 'Shows two quick actions',
@@ -515,22 +378,15 @@ class PlayerSettingsGeneral extends ConsumerWidget {
               onValueChanged: (value) {
                 ref
                     .read(settingsManagerProvider.notifier)
-                    .setGlobalSetting<String>(
-                      SettingKeys.playerAdaptivePreset,
-                      value,
-                    );
+                    .setGlobalSetting<String>(SettingKeys.playerAdaptivePreset, value);
               },
               enabled: layoutMode == PlayerLayoutMode.adaptive,
             ),
             SettingDropdown<String>.remote(
               label: 'Cover size',
               description: 'Sets the artwork size in the adaptive player',
-              values: PlayerCoverSize.values
-                  .map((size) => size.name)
-                  .toList(growable: false),
-              valueLabels: PlayerCoverSize.values
-                  .map((size) => size.label)
-                  .toList(growable: false),
+              values: PlayerCoverSize.values.map((size) => size.name).toList(growable: false),
+              valueLabels: PlayerCoverSize.values.map((size) => size.label).toList(growable: false),
               valueDescriptions: const <String>[
                 'Uses the size associated with the selected preset',
                 'Uses the smaller artwork size',
@@ -538,12 +394,7 @@ class PlayerSettingsGeneral extends ConsumerWidget {
               ],
               value: coverSize.name,
               onValueChanged: (value) {
-                ref
-                    .read(settingsManagerProvider.notifier)
-                    .setGlobalSetting<String>(
-                      SettingKeys.playerCoverSize,
-                      value,
-                    );
+                ref.read(settingsManagerProvider.notifier).setGlobalSetting<String>(SettingKeys.playerCoverSize, value);
               },
               enabled: layoutMode == PlayerLayoutMode.adaptive,
             ),

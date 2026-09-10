@@ -22,8 +22,7 @@ class TrayManager extends ConsumerStatefulWidget {
   static const String stopKey = 'stop';
 
   static Future<void> update() async {
-    if (kIsWeb ||
-        (!Platform.isLinux && !Platform.isWindows && !Platform.isMacOS)) {
+    if (kIsWeb || (!Platform.isLinux && !Platform.isWindows && !Platform.isMacOS)) {
       return;
     }
 
@@ -39,17 +38,12 @@ class TrayManager extends ConsumerStatefulWidget {
               items: [
                 MenuItem(
                   key: TrayManager.playPauseKey,
-                  label: audioHandler.playerControlState.playing
-                      ? 'Pause'
-                      : 'Play',
+                  label: audioHandler.playerControlState.playing ? 'Pause' : 'Play',
                 ),
                 MenuItem(key: TrayManager.stopKey, label: 'Stop'),
                 MenuItem(key: TrayManager.nextKey, label: 'Next'),
                 MenuItem(key: TrayManager.previousKey, label: 'Previous'),
-                MenuItem(
-                  key: TrayManager.fastForwardKey,
-                  label: 'Fast Forward',
-                ),
+                MenuItem(key: TrayManager.fastForwardKey, label: 'Fast Forward'),
                 MenuItem(key: TrayManager.rewindKey, label: 'Rewind'),
               ],
             ),
@@ -118,19 +112,13 @@ class _TrayManagerState extends ConsumerState<TrayManager> with TrayListener {
         );
         break;
       case TrayManager.playPauseKey:
-        audioHandler.playerControlState.playing
-            ? audioHandler.pause()
-            : audioHandler.play();
+        audioHandler.playerControlState.playing ? audioHandler.pause() : audioHandler.play();
         break;
       case TrayManager.fastForwardKey:
-        audioHandler.seekAbsolute(
-          audioHandler.position + const Duration(seconds: 10),
-        );
+        audioHandler.seekAbsolute(audioHandler.position + const Duration(seconds: 10));
         break;
       case TrayManager.rewindKey:
-        audioHandler.seekAbsolute(
-          audioHandler.position - const Duration(seconds: 10),
-        );
+        audioHandler.seekAbsolute(audioHandler.position - const Duration(seconds: 10));
         break;
       case TrayManager.nextKey:
         audioHandler.skipToNext();
@@ -145,11 +133,7 @@ class _TrayManagerState extends ConsumerState<TrayManager> with TrayListener {
         SystemChannels.platform.invokeMethod('SystemNavigator.pop');
         break;
       default:
-        logger(
-          'Unknown menu item clicked: ${menuItem.key}',
-          tag: 'TrayManager',
-          level: InfoLevel.warning,
-        );
+        logger('Unknown menu item clicked: ${menuItem.key}', tag: 'TrayManager', level: InfoLevel.warning);
         break;
     }
   }

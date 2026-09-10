@@ -16,8 +16,7 @@ abstract class InternalAnnotation with _$InternalAnnotation {
     @JsonKey(name: "type") AnnotationType? type,
   }) = _InternalAnnotation;
 
-  factory InternalAnnotation.fromJson(Map<String, dynamic> json) =>
-      _$InternalAnnotationFromJson(json);
+  factory InternalAnnotation.fromJson(Map<String, dynamic> json) => _$InternalAnnotationFromJson(json);
 }
 
 enum AnnotationType {

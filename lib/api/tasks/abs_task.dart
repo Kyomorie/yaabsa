@@ -12,9 +12,7 @@ abstract class AbsTask with _$AbsTask {
     @JsonKey(name: 'data') AbsTaskData? data,
     @JsonKey(name: 'title') String? title,
     @JsonKey(name: 'titleKey') String? titleKey,
-    @JsonKey(name: 'titleSubs', fromJson: jsonStringListFromDynamic)
-    @Default(<String>[])
-    List<String> titleSubs,
+    @JsonKey(name: 'titleSubs', fromJson: jsonStringListFromDynamic) @Default(<String>[]) List<String> titleSubs,
     @JsonKey(name: 'description') String? description,
     @JsonKey(name: 'descriptionKey') String? descriptionKey,
     @JsonKey(name: 'descriptionSubs', fromJson: jsonStringListFromDynamic)
@@ -22,9 +20,7 @@ abstract class AbsTask with _$AbsTask {
     List<String> descriptionSubs,
     @JsonKey(name: 'error') String? error,
     @JsonKey(name: 'errorKey') String? errorKey,
-    @JsonKey(name: 'errorSubs', fromJson: jsonStringListFromDynamic)
-    @Default(<String>[])
-    List<String> errorSubs,
+    @JsonKey(name: 'errorSubs', fromJson: jsonStringListFromDynamic) @Default(<String>[]) List<String> errorSubs,
     @JsonKey(name: 'showSuccess') @Default(false) bool showSuccess,
     @JsonKey(name: 'isFailed') @Default(false) bool isFailed,
     @JsonKey(name: 'isFinished') @Default(false) bool isFinished,
@@ -32,24 +28,20 @@ abstract class AbsTask with _$AbsTask {
     @JsonKey(name: 'finishedAt', fromJson: jsonIntFromDynamic) int? finishedAt,
   }) = _AbsTask;
 
-  factory AbsTask.fromJson(Map<String, dynamic> json) =>
-      _$AbsTaskFromJson(json);
+  factory AbsTask.fromJson(Map<String, dynamic> json) => _$AbsTaskFromJson(json);
 }
 
 @freezed
 abstract class AbsTaskData with _$AbsTaskData {
   const factory AbsTaskData({
-    @JsonKey(name: 'libraryItemId', fromJson: jsonStringFromDynamic)
-    String? libraryItemId,
-    @JsonKey(name: 'libraryId', fromJson: jsonStringFromDynamic)
-    String? libraryId,
+    @JsonKey(name: 'libraryItemId', fromJson: jsonStringFromDynamic) String? libraryItemId,
+    @JsonKey(name: 'libraryId', fromJson: jsonStringFromDynamic) String? libraryId,
     @JsonKey(name: 'ino', fromJson: jsonStringFromDynamic) String? ino,
     @JsonKey(name: 'encodeOptions') AbsTaskEncodeOptions? encodeOptions,
     @JsonKey(name: 'scanResults') AbsTaskScanResults? scanResults,
   }) = _AbsTaskData;
 
-  factory AbsTaskData.fromJson(Map<String, dynamic> json) =>
-      _$AbsTaskDataFromJson(json);
+  factory AbsTaskData.fromJson(Map<String, dynamic> json) => _$AbsTaskDataFromJson(json);
 }
 
 @freezed
@@ -60,8 +52,7 @@ abstract class AbsTaskEncodeOptions with _$AbsTaskEncodeOptions {
     @JsonKey(name: 'channels', fromJson: jsonIntFromDynamic) int? channels,
   }) = _AbsTaskEncodeOptions;
 
-  factory AbsTaskEncodeOptions.fromJson(Map<String, dynamic> json) =>
-      _$AbsTaskEncodeOptionsFromJson(json);
+  factory AbsTaskEncodeOptions.fromJson(Map<String, dynamic> json) => _$AbsTaskEncodeOptionsFromJson(json);
 }
 
 @freezed
@@ -73,6 +64,5 @@ abstract class AbsTaskScanResults with _$AbsTaskScanResults {
     @JsonKey(name: 'elapsed', fromJson: jsonIntFromDynamic) int? elapsed,
   }) = _AbsTaskScanResults;
 
-  factory AbsTaskScanResults.fromJson(Map<String, dynamic> json) =>
-      _$AbsTaskScanResultsFromJson(json);
+  factory AbsTaskScanResults.fromJson(Map<String, dynamic> json) => _$AbsTaskScanResultsFromJson(json);
 }

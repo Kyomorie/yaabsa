@@ -5,9 +5,8 @@ part 'admin_users_response.freezed.dart';
 
 @freezed
 abstract class AdminUsersResponse with _$AdminUsersResponse {
-  const factory AdminUsersResponse({
-    @Default(<SessionUserSummary>[]) List<SessionUserSummary> users,
-  }) = _AdminUsersResponse;
+  const factory AdminUsersResponse({@Default(<SessionUserSummary>[]) List<SessionUserSummary> users}) =
+      _AdminUsersResponse;
 
   factory AdminUsersResponse.fromDynamic(dynamic data) {
     if (data is List) {
@@ -15,18 +14,12 @@ abstract class AdminUsersResponse with _$AdminUsersResponse {
     }
 
     if (data is Map<String, dynamic>) {
-      return AdminUsersResponse(
-        users: sessionUserSummaryListFromDynamic(data['users'] ?? data['data']),
-      );
+      return AdminUsersResponse(users: sessionUserSummaryListFromDynamic(data['users'] ?? data['data']));
     }
 
     if (data is Map) {
       final parsedMap = Map<String, dynamic>.from(data);
-      return AdminUsersResponse(
-        users: sessionUserSummaryListFromDynamic(
-          parsedMap['users'] ?? parsedMap['data'],
-        ),
-      );
+      return AdminUsersResponse(users: sessionUserSummaryListFromDynamic(parsedMap['users'] ?? parsedMap['data']));
     }
 
     return const AdminUsersResponse();

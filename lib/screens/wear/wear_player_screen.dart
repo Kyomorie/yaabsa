@@ -29,10 +29,7 @@ class WearPlayerScreen extends ConsumerStatefulWidget {
 
 class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
   String? _title, _author, _coverUrl, _error, _itemId, _episodeId;
-  bool _isPlaying = false,
-      _isLoading = true,
-      _isDownloaded = false,
-      _isDownloading = false;
+  bool _isPlaying = false, _isLoading = true, _isDownloaded = false, _isDownloading = false;
   double _volume = 0.7, _downloadProgress = 0.0;
   Duration _position = Duration.zero;
   DateTime _now = DateTime.now();
@@ -54,10 +51,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
       if (mounted) setState(() => _isPlaying = s.playing);
     });
     _pos = _h.player
-        .createPositionStream(
-          minPeriod: const Duration(milliseconds: 500),
-          maxPeriod: const Duration(seconds: 1),
-        )
+        .createPositionStream(minPeriod: const Duration(milliseconds: 500), maxPeriod: const Duration(seconds: 1))
         .listen((_) {
           if (mounted && !_isLoading) setState(() => _position = _h.position);
         });
@@ -68,24 +62,17 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
       final itemId = _itemId;
       if (itemId == null || update.task.group != itemId || !mounted) return;
       _downloadFinishFallback?.cancel();
-      _taskProgress[update.task.taskId] = update.progress < 0
-          ? 0.0
-          : update.progress.clamp(0.0, 1.0);
+      _taskProgress[update.task.taskId] = update.progress < 0 ? 0.0 : update.progress.clamp(0.0, 1.0);
       final values = _taskProgress.values;
       setState(() {
         _isDownloading = true;
-        _downloadProgress = values.isEmpty
-            ? 0.0
-            : values.reduce((a, b) => a + b) / values.length;
+        _downloadProgress = values.isEmpty ? 0.0 : values.reduce((a, b) => a + b) / values.length;
       });
     });
     _dlQueue = downloadHandler.taskQueueStream.listen((tasks) {
       final itemId = _itemId;
       if (itemId == null || !_isDownloading) return;
-      final active = tasks.any(
-        (t) =>
-            downloadHandler.taskBelongsToItem(t, itemId, episodeId: _episodeId),
-      );
+      final active = tasks.any((t) => downloadHandler.taskBelongsToItem(t, itemId, episodeId: _episodeId));
       if (active) return;
       _taskProgress.clear();
       // Persisting the finished download (file path + cover) lags the task
@@ -93,10 +80,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
       // completedDownloadItemIds listener) or, for failed/cancelled
       // downloads that never produce one, until the fallback fires.
       _downloadFinishFallback?.cancel();
-      _downloadFinishFallback = Timer(
-        const Duration(seconds: 10),
-        _stopDownloadIndicator,
-      );
+      _downloadFinishFallback = Timer(const Duration(seconds: 10), _stopDownloadIndicator);
     });
     ref.listenManual(completedDownloadItemIdsProvider, (previous, next) {
       final itemId = _itemId;
@@ -108,9 +92,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
     });
     // The socket is disconnected while the app is backgrounded, so re-check
     // for remote playback when the app comes back to the foreground.
-    _lifecycle = AppLifecycleListener(
-      onResume: () => unawaited(_checkRemoteProgress()),
-    );
+    _lifecycle = AppLifecycleListener(onResume: () => unawaited(_checkRemoteProgress()));
     _load();
   }
 
@@ -121,18 +103,12 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
     if (_isLoading || _isPlaying || progress.isFinished) return;
 
     final itemId = _itemId;
-    final sameItem =
-        itemId != null &&
-        progress.libraryItemId == itemId &&
-        progress.episodeId == _episodeId;
+    final sameItem = itemId != null && progress.libraryItemId == itemId && progress.episodeId == _episodeId;
     if (!sameItem) {
       return _load();
     }
 
-    final remote = Duration(
-      microseconds: (progress.currentTime * Duration.microsecondsPerSecond)
-          .round(),
-    );
+    final remote = Duration(microseconds: (progress.currentTime * Duration.microsecondsPerSecond).round());
     if ((remote - _h.position).abs() < const Duration(seconds: 5)) return;
     await _h.seek(remote);
     if (mounted) setState(() => _position = remote);
@@ -145,12 +121,8 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
     try {
       final mp = await _fetchAllProgress(api);
       if (mp == null || mp.isEmpty) return;
-      final sorted = [...mp]
-        ..sort((a, b) => (b.lastUpdate ?? 0).compareTo(a.lastUpdate ?? 0));
-      final newest = sorted.firstWhere(
-        (p) => !p.isFinished,
-        orElse: () => sorted.first,
-      );
+      final sorted = [...mp]..sort((a, b) => (b.lastUpdate ?? 0).compareTo(a.lastUpdate ?? 0));
+      final newest = sorted.firstWhere((p) => !p.isFinished, orElse: () => sorted.first);
       await _onRemoteProgress(newest);
     } catch (_) {
       // Offline or transient failure; the next resume or socket event retries.
@@ -158,9 +130,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
   }
 
   Future<List<MediaProgress>?> _fetchAllProgress(ABSApi api) async {
-    if (!serverSupportsMediaProgressAndBookmarkRoutes(
-      ref.read(serverVersionProvider),
-    )) {
+    if (!serverSupportsMediaProgressAndBookmarkRoutes(ref.read(serverVersionProvider))) {
       return (await api.getMeApi().getUser()).data?.mediaProgress;
     }
 
@@ -222,17 +192,13 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
         });
       }
 
-      final sorted = [...mp]
-        ..sort((a, b) => (b.lastUpdate ?? 0).compareTo(a.lastUpdate ?? 0));
+      final sorted = [...mp]..sort((a, b) => (b.lastUpdate ?? 0).compareTo(a.lastUpdate ?? 0));
       final unfinished = sorted.where((p) => !p.isFinished).toList();
-      final candidates = (unfinished.isEmpty ? [sorted.first] : unfinished)
-          .take(5)
-          .toList();
+      final candidates = (unfinished.isEmpty ? [sorted.first] : unfinished).take(5).toList();
 
       final db = ref.read(appDatabaseProvider);
       final sessions = ref.read(sessionRepositoryProvider);
-      final canReachServer =
-          freshProgress || ref.read(serverReachabilityProvider);
+      final canReachServer = freshProgress || ref.read(serverReachabilityProvider);
 
       // Most recent first; skip what cannot play right now (not downloaded
       // while the server is unreachable) and fall through on open errors.
@@ -240,19 +206,11 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
       MediaProgress? lp;
       for (final candidate in candidates) {
         final downloaded =
-            await db.getStoredDownload(
-              candidate.libraryItemId,
-              user.id,
-              episodeId: candidate.episodeId,
-            ) !=
-            null;
+            await db.getStoredDownload(candidate.libraryItemId, user.id, episodeId: candidate.episodeId) != null;
         if (!downloaded && !canReachServer) continue;
         try {
           await sessions.closeSession();
-          final opened = await sessions.openSession(
-            candidate.libraryItemId,
-            episodeId: candidate.episodeId,
-          );
+          final opened = await sessions.openSession(candidate.libraryItemId, episodeId: candidate.episodeId);
           if (opened != null && opened.tracks.isNotEmpty) {
             media = opened;
             lp = candidate;
@@ -271,10 +229,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
       }
       final loadedMedia = media;
 
-      final initialPosition = Duration(
-        microseconds: ((lp.currentTime) * Duration.microsecondsPerSecond)
-            .round(),
-      );
+      final initialPosition = Duration(microseconds: ((lp.currentTime) * Duration.microsecondsPerSecond).round());
       await _h.loadInternalMedia(loadedMedia, initialPosition: initialPosition);
       _itemId = loadedMedia.itemId;
       _episodeId = loadedMedia.episodeId;
@@ -326,9 +281,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
       // The completedDownloadItemIds stream flips the icon back once the
       // stored download row is gone.
       try {
-        final download = await ref
-            .read(appDatabaseProvider)
-            .getStoredDownload(itemId, user.id, episodeId: _episodeId);
+        final download = await ref.read(appDatabaseProvider).getStoredDownload(itemId, user.id, episodeId: _episodeId);
         if (download != null) {
           await downloadHandler.deleteDownloadedItem(download, userId: user.id);
         }
@@ -349,8 +302,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
   @override
   Widget build(BuildContext c) {
     final downloadedIds = ref.watch(completedDownloadItemIdsProvider).value;
-    _isDownloaded =
-        _itemId != null && (downloadedIds?.contains(_itemId) ?? false);
+    _isDownloaded = _itemId != null && (downloadedIds?.contains(_itemId) ?? false);
     return Scaffold(
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(strokeWidth: 2))
@@ -362,8 +314,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
 
   // Hierarchy on the watch is conveyed by dimming the theme's onSurface
   // color, mirroring the white opacity steps used before the shared theme.
-  Color _onSurface(double alpha) =>
-      Theme.of(context).colorScheme.onSurface.withValues(alpha: alpha);
+  Color _onSurface(double alpha) => Theme.of(context).colorScheme.onSurface.withValues(alpha: alpha);
 
   Widget _err() => Center(
     child: Padding(
@@ -371,11 +322,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 32,
-            color: Theme.of(context).colorScheme.error,
-          ),
+          Icon(Icons.error_outline, size: 32, color: Theme.of(context).colorScheme.error),
           const SizedBox(height: 8),
           Text(
             _error!,
@@ -394,18 +341,14 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
 
   Widget _player() {
     final colorScheme = Theme.of(context).colorScheme;
-    final t =
-        '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}';
+    final t = '${_now.hour.toString().padLeft(2, '0')}:${_now.minute.toString().padLeft(2, '0')}';
     return Stack(
       fit: StackFit.expand,
       children: [
         if (_coverUrl != null)
           Positioned.fill(
             child: ColorFiltered(
-              colorFilter: const ColorFilter.mode(
-                Colors.black87,
-                BlendMode.darken,
-              ),
+              colorFilter: const ColorFilter.mode(Colors.black87, BlendMode.darken),
               child: _coverImage(_coverUrl!),
             ),
           )
@@ -415,10 +358,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                t,
-                style: TextStyle(fontSize: 11, color: _onSurface(0.38)),
-              ),
+              child: Text(t, style: TextStyle(fontSize: 11, color: _onSurface(0.38))),
             ),
             const Spacer(),
             Padding(
@@ -436,11 +376,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
                     ),
                   Text(
                     _title ?? '',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -454,10 +390,7 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
                       _btn(Icons.replay_30, _rew),
                       const SizedBox(width: 8),
                       Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: colorScheme.primary,
-                        ),
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: colorScheme.primary),
                         child: _btn(
                           _isPlaying ? Icons.pause : Icons.play_arrow,
                           _toggle,
@@ -479,17 +412,10 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    icon: Icon(
-                      Icons.volume_up,
-                      color: _onSurface(0.54),
-                      size: 22,
-                    ),
+                    icon: Icon(Icons.volume_up, color: _onSurface(0.54), size: 22),
                     onPressed: _vol,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                   ),
                   if (_isDownloading)
                     SizedBox(
@@ -498,17 +424,10 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          CircularProgressIndicator(
-                            value: _downloadProgress,
-                            strokeWidth: 2,
-                            color: _onSurface(0.54),
-                          ),
+                          CircularProgressIndicator(value: _downloadProgress, strokeWidth: 2, color: _onSurface(0.54)),
                           Text(
                             '${(_downloadProgress * 100).round()}',
-                            style: TextStyle(
-                              fontSize: 7,
-                              color: _onSurface(0.54),
-                            ),
+                            style: TextStyle(fontSize: 7, color: _onSurface(0.54)),
                           ),
                         ],
                       ),
@@ -516,18 +435,13 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
                   else
                     IconButton(
                       icon: Icon(
-                        _isDownloaded
-                            ? Icons.file_download_done
-                            : Icons.download,
+                        _isDownloaded ? Icons.file_download_done : Icons.download,
                         color: _onSurface(0.54),
                         size: 22,
                       ),
                       onPressed: _toggleDownload,
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 36,
-                        minHeight: 36,
-                      ),
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                     ),
                 ],
               ),
@@ -539,19 +453,16 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
     );
   }
 
-  Widget _btn(IconData i, VoidCallback f, {double s = 28, Color? color}) =>
-      IconButton(
-        icon: Icon(i, color: color ?? _onSurface(0.70), size: s),
-        onPressed: f,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-      );
+  Widget _btn(IconData i, VoidCallback f, {double s = 28, Color? color}) => IconButton(
+    icon: Icon(i, color: color ?? _onSurface(0.70), size: s),
+    onPressed: f,
+    padding: EdgeInsets.zero,
+    constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+  );
 
   Widget _progress() {
     final total = _h.media?.totalDuration ?? Duration.zero;
-    final fraction = total.inMilliseconds > 0
-        ? (_position.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0)
-        : 0.0;
+    final fraction = total.inMilliseconds > 0 ? (_position.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0) : 0.0;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -570,14 +481,8 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                _position.toCompactClockString(),
-                style: TextStyle(fontSize: 9, color: _onSurface(0.54)),
-              ),
-              Text(
-                total.toCompactClockString(),
-                style: TextStyle(fontSize: 9, color: _onSurface(0.54)),
-              ),
+              Text(_position.toCompactClockString(), style: TextStyle(fontSize: 9, color: _onSurface(0.54))),
+              Text(total.toCompactClockString(), style: TextStyle(fontSize: 9, color: _onSurface(0.54))),
             ],
           ),
         ],
@@ -588,19 +493,10 @@ class _WearPlayerScreenState extends ConsumerState<WearPlayerScreen> {
   Widget _coverImage(String url) {
     final uri = Uri.tryParse(url);
     if (uri != null && uri.scheme == 'file') {
-      return Image.file(
-        File(uri.toFilePath()),
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _placeholder(),
-      );
+      return Image.file(File(uri.toFilePath()), fit: BoxFit.cover, errorBuilder: (_, _, _) => _placeholder());
     }
-    return Image.network(
-      url,
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => _placeholder(),
-    );
+    return Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => _placeholder());
   }
 
-  Widget _placeholder() =>
-      Container(color: Theme.of(context).colorScheme.surfaceContainerHighest);
+  Widget _placeholder() => Container(color: Theme.of(context).colorScheme.surfaceContainerHighest);
 }

@@ -19,19 +19,15 @@ final class UploadMetadataProvidersProvider
           List<SearchProviderOption>,
           FutureOr<List<SearchProviderOption>>
         >
-    with
-        $FutureModifier<List<SearchProviderOption>>,
-        $FutureProvider<List<SearchProviderOption>> {
-  UploadMetadataProvidersProvider._({
-    required UploadMetadataProvidersFamily super.from,
-    required String super.argument,
-  }) : super(
-         retry: null,
-         name: r'uploadMetadataProvidersProvider',
-         isAutoDispose: false,
-         dependencies: null,
-         $allTransitiveDependencies: null,
-       );
+    with $FutureModifier<List<SearchProviderOption>>, $FutureProvider<List<SearchProviderOption>> {
+  UploadMetadataProvidersProvider._({required UploadMetadataProvidersFamily super.from, required String super.argument})
+    : super(
+        retry: null,
+        name: r'uploadMetadataProvidersProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$uploadMetadataProvidersHash();
@@ -45,9 +41,8 @@ final class UploadMetadataProvidersProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<SearchProviderOption>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
+  $FutureProviderElement<List<SearchProviderOption>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<SearchProviderOption>> create(Ref ref) {
@@ -57,8 +52,7 @@ final class UploadMetadataProvidersProvider
 
   @override
   bool operator ==(Object other) {
-    return other is UploadMetadataProvidersProvider &&
-        other.argument == argument;
+    return other is UploadMetadataProvidersProvider && other.argument == argument;
   }
 
   @override
@@ -67,15 +61,10 @@ final class UploadMetadataProvidersProvider
   }
 }
 
-String _$uploadMetadataProvidersHash() =>
-    r'6824ab6bf35da33e419595d0719d808e53625596';
+String _$uploadMetadataProvidersHash() => r'6824ab6bf35da33e419595d0719d808e53625596';
 
 final class UploadMetadataProvidersFamily extends $Family
-    with
-        $FunctionalFamilyOverride<
-          FutureOr<List<SearchProviderOption>>,
-          String
-        > {
+    with $FunctionalFamilyOverride<FutureOr<List<SearchProviderOption>>, String> {
   UploadMetadataProvidersFamily._()
     : super(
         retry: null,

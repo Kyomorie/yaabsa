@@ -22,9 +22,7 @@ class BluetoothAudioDevice {
     }
 
     final rawName = values['name'];
-    final name = rawName is String && rawName.trim().isNotEmpty
-        ? rawName.trim()
-        : 'Unnamed audio device';
+    final name = rawName is String && rawName.trim().isNotEmpty ? rawName.trim() : 'Unnamed audio device';
 
     return BluetoothAudioDevice(address: address, name: name);
   }
@@ -41,18 +39,14 @@ Set<String> decodeBluetoothDeviceAddresses(String? rawValue) {
       return <String>{};
     }
 
-    return {
-      for (final value in decoded) ?_normalizeBluetoothAddressValue(value),
-    };
+    return {for (final value in decoded) ?_normalizeBluetoothAddressValue(value)};
   } on FormatException {
     return <String>{};
   }
 }
 
 String encodeBluetoothDeviceAddresses(Iterable<String> addresses) {
-  final normalized = {
-    for (final address in addresses) ?_normalizeBluetoothAddress(address),
-  }.toList()..sort();
+  final normalized = {for (final address in addresses) ?_normalizeBluetoothAddress(address)}.toList()..sort();
 
   return jsonEncode(normalized);
 }

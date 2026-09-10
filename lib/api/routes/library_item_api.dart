@@ -135,25 +135,19 @@ class LibraryItemApi {
       return const BatchUpdateLibraryItemsResponse(success: true, updates: 0);
     }
 
-    final requestBody = updatePayloads
-        .map((payload) => payload.toJson())
-        .toList(growable: false);
+    final requestBody = updatePayloads.map((payload) => payload.toJson()).toList(growable: false);
 
-    final response =
-        await ABSApi.makeApiPostRequest<BatchUpdateLibraryItemsResponse>(
-          route: '/api/items/batch/update',
-          fromJson: (data) => BatchUpdateLibraryItemsResponse.fromJson(
-            data as Map<String, dynamic>,
-          ),
-          bodyData: requestBody,
-          cancelToken: cancelToken,
-          headers: headers,
-          extra: extra,
-          dio: _dio,
-        );
+    final response = await ABSApi.makeApiPostRequest<BatchUpdateLibraryItemsResponse>(
+      route: '/api/items/batch/update',
+      fromJson: (data) => BatchUpdateLibraryItemsResponse.fromJson(data as Map<String, dynamic>),
+      bodyData: requestBody,
+      cancelToken: cancelToken,
+      headers: headers,
+      extra: extra,
+      dio: _dio,
+    );
 
-    return response.data ??
-        const BatchUpdateLibraryItemsResponse(success: false, updates: 0);
+    return response.data ?? const BatchUpdateLibraryItemsResponse(success: false, updates: 0);
   }
 
   Future<bool> batchQuickMatchLibraryItems({
@@ -182,18 +176,15 @@ class LibraryItemApi {
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
   }) async {
-    final response =
-        await ABSApi.makeApiPostRequest<QuickMatchLibraryItemResponse>(
-          route: '/api/items/$itemId/match',
-          fromJson: (data) => QuickMatchLibraryItemResponse.fromJson(
-            data as Map<String, dynamic>,
-          ),
-          bodyData: request.toJson(),
-          cancelToken: cancelToken,
-          headers: headers,
-          extra: extra,
-          dio: _dio,
-        );
+    final response = await ABSApi.makeApiPostRequest<QuickMatchLibraryItemResponse>(
+      route: '/api/items/$itemId/match',
+      fromJson: (data) => QuickMatchLibraryItemResponse.fromJson(data as Map<String, dynamic>),
+      bodyData: request.toJson(),
+      cancelToken: cancelToken,
+      headers: headers,
+      extra: extra,
+      dio: _dio,
+    );
 
     return response.data ?? const QuickMatchLibraryItemResponse();
   }
@@ -300,12 +291,7 @@ class LibraryItemApi {
     );
   }
 
-  Widget getLibraryItemCover(
-    String id, {
-    LibraryItem? item,
-    double? width,
-    double? height,
-  }) {
+  Widget getLibraryItemCover(String id, {LibraryItem? item, double? width, double? height}) {
     if (item != null && !item.hasCover) {
       return const CoverPlaceholder();
     }
@@ -337,29 +323,11 @@ class LibraryItemApi {
     );
   }
 
-  Uri getCoverUri(
-    String id, {
-    LibraryItem? item,
-    double? width,
-    double? height,
-    bool raw = false,
-  }) {
-    return _buildCoverUri(
-      id,
-      item: item,
-      width: width,
-      height: height,
-      raw: raw,
-    );
+  Uri getCoverUri(String id, {LibraryItem? item, double? width, double? height, bool raw = false}) {
+    return _buildCoverUri(id, item: item, width: width, height: height, raw: raw);
   }
 
-  Uri _buildCoverUri(
-    String id, {
-    LibraryItem? item,
-    double? width,
-    double? height,
-    bool raw = false,
-  }) {
+  Uri _buildCoverUri(String id, {LibraryItem? item, double? width, double? height, bool raw = false}) {
     final localCoverUri = _resolveLocalCoverUri(item);
     if (localCoverUri != null) {
       return localCoverUri;
@@ -378,10 +346,7 @@ class LibraryItemApi {
     }
 
     if (raw == true) {
-      assert(
-        width == null && height == null,
-        'Raw cover request should not include width or height',
-      );
+      assert(width == null && height == null, 'Raw cover request should not include width or height');
       queryParams['raw'] = '1';
     }
 
@@ -391,9 +356,7 @@ class LibraryItemApi {
     }
 
     final base = Uri.parse('${_dio.options.baseUrl}/api/items/$id/cover');
-    return queryParams.isEmpty
-        ? base
-        : base.replace(queryParameters: queryParams);
+    return queryParams.isEmpty ? base : base.replace(queryParameters: queryParams);
   }
 
   Uri? _resolveLocalCoverUri(LibraryItem? item) {
@@ -406,9 +369,7 @@ class LibraryItemApi {
       return null;
     }
 
-    if (!kIsWeb &&
-        Platform.isWindows &&
-        RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(rawCoverPath)) {
+    if (!kIsWeb && Platform.isWindows && RegExp(r'^[a-zA-Z]:[\\/]').hasMatch(rawCoverPath)) {
       final file = File(rawCoverPath);
       if (file.existsSync()) {
         return file.uri;
@@ -429,9 +390,7 @@ class LibraryItemApi {
       return null;
     }
 
-    if (parsed.scheme == 'file' ||
-        parsed.scheme == 'content' ||
-        parsed.scheme == 'urlbookmark') {
+    if (parsed.scheme == 'file' || parsed.scheme == 'content' || parsed.scheme == 'urlbookmark') {
       return parsed;
     }
 

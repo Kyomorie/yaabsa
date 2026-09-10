@@ -55,10 +55,7 @@ class LibraryItemEncoderView extends StatelessWidget {
   Widget build(BuildContext context) {
     if (audioFiles.isEmpty) {
       return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('No audio tracks are available for M4B encoding.'),
-        ),
+        child: Padding(padding: EdgeInsets.all(24), child: Text('No audio tracks are available for M4B encoding.')),
       );
     }
 
@@ -88,8 +85,7 @@ class LibraryItemEncoderView extends StatelessWidget {
             child: _StatusCard(
               icon: Icons.error_outline,
               message: errorMessage!,
-              color: Theme.of(context).colorScheme.errorContainer
-                  .withValues(alpha: 0.45),
+              color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
               iconColor: Theme.of(context).colorScheme.error,
             ),
           ),
@@ -99,8 +95,7 @@ class LibraryItemEncoderView extends StatelessWidget {
             child: _StatusCard(
               icon: Icons.info_outline,
               message: infoMessage!,
-              color: Theme.of(context).colorScheme.primaryContainer
-                  .withValues(alpha: 0.45),
+              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.45),
               iconColor: Theme.of(context).colorScheme.primary,
             ),
           ),
@@ -166,25 +161,20 @@ class _EncoderActionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('M4B Encoder', style: Theme.of(context).textTheme.titleMedium),
-            if (currentEncodingHint != null &&
-                currentEncodingHint!.trim().isNotEmpty)
+            if (currentEncodingHint != null && currentEncodingHint!.trim().isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   currentEncodingHint!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
             const SizedBox(height: 4),
-            if (isTaskRunning &&
-                progressLabel != null &&
-                progressLabel!.trim().isNotEmpty) ...[
+            if (isTaskRunning && progressLabel != null && progressLabel!.trim().isNotEmpty) ...[
               Text(
                 'Progress: ${progressLabel!.trim()}',
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 6),
               LinearProgressIndicator(
@@ -205,9 +195,7 @@ class _EncoderActionCard extends StatelessWidget {
                     ],
                     selected: <bool>{advancedMode},
                     onSelectionChanged: (selection) {
-                      final selected = selection.isEmpty
-                          ? false
-                          : selection.first;
+                      final selected = selection.isEmpty ? false : selection.first;
                       onAdvancedModeChanged(selected);
                     },
                   ),
@@ -240,28 +228,16 @@ class _EncoderActionCard extends StatelessWidget {
               alignment: WrapAlignment.spaceBetween,
               children: [
                 OutlinedButton.icon(
-                  onPressed: (!isTaskRunning || isStarting || isCanceling)
-                      ? null
-                      : onCancelEncoding,
+                  onPressed: (!isTaskRunning || isStarting || isCanceling) ? null : onCancelEncoding,
                   icon: isCanceling
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2.1),
-                        )
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.1))
                       : const Icon(Icons.stop_circle_outlined),
                   label: Text(isCanceling ? 'Canceling...' : 'Cancel'),
                 ),
                 FilledButton.icon(
-                  onPressed: (isStarting || isCanceling || isTaskRunning)
-                      ? null
-                      : onStartEncoding,
+                  onPressed: (isStarting || isCanceling || isTaskRunning) ? null : onStartEncoding,
                   icon: isStarting || isTaskRunning
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2.1),
-                        )
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.1))
                       : const Icon(Icons.play_arrow_rounded),
                   label: Text(startButtonLabel),
                 ),
@@ -303,11 +279,7 @@ class _PresetOptions extends StatelessWidget {
           width: textfieldWidth,
           child: _DropdownCard<String>(
             label: 'Codec',
-            value: _safeStringValue(codec, const <String>[
-              'copy',
-              'aac',
-              'opus',
-            ]),
+            value: _safeStringValue(codec, const <String>['copy', 'aac', 'opus']),
             values: const <String>['copy', 'aac', 'opus'],
             display: (value) => value,
             onChanged: (value) {
@@ -322,12 +294,7 @@ class _PresetOptions extends StatelessWidget {
             width: textfieldWidth,
             child: _DropdownCard<String>(
               label: 'Bitrate',
-              value: _safeStringValue(bitrate, const <String>[
-                '32k',
-                '64k',
-                '128k',
-                '192k',
-              ]),
+              value: _safeStringValue(bitrate, const <String>['32k', '64k', '128k', '192k']),
               values: const <String>['32k', '64k', '128k', '192k'],
               display: (value) => value,
               onChanged: (value) {
@@ -387,10 +354,7 @@ class _AdvancedOptions extends StatelessWidget {
               width: textfieldWidth,
               child: TextFormField(
                 initialValue: codec,
-                decoration: const InputDecoration(
-                  labelText: 'Codec',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Codec', border: OutlineInputBorder()),
                 onChanged: onCodecChanged,
               ),
             ),
@@ -398,10 +362,7 @@ class _AdvancedOptions extends StatelessWidget {
               width: textfieldWidth,
               child: TextFormField(
                 initialValue: bitrate,
-                decoration: const InputDecoration(
-                  labelText: 'Bitrate',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Bitrate', border: OutlineInputBorder()),
                 onChanged: onBitrateChanged,
               ),
             ),
@@ -410,10 +371,7 @@ class _AdvancedOptions extends StatelessWidget {
               child: TextFormField(
                 initialValue: channels.toString(),
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Channels',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Channels', border: OutlineInputBorder()),
                 onChanged: (value) {
                   final parsed = int.tryParse(value.trim());
                   if (parsed != null && parsed > 0) {
@@ -452,10 +410,7 @@ class _TrackPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Audio Tracks',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Audio Tracks', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             SizedBox(
               height: _trackListHeight,
@@ -482,19 +437,12 @@ class _TrackPanel extends StatelessWidget {
   double get _trackListHeight {
     const rowHeight = 58.0;
     const maxHeight = 420.0;
-    return (audioFiles.length * rowHeight)
-        .clamp(rowHeight, maxHeight)
-        .toDouble();
+    return (audioFiles.length * rowHeight).clamp(rowHeight, maxHeight).toDouble();
   }
 }
 
 class _TrackRow extends StatelessWidget {
-  const _TrackRow({
-    required this.index,
-    required this.audioFile,
-    this.progress,
-    required this.isFinished,
-  });
+  const _TrackRow({required this.index, required this.audioFile, this.progress, required this.isFinished});
 
   final int index;
   final AudioFile audioFile;
@@ -504,18 +452,14 @@ class _TrackRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalizedProgress = progress?.trim();
-    final showProgress =
-        normalizedProgress != null && normalizedProgress.isNotEmpty;
+    final showProgress = normalizedProgress != null && normalizedProgress.isNotEmpty;
     final showFinished = isFinished || normalizedProgress == '100%';
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: index.isOdd
-            ? Theme.of(context).colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.3)
-            : null,
+        color: index.isOdd ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : null,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -535,9 +479,8 @@ class _TrackRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   _trackMeta(audioFile),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -548,18 +491,12 @@ class _TrackRow extends StatelessWidget {
             child: Align(
               alignment: Alignment.topRight,
               child: showFinished
-                  ? Icon(
-                      Icons.check_circle_outline_rounded,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 20,
-                    )
+                  ? Icon(Icons.check_circle_outline_rounded, color: Theme.of(context).colorScheme.primary, size: 20)
                   : showProgress
                   ? Text(
                       normalizedProgress,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: Theme.of(context).textTheme.labelSmall
+                          ?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w700),
                     )
                   : null,
             ),
@@ -589,26 +526,15 @@ class _DropdownCard<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return YaabsaExpressiveDropdownField<T>(
       value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-      options: [
-        for (final entry in values)
-          YaabsaDropdownOption<T>(value: entry, label: display(entry)),
-      ],
+      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      options: [for (final entry in values) YaabsaDropdownOption<T>(value: entry, label: display(entry))],
       onChanged: onChanged,
     );
   }
 }
 
 class _StatusCard extends StatelessWidget {
-  const _StatusCard({
-    required this.icon,
-    required this.message,
-    required this.color,
-    required this.iconColor,
-  });
+  const _StatusCard({required this.icon, required this.message, required this.color, required this.iconColor});
 
   final IconData icon;
   final String message;
@@ -661,12 +587,8 @@ double? _tryParsePercent(String? value) {
 
 String _trackMeta(AudioFile file) {
   final codec = file.codec ?? 'unknown codec';
-  final bitrate = file.bitRate == null
-      ? 'unknown bitrate'
-      : '${(file.bitRate! / 1000).round()}k';
-  final channels = file.channels == null
-      ? 'unknown channels'
-      : '${file.channels}ch';
+  final bitrate = file.bitRate == null ? 'unknown bitrate' : '${(file.bitRate! / 1000).round()}k';
+  final channels = file.channels == null ? 'unknown channels' : '${file.channels}ch';
   final duration = file.duration == null
       ? 'unknown duration'
       : formatDurationLong(Duration(seconds: file.duration!.round()));
@@ -690,27 +612,17 @@ String? describeCurrentEncoding(List<AudioFile> audioFiles) {
       .where((value) => value > 0)
       .map((value) => (value / 1000).round())
       .toSet();
-  final channels = audioFiles
-      .map((file) => file.channels)
-      .whereType<int>()
-      .where((value) => value > 0)
-      .toSet();
+  final channels = audioFiles.map((file) => file.channels).whereType<int>().where((value) => value > 0).toSet();
 
   final parts = <String>[];
   if (codecs.isNotEmpty) {
     parts.add(codecs.length == 1 ? codecs.first.toUpperCase() : 'Mixed codecs');
   }
   if (bitrates.isNotEmpty) {
-    parts.add(
-      bitrates.length == 1 ? '${bitrates.first} kbps' : 'Mixed bitrates',
-    );
+    parts.add(bitrates.length == 1 ? '${bitrates.first} kbps' : 'Mixed bitrates');
   }
   if (channels.isNotEmpty) {
-    parts.add(
-      channels.length == 1
-          ? '${channels.first} channel${channels.first == 1 ? '' : 's'}'
-          : 'Mixed channels',
-    );
+    parts.add(channels.length == 1 ? '${channels.first} channel${channels.first == 1 ? '' : 's'}' : 'Mixed channels');
   }
 
   return parts.isEmpty ? null : 'Current encoding: ${parts.join(' • ')}';
