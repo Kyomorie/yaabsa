@@ -177,11 +177,7 @@ void main() {
     });
 
     test('remainingAt clamps positions beyond the target to zero', () {
-      const target = ChapterSleepTarget(
-        itemId: 'book-1',
-        episodeId: null,
-        endPosition: Duration(seconds: 10),
-      );
+      const target = ChapterSleepTarget(itemId: 'book-1', episodeId: null, endPosition: Duration(seconds: 10));
 
       expect(target.remainingAt(const Duration(seconds: 12)), Duration.zero);
     });
@@ -189,11 +185,7 @@ void main() {
 
   group('resolveFollowingChapterSleepTarget', () {
     test('advances to a contiguous following chapter', () {
-      const currentTarget = ChapterSleepTarget(
-        itemId: 'book-1',
-        episodeId: null,
-        endPosition: Duration(seconds: 10),
-      );
+      const currentTarget = ChapterSleepTarget(itemId: 'book-1', episodeId: null, endPosition: Duration(seconds: 10));
 
       final target = resolveFollowingChapterSleepTarget(
         chapters: const [
@@ -209,11 +201,7 @@ void main() {
     });
 
     test('advances across a chapter gap', () {
-      const currentTarget = ChapterSleepTarget(
-        itemId: 'book-1',
-        episodeId: null,
-        endPosition: Duration(seconds: 10),
-      );
+      const currentTarget = ChapterSleepTarget(itemId: 'book-1', episodeId: null, endPosition: Duration(seconds: 10));
 
       final target = resolveFollowingChapterSleepTarget(
         chapters: const [
@@ -228,11 +216,7 @@ void main() {
     });
 
     test('can advance repeatedly from the armed boundary', () {
-      const currentTarget = ChapterSleepTarget(
-        itemId: 'book-1',
-        episodeId: null,
-        endPosition: Duration(seconds: 20),
-      );
+      const currentTarget = ChapterSleepTarget(itemId: 'book-1', episodeId: null, endPosition: Duration(seconds: 20));
 
       final target = resolveFollowingChapterSleepTarget(
         chapters: const [
@@ -248,11 +232,7 @@ void main() {
     });
 
     test('returns null when the current target is the media end', () {
-      const currentTarget = ChapterSleepTarget(
-        itemId: 'book-1',
-        episodeId: null,
-        endPosition: Duration(seconds: 30),
-      );
+      const currentTarget = ChapterSleepTarget(itemId: 'book-1', episodeId: null, endPosition: Duration(seconds: 30));
 
       final target = resolveFollowingChapterSleepTarget(
         chapters: const [InternalChapter(start: 20, end: 30, title: 'Final chapter')],
@@ -264,11 +244,7 @@ void main() {
     });
 
     test('fails closed when another chapter crosses the armed boundary', () {
-      const currentTarget = ChapterSleepTarget(
-        itemId: 'book-1',
-        episodeId: null,
-        endPosition: Duration(seconds: 10),
-      );
+      const currentTarget = ChapterSleepTarget(itemId: 'book-1', episodeId: null, endPosition: Duration(seconds: 10));
 
       final target = resolveFollowingChapterSleepTarget(
         chapters: const [
