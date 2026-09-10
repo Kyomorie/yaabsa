@@ -7,8 +7,8 @@ void main() {
     test('resolves the current chapter to an absolute media target', () {
       final target = resolveChapterSleepTarget(
         chapters: const [
-          InternalChapter(start: 10, end: 20, title: 'Chapter 1'),
-          InternalChapter(start: 20, end: 31, title: 'Chapter 2'),
+          InternalChapter(start: 600, end: 1200, title: 'Chapter 1'),
+          InternalChapter(start: 1200, end: 1860, title: 'Chapter 2'),
         ],
         mediaDuration: const Duration(minutes: 40),
         position: const Duration(minutes: 15),
@@ -184,6 +184,122 @@ void main() {
       );
 
       expect(target.remainingAt(const Duration(seconds: 12)), Duration.zero);
+    });
+  });
+
+  group('resolveFollowingChapterSleepTarget', () {
+    test('advances to a contiguous following chapter', () {
+      const currentTarget = ChapterSleepTarget(
+        itemId: 'book-1',
+        episodeId: null,
+        endPosition: Duration(seconds: 10),
+      );
+
+      final target = resolveFollowingChapterSleepTarget(
+        chapters: const [
+          InternalChapter(start: 0, end: 10, title: 'Chapter 1'),
+          InternalChapter(start: 10, end: 20, title: 'Chapter 2'),
+        ],
+        mediaDuration: const Duration(seconds: 30),
+        currentTarget: currentTarget,
+      );
+
+      expect(target?.endPosition, const Duration(seconds: 20));
+      expect(target?.itemId, 'book-1');
+    });
+
+    test('advances across a chapter gap', () {
+      const currentTarget = ChapterSleepTarget(
+        itemId: 'book-1',
+        episodeId: null,
+        endPosition: Duration(seconds: 10),
+      );
+
+      final target = resolveFollowingChapterSleepTarget(
+        chapters: const [
+          InternalChapter(start: 0, end: 10, title: 'Chapter 1'),
+          InternalChapter(start: 15, end: 20, title: 'Chapter 2'),
+        ],
+        mediaDuration: const Duration(seconds: 30),
+        currentTarget: currentTarget,
+      );
+
+      expect(target?.endPosition, const Duration(seconds: 20));
+    });
+
+    test('can advance repeatedly from the armed boundary', () {
+      const currentTarget = ChapterSleepTarget(
+        itemId: 'book-1',
+        episodeId: null,
+        endPosition: Duration(seconds: 20),
+      );
+
+      final target = resolveFollowingChapterSleepTarget(
+        chapters: const [
+          InternalChapter(start: 0, end: 10, title: 'Chapter 1'),
+          InternalChapter(start: 10, end: 20, title: 'Chapter 2'),
+          InternalChapter(start: 20, end: 30, title: 'Chapter 3'),
+        ],
+        mediaDuration: const Duration(seconds: 40),
+        currentTarget: currentTarget,
+      );
+
+      expect(target?.endPosition, const Duration(seconds: 30));
+    });
+
+    test('returns null when the current target is the media end', () {
+      const currentTarget = ChapterSleepTarget(
+        itemId: 'book-1',
+        episodeId: null,
+        endPosition: Duration(seconds: 30),
+      );
+
+      final target = resolveFollowingChapterSleepTarget(
+        chapters: const [InternalChapter(start: 20, end: 30, title: 'Final chapter')],
+        mediaDuration: const Duration(seconds: 30),
+        currentTarget: currentTarget,
+      );
+
+      expect(target, isNull);
+    });
+
+    test('fails closed when another chapter crosses the armed boundary', () {
+      const currentTarget = ChapterSleepTarget(
+        itemId: 'book-1',
+        episodeId: null,
+        endPosition: Duration(seconds: 10),
+      );
+
+      final target = resolveFollowingChapterSleepTarget(
+        chapters: const [
+          InternalChapter(start: 0, end: 10, title: 'Chapter 1'),
+          InternalChapter(start: 9, end: 20, title: 'Overlapping chapter'),
+        ],
+        mediaDuration: const Duration(seconds: 30),
+        currentTarget: currentTarget,
+      );
+
+      expect(target, isNull);
+    });
+
+    test('fails closed for duplicate next chapter starts', () {
+      const currentTarget = ChapterSleepTarget(
+        itemId: 'podcast-1',
+        episodeId: 'episode-7',
+        endPosition: Duration(seconds: 10),
+      );
+
+      final target = resolveFollowingChapterSleepTarget(
+        chapters: const [
+          InternalChapter(start: 0, end: 10, title: 'Chapter 1'),
+          InternalChapter(start: 10, end: 20, title: 'Chapter 2a'),
+          InternalChapter(start: 10, end: 25, title: 'Chapter 2b'),
+        ],
+        mediaDuration: const Duration(seconds: 30),
+        currentTarget: currentTarget,
+      );
+
+      expect(target, isNull);
     });
   });
 }
