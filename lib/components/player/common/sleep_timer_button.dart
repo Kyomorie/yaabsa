@@ -81,8 +81,10 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
   @override
   Widget build(BuildContext context) {
     final sleepTimer = ref.watch(sleepTimerHandlerProvider);
-    final chapterTarget = ref.read(sleepTimerHandlerProvider.notifier).availableChapterSleepTarget;
+    final handler = ref.read(sleepTimerHandlerProvider.notifier);
+    final chapterTarget = handler.availableChapterSleepTarget;
     final chapterRemaining = chapterTarget?.remainingAt(audioHandler.position);
+    final canReset = handler.canReset;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -148,7 +150,12 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
                     icon: const Icon(Icons.add),
                     label: const Text('+5m'),
                   ),
-                ],
+                ] else if (canReset)
+                  OutlinedButton.icon(
+                    onPressed: _extendChapterTimer,
+                    icon: const Icon(Icons.add),
+                    label: const Text('+1 chapter'),
+                  ),
                 FilledButton.tonalIcon(
                   onPressed: () {
                     ref.read(sleepTimerHandlerProvider.notifier).stop();
@@ -198,6 +205,13 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
 
     Navigator.of(context).pop();
     HapticFeedback.lightImpact();
+  }
+
+  void _extendChapterTimer() {
+    final extended = ref.read(sleepTimerHandlerProvider.notifier).reset();
+    if (extended) {
+      HapticFeedback.lightImpact();
+    }
   }
 
   void _handleCustomInput() {
