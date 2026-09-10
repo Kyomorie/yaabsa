@@ -49,8 +49,7 @@ class SleepTimerData {
        _forceMarkerVisibilityValue = forceMarkerVisibility;
 
   bool get showMarkerPin => _showMarkerPinValue ?? marker?.endPosition != null;
-  bool get showMarkerRange =>
-      _showMarkerRangeValue ?? marker?.endPosition != null;
+  bool get showMarkerRange => _showMarkerRangeValue ?? marker?.endPosition != null;
   bool get forceMarkerVisibility => _forceMarkerVisibilityValue ?? false;
 
   bool get isActive => state != SleepTimerState.inactive;
@@ -72,15 +71,12 @@ class SleepTimerData {
       remainingTime: remainingTime ?? this.remainingTime,
       state: state ?? this.state,
       mode: mode ?? this.mode,
-      totalDuration: clearTotalDuration
-          ? null
-          : totalDuration ?? this.totalDuration,
+      totalDuration: clearTotalDuration ? null : totalDuration ?? this.totalDuration,
       chapterTarget: chapterTarget ?? this.chapterTarget,
       marker: marker ?? this.marker,
       showMarkerPin: showMarkerPin ?? this.showMarkerPin,
       showMarkerRange: showMarkerRange ?? this.showMarkerRange,
-      forceMarkerVisibility:
-          forceMarkerVisibility ?? this.forceMarkerVisibility,
+      forceMarkerVisibility: forceMarkerVisibility ?? this.forceMarkerVisibility,
     );
   }
 }
@@ -98,10 +94,7 @@ class SleepTimerMarker {
   final Duration startPosition;
   final Duration? endPosition;
 
-  SleepTimerMarker copyWith({
-    Duration? endPosition,
-    bool clearEndPosition = false,
-  }) {
+  SleepTimerMarker copyWith({Duration? endPosition, bool clearEndPosition = false}) {
     return SleepTimerMarker(
       itemId: itemId,
       episodeId: episodeId,
@@ -138,21 +131,15 @@ class SleepTimerMarker {
       final episodeId = decoded['episodeId'];
       final startPositionMicros = decoded['startPositionMicros'];
       final endPositionMicros = decoded['endPositionMicros'];
-      if (itemId is! String ||
-          itemId.trim().isEmpty ||
-          startPositionMicros is! num) {
+      if (itemId is! String || itemId.trim().isEmpty || startPositionMicros is! num) {
         return null;
       }
 
       return SleepTimerMarker(
         itemId: itemId.trim(),
-        episodeId: episodeId is String && episodeId.trim().isNotEmpty
-            ? episodeId.trim()
-            : null,
+        episodeId: episodeId is String && episodeId.trim().isNotEmpty ? episodeId.trim() : null,
         startPosition: Duration(microseconds: startPositionMicros.toInt()),
-        endPosition: endPositionMicros is num
-            ? Duration(microseconds: endPositionMicros.toInt())
-            : null,
+        endPosition: endPositionMicros is num ? Duration(microseconds: endPositionMicros.toInt()) : null,
       );
     } catch (_) {
       return null;
@@ -208,10 +195,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     final markerRawValue = ref
         .read(settingsManagerProvider.notifier)
-        .getGlobalSetting<String>(
-          SettingKeys.sleepTimerMarker,
-          defaultValue: '',
-        );
+        .getGlobalSetting<String>(SettingKeys.sleepTimerMarker, defaultValue: '');
     final marker = SleepTimerMarker.fromRawJson(markerRawValue);
     final hasEnded = marker?.endPosition != null;
     return SleepTimerData(
@@ -226,44 +210,27 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   void _attachPlaybackStateListener() {
     try {
       _wasPlaybackRunning = audioHandler.playerControlState.playing;
-      _playerStateSubscription = audioHandler.playerControlStateStream.listen(
-        _handlePlayerStateChanged,
-      );
+      _playerStateSubscription = audioHandler.playerControlStateStream.listen(_handlePlayerStateChanged);
     } catch (e) {
-      logger(
-        'Failed to attach sleep timer playback listener: $e',
-        tag: 'SleepTimer',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to attach sleep timer playback listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
   void _attachPositionListener() {
     try {
-      _positionSubscription = audioHandler.positionStream.listen(
-        _handlePositionChanged,
-      );
+      _positionSubscription = audioHandler.positionStream.listen(_handlePositionChanged);
     } catch (e) {
-      logger(
-        'Failed to attach sleep timer position listener: $e',
-        tag: 'SleepTimer',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to attach sleep timer position listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
   void _attachPositionDiscontinuityListener() {
     try {
-      _positionDiscontinuitySubscription = audioHandler
-          .player
-          .positionDiscontinuityStream
-          .listen(_handlePositionDiscontinuity);
-    } catch (e) {
-      logger(
-        'Failed to attach sleep timer seek listener: $e',
-        tag: 'SleepTimer',
-        level: InfoLevel.warning,
+      _positionDiscontinuitySubscription = audioHandler.player.positionDiscontinuityStream.listen(
+        _handlePositionDiscontinuity,
       );
+    } catch (e) {
+      logger('Failed to attach sleep timer seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
@@ -279,20 +246,14 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       final media = audioHandler.currentMediaItem;
       if (target != null &&
           media != null &&
-          target.matchesMedia(
-            itemId: media.itemId,
-            episodeId: media.episodeId,
-          ) &&
+          target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId) &&
           target.endPosition >= media.totalDuration) {
         _claimChapterExpiry(_chapterRunGeneration);
         return;
       }
     }
 
-    if (wasRunning &&
-        !isRunning &&
-        state.isRunning &&
-        state.mode == SleepTimerMode.duration) {
+    if (wasRunning && !isRunning && state.isRunning && state.mode == SleepTimerMode.duration) {
       pause(triggeredByPlaybackPause: true);
       return;
     }
@@ -301,9 +262,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       if (!state.isActive) {
         audioHandler.clearSleepTimerCompletionGate();
       }
-      if (_pauseTriggeredByPlayback &&
-          state.state == SleepTimerState.paused &&
-          state.mode == SleepTimerMode.duration) {
+      if (_pauseTriggeredByPlayback && state.state == SleepTimerState.paused && state.mode == SleepTimerMode.duration) {
         resume();
         _scheduleMarkerPinHide();
         return;
@@ -321,18 +280,12 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     final target = state.chapterTarget;
     if (target == null || audioHandler.isCastControlActive) {
-      _cancelChapterTimerForContextChange(
-        'chapter target unavailable or cast became active',
-      );
+      _cancelChapterTimerForContextChange('chapter target unavailable or cast became active');
       return;
     }
 
     final media = audioHandler.currentMediaItem;
-    if (media == null ||
-        !target.matchesMedia(
-          itemId: media.itemId,
-          episodeId: media.episodeId,
-        )) {
+    if (media == null || !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
       _cancelChapterTimerForContextChange('playback media changed');
       return;
     }
@@ -347,8 +300,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     }
 
     final remaining = target.remainingAt(position);
-    if ((state.remainingTime - remaining).abs() >=
-        _sleepTimerUiUpdateInterval) {
+    if ((state.remainingTime - remaining).abs() >= _sleepTimerUiUpdateInterval) {
       state = state.copyWith(remainingTime: remaining);
     }
   }
@@ -370,10 +322,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     final media = audioHandler.currentMediaItem;
     if (media != null && audioHandler.position >= media.totalDuration) {
-      audioHandler.armSleepTimerCompletionGate(
-        itemId: media.itemId,
-        episodeId: media.episodeId,
-      );
+      audioHandler.armSleepTimerCompletionGate(itemId: media.itemId, episodeId: media.episodeId);
     }
 
     _chapterExpiryCheckGeneration += 1;
@@ -397,22 +346,14 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     final media = audioHandler.currentMediaItem;
     if (previousTarget == null ||
         media == null ||
-        !previousTarget.matchesMedia(
-          itemId: media.itemId,
-          episodeId: media.episodeId,
-        )) {
-      _cancelChapterTimerForContextChange(
-        'playback media changed while seeking',
-      );
+        !previousTarget.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
+      _cancelChapterTimerForContextChange('playback media changed while seeking');
       return;
     }
 
     final position = audioHandler.position;
     if (position >= media.totalDuration) {
-      audioHandler.armSleepTimerCompletionGate(
-        itemId: media.itemId,
-        episodeId: media.episodeId,
-      );
+      audioHandler.armSleepTimerCompletionGate(itemId: media.itemId, episodeId: media.episodeId);
       _claimChapterExpiry(runGeneration);
       return;
     }
@@ -425,18 +366,12 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       episodeId: media.episodeId,
     );
     if (nextTarget == null) {
-      _cancelChapterTimerForContextChange(
-        'seek landed outside a valid chapter',
-      );
+      _cancelChapterTimerForContextChange('seek landed outside a valid chapter');
       return;
     }
 
     final remaining = nextTarget.remainingAt(position);
-    state = state.copyWith(
-      remainingTime: remaining,
-      chapterTarget: nextTarget,
-      clearTotalDuration: true,
-    );
+    state = state.copyWith(remainingTime: remaining, chapterTarget: nextTarget, clearTotalDuration: true);
     _syncSleepTimerCompletionGate(nextTarget);
 
     if (nextTarget.endPosition != previousTarget.endPosition) {
@@ -463,14 +398,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       final media = audioHandler.currentMediaItem;
       if (target == null ||
           media == null ||
-          !target.matchesMedia(
-            itemId: media.itemId,
-            episodeId: media.episodeId,
-          ) ||
+          !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId) ||
           audioHandler.isCastControlActive) {
-        _cancelChapterTimerForContextChange(
-          'playback context changed before expiry',
-        );
+        _cancelChapterTimerForContextChange('playback context changed before expiry');
         return;
       }
 
@@ -484,11 +414,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     if (state.mode != SleepTimerMode.chapterEnd || !state.isActive) {
       return;
     }
-    logger(
-      'Chapter sleep timer cancelled: $reason',
-      tag: 'SleepTimer',
-      level: InfoLevel.info,
-    );
+    logger('Chapter sleep timer cancelled: $reason', tag: 'SleepTimer', level: InfoLevel.info);
     stop(suppressAutoRestart: false, recordHistory: false);
   }
 
@@ -506,8 +432,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
   bool _matchesChapterTargetMedia(ChapterSleepTarget target) {
     final media = audioHandler.currentMediaItem;
-    return media != null &&
-        target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId);
+    return media != null && target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId);
   }
 
   void _claimChapterExpiry(int generation) {
@@ -525,9 +450,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   bool _isFadeOutEnabled() {
-    return ref
-        .read(settingsManagerProvider.notifier)
-        .getGlobalSetting<bool>(SettingKeys.sleepTimerFadeOutEnabled);
+    return ref.read(settingsManagerProvider.notifier).getGlobalSetting<bool>(SettingKeys.sleepTimerFadeOutEnabled);
   }
 
   Duration _remainingForCurrentRun() {
@@ -550,18 +473,11 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
-  Future<void> _setPlayerVolumeSafely(
-    double volume, {
-    required String reason,
-  }) async {
+  Future<void> _setPlayerVolumeSafely(double volume, {required String reason}) async {
     try {
       await audioHandler.setVolume(volume);
     } catch (e) {
-      logger(
-        'Failed to set volume during $reason: $e',
-        tag: 'SleepTimer',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to set volume during $reason: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
@@ -572,10 +488,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     }
 
     _fadeBaseVolume = null;
-    await _setPlayerVolumeSafely(
-      fadeBaseVolume,
-      reason: 'sleep timer fade volume restore',
-    );
+    await _setPlayerVolumeSafely(fadeBaseVolume, reason: 'sleep timer fade volume restore');
   }
 
   void _applyFadeOutIfNeeded(Duration remaining) {
@@ -594,19 +507,12 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       return;
     }
 
-    final progress =
-        remaining.inMilliseconds / _sleepTimerFadeOutDuration.inMilliseconds;
+    final progress = remaining.inMilliseconds / _sleepTimerFadeOutDuration.inMilliseconds;
     final clampedProgress = progress.clamp(0.0, 1.0);
-    final curvedProgress = math
-        .pow(clampedProgress, _sleepTimerFadeCurveExponent)
-        .toDouble();
-    final targetVolume = (fadeBaseVolume * curvedProgress)
-        .clamp(0.0, fadeBaseVolume)
-        .toDouble();
+    final curvedProgress = math.pow(clampedProgress, _sleepTimerFadeCurveExponent).toDouble();
+    final targetVolume = (fadeBaseVolume * curvedProgress).clamp(0.0, fadeBaseVolume).toDouble();
 
-    unawaited(
-      _setPlayerVolumeSafely(targetVolume, reason: 'sleep timer fade out'),
-    );
+    unawaited(_setPlayerVolumeSafely(targetVolume, reason: 'sleep timer fade out'));
   }
 
   int _normalizeMinutesOfDay(int value) {
@@ -616,19 +522,13 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
   bool _isWithinAutoRestartTimeRange() {
     final settingManager = ref.read(settingsManagerProvider.notifier);
-    final useTimeRange = settingManager.getGlobalSetting<bool>(
-      SettingKeys.sleepTimerAutoRestartUseTimeRange,
-    );
+    final useTimeRange = settingManager.getGlobalSetting<bool>(SettingKeys.sleepTimerAutoRestartUseTimeRange);
     if (!useTimeRange) {
       return true;
     }
 
-    final startMinutesRaw = settingManager.getGlobalSetting<int>(
-      SettingKeys.sleepTimerAutoRestartRangeStartMinutes,
-    );
-    final endMinutesRaw = settingManager.getGlobalSetting<int>(
-      SettingKeys.sleepTimerAutoRestartRangeEndMinutes,
-    );
+    final startMinutesRaw = settingManager.getGlobalSetting<int>(SettingKeys.sleepTimerAutoRestartRangeStartMinutes);
+    final endMinutesRaw = settingManager.getGlobalSetting<int>(SettingKeys.sleepTimerAutoRestartRangeEndMinutes);
     final startMinutes = _normalizeMinutesOfDay(startMinutesRaw);
     final endMinutes = _normalizeMinutesOfDay(endMinutesRaw);
 
@@ -650,16 +550,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     try {
       await ref
           .read(settingsManagerProvider.notifier)
-          .setGlobalSetting<bool>(
-            SettingKeys.sleepTimerAutoRestartSuppressed,
-            value,
-          );
+          .setGlobalSetting<bool>(SettingKeys.sleepTimerAutoRestartSuppressed, value);
     } catch (e) {
-      logger(
-        'Failed to update sleep timer auto-restart suppression: $e',
-        tag: 'SleepTimer',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to update sleep timer auto-restart suppression: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
@@ -668,16 +561,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     try {
       await ref
           .read(settingsManagerProvider.notifier)
-          .setGlobalSetting<int>(
-            SettingKeys.sleepTimerLastDurationMinutes,
-            minutes,
-          );
+          .setGlobalSetting<int>(SettingKeys.sleepTimerLastDurationMinutes, minutes);
     } catch (e) {
-      logger(
-        'Failed to persist last sleep timer duration: $e',
-        tag: 'SleepTimer',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to persist last sleep timer duration: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
@@ -685,16 +571,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     try {
       await ref
           .read(settingsManagerProvider.notifier)
-          .setGlobalSetting<String>(
-            SettingKeys.sleepTimerMarker,
-            marker?.toRawJson() ?? '',
-          );
+          .setGlobalSetting<String>(SettingKeys.sleepTimerMarker, marker?.toRawJson() ?? '');
     } catch (e) {
-      logger(
-        'Failed to persist sleep timer marker: $e',
-        tag: 'SleepTimer',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to persist sleep timer marker: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
@@ -705,11 +584,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _markerRangeHideTimer = null;
   }
 
-  void _setMarkerVisibility({
-    bool? showPin,
-    bool? showRange,
-    bool? forceMarkerVisibility,
-  }) {
+  void _setMarkerVisibility({bool? showPin, bool? showRange, bool? forceMarkerVisibility}) {
     final marker = state.marker;
     if (marker == null) {
       return;
@@ -717,8 +592,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     final nextShowPin = showPin ?? state.showMarkerPin;
     final nextShowRange = showRange ?? state.showMarkerRange;
-    final nextForceMarkerVisibility =
-        forceMarkerVisibility ?? state.forceMarkerVisibility;
+    final nextForceMarkerVisibility = forceMarkerVisibility ?? state.forceMarkerVisibility;
     if (nextShowPin == state.showMarkerPin &&
         nextShowRange == state.showMarkerRange &&
         nextForceMarkerVisibility == state.forceMarkerVisibility) {
@@ -760,11 +634,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _markerPinHideTimer?.cancel();
     _markerPinHideTimer = Timer(_sleepTimerMarkerPinVisibilityDuration, () {
       _markerPinHideTimer = null;
-      _setMarkerVisibility(
-        showPin: false,
-        showRange: false,
-        forceMarkerVisibility: false,
-      );
+      _setMarkerVisibility(showPin: false, showRange: false, forceMarkerVisibility: false);
     });
   }
 
@@ -776,11 +646,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _markerPinHideTimer?.cancel();
     _markerPinHideTimer = null;
     _markerRangeHideTimer?.cancel();
-    _setMarkerVisibility(
-      showPin: false,
-      showRange: true,
-      forceMarkerVisibility: false,
-    );
+    _setMarkerVisibility(showPin: false, showRange: true, forceMarkerVisibility: false);
     _markerRangeHideTimer = Timer(_sleepTimerMarkerPinVisibilityDuration, () {
       _markerRangeHideTimer = null;
       _setMarkerVisibility(showRange: false);
@@ -790,9 +656,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   bool toggleSleepTimerMarker() {
     final marker = state.marker;
     final media = audioHandler.currentMediaItem;
-    if (marker == null ||
-        media == null ||
-        !marker.matches(itemId: media.itemId, episodeId: media.episodeId)) {
+    if (marker == null || media == null || !marker.matches(itemId: media.itemId, episodeId: media.episodeId)) {
       return false;
     }
 
@@ -800,21 +664,14 @@ class SleepTimerHandler extends _$SleepTimerHandler {
         .read(settingsManagerProvider.notifier)
         .getGlobalSetting<bool>(SettingKeys.sleepTimerShowMarker);
     final isMarkerVisible =
-        state.forceMarkerVisibility ||
-        (showMarkerSetting && (state.showMarkerPin || state.showMarkerRange));
+        state.forceMarkerVisibility || (showMarkerSetting && (state.showMarkerPin || state.showMarkerRange));
     if (isMarkerVisible) {
       _cancelMarkerVisibilityTimers();
-      state = state.copyWith(
-        showMarkerPin: false,
-        showMarkerRange: false,
-        forceMarkerVisibility: false,
-      );
+      state = state.copyWith(showMarkerPin: false, showMarkerRange: false, forceMarkerVisibility: false);
       return true;
     }
 
-    final markerWithEnd = marker.endPosition == null
-        ? _completeMarkerAtCurrentPosition()
-        : marker;
+    final markerWithEnd = marker.endPosition == null ? _completeMarkerAtCurrentPosition() : marker;
     if (markerWithEnd == null) {
       return false;
     }
@@ -836,19 +693,13 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       return null;
     }
 
-    return SleepTimerMarker(
-      itemId: media.itemId,
-      episodeId: media.episodeId,
-      startPosition: audioHandler.position,
-    );
+    return SleepTimerMarker(itemId: media.itemId, episodeId: media.episodeId, startPosition: audioHandler.position);
   }
 
   SleepTimerMarker? _completeMarkerAtCurrentPosition() {
     final marker = state.marker;
     final media = audioHandler.currentMediaItem;
-    if (marker == null ||
-        media == null ||
-        !marker.matches(itemId: media.itemId, episodeId: media.episodeId)) {
+    if (marker == null || media == null || !marker.matches(itemId: media.itemId, episodeId: media.episodeId)) {
       return marker;
     }
 
@@ -878,10 +729,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
         media != null &&
         target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId) &&
         target.endPosition >= media.totalDuration) {
-      audioHandler.armSleepTimerCompletionGate(
-        itemId: media.itemId,
-        episodeId: media.episodeId,
-      );
+      audioHandler.armSleepTimerCompletionGate(itemId: media.itemId, episodeId: media.episodeId);
       return;
     }
     audioHandler.clearSleepTimerCompletionGate();
@@ -894,20 +742,13 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     if (state.mode == SleepTimerMode.duration) {
       return true;
     }
-    if (!state.isRunning ||
-        audioHandler.isCastControlActive ||
-        _chapterSeekSettleTimer != null) {
+    if (!state.isRunning || audioHandler.isCastControlActive || _chapterSeekSettleTimer != null) {
       return false;
     }
 
     final target = state.chapterTarget;
     final media = audioHandler.currentMediaItem;
-    if (target == null ||
-        media == null ||
-        !target.matchesMedia(
-          itemId: media.itemId,
-          episodeId: media.episodeId,
-        )) {
+    if (target == null || media == null || !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
       return false;
     }
 
@@ -925,22 +766,14 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     }
 
     final settingManager = ref.read(settingsManagerProvider.notifier);
-    final autoRestartEnabled = settingManager.getGlobalSetting<bool>(
-      SettingKeys.sleepTimerAutoRestartEnabled,
-    );
+    final autoRestartEnabled = settingManager.getGlobalSetting<bool>(SettingKeys.sleepTimerAutoRestartEnabled);
     if (!autoRestartEnabled) {
       return;
     }
 
-    final autoRestartSuppressed = settingManager.getGlobalSetting<bool>(
-      SettingKeys.sleepTimerAutoRestartSuppressed,
-    );
+    final autoRestartSuppressed = settingManager.getGlobalSetting<bool>(SettingKeys.sleepTimerAutoRestartSuppressed);
     if (autoRestartSuppressed) {
-      logger(
-        'Sleep timer auto-restart is suppressed after manual stop',
-        tag: 'SleepTimer',
-        level: InfoLevel.debug,
-      );
+      logger('Sleep timer auto-restart is suppressed after manual stop', tag: 'SleepTimer', level: InfoLevel.debug);
       return;
     }
 
@@ -953,16 +786,10 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       return;
     }
 
-    final rememberedMinutes = settingManager.getGlobalSetting<int>(
-      SettingKeys.sleepTimerLastDurationMinutes,
-    );
+    final rememberedMinutes = settingManager.getGlobalSetting<int>(SettingKeys.sleepTimerLastDurationMinutes);
     final safeMinutes = rememberedMinutes < 1 ? 30 : rememberedMinutes;
 
-    logger(
-      'Auto-restarting sleep timer for $safeMinutes minutes',
-      tag: 'SleepTimer',
-      level: InfoLevel.info,
-    );
+    logger('Auto-restarting sleep timer for $safeMinutes minutes', tag: 'SleepTimer', level: InfoLevel.info);
     start(Duration(minutes: safeMinutes), automatic: true);
   }
 
@@ -984,11 +811,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     unawaited(_setAutoRestartSuppressed(false));
     unawaited(_persistLastDuration(duration));
 
-    logger(
-      'Sleep timer started for ${duration.inMinutes} minutes',
-      tag: 'SleepTimer',
-      level: InfoLevel.info,
-    );
+    logger('Sleep timer started for ${duration.inMinutes} minutes', tag: 'SleepTimer', level: InfoLevel.info);
 
     _cancelMarkerVisibilityTimers();
     final marker = _createMarker();
@@ -1008,9 +831,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     unawaited(
       PlayerHistoryHandler.addPlayerHistory(
-        automatic
-            ? PlayerHistoryType.sleepTimerAutoStarted
-            : PlayerHistoryType.sleepTimerStarted,
+        automatic ? PlayerHistoryType.sleepTimerAutoStarted : PlayerHistoryType.sleepTimerStarted,
         details: <String, Object?>{'durationSeconds': duration.inSeconds},
       ),
     );
@@ -1080,9 +901,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   void stop({bool suppressAutoRestart = true, bool recordHistory = true}) {
-    final remainingTime = state.isRunning
-        ? _remainingForCurrentRun()
-        : state.remainingTime;
+    final remainingTime = state.isRunning ? _remainingForCurrentRun() : state.remainingTime;
     _timer?.cancel();
     _timer = null;
     _countdownStartTime = null;
@@ -1112,10 +931,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       unawaited(
         PlayerHistoryHandler.addPlayerHistory(
           PlayerHistoryType.sleepTimerStopped,
-          details: <String, Object?>{
-            'remainingSeconds': remainingTime.inSeconds,
-            'source': 'manual',
-          },
+          details: <String, Object?>{'remainingSeconds': remainingTime.inSeconds, 'source': 'manual'},
         ),
       );
     }
@@ -1137,11 +953,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     logger('Sleep timer paused', tag: 'SleepTimer', level: InfoLevel.info);
 
     final marker = _completeMarkerAtCurrentPosition();
-    state = state.copyWith(
-      remainingTime: remainingTime,
-      state: SleepTimerState.paused,
-      marker: marker,
-    );
+    state = state.copyWith(remainingTime: remainingTime, state: SleepTimerState.paused, marker: marker);
     _showMarker(showPin: false);
     unawaited(_persistMarker(marker));
     unawaited(
@@ -1169,49 +981,29 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     logger('Sleep timer resumed', tag: 'SleepTimer', level: InfoLevel.info);
 
     final marker = state.marker?.copyWith(clearEndPosition: true);
-    state = state.copyWith(
-      state: SleepTimerState.running,
-      marker: marker,
-      forceMarkerVisibility: false,
-    );
+    state = state.copyWith(state: SleepTimerState.running, marker: marker, forceMarkerVisibility: false);
     _showMarker(showPin: false);
     unawaited(_persistMarker(marker));
     unawaited(
       PlayerHistoryHandler.addPlayerHistory(
         PlayerHistoryType.sleepTimerStarted,
-        details: <String, Object?>{
-          'durationSeconds': state.remainingTime.inSeconds,
-          'source': 'resume',
-        },
+        details: <String, Object?>{'durationSeconds': state.remainingTime.inSeconds, 'source': 'resume'},
       ),
     );
     _startTimer(state.remainingTime);
   }
 
   void extend(Duration additionalTime) {
-    if (!state.isActive ||
-        state.mode != SleepTimerMode.duration ||
-        additionalTime <= Duration.zero)
-      return;
+    if (!state.isActive || state.mode != SleepTimerMode.duration || additionalTime <= Duration.zero) return;
 
     final isRunning = state.isRunning;
-    final baseRemainingTime = isRunning
-        ? _remainingForCurrentRun()
-        : state.remainingTime;
+    final baseRemainingTime = isRunning ? _remainingForCurrentRun() : state.remainingTime;
     final newRemainingTime = baseRemainingTime + additionalTime;
-    final newTotalDuration =
-        (state.totalDuration ?? baseRemainingTime) + additionalTime;
+    final newTotalDuration = (state.totalDuration ?? baseRemainingTime) + additionalTime;
 
-    logger(
-      'Sleep timer extended by ${additionalTime.inMinutes} minutes',
-      tag: 'SleepTimer',
-      level: InfoLevel.info,
-    );
+    logger('Sleep timer extended by ${additionalTime.inMinutes} minutes', tag: 'SleepTimer', level: InfoLevel.info);
 
-    state = state.copyWith(
-      remainingTime: newRemainingTime,
-      totalDuration: newTotalDuration,
-    );
+    state = state.copyWith(remainingTime: newRemainingTime, totalDuration: newTotalDuration);
     unawaited(
       PlayerHistoryHandler.addPlayerHistory(
         PlayerHistoryType.sleepTimerExtended,
@@ -1243,19 +1035,12 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       return false;
     }
 
-    logger(
-      'Sleep timer reset to ${totalDuration.inMinutes} minutes',
-      tag: 'SleepTimer',
-      level: InfoLevel.info,
-    );
+    logger('Sleep timer reset to ${totalDuration.inMinutes} minutes', tag: 'SleepTimer', level: InfoLevel.info);
 
     unawaited(
       PlayerHistoryHandler.addPlayerHistory(
         PlayerHistoryType.sleepTimerStopped,
-        details: <String, Object?>{
-          'remainingSeconds': totalDuration.inSeconds,
-          'source': 'reset',
-        },
+        details: <String, Object?>{'remainingSeconds': totalDuration.inSeconds, 'source': 'reset'},
       ),
     );
 
@@ -1310,10 +1095,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     final media = audioHandler.currentMediaItem;
     if (currentTarget == null ||
         media == null ||
-        !currentTarget.matchesMedia(
-          itemId: media.itemId,
-          episodeId: media.episodeId,
-        )) {
+        !currentTarget.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
       return false;
     }
 
@@ -1329,11 +1111,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _chapterExpiryCheckGeneration += 1;
     final position = audioHandler.position;
     final remaining = nextTarget.remainingAt(position);
-    state = state.copyWith(
-      remainingTime: remaining,
-      chapterTarget: nextTarget,
-      clearTotalDuration: true,
-    );
+    state = state.copyWith(remainingTime: remaining, chapterTarget: nextTarget, clearTotalDuration: true);
     _syncSleepTimerCompletionGate(nextTarget);
 
     logger(
@@ -1369,8 +1147,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       } else {
         _applyFadeOutIfNeeded(remaining);
 
-        if ((state.remainingTime - remaining).abs() >=
-            _sleepTimerUiUpdateInterval) {
+        if ((state.remainingTime - remaining).abs() >= _sleepTimerUiUpdateInterval) {
           state = state.copyWith(remainingTime: remaining);
         }
       }
@@ -1412,8 +1189,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   void _onChapterTimerExpired(int generation, ChapterSleepTarget target) {
-    if (!_isChapterRunCurrent(generation) ||
-        !_matchesChapterTargetMedia(target)) {
+    if (!_isChapterRunCurrent(generation) || !_matchesChapterTargetMedia(target)) {
       return;
     }
 
@@ -1442,10 +1218,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     unawaited(
       PlayerHistoryHandler.addPlayerHistory(
         PlayerHistoryType.sleepTimerExpired,
-        details: <String, Object?>{
-          'action': action.name,
-          'mode': SleepTimerMode.chapterEnd.name,
-        },
+        details: <String, Object?>{'action': action.name, 'mode': SleepTimerMode.chapterEnd.name},
       ),
     );
 
@@ -1455,28 +1228,16 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   Future<void> _executeExpireAction(SleepTimerExpireAction action) async {
     try {
       if (action == SleepTimerExpireAction.pause) {
-        logger(
-          'Sleep timer expired, pausing playback',
-          tag: 'SleepTimer',
-          level: InfoLevel.info,
-        );
+        logger('Sleep timer expired, pausing playback', tag: 'SleepTimer', level: InfoLevel.info);
         await audioHandler.applySleepTimerAutoRewindNow();
         await audioHandler.pause();
       } else {
-        logger(
-          'Sleep timer expired, stopping playback',
-          tag: 'SleepTimer',
-          level: InfoLevel.info,
-        );
+        logger('Sleep timer expired, stopping playback', tag: 'SleepTimer', level: InfoLevel.info);
         await audioHandler.applySleepTimerAutoRewindNow();
         await audioHandler.stop();
       }
     } catch (e) {
-      logger(
-        'Failed to run sleep timer expiry action: $e',
-        tag: 'SleepTimer',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to run sleep timer expiry action: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     } finally {
       await _restoreFadeVolumeIfNeeded();
     }
@@ -1488,25 +1249,18 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     ChapterSleepTarget target,
   ) async {
     try {
-      if (!_isChapterRunCurrent(generation) ||
-          !_matchesChapterTargetMedia(target)) {
+      if (!_isChapterRunCurrent(generation) || !_matchesChapterTargetMedia(target)) {
         return;
       }
 
-      logger(
-        'Chapter sleep timer expired, pausing playback at chapter end',
-        tag: 'SleepTimer',
-        level: InfoLevel.info,
-      );
+      logger('Chapter sleep timer expired, pausing playback at chapter end', tag: 'SleepTimer', level: InfoLevel.info);
       await audioHandler.pause();
-      if (!_isChapterRunCurrent(generation) ||
-          !_matchesChapterTargetMedia(target)) {
+      if (!_isChapterRunCurrent(generation) || !_matchesChapterTargetMedia(target)) {
         return;
       }
 
       await audioHandler.applySleepTimerAutoRewindNow();
-      if (!_isChapterRunCurrent(generation) ||
-          !_matchesChapterTargetMedia(target)) {
+      if (!_isChapterRunCurrent(generation) || !_matchesChapterTargetMedia(target)) {
         return;
       }
 
@@ -1514,11 +1268,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
         await audioHandler.stop();
       }
     } catch (e) {
-      logger(
-        'Failed to run chapter sleep timer expiry action: $e',
-        tag: 'SleepTimer',
-        level: InfoLevel.warning,
-      );
+      logger('Failed to run chapter sleep timer expiry action: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     } finally {
       if (_isChapterRunCurrent(generation)) {
         await _restoreFadeVolumeIfNeeded();

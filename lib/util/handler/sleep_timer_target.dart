@@ -3,11 +3,7 @@ import 'package:yaabsa/models/internal_media.dart';
 enum SleepTimerMode { duration, chapterEnd }
 
 class ChapterSleepTarget {
-  const ChapterSleepTarget({
-    required this.itemId,
-    required this.episodeId,
-    required this.endPosition,
-  });
+  const ChapterSleepTarget({required this.itemId, required this.episodeId, required this.endPosition});
 
   final String itemId;
   final String? episodeId;
@@ -37,10 +33,8 @@ ChapterSleepTarget? resolveChapterSleepTarget({
     return null;
   }
 
-  final mediaDurationSeconds =
-      mediaDuration.inMicroseconds / Duration.microsecondsPerSecond;
-  final positionSeconds =
-      position.inMicroseconds / Duration.microsecondsPerSecond;
+  final mediaDurationSeconds = mediaDuration.inMicroseconds / Duration.microsecondsPerSecond;
+  final positionSeconds = position.inMicroseconds / Duration.microsecondsPerSecond;
 
   InternalChapter? matchingChapter;
   for (final chapter in chapters) {
@@ -70,18 +64,12 @@ ChapterSleepTarget? resolveChapterSleepTarget({
     return null;
   }
 
-  final endPosition = Duration(
-    microseconds: (end * Duration.microsecondsPerSecond).round(),
-  );
+  final endPosition = Duration(microseconds: (end * Duration.microsecondsPerSecond).round());
   if (endPosition <= position || endPosition > mediaDuration) {
     return null;
   }
 
-  return ChapterSleepTarget(
-    itemId: itemId,
-    episodeId: episodeId,
-    endPosition: endPosition,
-  );
+  return ChapterSleepTarget(itemId: itemId, episodeId: episodeId, endPosition: endPosition);
 }
 
 ChapterSleepTarget? resolveFollowingChapterSleepTarget({
@@ -92,25 +80,18 @@ ChapterSleepTarget? resolveFollowingChapterSleepTarget({
   if (chapters == null || chapters.isEmpty || mediaDuration <= Duration.zero) {
     return null;
   }
-  if (currentTarget.endPosition <= Duration.zero ||
-      currentTarget.endPosition >= mediaDuration) {
+  if (currentTarget.endPosition <= Duration.zero || currentTarget.endPosition >= mediaDuration) {
     return null;
   }
 
-  final mediaDurationSeconds =
-      mediaDuration.inMicroseconds / Duration.microsecondsPerSecond;
-  final boundarySeconds =
-      currentTarget.endPosition.inMicroseconds / Duration.microsecondsPerSecond;
+  final mediaDurationSeconds = mediaDuration.inMicroseconds / Duration.microsecondsPerSecond;
+  final boundarySeconds = currentTarget.endPosition.inMicroseconds / Duration.microsecondsPerSecond;
 
   InternalChapter? candidate;
   for (final chapter in chapters) {
     final start = chapter.start;
     final end = chapter.end;
-    if (!start.isFinite ||
-        !end.isFinite ||
-        start < 0 ||
-        end <= start ||
-        end > mediaDurationSeconds) {
+    if (!start.isFinite || !end.isFinite || start < 0 || end <= start || end > mediaDurationSeconds) {
       continue;
     }
 
@@ -136,16 +117,10 @@ ChapterSleepTarget? resolveFollowingChapterSleepTarget({
     return null;
   }
 
-  final endPosition = Duration(
-    microseconds: (candidate.end * Duration.microsecondsPerSecond).round(),
-  );
+  final endPosition = Duration(microseconds: (candidate.end * Duration.microsecondsPerSecond).round());
   if (endPosition <= currentTarget.endPosition || endPosition > mediaDuration) {
     return null;
   }
 
-  return ChapterSleepTarget(
-    itemId: currentTarget.itemId,
-    episodeId: currentTarget.episodeId,
-    endPosition: endPosition,
-  );
+  return ChapterSleepTarget(itemId: currentTarget.itemId, episodeId: currentTarget.episodeId, endPosition: endPosition);
 }
