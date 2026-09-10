@@ -54,7 +54,6 @@ class SleepTimerData {
 
   bool get isActive => state != SleepTimerState.inactive;
   bool get isRunning => state == SleepTimerState.running;
-  bool get canReset => isActive && mode == SleepTimerMode.duration;
 
   SleepTimerData copyWith({
     Duration? remainingTime,
@@ -63,7 +62,6 @@ class SleepTimerData {
     Duration? totalDuration,
     bool clearTotalDuration = false,
     ChapterSleepTarget? chapterTarget,
-    bool clearChapterTarget = false,
     SleepTimerMarker? marker,
     bool? showMarkerPin,
     bool? showMarkerRange,
@@ -74,7 +72,7 @@ class SleepTimerData {
       state: state ?? this.state,
       mode: mode ?? this.mode,
       totalDuration: clearTotalDuration ? null : totalDuration ?? this.totalDuration,
-      chapterTarget: clearChapterTarget ? null : chapterTarget ?? this.chapterTarget,
+      chapterTarget: chapterTarget ?? this.chapterTarget,
       marker: marker ?? this.marker,
       showMarkerPin: showMarkerPin ?? this.showMarkerPin,
       showMarkerRange: showMarkerRange ?? this.showMarkerRange,
@@ -436,16 +434,23 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     return generation == _chapterRunGeneration;
   }
 
+  bool _matchesChapterTargetMedia(ChapterSleepTarget target) {
+    final media = audioHandler.currentMediaItem;
+    return media != null && target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId);
+  }
+
   void _claimChapterExpiry(int generation) {
+    final target = state.chapterTarget;
     if (!_isChapterRunCurrent(generation) ||
         _chapterExpiryClaimed ||
         !state.isRunning ||
-        state.mode != SleepTimerMode.chapterEnd) {
+        state.mode != SleepTimerMode.chapterEnd ||
+        target == null) {
       return;
     }
 
     _chapterExpiryClaimed = true;
-    _onChapterTimerExpired(generation);
+    _onChapterTimerExpired(generation, target);
   }
 
   bool _isFadeOutEnabled() {
@@ -850,7 +855,6 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       stop(suppressAutoRestart: false, recordHistory: false);
     }
     _invalidateChapterRun();
-    final generation = _chapterRunGeneration;
 
     _pauseTriggeredByPlayback = false;
     _timer?.cancel();
@@ -899,9 +903,6 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       ),
     );
 
-    if (position >= target.endPosition) {
-      _scheduleChapterExpiryCheck(generation);
-    }
     return true;
   }
 
@@ -1033,9 +1034,6 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     }
     if (state.mode == SleepTimerMode.chapterEnd) {
       return _extendChapterTimerByOneChapter();
-    }
-    if (!state.canReset) {
-      return false;
     }
 
     final totalDuration = state.totalDuration ?? state.remainingTime;
@@ -1200,8 +1198,8 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     unawaited(_executeExpireAction(action));
   }
 
-  void _onChapterTimerExpired(int generation) {
-    if (!_isChapterRunCurrent(generation)) {
+  void _onChapterTimerExpired(int generation, ChapterSleepTarget target) {
+    if (!_isChapterRunCurrent(generation) || !_matchesChapterTargetMedia(target)) {
       return;
     }
 
@@ -1234,7 +1232,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       ),
     );
 
-    unawaited(_executeChapterExpireAction(action, generation));
+    unawaited(_executeChapterExpireAction(action, generation, target));
   }
 
   Future<void> _executeExpireAction(SleepTimerExpireAction action) async {
@@ -1255,20 +1253,24 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     }
   }
 
-  Future<void> _executeChapterExpireAction(SleepTimerExpireAction action, int generation) async {
+  Future<void> _executeChapterExpireAction(
+    SleepTimerExpireAction action,
+    int generation,
+    ChapterSleepTarget target,
+  ) async {
     try {
-      if (!_isChapterRunCurrent(generation)) {
+      if (!_isChapterRunCurrent(generation) || !_matchesChapterTargetMedia(target)) {
         return;
       }
 
       logger('Chapter sleep timer expired, pausing playback at chapter end', tag: 'SleepTimer', level: InfoLevel.info);
       await audioHandler.pause();
-      if (!_isChapterRunCurrent(generation)) {
+      if (!_isChapterRunCurrent(generation) || !_matchesChapterTargetMedia(target)) {
         return;
       }
 
       await audioHandler.applySleepTimerAutoRewindNow();
-      if (!_isChapterRunCurrent(generation)) {
+      if (!_isChapterRunCurrent(generation) || !_matchesChapterTargetMedia(target)) {
         return;
       }
 
