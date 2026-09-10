@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:yaabsa/database/settings_manager.dart';
+import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
 import 'package:yaabsa/util/audio_handler/player_history_handler.dart';
 import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/handler/sleep_timer_target.dart';
@@ -155,18 +156,22 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   Duration? _countdownRunDuration;
   StreamSubscription<PlayerState>? _playerStateSubscription;
   StreamSubscription<Duration>? _positionSubscription;
+  StreamSubscription<PositionDiscontinuity>? _positionDiscontinuitySubscription;
   bool _wasPlaybackRunning = false;
   bool _pauseTriggeredByPlayback = false;
   double? _fadeBaseVolume;
   Timer? _markerPinHideTimer;
   Timer? _markerRangeHideTimer;
+  Timer? _chapterSeekSettleTimer;
   int _chapterRunGeneration = 0;
+  int _chapterExpiryCheckGeneration = 0;
   bool _chapterExpiryClaimed = false;
 
   @override
   SleepTimerData build() {
     _attachPlaybackStateListener();
     _attachPositionListener();
+    _attachPositionDiscontinuityListener();
 
     ref.onDispose(() {
       _timer?.cancel();
@@ -183,6 +188,8 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       _playerStateSubscription = null;
       _positionSubscription?.cancel();
       _positionSubscription = null;
+      _positionDiscontinuitySubscription?.cancel();
+      _positionDiscontinuitySubscription = null;
 
       unawaited(_restoreFadeVolumeIfNeeded());
     });
@@ -215,6 +222,16 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       _positionSubscription = audioHandler.positionStream.listen(_handlePositionChanged);
     } catch (e) {
       logger('Failed to attach sleep timer position listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  void _attachPositionDiscontinuityListener() {
+    try {
+      _positionDiscontinuitySubscription = audioHandler.player.positionDiscontinuityStream.listen(
+        _handlePositionDiscontinuity,
+      );
+    } catch (e) {
+      logger('Failed to attach sleep timer seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
@@ -257,8 +274,12 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       return;
     }
 
+    if (_chapterSeekSettleTimer != null) {
+      return;
+    }
+
     if (position >= target.endPosition) {
-      _claimChapterExpiry(_chapterRunGeneration);
+      _scheduleChapterExpiryCheck(_chapterRunGeneration);
       return;
     }
 
@@ -266,6 +287,108 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     if ((state.remainingTime - remaining).abs() >= _sleepTimerUiUpdateInterval) {
       state = state.copyWith(remainingTime: remaining);
     }
+  }
+
+  void _handlePositionDiscontinuity(PositionDiscontinuity discontinuity) {
+    if (discontinuity.reason != PositionDiscontinuityReason.seek ||
+        !state.isRunning ||
+        state.mode != SleepTimerMode.chapterEnd ||
+        audioHandler.isCastControlActive) {
+      return;
+    }
+
+    // Smart rewind and resume reconciliation already use the existing guarded
+    // internal-seek scope. They may change the distance to the target, but must
+    // not retarget the chapter timer as a user navigation would.
+    if (audioHandler.hasGuardedInternalSeek) {
+      return;
+    }
+
+    _chapterExpiryCheckGeneration += 1;
+    final runGeneration = _chapterRunGeneration;
+    _chapterSeekSettleTimer?.cancel();
+    _chapterSeekSettleTimer = Timer(Duration.zero, () {
+      _chapterSeekSettleTimer = null;
+      _retargetChapterTimerAfterSeek(runGeneration);
+    });
+  }
+
+  void _retargetChapterTimerAfterSeek(int runGeneration) {
+    if (!_isChapterRunCurrent(runGeneration) ||
+        !state.isRunning ||
+        state.mode != SleepTimerMode.chapterEnd ||
+        audioHandler.isCastControlActive) {
+      return;
+    }
+
+    final previousTarget = state.chapterTarget;
+    final media = audioHandler.currentMediaItem;
+    if (previousTarget == null ||
+        media == null ||
+        !previousTarget.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
+      _cancelChapterTimerForContextChange('playback media changed while seeking');
+      return;
+    }
+
+    final position = audioHandler.position;
+    if (position >= media.totalDuration) {
+      _claimChapterExpiry(runGeneration);
+      return;
+    }
+
+    final nextTarget = resolveChapterSleepTarget(
+      chapters: media.chapters,
+      mediaDuration: media.totalDuration,
+      position: position,
+      itemId: media.itemId,
+      episodeId: media.episodeId,
+    );
+    if (nextTarget == null) {
+      _cancelChapterTimerForContextChange('seek landed outside a valid chapter');
+      return;
+    }
+
+    final remaining = nextTarget.remainingAt(position);
+    state = state.copyWith(
+      remainingTime: remaining,
+      chapterTarget: nextTarget,
+      clearTotalDuration: true,
+    );
+
+    if (nextTarget.endPosition != previousTarget.endPosition) {
+      logger(
+        'Chapter sleep timer retargeted to ${nextTarget.endPosition.inSeconds}s after seek',
+        tag: 'SleepTimer',
+        level: InfoLevel.info,
+      );
+    }
+  }
+
+  void _scheduleChapterExpiryCheck(int runGeneration) {
+    final checkGeneration = ++_chapterExpiryCheckGeneration;
+    scheduleMicrotask(() {
+      if (checkGeneration != _chapterExpiryCheckGeneration ||
+          !_isChapterRunCurrent(runGeneration) ||
+          _chapterSeekSettleTimer != null ||
+          !state.isRunning ||
+          state.mode != SleepTimerMode.chapterEnd) {
+        return;
+      }
+
+      final target = state.chapterTarget;
+      final media = audioHandler.currentMediaItem;
+      if (target == null ||
+          media == null ||
+          !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId) ||
+          audioHandler.isCastControlActive) {
+        _cancelChapterTimerForContextChange('playback context changed before expiry');
+        return;
+      }
+
+      if (audioHandler.position >= target.endPosition) {
+        _claimChapterExpiry(runGeneration);
+      }
+    });
   }
 
   void _cancelChapterTimerForContextChange(String reason) {
@@ -278,7 +401,10 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
   void _invalidateChapterRun() {
     _chapterRunGeneration += 1;
+    _chapterExpiryCheckGeneration += 1;
     _chapterExpiryClaimed = false;
+    _chapterSeekSettleTimer?.cancel();
+    _chapterSeekSettleTimer = null;
   }
 
   bool _isChapterRunCurrent(int generation) {
@@ -708,7 +834,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     );
 
     if (position >= target.endPosition) {
-      _claimChapterExpiry(generation);
+      _scheduleChapterExpiryCheck(generation);
     }
     return true;
   }
