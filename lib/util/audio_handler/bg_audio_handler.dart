@@ -174,6 +174,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   bool _historyWasPlayingReady = false;
   bool _historyWasCompleted = false;
   bool _hasFiredCompleted = false;
+  String? _sleepTimerCompletionGateItemId;
+  String? _sleepTimerCompletionGateEpisodeId;
   final BehaviorSubject<int> _queueLengthSubject = BehaviorSubject<int>.seeded(0);
   final BehaviorSubject<PlayerQueueSnapshot> _queueSnapshotSubject = BehaviorSubject<PlayerQueueSnapshot>.seeded(
     const PlayerQueueSnapshot(),
@@ -246,6 +248,32 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   Future<void> applySleepTimerAutoRewindNow() async {
     return _applySleepTimerAutoRewindNowInternal();
+  }
+
+  void armSleepTimerCompletionGate({required String itemId, String? episodeId}) {
+    _sleepTimerCompletionGateItemId = itemId;
+    _sleepTimerCompletionGateEpisodeId = episodeId;
+  }
+
+  void clearSleepTimerCompletionGate() {
+    _sleepTimerCompletionGateItemId = null;
+    _sleepTimerCompletionGateEpisodeId = null;
+  }
+
+  bool _consumeSleepTimerCompletionGate(InternalMedia media) {
+    final gateItemId = _sleepTimerCompletionGateItemId;
+    if (gateItemId == null) {
+      return false;
+    }
+
+    final matches = _queueItemsMatch(
+      leftItemId: gateItemId,
+      leftEpisodeId: _sleepTimerCompletionGateEpisodeId,
+      rightItemId: media.itemId,
+      rightEpisodeId: media.episodeId,
+    );
+    clearSleepTimerCompletionGate();
+    return matches;
   }
 
   Future<bool> playLastPlayed({bool requireStartupSettingEnabled = false, bool resumeCurrentIfPaused = true}) async {
@@ -1741,27 +1769,37 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           ),
         );
 
-        final loopMode = _ref
-            .read(settingsManagerProvider.notifier)
-            .getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
-        final isLoopOn = loopMode == 'on';
-
-        if (isLoopOn) {
-          final finishedQueueItem = QueueItem(itemId: finishedMedia.itemId, episodeId: finishedMedia.episodeId);
-          final displayInfo = QueueDisplayInfo(
-            title: finishedMedia.title,
-            subtitle: finishedMedia.subtitle,
-            author: finishedMedia.author,
+        final suppressAutoAdvanceForSleepTimer = _consumeSleepTimerCompletionGate(finishedMedia);
+        if (suppressAutoAdvanceForSleepTimer) {
+          logger(
+            'Suppressing queue auto-advance because the sleep timer targets media completion',
+            tag: 'AudioHandler',
+            level: InfoLevel.info,
           );
-          addToQueue(finishedQueueItem, displayInfo: displayInfo, allowCurrent: true, markAsManual: false);
-        }
-
-        if (queueList.isNotEmpty) {
-          _forceQueueSwitchOnNextPlay = true;
-          _ignoreProgressOnNextPlay = isLoopOn;
-          await play();
-        } else {
           await pause();
+        } else {
+          final loopMode = _ref
+              .read(settingsManagerProvider.notifier)
+              .getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
+          final isLoopOn = loopMode == 'on';
+
+          if (isLoopOn) {
+            final finishedQueueItem = QueueItem(itemId: finishedMedia.itemId, episodeId: finishedMedia.episodeId);
+            final displayInfo = QueueDisplayInfo(
+              title: finishedMedia.title,
+              subtitle: finishedMedia.subtitle,
+              author: finishedMedia.author,
+            );
+            addToQueue(finishedQueueItem, displayInfo: displayInfo, allowCurrent: true, markAsManual: false);
+          }
+
+          if (queueList.isNotEmpty) {
+            _forceQueueSwitchOnNextPlay = true;
+            _ignoreProgressOnNextPlay = isLoopOn;
+            await play();
+          } else {
+            await pause();
+          }
         }
       }
       _refreshPlayerControlState();
