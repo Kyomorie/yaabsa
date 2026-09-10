@@ -136,7 +136,7 @@ class ShakeRewindHandler {
   }
 
   Future<void> _triggerActionByPriority() async {
-    if (_canResetSleepTimer) {
+    if (_shouldHandleSleepTimerReset) {
       final didReset = containerRef.read(sleepTimerHandlerProvider.notifier).reset();
       if (didReset) {
         logger('Shake sleep timer reset triggered', tag: 'ShakeRewindHandler', level: InfoLevel.info);
@@ -185,9 +185,9 @@ class ShakeRewindHandler {
     return containerRef.read(settingsManagerProvider.notifier).getGlobalSetting<double>(key);
   }
 
-  bool get _canResetSleepTimer {
+  bool get _shouldHandleSleepTimerReset {
     return _boolSetting(SettingKeys.shakeToResetSleepTimer) &&
-        containerRef.read(sleepTimerHandlerProvider.notifier).canReset &&
+        containerRef.read(sleepTimerHandlerProvider).isActive &&
         audioHandler.player.playing;
   }
 
@@ -198,7 +198,7 @@ class ShakeRewindHandler {
   }
 
   bool get _shouldListen {
-    return DeviceCapabilities.supportsShakeActions && (_canResetSleepTimer || _canRewind);
+    return DeviceCapabilities.supportsShakeActions && (_shouldHandleSleepTimerReset || _canRewind);
   }
 
   void _reset() {
