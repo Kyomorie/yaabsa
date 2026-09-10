@@ -37,8 +37,10 @@ ChapterSleepTarget? resolveChapterSleepTarget({
     return null;
   }
 
-  final mediaDurationSeconds = mediaDuration.inMicroseconds / Duration.microsecondsPerSecond;
-  final positionSeconds = position.inMicroseconds / Duration.microsecondsPerSecond;
+  final mediaDurationSeconds =
+      mediaDuration.inMicroseconds / Duration.microsecondsPerSecond;
+  final positionSeconds =
+      position.inMicroseconds / Duration.microsecondsPerSecond;
 
   InternalChapter? matchingChapter;
   for (final chapter in chapters) {
@@ -90,18 +92,25 @@ ChapterSleepTarget? resolveFollowingChapterSleepTarget({
   if (chapters == null || chapters.isEmpty || mediaDuration <= Duration.zero) {
     return null;
   }
-  if (currentTarget.endPosition <= Duration.zero || currentTarget.endPosition >= mediaDuration) {
+  if (currentTarget.endPosition <= Duration.zero ||
+      currentTarget.endPosition >= mediaDuration) {
     return null;
   }
 
-  final mediaDurationSeconds = mediaDuration.inMicroseconds / Duration.microsecondsPerSecond;
-  final boundarySeconds = currentTarget.endPosition.inMicroseconds / Duration.microsecondsPerSecond;
+  final mediaDurationSeconds =
+      mediaDuration.inMicroseconds / Duration.microsecondsPerSecond;
+  final boundarySeconds =
+      currentTarget.endPosition.inMicroseconds / Duration.microsecondsPerSecond;
 
   InternalChapter? candidate;
   for (final chapter in chapters) {
     final start = chapter.start;
     final end = chapter.end;
-    if (!start.isFinite || !end.isFinite || start < 0 || end <= start || end > mediaDurationSeconds) {
+    if (!start.isFinite ||
+        !end.isFinite ||
+        start < 0 ||
+        end <= start ||
+        end > mediaDurationSeconds) {
       continue;
     }
 
