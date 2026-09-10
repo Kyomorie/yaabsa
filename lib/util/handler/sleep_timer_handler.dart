@@ -697,6 +697,33 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     );
   }
 
+  bool get canReset {
+    if (!state.isActive) {
+      return false;
+    }
+    if (state.mode == SleepTimerMode.duration) {
+      return true;
+    }
+    if (!state.isRunning || audioHandler.isCastControlActive || _chapterSeekSettleTimer != null) {
+      return false;
+    }
+
+    final target = state.chapterTarget;
+    final media = audioHandler.currentMediaItem;
+    if (target == null ||
+        media == null ||
+        !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
+      return false;
+    }
+
+    return resolveFollowingChapterSleepTarget(
+          chapters: media.chapters,
+          mediaDuration: media.totalDuration,
+          currentTarget: target,
+        ) !=
+        null;
+  }
+
   Future<void> _tryAutoRestartSleepTimerOnPlaybackStart() async {
     if (state.isActive) {
       return;
@@ -960,11 +987,21 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     unawaited(_persistLastDuration(newTotalDuration));
   }
 
-  void reset() {
-    if (!state.canReset) return;
+  bool reset() {
+    if (!state.isActive) {
+      return false;
+    }
+    if (state.mode == SleepTimerMode.chapterEnd) {
+      return _extendChapterTimerByOneChapter();
+    }
+    if (!state.canReset) {
+      return false;
+    }
 
     final totalDuration = state.totalDuration ?? state.remainingTime;
-    if (totalDuration <= Duration.zero) return;
+    if (totalDuration <= Duration.zero) {
+      return false;
+    }
 
     logger('Sleep timer reset to ${totalDuration.inMinutes} minutes', tag: 'SleepTimer', level: InfoLevel.info);
 
@@ -994,7 +1031,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       );
       _showMarker(showPin: false);
       unawaited(_persistMarker(marker));
-      return;
+      return true;
     }
 
     state = SleepTimerData(
@@ -1011,6 +1048,60 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _startTimer(totalDuration);
     unawaited(_setAutoRestartSuppressed(false));
     unawaited(_persistLastDuration(totalDuration));
+    return true;
+  }
+
+  bool _extendChapterTimerByOneChapter() {
+    if (!state.isRunning ||
+        state.mode != SleepTimerMode.chapterEnd ||
+        audioHandler.isCastControlActive ||
+        _chapterSeekSettleTimer != null) {
+      return false;
+    }
+
+    final currentTarget = state.chapterTarget;
+    final media = audioHandler.currentMediaItem;
+    if (currentTarget == null ||
+        media == null ||
+        !currentTarget.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
+      return false;
+    }
+
+    final nextTarget = resolveFollowingChapterSleepTarget(
+      chapters: media.chapters,
+      mediaDuration: media.totalDuration,
+      currentTarget: currentTarget,
+    );
+    if (nextTarget == null) {
+      return false;
+    }
+
+    _chapterExpiryCheckGeneration += 1;
+    final position = audioHandler.position;
+    final remaining = nextTarget.remainingAt(position);
+    state = state.copyWith(
+      remainingTime: remaining,
+      chapterTarget: nextTarget,
+      clearTotalDuration: true,
+    );
+
+    logger(
+      'Chapter sleep timer extended to next chapter target ${nextTarget.endPosition.inSeconds}s',
+      tag: 'SleepTimer',
+      level: InfoLevel.info,
+    );
+    unawaited(
+      PlayerHistoryHandler.addPlayerHistory(
+        PlayerHistoryType.sleepTimerExtended,
+        details: <String, Object?>{
+          'mode': SleepTimerMode.chapterEnd.name,
+          'additionalChapters': 1,
+          'targetPositionSeconds': nextTarget.endPosition.inSeconds,
+          'remainingSeconds': remaining.inSeconds,
+        },
+      ),
+    );
+    return true;
   }
 
   void _startTimer(Duration duration) {
