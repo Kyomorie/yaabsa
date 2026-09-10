@@ -82,8 +82,6 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
   Widget build(BuildContext context) {
     final sleepTimer = ref.watch(sleepTimerHandlerProvider);
     final handler = ref.read(sleepTimerHandlerProvider.notifier);
-    final chapterTarget = handler.availableChapterSleepTarget;
-    final chapterRemaining = chapterTarget?.remainingAt(audioHandler.position);
     final canReset = handler.canReset;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
@@ -117,12 +115,22 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
                   },
                 ),
               ),
-              if (chapterTarget != null && chapterRemaining != null)
-                ActionChip(
-                  avatar: const Icon(Icons.skip_next_rounded),
-                  label: Text('End of chapter · ${chapterRemaining.toLargestUnitCompactString()}'),
-                  onPressed: _startChapterTimer,
-                ),
+              StreamBuilder<Duration>(
+                stream: audioHandler.positionStream,
+                initialData: audioHandler.position,
+                builder: (context, positionSnapshot) {
+                  final chapterTarget = handler.availableChapterSleepTarget;
+                  final chapterRemaining = chapterTarget?.remainingAt(positionSnapshot.data ?? audioHandler.position);
+                  if (chapterTarget == null || chapterRemaining == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return ActionChip(
+                    avatar: const Icon(Icons.skip_next_rounded),
+                    label: Text('End of chapter · ${chapterRemaining.toLargestUnitCompactString()}'),
+                    onPressed: _startChapterTimer,
+                  );
+                },
+              ),
             ],
           ),
           const SizedBox(height: 12),
