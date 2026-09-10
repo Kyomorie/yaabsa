@@ -183,6 +183,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       _markerRangeHideTimer?.cancel();
       _markerRangeHideTimer = null;
       _invalidateChapterRun();
+      audioHandler.clearSleepTimerCompletionGate();
 
       _playerStateSubscription?.cancel();
       _playerStateSubscription = null;
@@ -240,12 +241,29 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     final wasRunning = _wasPlaybackRunning;
     _wasPlaybackRunning = isRunning;
 
+    if (playerState.processingState == ProcessingState.completed &&
+        state.isRunning &&
+        state.mode == SleepTimerMode.chapterEnd) {
+      final target = state.chapterTarget;
+      final media = audioHandler.currentMediaItem;
+      if (target != null &&
+          media != null &&
+          target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId) &&
+          target.endPosition >= media.totalDuration) {
+        _claimChapterExpiry(_chapterRunGeneration);
+        return;
+      }
+    }
+
     if (wasRunning && !isRunning && state.isRunning && state.mode == SleepTimerMode.duration) {
       pause(triggeredByPlaybackPause: true);
       return;
     }
 
     if (!wasRunning && isRunning) {
+      if (!state.isActive) {
+        audioHandler.clearSleepTimerCompletionGate();
+      }
       if (_pauseTriggeredByPlayback && state.state == SleepTimerState.paused && state.mode == SleepTimerMode.duration) {
         resume();
         _scheduleMarkerPinHide();
@@ -304,6 +322,11 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       return;
     }
 
+    final media = audioHandler.currentMediaItem;
+    if (media != null && audioHandler.position >= media.totalDuration) {
+      audioHandler.armSleepTimerCompletionGate(itemId: media.itemId, episodeId: media.episodeId);
+    }
+
     _chapterExpiryCheckGeneration += 1;
     final runGeneration = _chapterRunGeneration;
     _chapterSeekSettleTimer?.cancel();
@@ -332,6 +355,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     final position = audioHandler.position;
     if (position >= media.totalDuration) {
+      audioHandler.armSleepTimerCompletionGate(itemId: media.itemId, episodeId: media.episodeId);
       _claimChapterExpiry(runGeneration);
       return;
     }
@@ -354,6 +378,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       chapterTarget: nextTarget,
       clearTotalDuration: true,
     );
+    _syncSleepTimerCompletionGate(nextTarget);
 
     if (nextTarget.endPosition != previousTarget.endPosition) {
       logger(
@@ -697,6 +722,18 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     );
   }
 
+  void _syncSleepTimerCompletionGate(ChapterSleepTarget? target) {
+    final media = audioHandler.currentMediaItem;
+    if (target != null &&
+        media != null &&
+        target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId) &&
+        target.endPosition >= media.totalDuration) {
+      audioHandler.armSleepTimerCompletionGate(itemId: media.itemId, episodeId: media.episodeId);
+      return;
+    }
+    audioHandler.clearSleepTimerCompletionGate();
+  }
+
   bool get canReset {
     if (!state.isActive) {
       return false;
@@ -766,6 +803,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       stop(suppressAutoRestart: false, recordHistory: false);
     }
     _invalidateChapterRun();
+    audioHandler.clearSleepTimerCompletionGate();
 
     _pauseTriggeredByPlayback = false;
 
@@ -839,6 +877,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       showMarkerPin: false,
       showMarkerRange: false,
     );
+    _syncSleepTimerCompletionGate(target);
     unawaited(_persistMarker(marker));
     if (audioHandler.playerControlState.playing) {
       _scheduleMarkerPinHide();
@@ -875,6 +914,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _pauseTriggeredByPlayback = false;
     _cancelMarkerVisibilityTimers();
     _invalidateChapterRun();
+    audioHandler.clearSleepTimerCompletionGate();
 
     unawaited(_restoreFadeVolumeIfNeeded());
 
@@ -1084,6 +1124,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       chapterTarget: nextTarget,
       clearTotalDuration: true,
     );
+    _syncSleepTimerCompletionGate(nextTarget);
 
     logger(
       'Chapter sleep timer extended to next chapter target ${nextTarget.endPosition.inSeconds}s',
@@ -1137,6 +1178,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _pauseTriggeredByPlayback = false;
     _cancelMarkerVisibilityTimers();
     _invalidateChapterRun();
+    audioHandler.clearSleepTimerCompletionGate();
 
     final marker = _completeMarkerAtCurrentPosition();
     state = SleepTimerData(
