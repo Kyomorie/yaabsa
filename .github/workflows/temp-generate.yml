@@ -1,0 +1,51 @@
+name: Temporary generated-file refresh
+
+on:
+  push:
+    branches:
+      - feat/chapter-end-sleep-timer
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        shell: bash
+        run: flutter pub get
+
+      - name: Generate code
+        shell: bash
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Format sleep timer generated file
+        shell: bash
+        run: dart format lib/util/handler/sleep_timer_handler.g.dart
+
+      - name: Commit sleep timer generated file
+        shell: bash
+        run: |
+          if git diff --quiet -- lib/util/handler/sleep_timer_handler.g.dart; then
+            echo "Sleep timer generated file is already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/util/handler/sleep_timer_handler.g.dart
+          git commit -m "Regenerate sleep timer provider"
+          git push origin HEAD:feat/chapter-end-sleep-timer
