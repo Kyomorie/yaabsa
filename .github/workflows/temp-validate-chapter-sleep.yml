@@ -77,6 +77,7 @@ jobs:
         shell: bash
         run: |
           dart run build_runner build --build-filter=lib/util/handler/sleep_timer_handler.g.dart
+          dart format lib/util/handler/sleep_timer_handler.g.dart
           git diff --exit-code -- lib/util/handler/sleep_timer_handler.g.dart
 
       - name: Analyze sources
