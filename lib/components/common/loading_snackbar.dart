@@ -11,7 +11,11 @@ Future<T> runWithLoadingSnackBar<T>({
       duration: const Duration(days: 1),
       content: Row(
         children: [
-          const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2)),
+          const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2.2),
+          ),
           const SizedBox(width: 12),
           Expanded(child: Text(message)),
         ],

@@ -20,7 +20,8 @@ class UploadApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/search/providers',
-      fromJson: (data) => SearchProvidersResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          SearchProvidersResponse.fromJson(data as Map<String, dynamic>),
       queryParams: const <String, dynamic>{},
       dio: _dio,
       cancelToken: cancelToken,
@@ -36,11 +37,15 @@ class UploadApi {
     Map<String, dynamic>? extra,
     CancelToken? cancelToken,
   }) async {
-    final query = <String, dynamic>{if (path != null && path.trim().isNotEmpty) 'path': path, 'level': level};
+    final query = <String, dynamic>{
+      if (path != null && path.trim().isNotEmpty) 'path': path,
+      'level': level,
+    };
 
     return ABSApi.makeApiGetRequest(
       route: '/api/filesystem',
-      fromJson: (data) => FilesystemPathsResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          FilesystemPathsResponse.fromJson(data as Map<String, dynamic>),
       queryParams: query,
       dio: _dio,
       cancelToken: cancelToken,
@@ -58,7 +63,8 @@ class UploadApi {
   }) async {
     return ABSApi.makeApiPostRequest(
       route: '/api/filesystem/pathexists',
-      fromJson: (data) => PathExistsResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          PathExistsResponse.fromJson(data as Map<String, dynamic>),
       bodyData: {'directory': directory, 'folderPath': folderPath},
       dio: _dio,
       cancelToken: cancelToken,
@@ -78,13 +84,17 @@ class UploadApi {
     Map<String, dynamic>? extra,
     CancelToken? cancelToken,
   }) {
-    final endpoint = mediaType == 'podcast' ? '/api/search/podcasts' : '/api/search/books';
+    final endpoint = mediaType == 'podcast'
+        ? '/api/search/podcasts'
+        : '/api/search/books';
     final query = <String, String>{
       'title': title,
       if (author != null && author.trim().isNotEmpty) 'author': author.trim(),
-      if (provider != null && provider.trim().isNotEmpty) 'provider': provider.trim(),
+      if (provider != null && provider.trim().isNotEmpty)
+        'provider': provider.trim(),
       if (fallbackTitleOnly) 'fallbackTitleOnly': '1',
-      if (libraryItemId != null && libraryItemId.trim().isNotEmpty) 'id': libraryItemId.trim(),
+      if (libraryItemId != null && libraryItemId.trim().isNotEmpty)
+        'id': libraryItemId.trim(),
     };
 
     return ABSApi.makeApiGetRequest(

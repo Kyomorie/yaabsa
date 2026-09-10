@@ -31,7 +31,11 @@ class LibraryFilterSheet extends StatelessWidget {
         group: LibraryFilterGroup.genres,
         values: filterData?.genres ?? const <String>[],
       ),
-      _buildStringSection(title: 'Tags', group: LibraryFilterGroup.tags, values: filterData?.tags ?? const <String>[]),
+      _buildStringSection(
+        title: 'Tags',
+        group: LibraryFilterGroup.tags,
+        values: filterData?.tags ?? const <String>[],
+      ),
       _buildStringSection(
         title: 'Languages',
         group: LibraryFilterGroup.languages,
@@ -61,7 +65,9 @@ class LibraryFilterSheet extends StatelessWidget {
       if (isBookLibrary) _buildMissingSection(),
     ];
 
-    final visibleSections = sections.where((section) => section.options.isNotEmpty).toList(growable: false);
+    final visibleSections = sections
+        .where((section) => section.options.isNotEmpty)
+        .toList(growable: false);
 
     return SafeArea(
       top: false,
@@ -74,7 +80,13 @@ class LibraryFilterSheet extends StatelessWidget {
               child: Row(
                 children: [
                   const Expanded(
-                    child: Text('Library Filters', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      'Library Filters',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   if (activeFilter != null)
                     TextButton.icon(
@@ -92,7 +104,11 @@ class LibraryFilterSheet extends StatelessWidget {
             ),
             Expanded(
               child: visibleSections.isEmpty
-                  ? const Center(child: Text('No filter options are available for this library yet.'))
+                  ? const Center(
+                      child: Text(
+                        'No filter options are available for this library yet.',
+                      ),
+                    )
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                       itemCount: visibleSections.length,
@@ -101,7 +117,8 @@ class LibraryFilterSheet extends StatelessWidget {
                         return _FilterSection(
                           section: section,
                           activeFilter: activeFilter,
-                          onSelect: (queryValue) => Navigator.of(context).pop(queryValue),
+                          onSelect: (queryValue) =>
+                              Navigator.of(context).pop(queryValue),
                         );
                       },
                     ),
@@ -151,8 +168,10 @@ class LibraryFilterSheet extends StatelessWidget {
   _FilterSectionData _buildTracksSection() {
     final values = LibraryTracksFilterValue.values
         .map(
-          (value) =>
-              _FilterOption(label: _humanizeValue(value.wireValue), queryValue: LibraryFilter.tracks(value).queryValue),
+          (value) => _FilterOption(
+            label: _humanizeValue(value.wireValue),
+            queryValue: LibraryFilter.tracks(value).queryValue,
+          ),
         )
         .toList(growable: false);
 
@@ -168,9 +187,16 @@ class LibraryFilterSheet extends StatelessWidget {
         values
             .where((value) => value.trim().isNotEmpty)
             .toSet()
-            .map((value) => _FilterOption(label: value, queryValue: LibraryFilter.grouped(group, value).queryValue))
+            .map(
+              (value) => _FilterOption(
+                label: value,
+                queryValue: LibraryFilter.grouped(group, value).queryValue,
+              ),
+            )
             .toList(growable: false)
-          ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+          ..sort(
+            (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),
+          );
 
     return _FilterSectionData(title: title, options: options);
   }
@@ -183,20 +209,30 @@ class LibraryFilterSheet extends StatelessWidget {
   }) {
     final options =
         values
-            .where((value) => value.id.trim().isNotEmpty && value.name.trim().isNotEmpty)
-            .map(
+            .where(
               (value) =>
-                  _FilterOption(label: value.name, queryValue: LibraryFilter.grouped(group, value.id).queryValue),
+                  value.id.trim().isNotEmpty && value.name.trim().isNotEmpty,
+            )
+            .map(
+              (value) => _FilterOption(
+                label: value.name,
+                queryValue: LibraryFilter.grouped(group, value.id).queryValue,
+              ),
             )
             .toList(growable: true)
-          ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+          ..sort(
+            (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),
+          );
 
     if (includeNoSeriesOption) {
       options.insert(
         0,
         _FilterOption(
           label: 'No series',
-          queryValue: LibraryFilter.grouped(LibraryFilterGroup.series, 'no-series').queryValue,
+          queryValue: LibraryFilter.grouped(
+            LibraryFilterGroup.series,
+            'no-series',
+          ).queryValue,
         ),
       );
     }
@@ -214,12 +250,18 @@ class LibraryFilterSheet extends StatelessWidget {
         .where((segment) => segment.isNotEmpty)
         .toList(growable: false);
 
-    return split.map((segment) => '${segment[0].toUpperCase()}${segment.substring(1)}').join(' ');
+    return split
+        .map((segment) => '${segment[0].toUpperCase()}${segment.substring(1)}')
+        .join(' ');
   }
 }
 
 class _FilterSection extends StatefulWidget {
-  const _FilterSection({required this.section, required this.activeFilter, required this.onSelect});
+  const _FilterSection({
+    required this.section,
+    required this.activeFilter,
+    required this.onSelect,
+  });
 
   final _FilterSectionData section;
   final String? activeFilter;
@@ -236,7 +278,9 @@ class _FilterSectionState extends State<_FilterSection> {
   @override
   void initState() {
     super.initState();
-    _isExpanded = widget.section.options.any((option) => option.queryValue == widget.activeFilter);
+    _isExpanded = widget.section.options.any(
+      (option) => option.queryValue == widget.activeFilter,
+    );
   }
 
   @override
@@ -252,7 +296,12 @@ class _FilterSectionState extends State<_FilterSection> {
 
     final filteredOptions = _search.isEmpty
         ? options
-        : options.where((option) => option.label.toLowerCase().contains(_search.toLowerCase())).toList(growable: false);
+        : options
+              .where(
+                (option) =>
+                    option.label.toLowerCase().contains(_search.toLowerCase()),
+              )
+              .toList(growable: false);
 
     final showSearchField = options.length > 12;
     final denseListHeight = math.min(filteredOptions.length * 44.0, 240.0);
@@ -267,7 +316,9 @@ class _FilterSectionState extends State<_FilterSection> {
 
     return ExpressiveExpandableCard(
       title: widget.section.title,
-      subtitle: selectedLabel != null ? 'Selected: $selectedLabel' : '${widget.section.options.length} options',
+      subtitle: selectedLabel != null
+          ? 'Selected: $selectedLabel'
+          : '${widget.section.options.length} options',
       icon: selectedLabel != null ? Icons.check_circle_rounded : null,
       margin: const EdgeInsets.only(bottom: 10),
       childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -301,7 +352,10 @@ class _FilterSectionState extends State<_FilterSection> {
         if (filteredOptions.isEmpty)
           const Align(
             alignment: Alignment.centerLeft,
-            child: Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Text('No matching options')),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text('No matching options'),
+            ),
           )
         else if (filteredOptions.length <= 8)
           Align(

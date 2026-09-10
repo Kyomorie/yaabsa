@@ -6,7 +6,8 @@ part of 'update_admin_authentication_settings_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_UpdateAdminAuthenticationSettingsResponse _$UpdateAdminAuthenticationSettingsResponseFromJson(
+_UpdateAdminAuthenticationSettingsResponse
+_$UpdateAdminAuthenticationSettingsResponseFromJson(
   Map<String, dynamic> json,
 ) => _UpdateAdminAuthenticationSettingsResponse(
   updated: json['updated'] as bool? ?? false,
@@ -17,4 +18,7 @@ _UpdateAdminAuthenticationSettingsResponse _$UpdateAdminAuthenticationSettingsRe
 
 Map<String, dynamic> _$UpdateAdminAuthenticationSettingsResponseToJson(
   _UpdateAdminAuthenticationSettingsResponse instance,
-) => <String, dynamic>{'updated': instance.updated, 'serverSettings': instance.serverSettings};
+) => <String, dynamic>{
+  'updated': instance.updated,
+  'serverSettings': instance.serverSettings,
+};

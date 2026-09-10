@@ -4,7 +4,8 @@ part 'quick_match_library_item_options.freezed.dart';
 part 'quick_match_library_item_options.g.dart';
 
 @freezed
-abstract class QuickMatchLibraryItemOptions with _$QuickMatchLibraryItemOptions {
+abstract class QuickMatchLibraryItemOptions
+    with _$QuickMatchLibraryItemOptions {
   @JsonSerializable(includeIfNull: false)
   const factory QuickMatchLibraryItemOptions({
     @JsonKey(name: 'provider') String? provider,

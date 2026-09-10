@@ -27,7 +27,11 @@ import 'package:yaabsa/util/random_playback.dart';
 import 'package:yaabsa/util/setting_key.dart';
 
 class PlaylistDetailView extends HookConsumerWidget {
-  const PlaylistDetailView({required this.playlistId, super.key, this.initialEntry});
+  const PlaylistDetailView({
+    required this.playlistId,
+    super.key,
+    this.initialEntry,
+  });
 
   final String playlistId;
   final MultiBookEntryData? initialEntry;
@@ -38,7 +42,11 @@ class PlaylistDetailView extends HookConsumerWidget {
     final selectedLibrary = ref.watch(selectedLibraryProvider);
     final serverReachable = ref.watch(serverStatusProvider).value ?? false;
     if (selectedLibrary == null) {
-      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
+      return const Center(
+        child: Text(
+          'No library selected. Please select a library via the switcher.',
+        ),
+      );
     }
 
     final api = ref.watch(absApiProvider);
@@ -51,8 +59,15 @@ class PlaylistDetailView extends HookConsumerWidget {
     final currentUserId = ref.watch(currentUserProvider).value?.id;
     ref.watch(userSettingsWatcherProvider);
     final allowBookSelection = selectedLibrary.mediaType == 'book';
-    final resolvedPlaylist = _resolvePlaylist(playlistId, allPlaylistsAsync.value?.items);
-    final resolvedEntry = _resolveEntry(playlistId, initialEntry, resolvedPlaylist);
+    final resolvedPlaylist = _resolvePlaylist(
+      playlistId,
+      allPlaylistsAsync.value?.items,
+    );
+    final resolvedEntry = _resolveEntry(
+      playlistId,
+      initialEntry,
+      resolvedPlaylist,
+    );
 
     if (resolvedPlaylist == null) {
       if (allPlaylistsAsync.isLoading) {
@@ -61,14 +76,20 @@ class PlaylistDetailView extends HookConsumerWidget {
       if (allPlaylistsAsync.hasError) {
         if (!serverReachable) {
           return ConnectionIssueView.offline(
-            onRetry: () => ref.read(playlistsProvider(libraryId).notifier).refresh(withLoading: true),
+            onRetry: () => ref
+                .read(playlistsProvider(libraryId).notifier)
+                .refresh(withLoading: true),
           );
         }
 
         return ConnectionIssueView.requestFailed(
-          error: allPlaylistsAsync.error ?? Exception('Unknown playlist loading error.'),
+          error:
+              allPlaylistsAsync.error ??
+              Exception('Unknown playlist loading error.'),
           title: 'Playlist details could not be loaded',
-          onRetry: () => ref.read(playlistsProvider(libraryId).notifier).refresh(withLoading: true),
+          onRetry: () => ref
+              .read(playlistsProvider(libraryId).notifier)
+              .refresh(withLoading: true),
         );
       }
 
@@ -81,13 +102,23 @@ class PlaylistDetailView extends HookConsumerWidget {
 
     final playlistItems = resolvedPlaylist.items ?? const <PlaylistItem>[];
     final libraryItems = _playlistLibraryItems(playlistItems);
-    final missingCount = (playlistItems.length - libraryItems.length).clamp(0, playlistItems.length);
-    final canManagePlaylist = _canManagePlaylist(playlist: resolvedPlaylist, currentUserId: currentUserId);
+    final missingCount = (playlistItems.length - libraryItems.length).clamp(
+      0,
+      playlistItems.length,
+    );
+    final canManagePlaylist = _canManagePlaylist(
+      playlist: resolvedPlaylist,
+      currentUserId: currentUserId,
+    );
     final showShuffleButton =
         currentUserId != null &&
         ref
             .read(settingsManagerProvider.notifier)
-            .getUserSetting<bool>(currentUserId, SettingKeys.showShuffleButton, defaultValue: false);
+            .getUserSetting<bool>(
+              currentUserId,
+              SettingKeys.showShuffleButton,
+              defaultValue: false,
+            );
     final description = resolvedPlaylist.description?.trim();
 
     return LibraryGridLayoutBuilder(
@@ -114,7 +145,8 @@ class PlaylistDetailView extends HookConsumerWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
-                  if (showShuffleButton && hasRandomPlaylistPlaybackTarget(playlistItems))
+                  if (showShuffleButton &&
+                      hasRandomPlaylistPlaybackTarget(playlistItems))
                     IconButton.filledTonal(
                       onPressed: () => unawaited(
                         playRandomPlaylistItemOrEpisode(
@@ -170,8 +202,9 @@ class PlaylistDetailView extends HookConsumerWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     description,
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
@@ -182,24 +215,36 @@ class PlaylistDetailView extends HookConsumerWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     '$missingCount playlist entr${missingCount == 1 ? 'y is' : 'ies are'} not directly displayable.',
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
             if (libraryItems.isEmpty)
-              const Expanded(child: Center(child: Text('No library items found in this playlist.')))
+              const Expanded(
+                child: Center(
+                  child: Text('No library items found in this playlist.'),
+                ),
+              )
             else
               Expanded(
                 child: Stack(
                   children: [
                     Positioned.fill(
                       child: RefreshIndicator(
-                        onRefresh: () => ref.read(playlistsProvider(libraryId).notifier).refresh(withLoading: false),
+                        onRefresh: () => ref
+                            .read(playlistsProvider(libraryId).notifier)
+                            .refresh(withLoading: false),
                         child: AlignedGridView.count(
                           controller: scrollController,
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 16),
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalPadding,
+                            0,
+                            horizontalPadding,
+                            16,
+                          ),
                           crossAxisCount: gridLayout.crossAxisCount,
                           mainAxisSpacing: appGridSpacing,
                           crossAxisSpacing: appGridSpacing,
@@ -249,7 +294,11 @@ Playlist? _resolvePlaylist(String playlistId, List<Playlist>? allPlaylists) {
   return null;
 }
 
-MultiBookEntryData? _resolveEntry(String playlistId, MultiBookEntryData? initialEntry, Playlist? playlist) {
+MultiBookEntryData? _resolveEntry(
+  String playlistId,
+  MultiBookEntryData? initialEntry,
+  Playlist? playlist,
+) {
   if (initialEntry != null && initialEntry.id == playlistId) {
     return initialEntry;
   }
@@ -279,7 +328,10 @@ List<LibraryItem> _playlistLibraryItems(List<PlaylistItem> playlistItems) {
   return items;
 }
 
-bool _canManagePlaylist({required Playlist playlist, required String? currentUserId}) {
+bool _canManagePlaylist({
+  required Playlist playlist,
+  required String? currentUserId,
+}) {
   if (currentUserId == null || currentUserId.isEmpty) {
     return false;
   }
@@ -300,13 +352,28 @@ Future<void> _handlePlaylistAction({
       if (!allowBookSelection) {
         return;
       }
-      await _editPlaylistBooks(context: context, ref: ref, libraryId: libraryId, playlist: playlist);
+      await _editPlaylistBooks(
+        context: context,
+        ref: ref,
+        libraryId: libraryId,
+        playlist: playlist,
+      );
       break;
     case _PlaylistDetailAction.edit:
-      await _editPlaylist(context: context, ref: ref, libraryId: libraryId, playlist: playlist);
+      await _editPlaylist(
+        context: context,
+        ref: ref,
+        libraryId: libraryId,
+        playlist: playlist,
+      );
       break;
     case _PlaylistDetailAction.delete:
-      await _deletePlaylist(context: context, ref: ref, libraryId: libraryId, playlist: playlist);
+      await _deletePlaylist(
+        context: context,
+        ref: ref,
+        libraryId: libraryId,
+        playlist: playlist,
+      );
       break;
   }
 }
@@ -317,7 +384,9 @@ Future<void> _editPlaylistBooks({
   required String libraryId,
   required Playlist playlist,
 }) async {
-  final currentBooks = _playlistLibraryItems(playlist.items ?? const <PlaylistItem>[]);
+  final currentBooks = _playlistLibraryItems(
+    playlist.items ?? const <PlaylistItem>[],
+  );
   await editManagedListBooks(
     context: context,
     title: 'Edit books',
@@ -328,7 +397,9 @@ Future<void> _editPlaylistBooks({
         .read(playlistsProvider(libraryId).notifier)
         .replaceBooksInPlaylist(
           playlist.id,
-          currentBookIds: currentBooks.map((item) => item.id).toList(growable: false),
+          currentBookIds: currentBooks
+              .map((item) => item.id)
+              .toList(growable: false),
           desiredBookIds: bookIds,
         ),
     successMessage: 'Playlist books updated.',
@@ -365,7 +436,9 @@ Future<void> _deletePlaylist({
     context: context,
     title: 'Delete playlist?',
     message: '"${playlist.name}" will be permanently removed.',
-    onDelete: () => ref.read(playlistsProvider(libraryId).notifier).deletePlaylist(playlist.id),
+    onDelete: () => ref
+        .read(playlistsProvider(libraryId).notifier)
+        .deletePlaylist(playlist.id),
     successMessage: 'Playlist deleted.',
     errorFallback: 'Could not delete playlist.',
     popOnSuccess: true,

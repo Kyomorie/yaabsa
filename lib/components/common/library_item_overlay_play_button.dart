@@ -44,11 +44,15 @@ class LibraryItemOverlayPlayButton extends StatelessWidget {
       stream: audioHandler.queueTransitionLoadingStream,
       initialData: audioHandler.queueTransitionLoading,
       builder: (context, queueTransitionSnapshot) {
-        final isQueueTransitionLoading = queueTransitionSnapshot.data ?? audioHandler.queueTransitionLoading;
+        final isQueueTransitionLoading =
+            queueTransitionSnapshot.data ?? audioHandler.queueTransitionLoading;
         final isLoadingCurrentItem =
             isLoading ||
             (isQueueTransitionLoading &&
-                audioHandler.isQueueTransitionForItem(resolvedLibraryItemId, episodeId: shelfEpisode?.id));
+                audioHandler.isQueueTransitionForItem(
+                  resolvedLibraryItemId,
+                  episodeId: shelfEpisode?.id,
+                ));
 
         return SizedBox(
           width: 36,
@@ -64,7 +68,9 @@ class LibraryItemOverlayPlayButton extends StatelessWidget {
                     value: progressValue,
                     strokeWidth: 3,
                     backgroundColor: Colors.white24,
-                    valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      colorScheme.primary,
+                    ),
                   ),
                 ),
               IconButton(
@@ -72,12 +78,16 @@ class LibraryItemOverlayPlayButton extends StatelessWidget {
                     ? (isFinished ? 'Read Again' : 'Read')
                     : (isLoadingCurrentItem
                           ? 'Loading...'
-                          : (isPlayingCurrentItem ? 'Pause' : (isFinished ? 'Replay' : 'Play'))),
+                          : (isPlayingCurrentItem
+                                ? 'Pause'
+                                : (isFinished ? 'Replay' : 'Play'))),
                 icon: isEbook
                     ? Icon(
                         isFinished ? Icons.replay : Icons.book,
                         size: isFinished ? 18 : 16,
-                        color: isFinished ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                        color: isFinished
+                            ? colorScheme.onPrimary
+                            : colorScheme.onSurfaceVariant,
                       )
                     : (isLoadingCurrentItem
                           ? SizedBox(
@@ -85,13 +95,21 @@ class LibraryItemOverlayPlayButton extends StatelessWidget {
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onSurfaceVariant),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             )
                           : Icon(
-                              isPlayingCurrentItem ? Icons.pause : (isFinished ? Icons.replay : Icons.play_arrow),
+                              isPlayingCurrentItem
+                                  ? Icons.pause
+                                  : (isFinished
+                                        ? Icons.replay
+                                        : Icons.play_arrow),
                               size: isFinished ? 18 : 16,
-                              color: isFinished ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                              color: isFinished
+                                  ? colorScheme.onPrimary
+                                  : colorScheme.onSurfaceVariant,
                             )),
                 iconSize: isFinished ? 20 : 16,
                 onPressed: isEbook
@@ -109,7 +127,8 @@ class LibraryItemOverlayPlayButton extends StatelessWidget {
                           ];
                           bool isPdf = false;
                           for (final candidate in candidates) {
-                            final normalized = candidate?.trim().toLowerCase() ?? '';
+                            final normalized =
+                                candidate?.trim().toLowerCase() ?? '';
                             if (normalized == 'pdf') {
                               isPdf = true;
                               break;
@@ -117,7 +136,11 @@ class LibraryItemOverlayPlayButton extends StatelessWidget {
                           }
                           if (!isPdf) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Only PDF reading is currently supported on Linux')),
+                              const SnackBar(
+                                content: Text(
+                                  'Only PDF reading is currently supported on Linux',
+                                ),
+                              ),
                             );
                             return;
                           }
@@ -148,17 +171,23 @@ class LibraryItemOverlayPlayButton extends StatelessWidget {
                               }
 
                               if (item.mediaType == 'podcast') {
-                                final podcastEpisodes = _playablePodcastEpisodes(item);
-                                final episodeToPlay = shelfEpisode ?? podcastEpisodes.firstOrNull;
+                                final podcastEpisodes =
+                                    _playablePodcastEpisodes(item);
+                                final episodeToPlay =
+                                    shelfEpisode ?? podcastEpisodes.firstOrNull;
 
                                 if (episodeToPlay != null) {
-                                  final episodeIndex = podcastEpisodes.indexWhere(
-                                    (episode) => episode.id == episodeToPlay.id,
-                                  );
+                                  final episodeIndex = podcastEpisodes
+                                      .indexWhere(
+                                        (episode) =>
+                                            episode.id == episodeToPlay.id,
+                                      );
                                   audioHandler.playPodcastEpisode(
                                     item,
                                     episodeToPlay,
-                                    episodeIndex: episodeIndex < 0 ? null : episodeIndex,
+                                    episodeIndex: episodeIndex < 0
+                                        ? null
+                                        : episodeIndex,
                                     orderedEpisodes: podcastEpisodes,
                                   );
                                   return;

@@ -16,10 +16,12 @@ class PlayerComponentSettingsSheet extends StatefulWidget {
   final ValueChanged<PlayerLayoutProfile> onChanged;
 
   @override
-  State<PlayerComponentSettingsSheet> createState() => _PlayerComponentSettingsSheetState();
+  State<PlayerComponentSettingsSheet> createState() =>
+      _PlayerComponentSettingsSheetState();
 }
 
-class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSheet> {
+class _PlayerComponentSettingsSheetState
+    extends State<PlayerComponentSettingsSheet> {
   late PlayerLayoutProfile _profile;
 
   @override
@@ -28,7 +30,8 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
     _profile = widget.profile;
   }
 
-  PlayerComponentPlacement get _placement => _profile.placementFor(widget.componentType);
+  PlayerComponentPlacement get _placement =>
+      _profile.placementFor(widget.componentType);
 
   void _setProfile(PlayerLayoutProfile nextProfile) {
     setState(() {
@@ -49,7 +52,9 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
       hidden.add(utility);
     }
 
-    _setProfile(_profile.copyWith(hiddenUtilities: hidden.toList(growable: false)));
+    _setProfile(
+      _profile.copyWith(hiddenUtilities: hidden.toList(growable: false)),
+    );
   }
 
   void _moveUtility(int index, int delta) {
@@ -67,17 +72,27 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
   @override
   Widget build(BuildContext context) {
     final placement = _placement;
-    final maxScale = widget.componentType == PlayerComponentType.controls ? 1.0 : 1.8;
+    final maxScale = widget.componentType == PlayerComponentType.controls
+        ? 1.0
+        : 1.8;
     final scale = placement.scale.clamp(0.6, maxScale).toDouble();
 
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          8,
+          16,
+          16 + MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Text('${widget.componentType.label} settings', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                '${widget.componentType.label} settings',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 10),
               SwitchListTile(
                 value: placement.cardStyle,
@@ -109,7 +124,8 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
                   ),
                 ),
               ),
-              if (widget.componentType == PlayerComponentType.mediaInfo) ...<Widget>[
+              if (widget.componentType ==
+                  PlayerComponentType.mediaInfo) ...<Widget>[
                 const SizedBox(height: 10),
                 SwitchListTile(
                   value: placement.showAuthor,
@@ -135,9 +151,16 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
                 const SizedBox(height: 8),
                 YaabsaExpressiveDropdownField<PlayerMetadataTextAlign>(
                   value: placement.textAlign,
-                  decoration: const InputDecoration(labelText: 'Text alignment'),
+                  decoration: const InputDecoration(
+                    labelText: 'Text alignment',
+                  ),
                   options: PlayerMetadataTextAlign.values
-                      .map((mode) => YaabsaDropdownOption<PlayerMetadataTextAlign>(value: mode, label: mode.label))
+                      .map(
+                        (mode) => YaabsaDropdownOption<PlayerMetadataTextAlign>(
+                          value: mode,
+                          label: mode.label,
+                        ),
+                      )
                       .toList(growable: false),
                   onChanged: (PlayerMetadataTextAlign? mode) {
                     if (mode == null) {
@@ -147,7 +170,9 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
                   },
                 ),
                 const SizedBox(height: 10),
-                Text('Font scale ${placement.mediaInfoFontScale.toStringAsFixed(2)}x'),
+                Text(
+                  'Font scale ${placement.mediaInfoFontScale.toStringAsFixed(2)}x',
+                ),
                 Slider(
                   value: placement.mediaInfoFontScale.clamp(0.75, 1.6),
                   min: 0.75,
@@ -155,17 +180,27 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
                   divisions: 17,
                   label: '${placement.mediaInfoFontScale.toStringAsFixed(2)}x',
                   onChanged: (double value) {
-                    _updatePlacement(placement.copyWith(mediaInfoFontScale: value));
+                    _updatePlacement(
+                      placement.copyWith(mediaInfoFontScale: value),
+                    );
                   },
                 ),
               ],
-              if (widget.componentType == PlayerComponentType.cover) ...<Widget>[
+              if (widget.componentType ==
+                  PlayerComponentType.cover) ...<Widget>[
                 const SizedBox(height: 10),
                 YaabsaExpressiveDropdownField<PlayerCoverFitMode>(
                   value: placement.coverFitMode,
-                  decoration: const InputDecoration(labelText: 'Cover fit mode'),
+                  decoration: const InputDecoration(
+                    labelText: 'Cover fit mode',
+                  ),
                   options: PlayerCoverFitMode.values
-                      .map((mode) => YaabsaDropdownOption<PlayerCoverFitMode>(value: mode, label: mode.label))
+                      .map(
+                        (mode) => YaabsaDropdownOption<PlayerCoverFitMode>(
+                          value: mode,
+                          label: mode.label,
+                        ),
+                      )
                       .toList(growable: false),
                   onChanged: (PlayerCoverFitMode? mode) {
                     if (mode == null) {
@@ -175,23 +210,35 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
                   },
                 ),
               ],
-              if (widget.componentType == PlayerComponentType.seekBar) ...<Widget>[
+              if (widget.componentType ==
+                  PlayerComponentType.seekBar) ...<Widget>[
                 const SizedBox(height: 10),
                 YaabsaExpressiveDropdownField<PlayerSeekTimePlacement>(
                   value: placement.seekTimePlacement,
-                  decoration: const InputDecoration(labelText: 'Time labels position'),
+                  decoration: const InputDecoration(
+                    labelText: 'Time labels position',
+                  ),
                   options: PlayerSeekTimePlacement.values
-                      .map((mode) => YaabsaDropdownOption<PlayerSeekTimePlacement>(value: mode, label: mode.label))
+                      .map(
+                        (mode) => YaabsaDropdownOption<PlayerSeekTimePlacement>(
+                          value: mode,
+                          label: mode.label,
+                        ),
+                      )
                       .toList(growable: false),
                   onChanged: (PlayerSeekTimePlacement? mode) {
                     if (mode == null) {
                       return;
                     }
-                    _updatePlacement(placement.copyWith(seekTimePlacement: mode));
+                    _updatePlacement(
+                      placement.copyWith(seekTimePlacement: mode),
+                    );
                   },
                 ),
                 const SizedBox(height: 10),
-                Text('Seek bar height ${placement.seekTrackHeight.toStringAsFixed(1)}'),
+                Text(
+                  'Seek bar height ${placement.seekTrackHeight.toStringAsFixed(1)}',
+                ),
                 Slider(
                   value: placement.seekTrackHeight.clamp(4.0, 20.0),
                   min: 4.0,
@@ -199,10 +246,14 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
                   divisions: 16,
                   label: placement.seekTrackHeight.toStringAsFixed(1),
                   onChanged: (double value) {
-                    _updatePlacement(placement.copyWith(seekTrackHeight: value));
+                    _updatePlacement(
+                      placement.copyWith(seekTrackHeight: value),
+                    );
                   },
                 ),
-                Text('Time font size ${placement.seekTimeLabelFontSize.toStringAsFixed(1)}'),
+                Text(
+                  'Time font size ${placement.seekTimeLabelFontSize.toStringAsFixed(1)}',
+                ),
                 Slider(
                   value: placement.seekTimeLabelFontSize.clamp(8.0, 22.0),
                   min: 8.0,
@@ -210,18 +261,29 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
                   divisions: 14,
                   label: placement.seekTimeLabelFontSize.toStringAsFixed(1),
                   onChanged: (double value) {
-                    _updatePlacement(placement.copyWith(seekTimeLabelFontSize: value));
+                    _updatePlacement(
+                      placement.copyWith(seekTimeLabelFontSize: value),
+                    );
                   },
                 ),
               ],
               if (widget.componentType == PlayerComponentType.chapters ||
-                  widget.componentType == PlayerComponentType.queue) ...<Widget>[
+                  widget.componentType ==
+                      PlayerComponentType.queue) ...<Widget>[
                 const SizedBox(height: 10),
                 YaabsaExpressiveDropdownField<PlayerCollectionEmptyMode>(
                   value: placement.emptyMode,
-                  decoration: const InputDecoration(labelText: 'When this component has no data'),
+                  decoration: const InputDecoration(
+                    labelText: 'When this component has no data',
+                  ),
                   options: PlayerCollectionEmptyMode.values
-                      .map((mode) => YaabsaDropdownOption<PlayerCollectionEmptyMode>(value: mode, label: mode.label))
+                      .map(
+                        (mode) =>
+                            YaabsaDropdownOption<PlayerCollectionEmptyMode>(
+                              value: mode,
+                              label: mode.label,
+                            ),
+                      )
                       .toList(growable: false),
                   onChanged: (PlayerCollectionEmptyMode? mode) {
                     if (mode == null) {
@@ -231,7 +293,8 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
                   },
                 ),
               ],
-              if (widget.componentType == PlayerComponentType.utilities) ...<Widget>[
+              if (widget.componentType ==
+                  PlayerComponentType.utilities) ...<Widget>[
                 const SizedBox(height: 10),
                 ..._profile.utilityOrder.indexed.map((entry) {
                   final index = entry.$1;
@@ -248,15 +311,23 @@ class _PlayerComponentSettingsSheetState extends State<PlayerComponentSettingsSh
                         children: <Widget>[
                           IconButton(
                             tooltip: 'Move up',
-                            onPressed: index > 0 ? () => _moveUtility(index, -1) : null,
+                            onPressed: index > 0
+                                ? () => _moveUtility(index, -1)
+                                : null,
                             icon: const Icon(Icons.arrow_upward_rounded),
                           ),
                           IconButton(
                             tooltip: 'Move down',
-                            onPressed: index < _profile.utilityOrder.length - 1 ? () => _moveUtility(index, 1) : null,
+                            onPressed: index < _profile.utilityOrder.length - 1
+                                ? () => _moveUtility(index, 1)
+                                : null,
                             icon: const Icon(Icons.arrow_downward_rounded),
                           ),
-                          Switch(value: enabled, onChanged: (bool value) => _toggleUtilityVisibility(utility, value)),
+                          Switch(
+                            value: enabled,
+                            onChanged: (bool value) =>
+                                _toggleUtilityVisibility(utility, value),
+                          ),
                         ],
                       ),
                     ),

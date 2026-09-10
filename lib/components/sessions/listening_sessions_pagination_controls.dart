@@ -43,7 +43,12 @@ class ListeningSessionsPaginationControls extends StatelessWidget {
           value: itemsPerPage,
           enabled: !isLoading && onItemsPerPageChanged != null,
           options: options
-              .map((option) => YaabsaDropdownOption<int>(value: option, label: option.toString()))
+              .map(
+                (option) => YaabsaDropdownOption<int>(
+                  value: option,
+                  label: option.toString(),
+                ),
+              )
               .toList(growable: false),
           onChanged: (value) {
             if (value == null) {
@@ -65,14 +70,22 @@ class ListeningSessionsPaginationControls extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text('Total: $total', overflow: TextOverflow.ellipsis)),
+                  Expanded(
+                    child: Text(
+                      'Total: $total',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   Text('Page $currentPage / $clampedPages'),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Text('Per page:', style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    'Per page:',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   const SizedBox(width: 6),
                   buildPerPageSelector(),
                   const Spacer(),
@@ -94,12 +107,17 @@ class ListeningSessionsPaginationControls extends StatelessWidget {
 
         return Row(
           children: [
-            Expanded(child: Text('Total: $total', overflow: TextOverflow.ellipsis)),
+            Expanded(
+              child: Text('Total: $total', overflow: TextOverflow.ellipsis),
+            ),
             Text('Per page:', style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(width: 6),
             buildPerPageSelector(),
             const SizedBox(width: 12),
-            Text('Page $currentPage / $clampedPages', style: Theme.of(context).textTheme.bodyMedium),
+            Text(
+              'Page $currentPage / $clampedPages',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
             const SizedBox(width: 8),
             IconButton(
               tooltip: 'Previous page',

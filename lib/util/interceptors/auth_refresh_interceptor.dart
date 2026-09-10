@@ -14,7 +14,12 @@ import 'package:yaabsa/util/logger.dart';
 import 'package:yaabsa/util/network/dio_factory.dart';
 
 class AuthRefreshInterceptor extends Interceptor {
-  AuthRefreshInterceptor(this.container, {this.bearerAuthInterceptor, this.oAuthInterceptor, this.onAuthFailed});
+  AuthRefreshInterceptor(
+    this.container, {
+    this.bearerAuthInterceptor,
+    this.oAuthInterceptor,
+    this.onAuthFailed,
+  });
 
   static const String _retryExtraKey = 'auth_retry_attempted';
   static const String _skipRefreshExtraKey = 'skip_auth_refresh';
@@ -27,7 +32,10 @@ class AuthRefreshInterceptor extends Interceptor {
   static Completer<User?>? _globalRefreshCompleter;
 
   @override
-  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     if (_shouldSkip(options)) {
       return handler.next(options);
     }
@@ -60,7 +68,11 @@ class AuthRefreshInterceptor extends Interceptor {
                 requestOptions: options,
                 error: 'Unauthorized (Token refresh failed)',
                 type: DioExceptionType.badResponse,
-                response: Response(requestOptions: options, statusCode: 401, statusMessage: 'Unauthorized'),
+                response: Response(
+                  requestOptions: options,
+                  statusCode: 401,
+                  statusMessage: 'Unauthorized',
+                ),
               ),
             );
           }
@@ -74,13 +86,21 @@ class AuthRefreshInterceptor extends Interceptor {
 
           options.headers['Authorization'] = 'Bearer $newToken';
         } catch (e) {
-          logger('Token refresh error in onRequest: $e', tag: 'AuthRefreshInterceptor', level: InfoLevel.warning);
+          logger(
+            'Token refresh error in onRequest: $e',
+            tag: 'AuthRefreshInterceptor',
+            level: InfoLevel.warning,
+          );
           return handler.reject(
             DioException(
               requestOptions: options,
               error: 'Unauthorized (Token refresh failed: $e)',
               type: DioExceptionType.badResponse,
-              response: Response(requestOptions: options, statusCode: 401, statusMessage: 'Unauthorized'),
+              response: Response(
+                requestOptions: options,
+                statusCode: 401,
+                statusMessage: 'Unauthorized',
+              ),
             ),
           );
         }
@@ -91,9 +111,13 @@ class AuthRefreshInterceptor extends Interceptor {
   }
 
   @override
-  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     final statusCode = err.response?.statusCode;
-    if ((statusCode != 401 && statusCode != 403) || _shouldSkip(err.requestOptions)) {
+    if ((statusCode != 401 && statusCode != 403) ||
+        _shouldSkip(err.requestOptions)) {
       return handler.next(err);
     }
 
@@ -125,7 +149,8 @@ class AuthRefreshInterceptor extends Interceptor {
   }
 
   bool _shouldSkip(RequestOptions requestOptions) {
-    if (requestOptions.extra[_retryExtraKey] == true || requestOptions.extra[_skipRefreshExtraKey] == true) {
+    if (requestOptions.extra[_retryExtraKey] == true ||
+        requestOptions.extra[_skipRefreshExtraKey] == true) {
       return true;
     }
 
@@ -186,7 +211,11 @@ class AuthRefreshInterceptor extends Interceptor {
 
         final refreshToken = activeUser.refreshToken;
         if (refreshToken == null || refreshToken.isEmpty) {
-          logger('No refresh token available. Logging out.', tag: 'AuthRefreshInterceptor', level: InfoLevel.warning);
+          logger(
+            'No refresh token available. Logging out.',
+            tag: 'AuthRefreshInterceptor',
+            level: InfoLevel.warning,
+          );
           if (onAuthFailed != null) {
             await _notifyAuthFailed(onAuthFailed, activeUserId);
           }
@@ -212,7 +241,11 @@ class AuthRefreshInterceptor extends Interceptor {
         );
         final refreshedLogin = loginResponse.data;
         if (refreshedLogin == null) {
-          logger('Refresh response data is null.', tag: 'AuthRefreshInterceptor', level: InfoLevel.warning);
+          logger(
+            'Refresh response data is null.',
+            tag: 'AuthRefreshInterceptor',
+            level: InfoLevel.warning,
+          );
           completer.complete(null);
           return;
         }
@@ -231,8 +264,16 @@ class AuthRefreshInterceptor extends Interceptor {
         );
         completer.complete(refreshedUser);
       } catch (e, s) {
-        logger('Failed to refresh auth token: $e', tag: 'AuthRefreshInterceptor', level: InfoLevel.warning);
-        logger('Refresh stack trace: $s', tag: 'AuthRefreshInterceptor', level: InfoLevel.debug);
+        logger(
+          'Failed to refresh auth token: $e',
+          tag: 'AuthRefreshInterceptor',
+          level: InfoLevel.warning,
+        );
+        logger(
+          'Refresh stack trace: $s',
+          tag: 'AuthRefreshInterceptor',
+          level: InfoLevel.debug,
+        );
 
         if (e is AuthSecretsUnavailableException) {
           completer.completeError(e, s);
@@ -242,7 +283,9 @@ class AuthRefreshInterceptor extends Interceptor {
         if (e is DioException) {
           final status = e.response?.statusCode;
           if (_isConnectivityFailure(e)) {
-            container.read(serverReachabilityProvider.notifier).setUnreachable();
+            container
+                .read(serverReachabilityProvider.notifier)
+                .setUnreachable();
           }
           if (status == 401 || status == 403) {
             logger(
@@ -264,7 +307,10 @@ class AuthRefreshInterceptor extends Interceptor {
     return completer.future;
   }
 
-  static Future<void> _notifyAuthFailed(FutureOr<void> Function(String userId) callback, String userId) async {
+  static Future<void> _notifyAuthFailed(
+    FutureOr<void> Function(String userId) callback,
+    String userId,
+  ) async {
     try {
       await callback(userId);
     } catch (e, s) {
@@ -355,7 +401,9 @@ class AuthRefreshInterceptor extends Interceptor {
     final exp = payload['exp'];
     if (exp is int) {
       final expDateTime = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
-      return DateTime.now().add(const Duration(seconds: 5)).isAfter(expDateTime);
+      return DateTime.now()
+          .add(const Duration(seconds: 5))
+          .isAfter(expDateTime);
     }
     return false;
   }

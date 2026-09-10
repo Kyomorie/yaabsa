@@ -12,5 +12,6 @@ abstract class ItemsListenedTo with _$ItemsListenedTo {
     @JsonKey(name: "mediaMetadata") Metadata? mediaMetadata,
   }) = _ItemsListenedTo;
 
-  factory ItemsListenedTo.fromJson(Map<String, dynamic> json) => _$ItemsListenedToFromJson(json);
+  factory ItemsListenedTo.fromJson(Map<String, dynamic> json) =>
+      _$ItemsListenedToFromJson(json);
 }

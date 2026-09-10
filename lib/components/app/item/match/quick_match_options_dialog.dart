@@ -58,10 +58,12 @@ class QuickMatchOptionsDialog extends ConsumerStatefulWidget {
   final bool initialOverrideDetails;
 
   @override
-  ConsumerState<QuickMatchOptionsDialog> createState() => _QuickMatchOptionsDialogState();
+  ConsumerState<QuickMatchOptionsDialog> createState() =>
+      _QuickMatchOptionsDialogState();
 }
 
-class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialog> {
+class _QuickMatchOptionsDialogState
+    extends ConsumerState<QuickMatchOptionsDialog> {
   final Set<String> _selectedProviders = <String>{};
   late bool _overrideCover;
   late bool _overrideDetails;
@@ -71,7 +73,8 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
     super.initState();
     _overrideCover = widget.initialOverrideCover;
     _overrideDetails = widget.initialOverrideDetails;
-    if (widget.initialProvider != null && widget.initialProvider!.trim().isNotEmpty) {
+    if (widget.initialProvider != null &&
+        widget.initialProvider!.trim().isNotEmpty) {
       _selectedProviders.add(widget.initialProvider!);
     }
   }
@@ -93,7 +96,8 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
 
     final validValues = providers.map((p) => p.value).toSet();
     final effective = _selectedProviders.intersection(validValues);
-    if (effective.length == _selectedProviders.length && _selectedProviders.isNotEmpty) {
+    if (effective.length == _selectedProviders.length &&
+        _selectedProviders.isNotEmpty) {
       return;
     }
 
@@ -117,7 +121,10 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
     });
   }
 
-  String? _findMatchingProviderValue(List<SearchProviderOption> providers, String requestedValue) {
+  String? _findMatchingProviderValue(
+    List<SearchProviderOption> providers,
+    String requestedValue,
+  ) {
     final normalizedRequested = requestedValue.trim().toLowerCase();
     for (final provider in providers) {
       if (provider.value.trim().toLowerCase() == normalizedRequested) {
@@ -129,13 +136,17 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
 
   @override
   Widget build(BuildContext context) {
-    final providersAsync = ref.watch(uploadMetadataProvidersProvider(widget.mediaType));
+    final providersAsync = ref.watch(
+      uploadMetadataProvidersProvider(widget.mediaType),
+    );
 
-    final providers = providersAsync.asData?.value ?? const <SearchProviderOption>[];
+    final providers =
+        providersAsync.asData?.value ?? const <SearchProviderOption>[];
     _syncProviderSelection(providers);
 
     final canSubmit = _selectedProviders.length == 1;
-    final canPreview = _selectedProviders.isNotEmpty && widget.previewItems.isNotEmpty;
+    final canPreview =
+        _selectedProviders.isNotEmpty && widget.previewItems.isNotEmpty;
 
     return AlertDialog(
       title: Text(widget.title),
@@ -145,7 +156,8 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (widget.description != null && widget.description!.trim().isNotEmpty) ...[
+            if (widget.description != null &&
+                widget.description!.trim().isNotEmpty) ...[
               Text(widget.description!),
               const SizedBox(height: 12),
             ],
@@ -154,7 +166,11 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
                 padding: EdgeInsets.symmetric(vertical: 8),
                 child: Row(
                   children: [
-                    SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2)),
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2.2),
+                    ),
                     SizedBox(width: 10),
                     Text('Loading providers...'),
                   ],
@@ -166,7 +182,9 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
               ),
               data: (loadedProviders) {
                 if (loadedProviders.isEmpty) {
-                  return const Text('No metadata providers are available for this media type.');
+                  return const Text(
+                    'No metadata providers are available for this media type.',
+                  );
                 }
 
                 return ManualMatchProviderDropdown(
@@ -186,7 +204,9 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
               value: _overrideDetails,
               contentPadding: EdgeInsets.zero,
               title: const Text('Overwrite current metadata'),
-              subtitle: const Text('Replace existing title, author, description, and related fields.'),
+              subtitle: const Text(
+                'Replace existing title, author, description, and related fields.',
+              ),
               onChanged: (value) {
                 setState(() {
                   _overrideDetails = value;
@@ -197,7 +217,9 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
               value: _overrideCover,
               contentPadding: EdgeInsets.zero,
               title: const Text('Overwrite cover image'),
-              subtitle: const Text('Replace current cover artwork when a match provides one.'),
+              subtitle: const Text(
+                'Replace current cover artwork when a match provides one.',
+              ),
               onChanged: (value) {
                 setState(() {
                   _overrideCover = value;
@@ -210,7 +232,10 @@ class _QuickMatchOptionsDialogState extends ConsumerState<QuickMatchOptionsDialo
               runSpacing: 8,
               alignment: WrapAlignment.end,
               children: [
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
                 OutlinedButton.icon(
                   onPressed: canPreview
                       ? () async {

@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yaabsa/components/settings/settings_dropdown.dart';
@@ -20,13 +21,18 @@ class AndroidAutoPodcastLibrarySettings extends ConsumerStatefulWidget {
   static const String routeName = '/settings/android-auto/podcast-library';
 
   @override
-  ConsumerState<AndroidAutoPodcastLibrarySettings> createState() => _AndroidAutoPodcastLibrarySettingsState();
+  ConsumerState<AndroidAutoPodcastLibrarySettings> createState() =>
+      _AndroidAutoPodcastLibrarySettingsState();
 }
 
-class _AndroidAutoPodcastLibrarySettingsState extends ConsumerState<AndroidAutoPodcastLibrarySettings> {
+class _AndroidAutoPodcastLibrarySettingsState
+    extends ConsumerState<AndroidAutoPodcastLibrarySettings> {
   bool _isUpdatingSortField = false;
 
-  Future<void> _setSortField({required String userId, required String sortField}) async {
+  Future<void> _setSortField({
+    required String userId,
+    required String sortField,
+  }) async {
     if (_isUpdatingSortField) {
       return;
     }
@@ -38,13 +44,19 @@ class _AndroidAutoPodcastLibrarySettingsState extends ConsumerState<AndroidAutoP
     try {
       await ref
           .read(settingsManagerProvider.notifier)
-          .setUserSetting<String>(userId, SettingKeys.androidAutoPodcastSortField, sortField);
+          .setUserSetting<String>(
+            userId,
+            SettingKeys.androidAutoPodcastSortField,
+            sortField,
+          );
     } catch (e) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update sort field: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update sort field: $e')),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -72,7 +84,9 @@ class _AndroidAutoPodcastLibrarySettingsState extends ConsumerState<AndroidAutoP
             if (user == null) {
               return const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                child: Text('No active user. Sign in to configure car podcast settings'),
+                child: Text(
+                  'No active user. Sign in to configure car podcast settings',
+                ),
               );
             }
 
@@ -88,7 +102,10 @@ class _AndroidAutoPodcastLibrarySettingsState extends ConsumerState<AndroidAutoP
                   defaultValue: true,
                 ),
                 StreamBuilder<UserSettingEntry?>(
-                  stream: appDatabase.watchUserSetting(user.id, SettingKeys.androidAutoPodcastSortField),
+                  stream: appDatabase.watchUserSetting(
+                    user.id,
+                    SettingKeys.androidAutoPodcastSortField,
+                  ),
                   builder: (context, snapshot) {
                     final fallbackValue = ref
                         .read(settingsManagerProvider.notifier)
@@ -97,15 +114,26 @@ class _AndroidAutoPodcastLibrarySettingsState extends ConsumerState<AndroidAutoP
                           SettingKeys.androidAutoPodcastSortField,
                           defaultValue: _sortFieldAdded,
                         );
-                    final sortField = SettingsParser.decodeValue<String>(snapshot.data?.value, fallbackValue);
+                    final sortField = SettingsParser.decodeValue<String>(
+                      snapshot.data?.value,
+                      fallbackValue,
+                    );
                     final safeSortField =
-                        <String>{_sortFieldTitle, _sortFieldAuthor, _sortFieldAdded}.contains(sortField)
+                        <String>{
+                          _sortFieldTitle,
+                          _sortFieldAuthor,
+                          _sortFieldAdded,
+                        }.contains(sortField)
                         ? sortField
                         : _sortFieldAdded;
 
                     return SettingDropdown<String>.remote(
                       label: 'Sort By',
-                      values: const [_sortFieldTitle, _sortFieldAuthor, _sortFieldAdded],
+                      values: const [
+                        _sortFieldTitle,
+                        _sortFieldAuthor,
+                        _sortFieldAdded,
+                      ],
                       valueLabels: const ['Title', 'Author', 'Date Added'],
                       value: safeSortField,
                       enabled: !_isUpdatingSortField,
@@ -122,8 +150,10 @@ class _AndroidAutoPodcastLibrarySettingsState extends ConsumerState<AndroidAutoP
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) =>
-              Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load user settings: $error')),
+          error: (error, _) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Failed to load user settings: $error'),
+          ),
         ),
       ],
     );

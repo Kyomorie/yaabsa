@@ -27,8 +27,15 @@ class GlobalPlayerSettings extends StatelessWidget {
           settings: [
             const SettingSlider<int>(
               label: 'Max buffer size',
-              description: 'Maximum size of the audio buffer in bytes (hint for the OS)',
-              values: [512 * 1024, 1024 * 1024, 2 * 1024 * 1024, 5 * 1024 * 1024, 10 * 1024 * 1024],
+              description:
+                  'Maximum size of the audio buffer in bytes (hint for the OS)',
+              values: [
+                512 * 1024,
+                1024 * 1024,
+                2 * 1024 * 1024,
+                5 * 1024 * 1024,
+                10 * 1024 * 1024,
+              ],
               valueLabels: ['512 KB', '1 MB', '2 MB', '5 MB', '10 MB'],
               settingKey: SettingKeys.bufferSize,
             ),
@@ -44,14 +51,17 @@ class GlobalPlayerSettings extends StatelessWidget {
           settings: [
             const SettingSwitchTile(
               label: 'Lock Media Notification',
-              subtitle: 'Keep media controls visible in system notification panel',
+              subtitle:
+                  'Keep media controls visible in system notification panel',
               settingKey: SettingKeys.lockMediaNotification,
             ),
             SettingDropdown<String>(
               label: 'Media notification type',
               description: 'Choose whether notification progress tracks the full book or current chapter',
               values: MediaNotificationType.values.map((m) => m.name).toList(),
-              valueLabels: MediaNotificationType.values.map((m) => m.label).toList(),
+              valueLabels: MediaNotificationType.values
+                  .map((m) => m.label)
+                  .toList(),
               valueDescriptions: const [
                 'Show full audiobook progress and details',
                 'Show currently playing chapter progress and details',
@@ -64,7 +74,8 @@ class GlobalPlayerSettings extends StatelessWidget {
               SettingsNavigationItem(
                 icon: Icons.dashboard_customize_rounded,
                 title: 'Media Notification Actions',
-                subtitle: 'Customize the actions available in the media notification',
+                subtitle:
+                    'Customize the actions available in the media notification',
                 onTap: () => context.push(PlayerSettingsNotification.routeName),
               ),
           ],

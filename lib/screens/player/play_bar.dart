@@ -20,7 +20,11 @@ import 'package:yaabsa/util/setting_key.dart';
 import 'package:yaabsa/util/globals.dart';
 
 class PlayBar extends ConsumerStatefulWidget {
-  const PlayBar({super.key, this.includeBottomSafeArea = true, this.attachedToBottom = false});
+  const PlayBar({
+    super.key,
+    this.includeBottomSafeArea = true,
+    this.attachedToBottom = false,
+  });
 
   final bool includeBottomSafeArea;
   final bool attachedToBottom;
@@ -93,7 +97,9 @@ class _PlayBarState extends ConsumerState<PlayBar> {
       builder: (context, mediaSnapshot) {
         final currentMedia = mediaSnapshot.data;
         final chaptersExist =
-            currentMedia != null && currentMedia.chapters != null && currentMedia.chapters!.isNotEmpty;
+            currentMedia != null &&
+            currentMedia.chapters != null &&
+            currentMedia.chapters!.isNotEmpty;
 
         final metadata = Row(
           children: <Widget>[
@@ -106,8 +112,11 @@ class _PlayBarState extends ConsumerState<PlayBar> {
             Expanded(child: _MiniPlayerMetadata(media: currentMedia)),
           ],
         );
-        final compactDesktop = !mobile && MediaQuery.sizeOf(context).width < 1100;
-        final visibleDesktopActions = compactDesktop ? actions.take(2).toList(growable: false) : actions;
+        final compactDesktop =
+            !mobile && MediaQuery.sizeOf(context).width < 1100;
+        final visibleDesktopActions = compactDesktop
+            ? actions.take(2).toList(growable: false)
+            : actions;
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -121,18 +130,28 @@ class _PlayBarState extends ConsumerState<PlayBar> {
                 if (mobile)
                   IconButton(
                     tooltip: 'More player controls',
-                    onPressed: () => _showMiniActionsSheet(context, actions: actions, hasChapters: chaptersExist),
+                    onPressed: () => _showMiniActionsSheet(
+                      context,
+                      actions: actions,
+                      hasChapters: chaptersExist,
+                    ),
                     icon: const Icon(Icons.more_horiz_rounded),
                   )
                 else ...<Widget>[
                   const SizedBox(width: 18),
-                  PlayerActionBar(actions: visibleDesktopActions, hasChapters: chaptersExist, spacing: 6),
+                  PlayerActionBar(
+                    actions: visibleDesktopActions,
+                    hasChapters: chaptersExist,
+                    spacing: 6,
+                  ),
                   if (visibleDesktopActions.length != actions.length)
                     IconButton(
                       tooltip: 'More player controls',
                       onPressed: () => _showMiniActionsSheet(
                         context,
-                        actions: actions.skip(visibleDesktopActions.length).toList(growable: false),
+                        actions: actions
+                            .skip(visibleDesktopActions.length)
+                            .toList(growable: false),
                         hasChapters: chaptersExist,
                       ),
                       icon: const Icon(Icons.more_horiz_rounded),
@@ -175,7 +194,12 @@ class _PlayBarState extends ConsumerState<PlayBar> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               if (actions.isNotEmpty) ...<Widget>[
-                PlayerActionBar(actions: actions, hasChapters: hasChapters, showLabels: true, spacing: 8),
+                PlayerActionBar(
+                  actions: actions,
+                  hasChapters: hasChapters,
+                  showLabels: true,
+                  spacing: 8,
+                ),
                 const SizedBox(height: 12),
               ],
               Material(
@@ -183,7 +207,9 @@ class _PlayBarState extends ConsumerState<PlayBar> {
                 child: ListTile(
                   leading: const Icon(Icons.stop_circle_rounded),
                   title: const Text('Stop playback'),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   tileColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                   onTap: () {
                     Navigator.of(context).pop();
@@ -214,7 +240,11 @@ class _PlayBarState extends ConsumerState<PlayBar> {
         leading: SizedBox(
           width: _mobileCoverSize,
           height: _mobileCoverSize,
-          child: _PlayBarCover(coverUri: coverUri, borderRadius: _mobileCoverRadius, requestHeaders: requestHeaders),
+          child: _PlayBarCover(
+            coverUri: coverUri,
+            borderRadius: _mobileCoverRadius,
+            requestHeaders: requestHeaders,
+          ),
         ),
       );
     }
@@ -226,12 +256,19 @@ class _PlayBarState extends ConsumerState<PlayBar> {
       leading: SizedBox(
         width: _desktopCoverWidth,
         height: _desktopCoverWidth,
-        child: _PlayBarCover(coverUri: coverUri, borderRadius: _desktopCoverRadius, requestHeaders: requestHeaders),
+        child: _PlayBarCover(
+          coverUri: coverUri,
+          borderRadius: _desktopCoverRadius,
+          requestHeaders: requestHeaders,
+        ),
       ),
     );
   }
 
-  Widget _buildIdleContent(BuildContext context, LastPlayedMiniPlayerSnapshot snapshot) {
+  Widget _buildIdleContent(
+    BuildContext context,
+    LastPlayedMiniPlayerSnapshot snapshot,
+  ) {
     return PlayBarIdleContent(
       snapshot: snapshot,
       isMobile: context.isMobile,
@@ -247,7 +284,9 @@ class _PlayBarState extends ConsumerState<PlayBar> {
   Widget _buildTransitionLoadingContent(BuildContext context) {
     final isMobile = context.isMobile;
     final coverSize = isMobile ? _mobileCoverSize : _desktopCoverWidth;
-    final coverRadius = isMobile ? _mobileCoverRadius : (widget.attachedToBottom ? 0.0 : _desktopCoverRadius);
+    final coverRadius = isMobile
+        ? _mobileCoverRadius
+        : (widget.attachedToBottom ? 0.0 : _desktopCoverRadius);
 
     return SizedBox(
       height: coverSize,
@@ -268,7 +307,11 @@ class _PlayBarState extends ConsumerState<PlayBar> {
             ),
           ),
           const SizedBox(width: 10),
-          const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2)),
+          const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2.2),
+          ),
         ],
       ),
     );
@@ -276,11 +319,25 @@ class _PlayBarState extends ConsumerState<PlayBar> {
 
   @override
   Widget build(BuildContext context) {
-    final rawTransportMode = ref.watch(globalSettingByKeyProvider(SettingKeys.miniPlayerTransportMode)).asData?.value;
-    final rawActions = ref.watch(globalSettingByKeyProvider(SettingKeys.miniPlayerActions)).asData?.value;
-    final rawImmersiveColors = ref.watch(globalSettingByKeyProvider(SettingKeys.playerImmersiveColors)).asData?.value;
-    final transportMode = PlayerTransportMode.fromSettingValue(rawTransportMode);
-    final actions = decodePlayerActions(rawActions, fallback: defaultMiniPlayerActions);
+    final rawTransportMode = ref
+        .watch(globalSettingByKeyProvider(SettingKeys.miniPlayerTransportMode))
+        .asData
+        ?.value;
+    final rawActions = ref
+        .watch(globalSettingByKeyProvider(SettingKeys.miniPlayerActions))
+        .asData
+        ?.value;
+    final rawImmersiveColors = ref
+        .watch(globalSettingByKeyProvider(SettingKeys.playerImmersiveColors))
+        .asData
+        ?.value;
+    final transportMode = PlayerTransportMode.fromSettingValue(
+      rawTransportMode,
+    );
+    final actions = decodePlayerActions(
+      rawActions,
+      fallback: defaultMiniPlayerActions,
+    );
     final immersiveColors = SettingsParser.decodeValue<bool>(
       rawImmersiveColors,
       defaultSettings[SettingKeys.playerImmersiveColors] as bool,
@@ -314,8 +371,14 @@ class _PlayBarState extends ConsumerState<PlayBar> {
                       : const EdgeInsets.fromLTRB(10, 7, 10, 6)
                 : const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
             final border = widget.attachedToBottom
-                ? Border(top: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.6)))
-                : Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6));
+                ? Border(
+                    top: BorderSide(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                    ),
+                  )
+                : Border.all(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                  );
 
             return StreamBuilder<LastPlayedMiniPlayerSnapshot?>(
               stream: audioHandler.lastPlayedMiniPlayerSnapshotStream,
@@ -327,37 +390,53 @@ class _PlayBarState extends ConsumerState<PlayBar> {
                   builder: (context, mediaSnapshot) {
                     final currentMedia = mediaSnapshot.data;
                     final snapshot = lastPlayedSnapshot.data;
-                    final isIdleMiniPlayer = !isTransitionLoading && currentMedia == null && snapshot != null;
+                    final isIdleMiniPlayer =
+                        !isTransitionLoading &&
+                        currentMedia == null &&
+                        snapshot != null;
                     final content = isTransitionLoading
                         ? _buildTransitionLoadingContent(context)
                         : currentMedia != null
-                        ? _buildReadyContent(context, transportMode: transportMode, actions: actions)
+                        ? _buildReadyContent(
+                            context,
+                            transportMode: transportMode,
+                            actions: actions,
+                          )
                         : snapshot != null
                         ? _buildIdleContent(context, snapshot)
                         : const SizedBox.shrink();
 
                     return CoverPaletteBuilder(
-                      coverUri: immersiveColors ? libraryItemCoverUri(currentMedia?.cover ?? snapshot?.cover) : null,
+                      coverUri: immersiveColors
+                          ? libraryItemCoverUri(
+                              currentMedia?.cover ?? snapshot?.cover,
+                            )
+                          : null,
                       requestHeaders: audioHandler.currentRequestHeaders,
                       builder: (context, palette) {
-                        final dark = Theme.of(context).brightness == Brightness.dark;
+                        final dark =
+                            Theme.of(context).brightness == Brightness.dark;
                         final gradientStart = immersiveColors
                             ? Color.alphaBlend(
-                                (palette?.primary ?? colorScheme.primaryContainer).withValues(
-                                  alpha: dark ? 0.22 : 0.12,
-                                ),
+                                (palette?.primary ??
+                                        colorScheme.primaryContainer)
+                                    .withValues(alpha: dark ? 0.22 : 0.12),
                                 colorScheme.surfaceContainer,
                               )
                             : colorScheme.surfaceContainer;
                         final gradientEnd = immersiveColors
                             ? Color.alphaBlend(
-                                (palette?.secondary ?? colorScheme.secondaryContainer).withValues(
-                                  alpha: dark ? 0.2 : 0.1,
-                                ),
+                                (palette?.secondary ??
+                                        colorScheme.secondaryContainer)
+                                    .withValues(alpha: dark ? 0.2 : 0.1),
                                 colorScheme.surfaceContainer,
                               )
                             : colorScheme.surfaceContainer;
-                        final baseColor = Color.lerp(gradientStart, gradientEnd, 0.5)!;
+                        final baseColor = Color.lerp(
+                          gradientStart,
+                          gradientEnd,
+                          0.5,
+                        )!;
                         final gradient = LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -367,17 +446,26 @@ class _PlayBarState extends ConsumerState<PlayBar> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: <Color>[
-                            Color.alphaBlend(colorScheme.onSurface.withValues(alpha: 0.06), gradientStart),
-                            Color.alphaBlend(colorScheme.onSurface.withValues(alpha: 0.06), gradientEnd),
+                            Color.alphaBlend(
+                              colorScheme.onSurface.withValues(alpha: 0.06),
+                              gradientStart,
+                            ),
+                            Color.alphaBlend(
+                              colorScheme.onSurface.withValues(alpha: 0.06),
+                              gradientEnd,
+                            ),
                           ],
                         );
-                        final paintsSystemInset = context.isMobile && widget.includeBottomSafeArea;
-                        final navigationBarBrightness = ThemeData.estimateBrightnessForColor(baseColor);
+                        final paintsSystemInset =
+                            context.isMobile && widget.includeBottomSafeArea;
+                        final navigationBarBrightness =
+                            ThemeData.estimateBrightnessForColor(baseColor);
                         return AnnotatedRegion<SystemUiOverlayStyle>(
                           value: SystemUiOverlayStyle(
                             systemNavigationBarColor: Colors.transparent,
                             systemNavigationBarDividerColor: Colors.transparent,
-                            systemNavigationBarIconBrightness: navigationBarBrightness == Brightness.dark
+                            systemNavigationBarIconBrightness:
+                                navigationBarBrightness == Brightness.dark
                                 ? Brightness.light
                                 : Brightness.dark,
                             systemNavigationBarContrastEnforced: false,
@@ -385,7 +473,9 @@ class _PlayBarState extends ConsumerState<PlayBar> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 260),
                             curve: Curves.easeOut,
-                            decoration: BoxDecoration(gradient: paintsSystemInset ? gradient : null),
+                            decoration: BoxDecoration(
+                              gradient: paintsSystemInset ? gradient : null,
+                            ),
                             child: SafeArea(
                               top: false,
                               left: !widget.attachedToBottom,
@@ -398,8 +488,10 @@ class _PlayBarState extends ConsumerState<PlayBar> {
                                   borderRadius: borderRadius,
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.opaque,
-                                    onVerticalDragStart: _handleVerticalDragStart,
-                                    onVerticalDragUpdate: _handleVerticalDragUpdate,
+                                    onVerticalDragStart:
+                                        _handleVerticalDragStart,
+                                    onVerticalDragUpdate:
+                                        _handleVerticalDragUpdate,
                                     onVerticalDragEnd: _handleVerticalDragEnd,
                                     child: InkWell(
                                       onTap: isIdleMiniPlayer
@@ -414,16 +506,23 @@ class _PlayBarState extends ConsumerState<PlayBar> {
                                         setState(() => _isHovered = hovering);
                                       },
                                       child: AnimatedContainer(
-                                        duration: const Duration(milliseconds: 260),
+                                        duration: const Duration(
+                                          milliseconds: 260,
+                                        ),
                                         curve: Curves.easeOut,
                                         padding: innerPadding,
                                         decoration: BoxDecoration(
-                                          color: paintsSystemInset && _isHovered && !_isSeekBarHovered
-                                              ? colorScheme.onSurface.withValues(alpha: 0.06)
+                                          color:
+                                              paintsSystemInset &&
+                                                  _isHovered &&
+                                                  !_isSeekBarHovered
+                                              ? colorScheme.onSurface
+                                                    .withValues(alpha: 0.06)
                                               : null,
                                           gradient: paintsSystemInset
                                               ? null
-                                              : (_isHovered && !_isSeekBarHovered)
+                                              : (_isHovered &&
+                                                    !_isSeekBarHovered)
                                               ? hoveredGradient
                                               : gradient,
                                           borderRadius: borderRadius,
@@ -468,11 +567,13 @@ class _MiniTransportControls extends StatelessWidget {
       spacing: 0,
       runSpacing: 0,
       children: <Widget>[
-        if (showSkip && (!compact || !showJump)) const SkipButton(previous: true),
+        if (showSkip && (!compact || !showJump))
+          const SkipButton(previous: true),
         if (showJump) const JumpButton(rewind: true),
         const ControlButton(),
         if (showJump) const JumpButton(rewind: false),
-        if (showSkip && (!compact || !showJump)) const SkipButton(previous: false),
+        if (showSkip && (!compact || !showJump))
+          const SkipButton(previous: false),
       ],
     );
   }
@@ -495,15 +596,17 @@ class _MiniPlayerMetadata extends StatelessWidget {
           title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(context).textTheme.titleSmall
+              ?.copyWith(fontWeight: FontWeight.w700),
         ),
         if (author?.isNotEmpty == true)
           Text(
             author!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
       ],
     );
@@ -511,7 +614,11 @@ class _MiniPlayerMetadata extends StatelessWidget {
 }
 
 class _PlayBarCover extends StatelessWidget {
-  const _PlayBarCover({required this.coverUri, required this.borderRadius, required this.requestHeaders});
+  const _PlayBarCover({
+    required this.coverUri,
+    required this.borderRadius,
+    required this.requestHeaders,
+  });
 
   final Uri? coverUri;
   final double borderRadius;
@@ -534,7 +641,8 @@ class _PlayBarCover extends StatelessWidget {
         image: imageProvider,
         fit: BoxFit.cover,
         filterQuality: FilterQuality.low,
-        errorBuilder: (context, error, stackTrace) => CoverPlaceholder(borderRadius: borderRadius),
+        errorBuilder: (context, error, stackTrace) =>
+            CoverPlaceholder(borderRadius: borderRadius),
       ),
     );
   }

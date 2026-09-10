@@ -11,5 +11,6 @@ abstract class PathExistsResponse with _$PathExistsResponse {
     @JsonKey(name: 'error') String? error,
   }) = _PathExistsResponse;
 
-  factory PathExistsResponse.fromJson(Map<String, dynamic> json) => _$PathExistsResponseFromJson(json);
+  factory PathExistsResponse.fromJson(Map<String, dynamic> json) =>
+      _$PathExistsResponseFromJson(json);
 }

@@ -163,14 +163,21 @@ class ExpressiveActionTable<T> extends StatelessWidget {
     return null;
   }
 
-  Widget _buildCellWithTooltip(BuildContext context, ExpressiveTableColumn<T> column, T row, {required bool mobile}) {
+  Widget _buildCellWithTooltip(
+    BuildContext context,
+    ExpressiveTableColumn<T> column,
+    T row, {
+    required bool mobile,
+  }) {
     final cellWidget = mobile
-        ? (column.mobileCellBuilder?.call(context, row) ?? column.cellBuilder(context, row))
+        ? (column.mobileCellBuilder?.call(context, row) ??
+              column.cellBuilder(context, row))
         : column.cellBuilder(context, row);
 
     final explicitMessage = column.tooltipBuilder?.call(row)?.trim();
     final inferredMessage = _inferTooltipFromWidget(cellWidget)?.trim();
-    final tooltipMessage = (explicitMessage != null && explicitMessage.isNotEmpty)
+    final tooltipMessage =
+        (explicitMessage != null && explicitMessage.isNotEmpty)
         ? explicitMessage
         : (inferredMessage != null && inferredMessage.isNotEmpty)
         ? inferredMessage
@@ -191,15 +198,27 @@ class ExpressiveActionTable<T> extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(emptyTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              emptyTitle,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             if (emptySubtitle != null && emptySubtitle!.trim().isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text(emptySubtitle!, style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+              Text(
+                emptySubtitle!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ],
         ),
@@ -207,18 +226,29 @@ class ExpressiveActionTable<T> extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, T row, {required bool compact}) {
+  Widget _buildActionButtons(
+    BuildContext context,
+    T row, {
+    required bool compact,
+  }) {
     final key = rowId(row);
     if (busyRowIds.contains(key)) {
-      return const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2));
+      return const SizedBox(
+        width: 18,
+        height: 18,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
     }
 
-    final visibleActions = actions.where((action) => action.isVisible?.call(row) ?? true).toList(growable: false);
+    final visibleActions = actions
+        .where((action) => action.isVisible?.call(row) ?? true)
+        .toList(growable: false);
     if (visibleActions.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final disabledColor = Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.42);
+    final disabledColor = Theme.of(context).colorScheme.onSurfaceVariant
+        .withValues(alpha: 0.42);
 
     return Wrap(
       spacing: compact ? 2 : 4,
@@ -229,13 +259,18 @@ class ExpressiveActionTable<T> extends StatelessWidget {
           Builder(
             builder: (context) {
               final enabled = action.isEnabled?.call(row) ?? true;
-              final color = enabled ? _actionColor(context, action.tone) : disabledColor;
+              final color = enabled
+                  ? _actionColor(context, action.tone)
+                  : disabledColor;
               final icon = action.iconBuilder?.call(row) ?? action.icon;
-              final tooltip = action.tooltipBuilder?.call(row) ?? action.tooltip;
+              final tooltip =
+                  action.tooltipBuilder?.call(row) ?? action.tooltip;
 
               return IconButton(
                 tooltip: tooltip,
-                visualDensity: compact ? VisualDensity.compact : VisualDensity.standard,
+                visualDensity: compact
+                    ? VisualDensity.compact
+                    : VisualDensity.standard,
                 onPressed: enabled ? () => _handleActionTap(action, row) : null,
                 icon: Icon(icon, size: compact ? 19 : 20, color: color),
               );
@@ -325,7 +360,9 @@ class ExpressiveActionTable<T> extends StatelessWidget {
                   width: 40,
                   child: Checkbox(
                     value: isSelected,
-                    onChanged: onSelectionChanged == null ? null : (value) => onSelectionChanged!(row, value ?? false),
+                    onChanged: onSelectionChanged == null
+                        ? null
+                        : (value) => onSelectionChanged!(row, value ?? false),
                   ),
                 ),
               for (var i = 0; i < columns.length; i++) ...[
@@ -333,7 +370,12 @@ class ExpressiveActionTable<T> extends StatelessWidget {
                   flex: columns[i].flex,
                   child: Align(
                     alignment: _cellAlignment(columns[i].alignment),
-                    child: _buildCellWithTooltip(context, columns[i], row, mobile: false),
+                    child: _buildCellWithTooltip(
+                      context,
+                      columns[i],
+                      row,
+                      mobile: false,
+                    ),
                   ),
                 ),
                 if (i < columns.length - 1) const SizedBox(width: 8),
@@ -354,7 +396,8 @@ class ExpressiveActionTable<T> extends StatelessWidget {
   }
 
   Widget _buildDesktopList(BuildContext context) {
-    final borderColor = Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.34);
+    final borderColor = Theme.of(context).colorScheme.outlineVariant
+        .withValues(alpha: 0.34);
     const radius = Radius.circular(18);
 
     return ListView.builder(
@@ -366,7 +409,10 @@ class ExpressiveActionTable<T> extends StatelessWidget {
         if (index == 0) {
           return Container(
             decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(topLeft: radius, topRight: radius),
+              borderRadius: const BorderRadius.only(
+                topLeft: radius,
+                topRight: radius,
+              ),
               border: Border(
                 top: BorderSide(color: borderColor),
                 left: BorderSide(color: borderColor),
@@ -374,7 +420,10 @@ class ExpressiveActionTable<T> extends StatelessWidget {
               ),
             ),
             child: ClipRRect(
-              borderRadius: const BorderRadius.only(topLeft: radius, topRight: radius),
+              borderRadius: const BorderRadius.only(
+                topLeft: radius,
+                topRight: radius,
+              ),
               child: _buildDesktopHeader(context),
             ),
           );
@@ -386,7 +435,10 @@ class ExpressiveActionTable<T> extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: isLastRow
-                  ? const BorderRadius.only(bottomLeft: radius, bottomRight: radius)
+                  ? const BorderRadius.only(
+                      bottomLeft: radius,
+                      bottomRight: radius,
+                    )
                   : BorderRadius.zero,
               border: Border(
                 left: BorderSide(color: borderColor),
@@ -396,7 +448,10 @@ class ExpressiveActionTable<T> extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: isLastRow
-                  ? const BorderRadius.only(bottomLeft: radius, bottomRight: radius)
+                  ? const BorderRadius.only(
+                      bottomLeft: radius,
+                      bottomRight: radius,
+                    )
                   : BorderRadius.zero,
               child: _buildDesktopRow(context, row, index - 1),
             ),
@@ -408,32 +463,43 @@ class ExpressiveActionTable<T> extends StatelessWidget {
 
   Widget _buildMobileRowCard(BuildContext context, T row) {
     final colorScheme = Theme.of(context).colorScheme;
-    final mobileColumns = columns.where((column) => column.showOnMobile).toList(growable: false);
+    final mobileColumns = columns
+        .where((column) => column.showOnMobile)
+        .toList(growable: false);
     final isSelected = showSelection && selectedRowIds.contains(rowId(row));
 
     return Card(
       elevation: 0,
       margin: EdgeInsets.zero,
-      color: isSelected ? colorScheme.primaryContainer.withValues(alpha: 0.15) : colorScheme.surfaceContainerLow,
+      color: isSelected
+          ? colorScheme.primaryContainer.withValues(alpha: 0.15)
+          : colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isSelected ? colorScheme.primary : colorScheme.outlineVariant.withValues(alpha: 0.28),
+          color: isSelected
+              ? colorScheme.primary
+              : colorScheme.outlineVariant.withValues(alpha: 0.28),
           width: isSelected ? 2 : 1,
         ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: (onRowTap == null && (!showSelection || onSelectionChanged == null))
+        onTap:
+            (onRowTap == null && (!showSelection || onSelectionChanged == null))
             ? null
             : () {
-                if (showSelection && selectedRowIds.isNotEmpty && onSelectionChanged != null) {
+                if (showSelection &&
+                    selectedRowIds.isNotEmpty &&
+                    onSelectionChanged != null) {
                   onSelectionChanged!(row, !isSelected);
                 } else if (onRowTap != null) {
                   _handleRowTap(row);
                 }
               },
-        onLongPress: showSelection && onSelectionChanged != null ? () => onSelectionChanged!(row, !isSelected) : null,
+        onLongPress: showSelection && onSelectionChanged != null
+            ? () => onSelectionChanged!(row, !isSelected)
+            : null,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
           child: Column(
@@ -453,12 +519,17 @@ class ExpressiveActionTable<T> extends StatelessWidget {
                                 ?.copyWith(color: colorScheme.onSurfaceVariant),
                           );
 
-                          final headerTooltip = mobileColumns[index].headerTooltip?.trim();
+                          final headerTooltip = mobileColumns[index]
+                              .headerTooltip
+                              ?.trim();
                           if (headerTooltip == null || headerTooltip.isEmpty) {
                             return labelText;
                           }
 
-                          return Tooltip(message: headerTooltip, child: labelText);
+                          return Tooltip(
+                            message: headerTooltip,
+                            child: labelText,
+                          );
                         },
                       ),
                     ),
@@ -466,18 +537,30 @@ class ExpressiveActionTable<T> extends StatelessWidget {
                     Expanded(
                       child: Align(
                         alignment: AlignmentDirectional.centerStart,
-                        child: _buildCellWithTooltip(context, mobileColumns[index], row, mobile: true),
+                        child: _buildCellWithTooltip(
+                          context,
+                          mobileColumns[index],
+                          row,
+                          mobile: true,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                if (index != mobileColumns.length - 1) const SizedBox(height: 8),
+                if (index != mobileColumns.length - 1)
+                  const SizedBox(height: 8),
               ],
               if (actions.isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Divider(color: colorScheme.outlineVariant.withValues(alpha: 0.25), height: 1),
+                Divider(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.25),
+                  height: 1,
+                ),
                 const SizedBox(height: 4),
-                Align(alignment: Alignment.centerRight, child: _buildActionButtons(context, row, compact: true)),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _buildActionButtons(context, row, compact: true),
+                ),
               ],
             ],
           ),
@@ -494,7 +577,9 @@ class ExpressiveActionTable<T> extends StatelessWidget {
       itemCount: rows.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        return RepaintBoundary(child: _buildMobileRowCard(context, rows[index]));
+        return RepaintBoundary(
+          child: _buildMobileRowCard(context, rows[index]),
+        );
       },
     );
   }
@@ -514,7 +599,12 @@ class ExpressiveActionTable<T> extends StatelessWidget {
   }
 
   Widget _buildEmptyList(BuildContext context) {
-    return ListView(physics: physics, shrinkWrap: shrinkWrap, padding: padding, children: [_buildEmptyState(context)]);
+    return ListView(
+      physics: physics,
+      shrinkWrap: shrinkWrap,
+      padding: padding,
+      children: [_buildEmptyState(context)],
+    );
   }
 
   Widget _buildTableBody(BuildContext context) {
@@ -530,7 +620,9 @@ class ExpressiveActionTable<T> extends StatelessWidget {
       return _buildEmptyList(context);
     }
 
-    return context.isMobile ? _buildMobileList(context) : _buildDesktopList(context);
+    return context.isMobile
+        ? _buildMobileList(context)
+        : _buildDesktopList(context);
   }
 
   @override
@@ -544,7 +636,8 @@ class ExpressiveActionTable<T> extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final maxHeight = constraints.maxHeight;
-        final hasBoundedHeight = constraints.hasBoundedHeight && maxHeight.isFinite;
+        final hasBoundedHeight =
+            constraints.hasBoundedHeight && maxHeight.isFinite;
         final minHeightForActions = 72.0 + topActionsSpacing;
 
         // In very small viewports, prioritizing table scroll space avoids flex overflow.

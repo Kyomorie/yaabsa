@@ -7,7 +7,11 @@ import 'package:yaabsa/components/common/scroll_to_top_button.dart';
 import 'package:yaabsa/util/layout_sizes.dart';
 
 class ManagedMultiBookCardConfig {
-  const ManagedMultiBookCardConfig({required this.entry, required this.onTap, this.onLongPress});
+  const ManagedMultiBookCardConfig({
+    required this.entry,
+    required this.onTap,
+    this.onLongPress,
+  });
 
   final MultiBookEntryData entry;
   final VoidCallback onTap;
@@ -42,7 +46,10 @@ class ManagedMultiBookView extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final gridLayout = appCenteredGridLayout(constraints.maxWidth, tileWidth: appGridTileWidth * 1.5);
+        final gridLayout = appCenteredGridLayout(
+          constraints.maxWidth,
+          tileWidth: appGridTileWidth * 1.5,
+        );
 
         return Column(
           children: [
@@ -132,8 +139,9 @@ class _ManagedMultiBookEmptyState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             if (onCreate != null) ...[
               const SizedBox(height: 12),

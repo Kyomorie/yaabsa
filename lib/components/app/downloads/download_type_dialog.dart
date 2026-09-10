@@ -76,10 +76,19 @@ class _DownloadTypeDialogState extends State<DownloadTypeDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
         FilledButton(
           onPressed: () {
-            Navigator.pop(context, DownloadTypeDialogResult(type: _selectedType, remember: _rememberChoice));
+            Navigator.pop(
+              context,
+              DownloadTypeDialogResult(
+                type: _selectedType,
+                remember: _rememberChoice,
+              ),
+            );
           },
           child: const Text('Download'),
         ),

@@ -50,7 +50,9 @@ class PodcastHeaderCard extends StatelessWidget {
     final metadata = item.media?.podcastMedia?.metadata;
     final description = metadata?.description?.trim();
     final hasDescription = description != null && description.isNotEmpty;
-    final previewDescription = hasDescription ? _plainTextPreview(description) : null;
+    final previewDescription = hasDescription
+        ? _plainTextPreview(description)
+        : null;
     final coverSize = context.isMobile ? 164.0 : 210.0;
 
     return Card(
@@ -63,7 +65,11 @@ class PodcastHeaderCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                IconButton(onPressed: onBack, icon: const Icon(Icons.arrow_back_rounded), tooltip: 'Back'),
+                IconButton(
+                  onPressed: onBack,
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  tooltip: 'Back',
+                ),
                 const SizedBox(width: 4),
                 Text('Podcast', style: Theme.of(context).textTheme.titleSmall),
               ],
@@ -75,7 +81,11 @@ class PodcastHeaderCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(width: coverSize, height: coverSize, child: cover),
+                    child: SizedBox(
+                      width: coverSize,
+                      height: coverSize,
+                      child: cover,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   _PodcastHeaderText(
@@ -84,8 +94,10 @@ class PodcastHeaderCard extends StatelessWidget {
                     visibleEpisodes: visibleEpisodes,
                     duration: duration,
                     isCurrentPlayableEpisode: isCurrentPlayableEpisode,
-                    isPlayingCurrentPlayableEpisode: isPlayingCurrentPlayableEpisode,
-                    isLoadingCurrentPlayableEpisode: isLoadingCurrentPlayableEpisode,
+                    isPlayingCurrentPlayableEpisode:
+                        isPlayingCurrentPlayableEpisode,
+                    isLoadingCurrentPlayableEpisode:
+                        isLoadingCurrentPlayableEpisode,
                     isFindingEpisodes: isFindingEpisodes,
                     onPlayLatest: onPlayLatest,
                     onShuffle: onShuffle,
@@ -102,7 +114,11 @@ class PodcastHeaderCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: SizedBox(width: coverSize, height: coverSize, child: cover),
+                    child: SizedBox(
+                      width: coverSize,
+                      height: coverSize,
+                      child: cover,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -112,8 +128,10 @@ class PodcastHeaderCard extends StatelessWidget {
                       visibleEpisodes: visibleEpisodes,
                       duration: duration,
                       isCurrentPlayableEpisode: isCurrentPlayableEpisode,
-                      isPlayingCurrentPlayableEpisode: isPlayingCurrentPlayableEpisode,
-                      isLoadingCurrentPlayableEpisode: isLoadingCurrentPlayableEpisode,
+                      isPlayingCurrentPlayableEpisode:
+                          isPlayingCurrentPlayableEpisode,
+                      isLoadingCurrentPlayableEpisode:
+                          isLoadingCurrentPlayableEpisode,
                       isFindingEpisodes: isFindingEpisodes,
                       onPlayLatest: onPlayLatest,
                       onShuffle: onShuffle,
@@ -127,16 +145,24 @@ class PodcastHeaderCard extends StatelessWidget {
               ),
             if (hasDescription) ...[
               const SizedBox(height: 10),
-              Text('DESCRIPTION', style: Theme.of(context).textTheme.labelSmall),
+              Text(
+                'DESCRIPTION',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
               const SizedBox(height: 6),
               Text(
                 showFullDescription ? description : previewDescription!,
                 maxLines: showFullDescription ? null : 4,
-                overflow: showFullDescription ? TextOverflow.visible : TextOverflow.ellipsis,
+                overflow: showFullDescription
+                    ? TextOverflow.visible
+                    : TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 4),
-              TextButton(onPressed: onToggleDescription, child: Text(showFullDescription ? 'Show less' : 'Show more')),
+              TextButton(
+                onPressed: onToggleDescription,
+                child: Text(showFullDescription ? 'Show less' : 'Show more'),
+              ),
             ],
           ],
         ),
@@ -183,13 +209,25 @@ class _PodcastHeaderText extends StatelessWidget {
     final metadata = item.media?.podcastMedia?.metadata;
     final author = metadata?.author;
     final countLabel = '$visibleEpisodes / $totalEpisodes episodes';
-    final durationLabel = duration == null ? null : formatDurationLong(duration!);
+    final durationLabel = duration == null
+        ? null
+        : formatDurationLong(duration!);
     final playLabel = isLoadingCurrentPlayableEpisode
         ? 'Loading'
-        : (isPlayingCurrentPlayableEpisode ? 'Pause' : (isCurrentPlayableEpisode ? 'Resume' : 'Play'));
+        : (isPlayingCurrentPlayableEpisode
+              ? 'Pause'
+              : (isCurrentPlayableEpisode ? 'Resume' : 'Play'));
     final iconWidget = isLoadingCurrentPlayableEpisode
-        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
-        : Icon(isPlayingCurrentPlayableEpisode ? Icons.pause_rounded : Icons.play_arrow_rounded);
+        ? const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2.2),
+          )
+        : Icon(
+            isPlayingCurrentPlayableEpisode
+                ? Icons.pause_rounded
+                : Icons.play_arrow_rounded,
+          );
     final onPressed = isLoadingCurrentPlayableEpisode
         ? null
         : (isPlayingCurrentPlayableEpisode ? onPauseLatest : onPlayLatest);
@@ -197,7 +235,12 @@ class _PodcastHeaderText extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(item.title, maxLines: 3, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          item.title,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         if (author != null && author.trim().isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4),
@@ -205,8 +248,9 @@ class _PodcastHeaderText extends StatelessWidget {
               author,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         const SizedBox(height: 8),
@@ -220,7 +264,11 @@ class _PodcastHeaderText extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            FilledButton.icon(onPressed: onPressed, icon: iconWidget, label: Text(playLabel)),
+            FilledButton.icon(
+              onPressed: onPressed,
+              icon: iconWidget,
+              label: Text(playLabel),
+            ),
             if (onShuffle != null)
               IconButton.filledTonal(
                 onPressed: onShuffle,
@@ -240,7 +288,11 @@ class _PodcastHeaderText extends StatelessWidget {
                 onPressed: isFindingEpisodes ? null : onFindEpisodes,
                 tooltip: 'Find episodes',
                 icon: isFindingEpisodes
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2.2),
+                      )
                     : const Icon(Icons.search_rounded),
                 visualDensity: VisualDensity.compact,
               ),
@@ -259,5 +311,8 @@ class _PodcastHeaderText extends StatelessWidget {
 }
 
 String _plainTextPreview(String text) {
-  return text.replaceAll(RegExp(r'<[^>]*>'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+  return text
+      .replaceAll(RegExp(r'<[^>]*>'), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
 }

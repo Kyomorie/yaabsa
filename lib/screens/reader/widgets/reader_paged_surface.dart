@@ -30,7 +30,8 @@ class ReaderPagedSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: const <ShortcutActivator, Intent>{
-        SingleActivator(LogicalKeyboardKey.arrowLeft): _ReaderPreviousPageIntent(),
+        SingleActivator(LogicalKeyboardKey.arrowLeft):
+            _ReaderPreviousPageIntent(),
         SingleActivator(LogicalKeyboardKey.arrowRight): _ReaderNextPageIntent(),
       },
       child: Actions(
@@ -56,11 +57,13 @@ class ReaderPagedSurface extends StatelessWidget {
           autofocus: true,
           child: Listener(
             onPointerSignal: (pointerSignal) {
-              if (!interceptPointerScrollForPaging || pointerSignal is! PointerScrollEvent) {
+              if (!interceptPointerScrollForPaging ||
+                  pointerSignal is! PointerScrollEvent) {
                 return;
               }
 
-              if (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) {
+              if (HardwareKeyboard.instance.isControlPressed ||
+                  HardwareKeyboard.instance.isMetaPressed) {
                 return;
               }
 
@@ -76,7 +79,9 @@ class ReaderPagedSurface extends StatelessWidget {
                 if (showNavigationHoverAreas) ...[
                   _ReaderNavigationHoverArea(
                     icon: Icons.arrow_back,
-                    onTap: canGoPrevious ? () => unawaited(onPreviousPage()) : null,
+                    onTap: canGoPrevious
+                        ? () => unawaited(onPreviousPage())
+                        : null,
                     alignment: Alignment.centerLeft,
                   ),
                   _ReaderNavigationHoverArea(
@@ -85,7 +90,8 @@ class ReaderPagedSurface extends StatelessWidget {
                     alignment: Alignment.centerRight,
                   ),
                 ],
-                if (centerOverlay != null) Positioned.fill(child: IgnorePointer(child: centerOverlay)),
+                if (centerOverlay != null)
+                  Positioned.fill(child: IgnorePointer(child: centerOverlay)),
               ],
             ),
           ),
@@ -104,17 +110,23 @@ class _ReaderNextPageIntent extends Intent {
 }
 
 class _ReaderNavigationHoverArea extends StatefulWidget {
-  const _ReaderNavigationHoverArea({required this.icon, required this.onTap, required this.alignment});
+  const _ReaderNavigationHoverArea({
+    required this.icon,
+    required this.onTap,
+    required this.alignment,
+  });
 
   final IconData icon;
   final VoidCallback? onTap;
   final Alignment alignment;
 
   @override
-  State<_ReaderNavigationHoverArea> createState() => _ReaderNavigationHoverAreaState();
+  State<_ReaderNavigationHoverArea> createState() =>
+      _ReaderNavigationHoverAreaState();
 }
 
-class _ReaderNavigationHoverAreaState extends State<_ReaderNavigationHoverArea> {
+class _ReaderNavigationHoverAreaState
+    extends State<_ReaderNavigationHoverArea> {
   bool _isHovered = false;
 
   @override

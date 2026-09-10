@@ -151,12 +151,17 @@ class _RichTextQuillFieldState extends State<RichTextQuillField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontSize: 15)),
-        if (widget.helperText != null && widget.helperText!.trim().isNotEmpty) ...[
+        Text(
+          widget.label,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontSize: 15),
+        ),
+        if (widget.helperText != null &&
+            widget.helperText!.trim().isNotEmpty) ...[
           const SizedBox(height: 2),
           Text(
             widget.helperText!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
           ),
         ],
         const SizedBox(height: 4),
@@ -168,11 +173,19 @@ class _RichTextQuillFieldState extends State<RichTextQuillField> {
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.75)),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.75),
+                ),
               ),
               child: Column(
                 children: [
-                  Padding(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), child: _buildToolbarRow()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 2,
+                    ),
+                    child: _buildToolbarRow(),
+                  ),
                   Divider(height: 1, color: colorScheme.outlineVariant),
                   SizedBox(
                     height: widget.editorHeight,

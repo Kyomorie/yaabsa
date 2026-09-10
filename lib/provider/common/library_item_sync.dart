@@ -16,13 +16,23 @@ Future<void> processLibraryItemAdded({
   required LibraryItem item,
   String source = 'unknown',
 }) async {
-  container.read(libraryItemMutationProvider.notifier).emitAdded(item, source: source);
+  container
+      .read(libraryItemMutationProvider.notifier)
+      .emitAdded(item, source: source);
 
   try {
     await _updateStoredDownloadSnapshot(container: container, item: item);
-    await invalidateCachedLibraryItemEntries(container: container, itemId: item.id, libraryId: item.libraryId);
+    await invalidateCachedLibraryItemEntries(
+      container: container,
+      itemId: item.id,
+      libraryId: item.libraryId,
+    );
   } catch (e, s) {
-    logger('Failed to sync local item add for ${item.id}: $e\n$s', tag: 'LibraryItemSync', level: InfoLevel.warning);
+    logger(
+      'Failed to sync local item add for ${item.id}: $e\n$s',
+      tag: 'LibraryItemSync',
+      level: InfoLevel.warning,
+    );
   }
 }
 
@@ -41,13 +51,23 @@ Future<void> processLibraryItemUpdate({
   }
 
   final previousItem = getLiveLibraryItemSnapshot(item.id);
-  container.read(libraryItemMutationProvider.notifier).emitUpdated(item, previousItem: previousItem, source: source);
+  container
+      .read(libraryItemMutationProvider.notifier)
+      .emitUpdated(item, previousItem: previousItem, source: source);
 
   try {
     await _updateStoredDownloadSnapshot(container: container, item: item);
-    await invalidateCachedLibraryItemEntries(container: container, itemId: item.id, libraryId: item.libraryId);
+    await invalidateCachedLibraryItemEntries(
+      container: container,
+      itemId: item.id,
+      libraryId: item.libraryId,
+    );
   } catch (e, s) {
-    logger('Failed to sync local item update for ${item.id}: $e\n$s', tag: 'LibraryItemSync', level: InfoLevel.warning);
+    logger(
+      'Failed to sync local item update for ${item.id}: $e\n$s',
+      tag: 'LibraryItemSync',
+      level: InfoLevel.warning,
+    );
   }
 }
 
@@ -79,10 +99,19 @@ Future<void> processLibraryItemRemovedById({
 
   container
       .read(libraryItemMutationProvider.notifier)
-      .emitRemoved(itemId: normalizedItemId, libraryId: libraryId, item: item, source: source);
+      .emitRemoved(
+        itemId: normalizedItemId,
+        libraryId: libraryId,
+        item: item,
+        source: source,
+      );
 
   try {
-    await invalidateCachedLibraryItemEntries(container: container, itemId: normalizedItemId, libraryId: libraryId);
+    await invalidateCachedLibraryItemEntries(
+      container: container,
+      itemId: normalizedItemId,
+      libraryId: libraryId,
+    );
   } catch (e, s) {
     logger(
       'Failed to sync local item removal for $normalizedItemId: $e\n$s',
@@ -98,7 +127,11 @@ Future<void> processLibraryItemsAdded({
   String source = 'unknown',
 }) async {
   for (final item in items) {
-    await processLibraryItemAdded(container: container, item: item, source: source);
+    await processLibraryItemAdded(
+      container: container,
+      item: item,
+      source: source,
+    );
   }
 }
 
@@ -108,19 +141,32 @@ Future<void> processLibraryItemsUpdated({
   String source = 'unknown',
 }) async {
   for (final item in items) {
-    await processLibraryItemUpdate(container: container, item: item, source: source);
+    await processLibraryItemUpdate(
+      container: container,
+      item: item,
+      source: source,
+    );
   }
 }
 
-Future<void> _updateStoredDownloadSnapshot({required ProviderContainer container, required LibraryItem item}) async {
-  final userId = container.read(currentUserProvider).value?.id ?? container.read(absApiProvider)?.user?.id;
+Future<void> _updateStoredDownloadSnapshot({
+  required ProviderContainer container,
+  required LibraryItem item,
+}) async {
+  final userId =
+      container.read(currentUserProvider).value?.id ??
+      container.read(absApiProvider)?.user?.id;
   if (userId == null || userId.isEmpty) {
     return;
   }
 
   await container
       .read(appDatabaseProvider)
-      .updateStoredDownloadItemSnapshot(itemId: item.id, userId: userId, item: item);
+      .updateStoredDownloadItemSnapshot(
+        itemId: item.id,
+        userId: userId,
+        item: item,
+      );
 }
 
 bool _registerUpdateSignature(LibraryItem item) {

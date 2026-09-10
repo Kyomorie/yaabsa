@@ -66,8 +66,14 @@ Future<void> showDesktopPlayerSidePanel(
                       children: <Widget>[
                         Icon(type.icon),
                         const SizedBox(width: 12),
-                        Expanded(child: Text(type.label, style: Theme.of(context).textTheme.titleLarge)),
-                        if (type == DesktopPlayerPanelType.bookmarks) BookmarkAddButton(itemId: media.itemId),
+                        Expanded(
+                          child: Text(
+                            type.label,
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                        if (type == DesktopPlayerPanelType.bookmarks)
+                          BookmarkAddButton(itemId: media.itemId),
                         IconButton(
                           tooltip: 'Close',
                           onPressed: () => Navigator.of(context).pop(),
@@ -76,7 +82,10 @@ Future<void> showDesktopPlayerSidePanel(
                       ],
                     ),
                   ),
-                  Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
+                  Divider(
+                    height: 1,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
                   Expanded(
                     child: _DesktopPanelContent(type: type, media: media),
                   ),
@@ -88,9 +97,16 @@ Future<void> showDesktopPlayerSidePanel(
       );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
-      final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic);
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
       return SlideTransition(
-        position: Tween<Offset>(begin: Offset(fromLeft ? -1 : 1, 0), end: Offset.zero).animate(curved),
+        position: Tween<Offset>(
+          begin: Offset(fromLeft ? -1 : 1, 0),
+          end: Offset.zero,
+        ).animate(curved),
         child: FadeTransition(opacity: curved, child: child),
       );
     },

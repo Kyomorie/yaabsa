@@ -23,9 +23,10 @@ class LibraryItemMutation {
   final String source;
 }
 
-final libraryItemMutationProvider = NotifierProvider<LibraryItemMutationNotifier, LibraryItemMutation?>(
-  LibraryItemMutationNotifier.new,
-);
+final libraryItemMutationProvider =
+    NotifierProvider<LibraryItemMutationNotifier, LibraryItemMutation?>(
+      LibraryItemMutationNotifier.new,
+    );
 
 class LibraryItemMutationNotifier extends Notifier<LibraryItemMutation?> {
   int _sequence = 0;
@@ -44,7 +45,11 @@ class LibraryItemMutationNotifier extends Notifier<LibraryItemMutation?> {
     );
   }
 
-  void emitUpdated(LibraryItem item, {LibraryItem? previousItem, String source = 'unknown'}) {
+  void emitUpdated(
+    LibraryItem item, {
+    LibraryItem? previousItem,
+    String source = 'unknown',
+  }) {
     state = LibraryItemMutation(
       sequence: _sequence++,
       type: LibraryItemMutationType.updated,
@@ -56,7 +61,12 @@ class LibraryItemMutationNotifier extends Notifier<LibraryItemMutation?> {
     );
   }
 
-  void emitRemoved({required String itemId, String? libraryId, LibraryItem? item, String source = 'unknown'}) {
+  void emitRemoved({
+    required String itemId,
+    String? libraryId,
+    LibraryItem? item,
+    String source = 'unknown',
+  }) {
     state = LibraryItemMutation(
       sequence: _sequence++,
       type: LibraryItemMutationType.removed,

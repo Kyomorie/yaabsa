@@ -25,29 +25,40 @@ class LatestEpisodesView extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedLibrary = ref.watch(selectedLibraryProvider);
     if (selectedLibrary == null) {
-      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
+      return const Center(
+        child: Text(
+          'No library selected. Please select a library via the switcher.',
+        ),
+      );
     }
     if (selectedLibrary.mediaType != 'podcast') {
-      return const Center(child: Text('Latest Episodes is available for podcast libraries.'));
+      return const Center(
+        child: Text('Latest Episodes is available for podcast libraries.'),
+      );
     }
 
     final api = ref.watch(absApiProvider);
     if (api == null) {
       return ConnectionIssueView.offline(
-        onRetry: () => ref.read(latestEpisodesProvider(selectedLibrary.id).notifier).refresh(),
+        onRetry: () => ref
+            .read(latestEpisodesProvider(selectedLibrary.id).notifier)
+            .refresh(),
       );
     }
 
     final provider = latestEpisodesProvider(selectedLibrary.id);
     final latestEpisodes = ref.watch(provider);
-    final progressByKey = ref.watch(mediaProgressProvider).value ?? const <String, MediaProgress>{};
+    final progressByKey =
+        ref.watch(mediaProgressProvider).value ??
+        const <String, MediaProgress>{};
     final scrollController = useScrollController();
     final pendingEpisodeIds = useState(<String>{});
     final playbackState = useStream(audioHandler.playbackState);
 
     useEffect(() {
       void loadMoreWhenNeeded() {
-        if (!scrollController.hasClients || scrollController.position.extentAfter > 480) {
+        if (!scrollController.hasClients ||
+            scrollController.position.extentAfter > 480) {
           return;
         }
         unawaited(ref.read(provider.notifier).loadNextPage());
@@ -59,7 +70,9 @@ class LatestEpisodesView extends HookConsumerWidget {
 
     Future<void> playEpisode(Episode episode) async {
       final current = audioHandler.currentMediaItem;
-      final isCurrent = current?.itemId == episode.libraryItemId && current?.episodeId == episode.id;
+      final isCurrent =
+          current?.itemId == episode.libraryItemId &&
+          current?.episodeId == episode.id;
       if (isCurrent) {
         if (playbackState.data?.playing ?? false) {
           await audioHandler.pause();
@@ -71,7 +84,12 @@ class LatestEpisodesView extends HookConsumerWidget {
 
       pendingEpisodeIds.value = {...pendingEpisodeIds.value, episode.id};
       try {
-        final item = await ref.read(libraryItemProvider(episode.libraryItemId, episodeId: episode.id).future);
+        final item = await ref.read(
+          libraryItemProvider(
+            episode.libraryItemId,
+            episodeId: episode.id,
+          ).future,
+        );
         final itemEpisodes = item.media?.podcastMedia?.episodes;
         Episode resolvedEpisode = episode;
         if (itemEpisodes != null) {
@@ -85,10 +103,13 @@ class LatestEpisodesView extends HookConsumerWidget {
         audioHandler.playPodcastEpisode(item, resolvedEpisode);
       } catch (error) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not play this episode: $error')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not play this episode: $error')),
+          );
         }
       } finally {
-        pendingEpisodeIds.value = {...pendingEpisodeIds.value}..remove(episode.id);
+        pendingEpisodeIds.value = {...pendingEpisodeIds.value}
+          ..remove(episode.id);
       }
     }
 
@@ -116,7 +137,12 @@ class LatestEpisodesView extends HookConsumerWidget {
           child: ListView.builder(
             controller: scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(context.isMobile ? 12 : 24, 20, context.isMobile ? 12 : 24, 32),
+            padding: EdgeInsets.fromLTRB(
+              context.isMobile ? 12 : 24,
+              20,
+              context.isMobile ? 12 : 24,
+              32,
+            ),
             itemCount: state.episodes.length + 2,
             itemBuilder: (context, index) {
               if (index == 0) {
@@ -127,7 +153,10 @@ class LatestEpisodesView extends HookConsumerWidget {
                       constraints: const BoxConstraints(maxWidth: 960),
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('Latest Episodes', style: Theme.of(context).textTheme.headlineSmall),
+                        child: Text(
+                          'Latest Episodes',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
                       ),
                     ),
                   ),
@@ -148,7 +177,9 @@ class LatestEpisodesView extends HookConsumerWidget {
 
               final episode = state.episodes[index - 1];
               final current = audioHandler.currentMediaItem;
-              final isCurrent = current?.itemId == episode.libraryItemId && current?.episodeId == episode.id;
+              final isCurrent =
+                  current?.itemId == episode.libraryItemId &&
+                  current?.episodeId == episode.id;
 
               return Center(
                 child: ConstrainedBox(
@@ -157,16 +188,22 @@ class LatestEpisodesView extends HookConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _LatestEpisodeCard(
                       episode: episode,
-                      progress: progressByKey[mediaProgressKey(episode.libraryItemId, episode.id)],
+                      progress:
+                          progressByKey[mediaProgressKey(
+                            episode.libraryItemId,
+                            episode.id,
+                          )],
                       cover: api.getLibraryItemApi().getLibraryItemCover(
                         episode.libraryItemId,
                         width: context.isMobile ? 72 : 88,
                         height: context.isMobile ? 72 : 88,
                       ),
                       isCurrent: isCurrent,
-                      isPlaying: isCurrent && (playbackState.data?.playing ?? false),
+                      isPlaying:
+                          isCurrent && (playbackState.data?.playing ?? false),
                       isLoading: pendingEpisodeIds.value.contains(episode.id),
-                      onOpen: () => context.push('/item/${episode.libraryItemId}'),
+                      onOpen: () =>
+                          context.push('/item/${episode.libraryItemId}'),
                       onPlay: () => playEpisode(episode),
                     ),
                   ),
@@ -214,7 +251,10 @@ class _LatestEpisodeCard extends StatelessWidget {
     final podcastTitle = episode.podcast?.metadata.title?.trim();
     final podcastAuthor = episode.podcast?.metadata.author?.trim();
     final publishedLabel = podcastFormatEpisodeDate(episode);
-    final durationSeconds = episode.audioFile?.duration ?? episode.audioTrack?.duration ?? episode.duration;
+    final durationSeconds =
+        episode.audioFile?.duration ??
+        episode.audioTrack?.duration ??
+        episode.duration;
     final durationLabel = durationSeconds == null
         ? null
         : formatDurationShort(Duration(seconds: durationSeconds.round()));
@@ -224,7 +264,9 @@ class _LatestEpisodeCard extends StatelessWidget {
     final coverSize = context.isMobile ? 72.0 : 88.0;
 
     return Material(
-      color: isCurrent ? colorScheme.primaryContainer.withValues(alpha: 0.24) : colorScheme.surfaceContainerLow,
+      color: isCurrent
+          ? colorScheme.primaryContainer.withValues(alpha: 0.24)
+          : colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -236,7 +278,11 @@ class _LatestEpisodeCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: SizedBox(width: coverSize, height: coverSize, child: cover),
+                child: SizedBox(
+                  width: coverSize,
+                  height: coverSize,
+                  child: cover,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -257,7 +303,8 @@ class _LatestEpisodeCard extends StatelessWidget {
                             : '$podcastTitle · $podcastAuthor',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.primary),
+                        style: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(color: colorScheme.primary),
                       ),
                     ],
                     if (description != null && !context.isMobile) ...[
@@ -266,7 +313,8 @@ class _LatestEpisodeCard extends StatelessWidget {
                         description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                     ],
                     const SizedBox(height: 7),
@@ -291,8 +339,14 @@ class _LatestEpisodeCard extends StatelessWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isFinished ? colorScheme.primary : colorScheme.surfaceContainerHighest,
-                      border: Border.all(color: isCurrent ? colorScheme.primary : colorScheme.outlineVariant),
+                      color: isFinished
+                          ? colorScheme.primary
+                          : colorScheme.surfaceContainerHighest,
+                      border: Border.all(
+                        color: isCurrent
+                            ? colorScheme.primary
+                            : colorScheme.outlineVariant,
+                      ),
                     ),
                     child: Center(
                       child: LibraryItemOverlayPlayButton(

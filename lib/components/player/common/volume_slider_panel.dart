@@ -65,7 +65,9 @@ class VolumeSliderPanel extends StatelessWidget {
           initialData: 1.0,
           builder: (context, snapshot) {
             final maxVolume = audioHandler.maxVolume;
-            final volume = (snapshot.data ?? 1.0).clamp(0.0, maxVolume).toDouble();
+            final volume = (snapshot.data ?? 1.0)
+                .clamp(0.0, maxVolume)
+                .toDouble();
             final sliderValue = _volumeToSliderValue(volume, maxVolume);
             final unitySliderValue = _volumeToSliderValue(1.0, maxVolume);
 
@@ -74,8 +76,11 @@ class VolumeSliderPanel extends StatelessWidget {
                 maxVolume: maxVolume,
                 sliderValue: sliderValue,
                 unitySliderValue: unitySliderValue,
-                sliderValueToVolume: (double value) => _sliderValueToVolume(value, maxVolume),
-                onChanged: (value) => audioHandler.setVolume(_sliderValueToVolume(value, maxVolume)),
+                sliderValueToVolume: (double value) =>
+                    _sliderValueToVolume(value, maxVolume),
+                onChanged: (value) => audioHandler.setVolume(
+                  _sliderValueToVolume(value, maxVolume),
+                ),
               );
             }
 
@@ -84,8 +89,11 @@ class VolumeSliderPanel extends StatelessWidget {
               maxVolume: maxVolume,
               sliderValue: sliderValue,
               unitySliderValue: unitySliderValue,
-              sliderValueToVolume: (double value) => _sliderValueToVolume(value, maxVolume),
-              onChanged: (value) => audioHandler.setVolume(_sliderValueToVolume(value, maxVolume)),
+              sliderValueToVolume: (double value) =>
+                  _sliderValueToVolume(value, maxVolume),
+              onChanged: (value) => audioHandler.setVolume(
+                _sliderValueToVolume(value, maxVolume),
+              ),
             );
           },
         );
@@ -121,7 +129,10 @@ class _HorizontalVolumePanel extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            Icon(Icons.volume_down_rounded, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.volume_down_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: _VolumeSlider(
@@ -133,11 +144,17 @@ class _HorizontalVolumePanel extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.volume_up_rounded, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.volume_up_rounded,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ],
         ),
         const SizedBox(height: 8),
-        Text('${(volume * 100).round()}%', style: Theme.of(context).textTheme.bodyMedium),
+        Text(
+          '${(volume * 100).round()}%',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
       ],
     );
   }
@@ -220,7 +237,8 @@ class _VolumeSliderState extends State<_VolumeSlider> {
         trackShape: showMarker
             ? _UnityMarkerTrackShape(
                 position: widget.unitySliderValue,
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.45),
+                color: Theme.of(context).colorScheme.onSurfaceVariant
+                    .withValues(alpha: 0.45),
               )
             : null,
       ),
@@ -280,7 +298,11 @@ class _UnityMarkerTrackShape extends RoundedRectSliderTrackShape {
     final markerPaint = Paint()..color = color;
     final markerX = trackRect.left + (trackRect.width * position);
     context.canvas.drawRect(
-      Rect.fromCenter(center: Offset(markerX, trackRect.center.dy), width: 2, height: 8),
+      Rect.fromCenter(
+        center: Offset(markerX, trackRect.center.dy),
+        width: 2,
+        height: 8,
+      ),
       markerPaint,
     );
   }

@@ -23,14 +23,19 @@ Future<bool> pairWithPhone() async {
   const channel = MethodChannel(_wearDataChannelName);
   final Map<dynamic, dynamic>? result;
   try {
-    result = await channel.invokeMethod<Map<dynamic, dynamic>>('requestCredentials');
+    result = await channel.invokeMethod<Map<dynamic, dynamic>>(
+      'requestCredentials',
+    );
   } on PlatformException catch (_) {
     return false;
   }
 
   final serverUrl = result?['serverUrl'] as String?;
   final accessToken = result?['accessToken'] as String?;
-  if (serverUrl == null || serverUrl.isEmpty || accessToken == null || accessToken.isEmpty) {
+  if (serverUrl == null ||
+      serverUrl.isEmpty ||
+      accessToken == null ||
+      accessToken.isEmpty) {
     return false;
   }
 
@@ -54,7 +59,10 @@ Future<bool> pairWithPhone() async {
     accessToken: accessToken,
     refreshToken: result?['refreshToken'] as String?,
     setting: login.user.setting ?? login.serverSettings,
-    server: Server.fromExternalAddress(externalAddress: serverUrl, activeConnection: ServerConnection.external),
+    server: Server.fromExternalAddress(
+      externalAddress: serverUrl,
+      activeConnection: ServerConnection.external,
+    ),
   );
 
   final db = containerRef.read(appDatabaseProvider);
@@ -82,7 +90,9 @@ void initPhoneWearHandler() {
 
 Future<void> _openWearSignInIfRequestPending(MethodChannel channel) async {
   try {
-    final pending = await channel.invokeMethod<bool>('hasPendingCredentialRequest') ?? false;
+    final pending =
+        await channel.invokeMethod<bool>('hasPendingCredentialRequest') ??
+        false;
     if (pending) {
       _openWearSignIn();
     }

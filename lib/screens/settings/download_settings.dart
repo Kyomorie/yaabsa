@@ -39,7 +39,8 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.maybeOf(context)
+        ?.showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -60,7 +61,9 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
         );
         nextValue = pickedUri?.toString();
       } else if (!kIsWeb && (Platform.isLinux || Platform.isWindows)) {
-        final directoryPath = await FilePicker.getDirectoryPath(dialogTitle: 'Choose download folder');
+        final directoryPath = await FilePicker.getDirectoryPath(
+          dialogTitle: 'Choose download folder',
+        );
         if (directoryPath != null && directoryPath.trim().isNotEmpty) {
           nextValue = encodeDesktopDownloadLocation(directoryPath);
         }
@@ -81,14 +84,19 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
     if (_isPicking) return;
     setState(() => _isPicking = true);
     try {
-      await ref.read(settingsManagerProvider.notifier).setUserSetting<String>(userId, SettingKeys.downloadPath, '');
+      await ref
+          .read(settingsManagerProvider.notifier)
+          .setUserSetting<String>(userId, SettingKeys.downloadPath, '');
       _showMessage('Using default download location');
     } finally {
       if (mounted) setState(() => _isPicking = false);
     }
   }
 
-  Future<void> _handleLocationAction(String userId, {required bool hasCustomLocation}) async {
+  Future<void> _handleLocationAction(
+    String userId, {
+    required bool hasCustomLocation,
+  }) async {
     if (!supportsCustomDownloadLocation || _isPicking) return;
     if (!hasCustomLocation) {
       await _pickLocation(userId);
@@ -108,14 +116,16 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
             ListTile(
               leading: const Icon(Icons.restart_alt_rounded),
               title: const Text('Use default location'),
-              onTap: () => Navigator.of(context).pop(_LocationAction.useDefault),
+              onTap: () =>
+                  Navigator.of(context).pop(_LocationAction.useDefault),
             ),
           ],
         ),
       ),
     );
     if (selectedAction == _LocationAction.choose) await _pickLocation(userId);
-    if (selectedAction == _LocationAction.useDefault) await _resetToDefaultLocation(userId);
+    if (selectedAction == _LocationAction.useDefault)
+      await _resetToDefaultLocation(userId);
   }
 
   @override
@@ -131,7 +141,10 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
             .when(
               data: (user) {
                 if (user == null) {
-                  return const Padding(padding: EdgeInsets.all(20), child: Text('Sign in to configure downloads'));
+                  return const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Text('Sign in to configure downloads'),
+                  );
                 }
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -144,37 +157,54 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
                           icon: Icons.download_for_offline_rounded,
                           title: 'Smart Downloads',
                           subtitle: 'Automatically download and remove items based on rules',
-                          onTap: () => context.push('/settings/library/smart-downloads'),
+                          onTap: () =>
+                              context.push('/settings/library/smart-downloads'),
                         ),
                       ],
                       settings: [
                         StreamBuilder<UserSettingEntry?>(
-                          stream: db.watchUserSetting(user.id, SettingKeys.downloadPath),
+                          stream: db.watchUserSetting(
+                            user.id,
+                            SettingKeys.downloadPath,
+                          ),
                           builder: (context, snapshot) {
                             final fallback = ref
                                 .read(settingsManagerProvider.notifier)
-                                .getUserSetting<String>(user.id, SettingKeys.downloadPath, defaultValue: '');
+                                .getUserSetting<String>(
+                                  user.id,
+                                  SettingKeys.downloadPath,
+                                  defaultValue: '',
+                                );
                             final raw = snapshot.data?.value ?? fallback;
-                            final custom = parseDownloadLocationSetting(raw) != null;
+                            final custom =
+                                parseDownloadLocationSetting(raw) != null;
                             return FutureBuilder<String>(
                               future: _defaultLocationFuture,
-                              builder: (context, locationSnapshot) => SettingButton(
-                                label: 'Download Location',
-                                description: custom
-                                    ? formatDownloadLocationForDisplay(raw)
-                                    : (locationSnapshot.data ?? 'Loading default location...'),
-                                buttonText: custom ? 'Change' : 'Choose',
-                                buttonIcon: Icons.folder_open,
-                                onPressed: supportsCustomDownloadLocation
-                                    ? () => _handleLocationAction(user.id, hasCustomLocation: custom)
-                                    : null,
-                                isLoading: _isPicking,
-                              ),
+                              builder: (context, locationSnapshot) =>
+                                  SettingButton(
+                                    label: 'Download Location',
+                                    description: custom
+                                        ? formatDownloadLocationForDisplay(raw)
+                                        : (locationSnapshot.data ??
+                                              'Loading default location...'),
+                                    buttonText: custom ? 'Change' : 'Choose',
+                                    buttonIcon: Icons.folder_open,
+                                    onPressed: supportsCustomDownloadLocation
+                                        ? () => _handleLocationAction(
+                                            user.id,
+                                            hasCustomLocation: custom,
+                                          )
+                                        : null,
+                                    isLoading: _isPicking,
+                                  ),
                             );
                           },
                         ),
                         StreamBuilder<UserSettingEntry?>(
-                          stream: db.watchUserSetting(user.id, SettingKeys.downloadTypePreference),
+                          stream: db.watchUserSetting(
+                            user.id,
+                            SettingKeys.downloadTypePreference,
+                          ),
                           builder: (context, snapshot) {
                             final fallback = ref
                                 .read(settingsManagerProvider.notifier)
@@ -183,16 +213,33 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
                                   SettingKeys.downloadTypePreference,
                                   defaultValue: 'askEveryTime',
                                 );
-                            final value = SettingsParser.decodeValue<String>(snapshot.data?.value, fallback);
+                            final value = SettingsParser.decodeValue<String>(
+                              snapshot.data?.value,
+                              fallback,
+                            );
                             return SettingDropdown<String>.remote(
                               label: 'Download Preference',
                               description: 'What files to download by default',
                               value: value,
-                              values: const ['askEveryTime', 'audiobook', 'ebook', 'both'],
-                              valueLabels: const ['Ask every time', 'Audiobook only', 'Ebook only', 'Both'],
+                              values: const [
+                                'askEveryTime',
+                                'audiobook',
+                                'ebook',
+                                'both',
+                              ],
+                              valueLabels: const [
+                                'Ask every time',
+                                'Audiobook only',
+                                'Ebook only',
+                                'Both',
+                              ],
                               onValueChanged: (newValue) => ref
                                   .read(settingsManagerProvider.notifier)
-                                  .setUserSetting<String>(user.id, SettingKeys.downloadTypePreference, newValue),
+                                  .setUserSetting<String>(
+                                    user.id,
+                                    SettingKeys.downloadTypePreference,
+                                    newValue,
+                                  ),
                             );
                           },
                         ),
@@ -200,9 +247,10 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
                           label: 'Download only on Wi-Fi',
                           settingKey: SettingKeys.downloadOnlyOnWifi,
                           userId: user.id,
-                          subtitle:
-                              'Wait for a Wi-Fi connection before starting any download, including Smart Downloads.',
-                          onChanged: (_) => unawaited(downloadHandler.applyDownloadSettings()),
+                          subtitle: 'Wait for a Wi-Fi connection before starting any download, including Smart Downloads.',
+                          onChanged: (_) => unawaited(
+                            downloadHandler.applyDownloadSettings(),
+                          ),
                         ),
                         SettingSlider<int>(
                           label: 'Maximum parallel downloads',
@@ -222,19 +270,31 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
                           ],
                           settingKey: SettingKeys.downloadMaxParallel,
                           userId: user.id,
-                          onChanged: (_) => unawaited(downloadHandler.applyDownloadSettings()),
+                          onChanged: (_) => unawaited(
+                            downloadHandler.applyDownloadSettings(),
+                          ),
                         ),
                         SettingSwitchTile(
-                          label: 'Download Continue Listening and Continue Series',
-                          settingKey: SettingKeys.downloadContinueListeningAndSeries,
+                          label:
+                              'Download Continue Listening and Continue Series',
+                          settingKey:
+                              SettingKeys.downloadContinueListeningAndSeries,
                           userId: user.id,
                           subtitle: 'Automatically download all items shown in Continue Listening and Continue Series.',
                           onChanged: (enabled) {
-                            final manager = ref.read(smartDownloadManagerProvider.notifier);
+                            final manager = ref.read(
+                              smartDownloadManagerProvider.notifier,
+                            );
                             if (!enabled) {
-                              unawaited(manager.deleteContinueShelfDownloads(userId: user.id));
+                              unawaited(
+                                manager.deleteContinueShelfDownloads(
+                                  userId: user.id,
+                                ),
+                              );
                             }
-                            manager.requestReconcile(reason: 'continue shelf setting changed');
+                            manager.requestReconcile(
+                              reason: 'continue shelf setting changed',
+                            );
                           },
                         ),
                         SettingButton(
@@ -250,17 +310,24 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
                                   setState(() => _isCleaning = true);
                                   try {
                                     final deleted = await ref
-                                        .read(smartDownloadManagerProvider.notifier)
-                                        .deleteListenedManagedDownloads(userId: user.id);
+                                        .read(
+                                          smartDownloadManagerProvider.notifier,
+                                        )
+                                        .deleteListenedManagedDownloads(
+                                          userId: user.id,
+                                        );
                                     _showMessage(
                                       deleted == 0
                                           ? 'No listened smart downloads were ready to delete.'
                                           : 'Deleted $deleted listened smart download${deleted == 1 ? '' : 's'}',
                                     );
                                   } catch (error) {
-                                    _showMessage('Failed to delete listened smart downloads: $error');
+                                    _showMessage(
+                                      'Failed to delete listened smart downloads: $error',
+                                    );
                                   } finally {
-                                    if (mounted) setState(() => _isCleaning = false);
+                                    if (mounted)
+                                      setState(() => _isCleaning = false);
                                   }
                                 },
                         ),
@@ -273,8 +340,10 @@ class _DownloadSettingsState extends ConsumerState<DownloadSettings> {
                 padding: EdgeInsets.all(16),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (error, _) =>
-                  Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load download settings: $error')),
+              error: (error, _) => Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text('Failed to load download settings: $error'),
+              ),
             ),
       ],
     );

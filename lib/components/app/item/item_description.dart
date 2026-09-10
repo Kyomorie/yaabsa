@@ -35,14 +35,23 @@ class _ItemDescriptionState extends State<ItemDescription> {
                   data: description,
                   shrinkWrap: true,
                   style: {
-                    'html': Style(margin: Margins.zero, padding: HtmlPaddings.zero),
+                    'html': Style(
+                      margin: Margins.zero,
+                      padding: HtmlPaddings.zero,
+                    ),
                     'body': Style(
                       margin: Margins.zero,
                       padding: HtmlPaddings.zero,
-                      fontSize: FontSize((Theme.of(context).textTheme.bodyMedium?.fontSize ?? 14)),
+                      fontSize: FontSize(
+                        (Theme.of(context).textTheme.bodyMedium?.fontSize ??
+                            14),
+                      ),
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
-                    'p': Style(margin: Margins.zero, padding: HtmlPaddings.zero),
+                    'p': Style(
+                      margin: Margins.zero,
+                      padding: HtmlPaddings.zero,
+                    ),
                   },
                 ),
               )

@@ -41,7 +41,11 @@ class SplitMetadataTermsToolResult {
 }
 
 class _SplitTermsResult {
-  const _SplitTermsResult({required this.changed, required this.updatedValues, required this.sourceTerms});
+  const _SplitTermsResult({
+    required this.changed,
+    required this.updatedValues,
+    required this.sourceTerms,
+  });
 
   final bool changed;
   final List<String> updatedValues;
@@ -50,9 +54,14 @@ class _SplitTermsResult {
 
 Future<List<Library>> fetchMetadataToolLibraries(ABSApi api) async {
   final response = await api.getLibraryApi().getLibraries();
-  final libraries = List<Library>.from(response.data?.libraries ?? const <Library>[]);
+  final libraries = List<Library>.from(
+    response.data?.libraries ?? const <Library>[],
+  );
 
-  libraries.sort((first, second) => first.name.toLowerCase().compareTo(second.name.toLowerCase()));
+  libraries.sort(
+    (first, second) =>
+        first.name.toLowerCase().compareTo(second.name.toLowerCase()),
+  );
   return libraries;
 }
 
@@ -72,7 +81,10 @@ Future<ForceMetadataRefreshToolResult> runForceMetadataRefreshTool({
 
     for (final item in libraryItems) {
       final currentTags = _normalizedUniqueTerms(_extractItemTags(item));
-      final updatedTags = _normalizedUniqueTerms(<String>[...currentTags, forceMetadataTag]);
+      final updatedTags = _normalizedUniqueTerms(<String>[
+        ...currentTags,
+        forceMetadataTag,
+      ]);
 
       if (listEquals(currentTags, updatedTags)) {
         continue;
@@ -137,7 +149,9 @@ Future<SplitMetadataTermsToolResult> runSplitMetadataTermsTool({
         payloads.add(
           BatchUpdateLibraryItemRequest(
             id: item.id,
-            mediaPayload: UpdateLibraryItemMediaRequest(tags: splitResult.updatedValues),
+            mediaPayload: UpdateLibraryItemMediaRequest(
+              tags: splitResult.updatedValues,
+            ),
           ),
         );
       } else {
@@ -145,7 +159,9 @@ Future<SplitMetadataTermsToolResult> runSplitMetadataTermsTool({
           BatchUpdateLibraryItemRequest(
             id: item.id,
             mediaPayload: UpdateLibraryItemMediaRequest(
-              metadata: UpdateLibraryItemMediaMetadataPatch(genres: splitResult.updatedValues),
+              metadata: UpdateLibraryItemMediaMetadataPatch(
+                genres: splitResult.updatedValues,
+              ),
             ),
           ),
         );
@@ -164,13 +180,22 @@ Future<SplitMetadataTermsToolResult> runSplitMetadataTermsTool({
   );
 }
 
-Future<List<LibraryItem>> _fetchAllLibraryItems(ABSApi api, String libraryId) async {
+Future<List<LibraryItem>> _fetchAllLibraryItems(
+  ABSApi api,
+  String libraryId,
+) async {
   final allItems = <LibraryItem>[];
   var page = 0;
 
   while (true) {
-    final request = LibraryItemsRequest(limit: _metadataToolPageSize, page: page);
-    final response = await api.getLibraryApi().getLibraryItems(libraryId, request);
+    final request = LibraryItemsRequest(
+      limit: _metadataToolPageSize,
+      page: page,
+    );
+    final response = await api.getLibraryApi().getLibraryItems(
+      libraryId,
+      request,
+    );
     final pageData = response.data;
     if (pageData == null || pageData.results.isEmpty) {
       break;
@@ -193,7 +218,10 @@ Future<List<LibraryItem>> _fetchAllLibraryItems(ABSApi api, String libraryId) as
   return allItems;
 }
 
-Future<int> _applyBatchMediaUpdates(ABSApi api, List<BatchUpdateLibraryItemRequest> payloads) async {
+Future<int> _applyBatchMediaUpdates(
+  ABSApi api,
+  List<BatchUpdateLibraryItemRequest> payloads,
+) async {
   if (payloads.isEmpty) {
     return 0;
   }
@@ -202,7 +230,9 @@ Future<int> _applyBatchMediaUpdates(ABSApi api, List<BatchUpdateLibraryItemReque
   for (var start = 0; start < payloads.length; start += _metadataBatchSize) {
     final end = math.min(start + _metadataBatchSize, payloads.length);
     final chunk = payloads.sublist(start, end);
-    final response = await api.getLibraryItemApi().batchUpdateLibraryItems(chunk);
+    final response = await api.getLibraryItemApi().batchUpdateLibraryItems(
+      chunk,
+    );
     if (!response.success) {
       throw Exception('Batch item update failed.');
     }
@@ -213,21 +243,30 @@ Future<int> _applyBatchMediaUpdates(ABSApi api, List<BatchUpdateLibraryItemReque
   return updates;
 }
 
-List<Library> _targetLibraries(List<Library> libraries, List<String> selectedLibraryIds) {
+List<Library> _targetLibraries(
+  List<Library> libraries,
+  List<String> selectedLibraryIds,
+) {
   if (selectedLibraryIds.isEmpty) {
     return libraries;
   }
 
   final selectedSet = selectedLibraryIds.toSet();
-  return libraries.where((library) => selectedSet.contains(library.id)).toList(growable: false);
+  return libraries
+      .where((library) => selectedSet.contains(library.id))
+      .toList(growable: false);
 }
 
 List<String> _extractItemTags(LibraryItem item) {
-  return item.media?.bookMedia?.tags ?? item.media?.podcastMedia?.tags ?? const <String>[];
+  return item.media?.bookMedia?.tags ??
+      item.media?.podcastMedia?.tags ??
+      const <String>[];
 }
 
 List<String> _extractItemGenres(LibraryItem item) {
-  return item.media?.bookMedia?.metadata.genres ?? item.media?.podcastMedia?.metadata.genres ?? const <String>[];
+  return item.media?.bookMedia?.metadata.genres ??
+      item.media?.podcastMedia?.metadata.genres ??
+      const <String>[];
 }
 
 List<String> _normalizedUniqueTerms(Iterable<String> terms) {

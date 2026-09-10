@@ -12,7 +12,8 @@ part of 'multi_select_app_bar_provider.dart';
 @ProviderFor(MultiSelectAppBar)
 final multiSelectAppBarProvider = MultiSelectAppBarProvider._();
 
-final class MultiSelectAppBarProvider extends $NotifierProvider<MultiSelectAppBar, MultiSelectAppBarState?> {
+final class MultiSelectAppBarProvider
+    extends $NotifierProvider<MultiSelectAppBar, MultiSelectAppBarState?> {
   MultiSelectAppBarProvider._()
     : super(
         from: null,
@@ -33,7 +34,10 @@ final class MultiSelectAppBarProvider extends $NotifierProvider<MultiSelectAppBa
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(MultiSelectAppBarState? value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<MultiSelectAppBarState?>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<MultiSelectAppBarState?>(value),
+    );
   }
 }
 
@@ -44,7 +48,8 @@ abstract class _$MultiSelectAppBar extends $Notifier<MultiSelectAppBarState?> {
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<MultiSelectAppBarState?, MultiSelectAppBarState?>;
+    final ref =
+        this.ref as $Ref<MultiSelectAppBarState?, MultiSelectAppBarState?>;
     final element =
         ref.element
             as $ClassProviderElement<

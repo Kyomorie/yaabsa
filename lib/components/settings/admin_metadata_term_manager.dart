@@ -2,8 +2,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/api/admin/metadata_term_update_response.dart';
 import 'package:yaabsa/components/common/list_management_dialogs.dart';
 
-typedef MetadataTermRenameCallback = Future<MetadataTermUpdateResponse> Function(String currentTerm, String newTerm);
-typedef MetadataTermDeleteCallback = Future<MetadataTermUpdateResponse> Function(String term);
+typedef MetadataTermRenameCallback =
+    Future<MetadataTermUpdateResponse> Function(
+      String currentTerm,
+      String newTerm,
+    );
+typedef MetadataTermDeleteCallback =
+    Future<MetadataTermUpdateResponse> Function(String term);
 
 class AdminMetadataTermManager extends StatefulWidget {
   const AdminMetadataTermManager({
@@ -26,7 +31,8 @@ class AdminMetadataTermManager extends StatefulWidget {
   final Widget? toolbarAction;
 
   @override
-  State<AdminMetadataTermManager> createState() => _AdminMetadataTermManagerState();
+  State<AdminMetadataTermManager> createState() =>
+      _AdminMetadataTermManagerState();
 }
 
 class _AdminMetadataTermManagerState extends State<AdminMetadataTermManager> {
@@ -96,7 +102,10 @@ class _AdminMetadataTermManagerState extends State<AdminMetadataTermManager> {
                 onSubmitted: (_) => submit(),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
                 FilledButton(onPressed: submit, child: const Text('Save')),
               ],
             );
@@ -131,17 +140,24 @@ class _AdminMetadataTermManagerState extends State<AdminMetadataTermManager> {
 
       final merged = response.tagMerged ?? response.genreMerged ?? false;
       final updatedCount = response.numItemsUpdated;
-      final mergeMessage = merged ? ' Existing ${widget.entityLabel} values were merged.' : '';
+      final mergeMessage = merged
+          ? ' Existing ${widget.entityLabel} values were merged.'
+          : '';
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Updated $updatedCount item(s).$mergeMessage')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Updated $updatedCount item(s).$mergeMessage')),
+      );
     } catch (error) {
       if (!mounted) {
         return;
       }
 
-      final message = listManagementErrorMessage(error, fallback: 'Failed to rename ${widget.entityLabel}.');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      final message = listManagementErrorMessage(
+        error,
+        fallback: 'Failed to rename ${widget.entityLabel}.',
+      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -176,15 +192,20 @@ class _AdminMetadataTermManagerState extends State<AdminMetadataTermManager> {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Updated ${response.numItemsUpdated} item(s).')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Updated ${response.numItemsUpdated} item(s).')),
+      );
     } catch (error) {
       if (!mounted) {
         return;
       }
 
-      final message = listManagementErrorMessage(error, fallback: 'Failed to delete ${widget.entityLabel}.');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      final message = listManagementErrorMessage(
+        error,
+        fallback: 'Failed to delete ${widget.entityLabel}.',
+      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -209,7 +230,10 @@ class _AdminMetadataTermManagerState extends State<AdminMetadataTermManager> {
                 onPressed: _isBusy ? null : _handleRefresh,
                 icon: const Icon(Icons.refresh_outlined),
               ),
-              if (widget.toolbarAction != null) ...[const SizedBox(width: 8), widget.toolbarAction!],
+              if (widget.toolbarAction != null) ...[
+                const SizedBox(width: 8),
+                widget.toolbarAction!,
+              ],
             ],
           ),
         ),
@@ -219,14 +243,23 @@ class _AdminMetadataTermManagerState extends State<AdminMetadataTermManager> {
             child: widget.items.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-                    children: [Text(widget.emptyMessage, style: Theme.of(context).textTheme.bodyMedium)],
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 12,
+                    ),
+                    children: [
+                      Text(
+                        widget.emptyMessage,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
                   )
                 : ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.only(bottom: 20),
                     itemCount: widget.items.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1),
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final term = widget.items[index];
                       final processingThisTerm = term == _processingTerm;
@@ -239,17 +272,30 @@ class _AdminMetadataTermManagerState extends State<AdminMetadataTermManager> {
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               if (processingThisTerm)
-                                const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               else ...[
                                 IconButton(
                                   tooltip: 'Rename ${widget.entityLabel}',
-                                  onPressed: _isBusy ? null : () => _renameTerm(term),
+                                  onPressed: _isBusy
+                                      ? null
+                                      : () => _renameTerm(term),
                                   icon: const Icon(Icons.edit_outlined),
                                 ),
                                 IconButton(
                                   tooltip: 'Delete ${widget.entityLabel}',
-                                  onPressed: _isBusy ? null : () => _deleteTerm(term),
-                                  icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                                  onPressed: _isBusy
+                                      ? null
+                                      : () => _deleteTerm(term),
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
                                 ),
                               ],
                             ],

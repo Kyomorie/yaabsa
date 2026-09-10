@@ -24,13 +24,18 @@ class ServerManagementUploadModeButton extends ConsumerWidget {
     final appDatabase = ref.watch(appDatabaseProvider);
 
     return StreamBuilder<UserSettingEntry?>(
-      stream: appDatabase.watchUserSetting(userId, SettingKeys.serverManagementUploadItems),
+      stream: appDatabase.watchUserSetting(
+        userId,
+        SettingKeys.serverManagementUploadItems,
+      ),
       builder: (context, snapshot) {
         final uploadItemsEnabled = SettingsParser.decodeValue<bool>(
           snapshot.data?.value,
-          defaultSettings[SettingKeys.serverManagementUploadItems] as bool? ?? false,
+          defaultSettings[SettingKeys.serverManagementUploadItems] as bool? ??
+              false,
         );
-        final enabled = canUploadItems && uploadItemsEnabled && hasSelectedLibrary;
+        final enabled =
+            canUploadItems && uploadItemsEnabled && hasSelectedLibrary;
         final disabledReason = !canUploadItems
             ? 'Requires upload permission.'
             : !uploadItemsEnabled
@@ -41,9 +46,7 @@ class ServerManagementUploadModeButton extends ConsumerWidget {
 
         return SettingButton(
           label: 'Open upload',
-          description: enabled
-              ? null
-              : disabledReason ?? 'Upload mode requires upload permission and enabled upload actions.',
+          description: enabled ? null : disabledReason ?? 'Upload mode requires upload permission and enabled upload actions.',
           buttonText: 'Open',
           buttonIcon: Icons.cloud_upload_outlined,
           onPressed: enabled ? onPressed : null,

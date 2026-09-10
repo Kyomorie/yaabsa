@@ -19,15 +19,16 @@ _AdminBackup _$AdminBackupFromJson(Map<String, dynamic> json) => _AdminBackup(
   serverVersion: json['serverVersion'] as String?,
 );
 
-Map<String, dynamic> _$AdminBackupToJson(_AdminBackup instance) => <String, dynamic>{
-  'id': instance.id,
-  'key': instance.key,
-  'backupDirPath': instance.backupDirPath,
-  'datePretty': instance.datePretty,
-  'fullPath': instance.fullPath,
-  'path': instance.path,
-  'filename': instance.filename,
-  'fileSize': instance.fileSize,
-  'createdAt': instance.createdAt,
-  'serverVersion': instance.serverVersion,
-};
+Map<String, dynamic> _$AdminBackupToJson(_AdminBackup instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'key': instance.key,
+      'backupDirPath': instance.backupDirPath,
+      'datePretty': instance.datePretty,
+      'fullPath': instance.fullPath,
+      'path': instance.path,
+      'filename': instance.filename,
+      'fileSize': instance.fileSize,
+      'createdAt': instance.createdAt,
+      'serverVersion': instance.serverVersion,
+    };

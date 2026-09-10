@@ -10,21 +10,29 @@ Future<String?> showFilesystemDirectoryPickerDialog(
 }) {
   return showDialog<String>(
     context: context,
-    builder: (_) => _FilesystemDirectoryPickerDialog(title: title, initialPath: initialPath),
+    builder: (_) => _FilesystemDirectoryPickerDialog(
+      title: title,
+      initialPath: initialPath,
+    ),
   );
 }
 
 class _FilesystemDirectoryPickerDialog extends ConsumerStatefulWidget {
-  const _FilesystemDirectoryPickerDialog({required this.title, this.initialPath});
+  const _FilesystemDirectoryPickerDialog({
+    required this.title,
+    this.initialPath,
+  });
 
   final String title;
   final String? initialPath;
 
   @override
-  ConsumerState<_FilesystemDirectoryPickerDialog> createState() => _FilesystemDirectoryPickerDialogState();
+  ConsumerState<_FilesystemDirectoryPickerDialog> createState() =>
+      _FilesystemDirectoryPickerDialogState();
 }
 
-class _FilesystemDirectoryPickerDialogState extends ConsumerState<_FilesystemDirectoryPickerDialog> {
+class _FilesystemDirectoryPickerDialogState
+    extends ConsumerState<_FilesystemDirectoryPickerDialog> {
   bool _isLoading = true;
   String? _errorMessage;
   String? _currentPath;
@@ -54,7 +62,10 @@ class _FilesystemDirectoryPickerDialogState extends ConsumerState<_FilesystemDir
     return normalized.substring(0, separatorIndex);
   }
 
-  Future<void> _loadDirectories({String? path, bool pushCurrentToHistory = false}) async {
+  Future<void> _loadDirectories({
+    String? path,
+    bool pushCurrentToHistory = false,
+  }) async {
     if (pushCurrentToHistory) {
       _history.add(_currentPath);
     }
@@ -78,9 +89,18 @@ class _FilesystemDirectoryPickerDialogState extends ConsumerState<_FilesystemDir
     });
 
     try {
-      final response = await api.getUploadApi().getFilesystemPaths(path: path, level: 0);
-      final directories = List<FilesystemDirectory>.from(response.data?.directories ?? const <FilesystemDirectory>[])
-        ..sort((left, right) => left.dirname.toLowerCase().compareTo(right.dirname.toLowerCase()));
+      final response = await api.getUploadApi().getFilesystemPaths(
+        path: path,
+        level: 0,
+      );
+      final directories =
+          List<FilesystemDirectory>.from(
+            response.data?.directories ?? const <FilesystemDirectory>[],
+          )..sort(
+            (left, right) => left.dirname.toLowerCase().compareTo(
+              right.dirname.toLowerCase(),
+            ),
+          );
 
       if (!mounted) {
         return;
@@ -151,12 +171,16 @@ class _FilesystemDirectoryPickerDialogState extends ConsumerState<_FilesystemDir
                     _currentPath == null ? 'Root' : _currentPath!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 IconButton(
                   tooltip: 'Refresh',
-                  onPressed: _isLoading ? null : () => _loadDirectories(path: _currentPath),
+                  onPressed: _isLoading
+                      ? null
+                      : () => _loadDirectories(path: _currentPath),
                   icon: const Icon(Icons.refresh_rounded),
                 ),
               ],
@@ -169,7 +193,10 @@ class _FilesystemDirectoryPickerDialogState extends ConsumerState<_FilesystemDir
                   color: colorScheme.errorContainer.withValues(alpha: 0.45),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(_errorMessage!, style: TextStyle(color: colorScheme.error)),
+                child: Text(
+                  _errorMessage!,
+                  style: TextStyle(color: colorScheme.error),
+                ),
               ),
               const SizedBox(height: 8),
             ],
@@ -181,25 +208,39 @@ class _FilesystemDirectoryPickerDialogState extends ConsumerState<_FilesystemDir
                       decoration: BoxDecoration(
                         color: colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.3,
+                          ),
+                        ),
                       ),
                       alignment: Alignment.center,
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         'No directories available.',
-                        style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     )
                   : ListView.separated(
                       itemCount: _directories.length,
-                      separatorBuilder: (_, _) =>
-                          Divider(height: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.25)),
+                      separatorBuilder: (_, _) => Divider(
+                        height: 1,
+                        color: colorScheme.outlineVariant.withValues(
+                          alpha: 0.25,
+                        ),
+                      ),
                       itemBuilder: (context, index) {
                         final directory = _directories[index];
                         return ListTile(
                           leading: const Icon(Icons.folder_outlined),
                           title: Text(directory.dirname),
-                          subtitle: Text(directory.path, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          subtitle: Text(
+                            directory.path,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           onTap: () => _selectPath(directory.path),
                           trailing: IconButton(
                             tooltip: 'Open',
@@ -214,9 +255,14 @@ class _FilesystemDirectoryPickerDialogState extends ConsumerState<_FilesystemDir
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton.icon(
-          onPressed: _currentPath == null ? null : () => Navigator.of(context).pop(_currentPath),
+          onPressed: _currentPath == null
+              ? null
+              : () => Navigator.of(context).pop(_currentPath),
           icon: const Icon(Icons.check_rounded),
           label: const Text('Use current folder'),
         ),

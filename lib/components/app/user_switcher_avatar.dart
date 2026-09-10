@@ -1,7 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 
 class UserSwitcherAvatar extends StatelessWidget {
-  const UserSwitcherAvatar({super.key, required this.username, required this.compact, required this.serverReachable});
+  const UserSwitcherAvatar({
+    super.key,
+    required this.username,
+    required this.compact,
+    required this.serverReachable,
+  });
 
   final String? username;
   final bool compact;
@@ -12,7 +17,9 @@ class UserSwitcherAvatar extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final avatarRadius = compact ? 13.0 : 14.0;
     final indicatorSize = compact ? 9.0 : 10.0;
-    final displayInitial = username != null && username!.isNotEmpty ? username![0].toUpperCase() : 'U';
+    final displayInitial = username != null && username!.isNotEmpty
+        ? username![0].toUpperCase()
+        : 'U';
 
     Color indicatorColor;
     String indicatorTooltip;
@@ -38,7 +45,11 @@ class UserSwitcherAvatar extends StatelessWidget {
             backgroundColor: colorScheme.primary,
             child: Text(
               displayInitial,
-              style: TextStyle(color: colorScheme.onPrimary, fontSize: compact ? 10 : 11, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: colorScheme.onPrimary,
+                fontSize: compact ? 10 : 11,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           Positioned(
@@ -50,7 +61,10 @@ class UserSwitcherAvatar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: indicatorColor,
                 shape: BoxShape.circle,
-                border: Border.all(color: colorScheme.surfaceContainerHigh, width: 1.2),
+                border: Border.all(
+                  color: colorScheme.surfaceContainerHigh,
+                  width: 1.2,
+                ),
               ),
             ),
           ),

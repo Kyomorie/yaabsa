@@ -55,13 +55,16 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
   @override
   void didUpdateWidget(covariant LibraryUploadItemCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.item.title != widget.item.title && _titleController.text != widget.item.title) {
+    if (oldWidget.item.title != widget.item.title &&
+        _titleController.text != widget.item.title) {
       _titleController.text = widget.item.title;
     }
-    if (oldWidget.item.author != widget.item.author && _authorController.text != widget.item.author) {
+    if (oldWidget.item.author != widget.item.author &&
+        _authorController.text != widget.item.author) {
       _authorController.text = widget.item.author;
     }
-    if (oldWidget.item.series != widget.item.series && _seriesController.text != widget.item.series) {
+    if (oldWidget.item.series != widget.item.series &&
+        _seriesController.text != widget.item.series) {
       _seriesController.text = widget.item.series;
     }
   }
@@ -93,7 +96,9 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(14),
-        border: Border.fromBorderSide(BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.4))),
+        border: Border.fromBorderSide(
+          BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
+        ),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -112,8 +117,12 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
                             label: 'Title',
                             controller: _titleController,
                             enabled: widget.enabled,
-                            onChanged: (value) =>
-                                widget.onChanged(widget.item.copyWith(title: value, clearMessage: true)),
+                            onChanged: (value) => widget.onChanged(
+                              widget.item.copyWith(
+                                title: value,
+                                clearMessage: true,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -125,7 +134,10 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Align(alignment: Alignment.centerLeft, child: _buildFetchMetadataButton(context)),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _buildFetchMetadataButton(context),
+                    ),
                   ],
                 );
               }
@@ -138,7 +150,9 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
                       label: 'Title',
                       controller: _titleController,
                       enabled: widget.enabled,
-                      onChanged: (value) => widget.onChanged(widget.item.copyWith(title: value, clearMessage: true)),
+                      onChanged: (value) => widget.onChanged(
+                        widget.item.copyWith(title: value, clearMessage: true),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -172,12 +186,16 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
                   ),
                   IconButton(
                     tooltip: 'Accept metadata suggestion',
-                    onPressed: widget.enabled ? widget.onAcceptPendingMetadata : null,
+                    onPressed: widget.enabled
+                        ? widget.onAcceptPendingMetadata
+                        : null,
                     icon: const Icon(Icons.check_rounded),
                   ),
                   IconButton(
                     tooltip: 'Reject metadata suggestion',
-                    onPressed: widget.enabled ? widget.onRejectPendingMetadata : null,
+                    onPressed: widget.enabled
+                        ? widget.onRejectPendingMetadata
+                        : null,
                     icon: const Icon(Icons.close_rounded),
                   ),
                 ],
@@ -193,7 +211,9 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
                   controller: _authorController,
                   focusNode: _authorFocusNode,
                   suggestions: widget.authorSuggestions,
-                  onChanged: (value) => widget.onChanged(widget.item.copyWith(author: value, clearMessage: true)),
+                  onChanged: (value) => widget.onChanged(
+                    widget.item.copyWith(author: value, clearMessage: true),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -203,7 +223,9 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
                   controller: _seriesController,
                   focusNode: _seriesFocusNode,
                   suggestions: widget.seriesSuggestions,
-                  onChanged: (value) => widget.onChanged(widget.item.copyWith(series: value, clearMessage: true)),
+                  onChanged: (value) => widget.onChanged(
+                    widget.item.copyWith(series: value, clearMessage: true),
+                  ),
                 ),
               ),
             ],
@@ -217,7 +239,11 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
                     _isFileListExpanded = !_isFileListExpanded;
                   });
                 },
-                icon: Icon(_isFileListExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded),
+                icon: Icon(
+                  _isFileListExpanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                ),
                 label: Text('Files (${widget.item.uploadFiles.length})'),
               ),
             ],
@@ -230,7 +256,10 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
                 itemCount: widget.item.uploadFiles.length,
                 itemBuilder: (context, index) {
                   final file = widget.item.uploadFiles[index];
-                  return Text(file.relativePath, style: Theme.of(context).textTheme.bodySmall);
+                  return Text(
+                    file.relativePath,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  );
                 },
               ),
             ),
@@ -240,14 +269,17 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
             const SizedBox(height: 4),
             Text(
               '${formatByteProgress(transferredBytes: widget.item.uploadedBytes, totalBytes: widget.item.totalBytes)} | ${formatByteRate(widget.item.uploadSpeedBytesPerSecond)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
-          if (widget.item.message != null && widget.item.message!.trim().isNotEmpty) ...[
+          if (widget.item.message != null &&
+              widget.item.message!.trim().isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               widget.item.message!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: _messageColor(context)),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: _messageColor(context)),
             ),
           ],
         ],
@@ -264,9 +296,13 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
         icon: const Icon(Icons.cloud_download_outlined, size: 18),
         label: const Text('Fetch metadata'),
         style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.34)),
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.34),
+          ),
           backgroundColor: colorScheme.surfaceContainer,
         ),
       ),
@@ -293,18 +329,21 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
           return suggestions.take(10);
         }
 
-        return suggestions.where((option) => option.toLowerCase().contains(query)).take(10);
+        return suggestions
+            .where((option) => option.toLowerCase().contains(query))
+            .take(10);
       },
       onSelected: onChanged,
-      fieldViewBuilder: (context, textController, textFocusNode, onFieldSubmitted) {
-        return TextField(
-          controller: textController,
-          focusNode: textFocusNode,
-          enabled: widget.enabled,
-          onChanged: onChanged,
-          decoration: yaabsaFieldDecoration(context, label: label),
-        );
-      },
+      fieldViewBuilder:
+          (context, textController, textFocusNode, onFieldSubmitted) {
+            return TextField(
+              controller: textController,
+              focusNode: textFocusNode,
+              enabled: widget.enabled,
+              onChanged: onChanged,
+              decoration: yaabsaFieldDecoration(context, label: label),
+            );
+          },
       optionsViewBuilder: (context, onSelected, options) {
         return Align(
           alignment: Alignment.topLeft,
@@ -323,8 +362,14 @@ class _LibraryUploadItemCardState extends State<LibraryUploadItemCard> {
                   return InkWell(
                     onTap: () => onSelected(option),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      child: Text(option, style: Theme.of(context).textTheme.bodyMedium),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      child: Text(
+                        option,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ),
                   );
                 },

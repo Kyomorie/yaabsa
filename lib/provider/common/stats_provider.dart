@@ -48,7 +48,9 @@ Future<UserListeningStats> listeningStats(Ref ref) async {
         tag: 'StatsProvider',
         level: InfoLevel.warning,
       );
-      final fallbackResponse = await api.getMeApi().getListeningStats(currentUser.id);
+      final fallbackResponse = await api.getMeApi().getListeningStats(
+        currentUser.id,
+      );
       return fallbackResponse.data ?? const UserListeningStats();
     }
     rethrow;
@@ -98,13 +100,18 @@ Future<ListeningActivityStats> listeningActivityStats(Ref ref) async {
     dayTotals[dayKeyFromDate(parsedDate)] = _safeListeningTime(entry.value);
   }
 
-  return ListeningActivityStats(dailyListeningSeconds: dayTotals, loadedPages: 1, loadedSessions: dayTotals.length);
+  return ListeningActivityStats(
+    dailyListeningSeconds: dayTotals,
+    loadedPages: 1,
+    loadedSessions: dayTotals.length,
+  );
 }
 
 @Riverpod(keepAlive: true)
 class AdvancedListeningAnalytics extends _$AdvancedListeningAnalytics {
   @override
-  AdvancedListeningAnalyticsState build() => const AdvancedListeningAnalyticsState();
+  AdvancedListeningAnalyticsState build() =>
+      const AdvancedListeningAnalyticsState();
 
   Future<void> load() async {
     if (state.isLoading) return;
@@ -124,7 +131,10 @@ class AdvancedListeningAnalytics extends _$AdvancedListeningAnalytics {
     state = AdvancedListeningAnalyticsState(
       isLoading: true,
       stats: previousStats,
-      progress: const AdvancedLoadingProgressInfo(loadedPages: 0, loadedSessions: 0),
+      progress: const AdvancedLoadingProgressInfo(
+        loadedPages: 0,
+        loadedSessions: 0,
+      ),
     );
 
     final sessions = <PlaybackSession>[];
@@ -153,7 +163,8 @@ class AdvancedListeningAnalytics extends _$AdvancedListeningAnalytics {
         if (pageData.numPages != null && pageData.numPages! > 0) {
           numPages = pageData.numPages!;
         } else if (totalAvailableSessions > 0) {
-          numPages = (totalAvailableSessions / _advancedSessionsPageSize).ceil();
+          numPages = (totalAvailableSessions / _advancedSessionsPageSize)
+              .ceil();
         } else {
           final hasMore = pageData.sessions.length == _advancedSessionsPageSize;
           numPages = hasMore ? page + 2 : page + 1;
@@ -166,14 +177,18 @@ class AdvancedListeningAnalytics extends _$AdvancedListeningAnalytics {
             loadedPages: loadedPages,
             loadedSessions: sessions.length,
             totalPages: numPages > 0 ? numPages : null,
-            totalSessions: totalAvailableSessions > 0 ? totalAvailableSessions : null,
+            totalSessions: totalAvailableSessions > 0
+                ? totalAvailableSessions
+                : null,
           ),
         );
 
         page++;
       }
 
-      final resolvedTotalSessions = totalAvailableSessions > 0 ? totalAvailableSessions : sessions.length;
+      final resolvedTotalSessions = totalAvailableSessions > 0
+          ? totalAvailableSessions
+          : sessions.length;
       final computed = _calculateAdvancedListeningStats(
         sessions: sessions,
         loadedPages: loadedPages,
@@ -182,8 +197,15 @@ class AdvancedListeningAnalytics extends _$AdvancedListeningAnalytics {
 
       state = AdvancedListeningAnalyticsState(stats: computed);
     } catch (error) {
-      logger('Failed to compute advanced analytics: $error', tag: 'StatsProvider', level: InfoLevel.error);
-      state = AdvancedListeningAnalyticsState(stats: previousStats, errorMessage: error.toString());
+      logger(
+        'Failed to compute advanced analytics: $error',
+        tag: 'StatsProvider',
+        level: InfoLevel.error,
+      );
+      state = AdvancedListeningAnalyticsState(
+        stats: previousStats,
+        errorMessage: error.toString(),
+      );
     }
   }
 
@@ -199,7 +221,10 @@ Future<Response<ListeningSessionsPage>> _getListeningSessionsPage({
   required int itemsPerPage,
 }) async {
   try {
-    return await api.getMeApi().getMeListeningSessions(page: page, itemsPerPage: itemsPerPage);
+    return await api.getMeApi().getMeListeningSessions(
+      page: page,
+      itemsPerPage: itemsPerPage,
+    );
   } on DioException catch (error) {
     final statusCode = error.response?.statusCode;
     if (statusCode == 404 || statusCode == 405) {
@@ -208,7 +233,11 @@ Future<Response<ListeningSessionsPage>> _getListeningSessionsPage({
         tag: 'StatsProvider',
         level: InfoLevel.warning,
       );
-      return api.getMeApi().getUserListeningSessions(userId, page: page, itemsPerPage: itemsPerPage);
+      return api.getMeApi().getUserListeningSessions(
+        userId,
+        page: page,
+        itemsPerPage: itemsPerPage,
+      );
     }
     rethrow;
   }
@@ -220,7 +249,10 @@ AdvancedListeningStats _calculateAdvancedListeningStats({
   required int totalAvailableSessions,
 }) {
   if (sessions.isEmpty) {
-    return _emptyAdvancedStats(loadedPages: loadedPages, totalAvailableSessions: totalAvailableSessions);
+    return _emptyAdvancedStats(
+      loadedPages: loadedPages,
+      totalAvailableSessions: totalAvailableSessions,
+    );
   }
 
   final listeningTimes = <double>[];
@@ -228,8 +260,12 @@ AdvancedListeningStats _calculateAdvancedListeningStats({
   final itemAggregates = <String, _ItemAggregate>{};
   final authorAggregates = <String, _EntityAggregate>{};
 
-  final weekdayTotals = <String, double>{for (final label in _weekdayLabels) label: 0};
-  final hourlyTotals = <int, double>{for (var hour = 0; hour < 24; hour++) hour: 0};
+  final weekdayTotals = <String, double>{
+    for (final label in _weekdayLabels) label: 0,
+  };
+  final hourlyTotals = <int, double>{
+    for (var hour = 0; hour < 24; hour++) hour: 0,
+  };
   final monthlyTotals = SplayTreeMap<String, double>();
 
   final sessionDays = <int>{};
@@ -258,20 +294,29 @@ AdvancedListeningStats _calculateAdvancedListeningStats({
       totalPodcastListeningTime += sessionListeningTime;
     }
 
-    final itemId = (session.libraryItemId).trim().isNotEmpty ? session.libraryItemId : session.id;
+    final itemId = (session.libraryItemId).trim().isNotEmpty
+        ? session.libraryItemId
+        : session.id;
     final itemTitle = _resolveItemTitle(session);
     final itemAuthor = _resolveItemAuthor(session);
 
     final itemAggregate = itemAggregates.putIfAbsent(
       itemId,
-      () => _ItemAggregate(id: itemId, title: itemTitle, author: itemAuthor, mediaType: mediaType),
+      () => _ItemAggregate(
+        id: itemId,
+        title: itemTitle,
+        author: itemAuthor,
+        mediaType: mediaType,
+      ),
     );
     itemAggregate.totalListeningTime += sessionListeningTime;
     itemAggregate.sessions += 1;
-    if (itemAggregate.title == _ItemAggregate.unknownTitle && itemTitle != _ItemAggregate.unknownTitle) {
+    if (itemAggregate.title == _ItemAggregate.unknownTitle &&
+        itemTitle != _ItemAggregate.unknownTitle) {
       itemAggregate.title = itemTitle;
     }
-    if (itemAggregate.author == _ItemAggregate.unknownAuthor && itemAuthor != _ItemAggregate.unknownAuthor) {
+    if (itemAggregate.author == _ItemAggregate.unknownAuthor &&
+        itemAuthor != _ItemAggregate.unknownAuthor) {
       itemAggregate.author = itemAuthor;
     }
 
@@ -283,8 +328,13 @@ AdvancedListeningStats _calculateAdvancedListeningStats({
       }
 
       final authorId = author.id?.trim();
-      final key = authorId == null || authorId.isEmpty ? normalized.toLowerCase() : authorId;
-      final authorAggregate = authorAggregates.putIfAbsent(key, () => _EntityAggregate(id: authorId, name: normalized));
+      final key = authorId == null || authorId.isEmpty
+          ? normalized.toLowerCase()
+          : authorId;
+      final authorAggregate = authorAggregates.putIfAbsent(
+        key,
+        () => _EntityAggregate(id: authorId, name: normalized),
+      );
       authorAggregate.totalListeningTime += sessionListeningTime;
       authorAggregate.sessions += 1;
     }
@@ -295,27 +345,40 @@ AdvancedListeningStats _calculateAdvancedListeningStats({
     }
 
     final millis = timestamp.millisecondsSinceEpoch;
-    firstSessionAt = firstSessionAt == null || millis < firstSessionAt ? millis : firstSessionAt;
-    lastSessionAt = lastSessionAt == null || millis > lastSessionAt ? millis : lastSessionAt;
+    firstSessionAt = firstSessionAt == null || millis < firstSessionAt
+        ? millis
+        : firstSessionAt;
+    lastSessionAt = lastSessionAt == null || millis > lastSessionAt
+        ? millis
+        : lastSessionAt;
 
     final dayEpoch =
-        DateTime.utc(timestamp.year, timestamp.month, timestamp.day).millisecondsSinceEpoch ~/
+        DateTime.utc(
+          timestamp.year,
+          timestamp.month,
+          timestamp.day,
+        ).millisecondsSinceEpoch ~/
         Duration.millisecondsPerDay;
     sessionDays.add(dayEpoch);
 
     final weekdayLabel = _weekdayLabels[timestamp.weekday - 1];
-    weekdayTotals[weekdayLabel] = (weekdayTotals[weekdayLabel] ?? 0) + sessionListeningTime;
+    weekdayTotals[weekdayLabel] =
+        (weekdayTotals[weekdayLabel] ?? 0) + sessionListeningTime;
 
     final hour = timestamp.hour;
     hourlyTotals[hour] = (hourlyTotals[hour] ?? 0) + sessionListeningTime;
 
-    final monthLabel = '${timestamp.year}-${timestamp.month.toString().padLeft(2, '0')}';
-    monthlyTotals[monthLabel] = (monthlyTotals[monthLabel] ?? 0) + sessionListeningTime;
+    final monthLabel =
+        '${timestamp.year}-${timestamp.month.toString().padLeft(2, '0')}';
+    monthlyTotals[monthLabel] =
+        (monthlyTotals[monthLabel] ?? 0) + sessionListeningTime;
   }
 
   final sortedListeningTimes = List<double>.from(listeningTimes)..sort();
   final medianSessionTime = _median(sortedListeningTimes);
-  final averageSessionTime = sessions.isEmpty ? 0.0 : totalListeningTime / sessions.length;
+  final averageSessionTime = sessions.isEmpty
+      ? 0.0
+      : totalListeningTime / sessions.length;
 
   final topItems =
       itemAggregates.values
@@ -358,16 +421,29 @@ AdvancedListeningStats _calculateAdvancedListeningStats({
         });
 
   final weekdayBreakdown = _weekdayLabels
-      .map((label) => AdvancedTimeBucket(label: label, totalListeningTime: weekdayTotals[label] ?? 0))
+      .map(
+        (label) => AdvancedTimeBucket(
+          label: label,
+          totalListeningTime: weekdayTotals[label] ?? 0,
+        ),
+      )
       .toList(growable: false);
 
   final hourlyBreakdown = List<AdvancedTimeBucket>.generate(24, (hour) {
     final label = '${hour.toString().padLeft(2, '0')}:00';
-    return AdvancedTimeBucket(label: label, totalListeningTime: hourlyTotals[hour] ?? 0);
+    return AdvancedTimeBucket(
+      label: label,
+      totalListeningTime: hourlyTotals[hour] ?? 0,
+    );
   });
 
   final monthlyBreakdown = monthlyTotals.entries
-      .map((entry) => AdvancedTimeBucket(label: entry.key, totalListeningTime: entry.value))
+      .map(
+        (entry) => AdvancedTimeBucket(
+          label: entry.key,
+          totalListeningTime: entry.value,
+        ),
+      )
       .toList(growable: false);
 
   final favoriteWeekday = _favoriteWeekday(weekdayTotals);
@@ -398,7 +474,10 @@ AdvancedListeningStats _calculateAdvancedListeningStats({
   );
 }
 
-AdvancedListeningStats _emptyAdvancedStats({required int loadedPages, required int totalAvailableSessions}) {
+AdvancedListeningStats _emptyAdvancedStats({
+  required int loadedPages,
+  required int totalAvailableSessions,
+}) {
   return AdvancedListeningStats(
     loadedPages: loadedPages,
     totalSessions: 0,
@@ -502,7 +581,10 @@ String _resolveItemAuthor(PlaybackSession session) {
   final metadata = session.mediaMetadata;
   final bookAuthors = metadata?.bookMetadata?.authors;
   if (bookAuthors != null && bookAuthors.isNotEmpty) {
-    final joined = bookAuthors.map((author) => author.name.trim()).where((name) => name.isNotEmpty).join(', ');
+    final joined = bookAuthors
+        .map((author) => author.name.trim())
+        .where((name) => name.isNotEmpty)
+        .join(', ');
     if (joined.isNotEmpty) {
       return joined;
     }
@@ -601,7 +683,12 @@ class _ItemAggregate {
   static const String unknownTitle = 'Unknown Item';
   static const String unknownAuthor = 'Unknown Author';
 
-  _ItemAggregate({required this.id, required this.title, required this.author, required this.mediaType});
+  _ItemAggregate({
+    required this.id,
+    required this.title,
+    required this.author,
+    required this.mediaType,
+  });
 
   final String id;
   String title;

@@ -1,5 +1,11 @@
-bool serverVersionAtLeast(String? version, {required int major, required int minor, int patch = 0}) {
-  final match = RegExp(r'^\s*v?(\d+)\.(\d+)(?:\.(\d+))?').firstMatch(version ?? '');
+bool serverVersionAtLeast(
+  String? version, {
+  required int major,
+  required int minor,
+  int patch = 0,
+}) {
+  final match = RegExp(r'^\s*v?(\d+)\.(\d+)(?:\.(\d+))?')
+      .firstMatch(version ?? '');
   if (match == null) {
     return false;
   }

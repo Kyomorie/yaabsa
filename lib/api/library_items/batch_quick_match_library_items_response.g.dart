@@ -6,7 +6,8 @@ part of 'batch_quick_match_library_items_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_BatchQuickMatchLibraryItemsResponse _$BatchQuickMatchLibraryItemsResponseFromJson(Map<String, dynamic> json) =>
+_BatchQuickMatchLibraryItemsResponse
+_$BatchQuickMatchLibraryItemsResponseFromJson(Map<String, dynamic> json) =>
     _BatchQuickMatchLibraryItemsResponse(
       success: json['success'] as bool? ?? false,
       updates: (json['updates'] as num?)?.toInt() ?? 0,
@@ -15,11 +16,12 @@ _BatchQuickMatchLibraryItemsResponse _$BatchQuickMatchLibraryItemsResponseFromJs
       error: json['error'] as String?,
     );
 
-Map<String, dynamic> _$BatchQuickMatchLibraryItemsResponseToJson(_BatchQuickMatchLibraryItemsResponse instance) =>
-    <String, dynamic>{
-      'success': instance.success,
-      'updates': instance.updates,
-      'unmatched': instance.unmatched,
-      'message': instance.message,
-      'error': instance.error,
-    };
+Map<String, dynamic> _$BatchQuickMatchLibraryItemsResponseToJson(
+  _BatchQuickMatchLibraryItemsResponse instance,
+) => <String, dynamic>{
+  'success': instance.success,
+  'updates': instance.updates,
+  'unmatched': instance.unmatched,
+  'message': instance.message,
+  'error': instance.error,
+};

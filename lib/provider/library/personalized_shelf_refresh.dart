@@ -7,7 +7,8 @@ import 'package:yaabsa/util/interceptors/cache_interceptor.dart';
 import 'package:yaabsa/util/logger.dart';
 
 const Duration _personalizedShelfRefreshMinInterval = Duration(seconds: 30);
-final Map<String, DateTime> _lastPersonalizedShelfRefreshByKey = <String, DateTime>{};
+final Map<String, DateTime> _lastPersonalizedShelfRefreshByKey =
+    <String, DateTime>{};
 final Set<String> _personalizedShelfRefreshInFlight = <String>{};
 
 Future<bool> refreshPersonalizedShelfForCompletedItem({
@@ -55,7 +56,8 @@ Future<bool> refreshPersonalizedShelfForCompletedItem({
   final refreshKey = '$resolvedLibraryId:$itemId';
   final now = DateTime.now();
   final lastRefreshAt = _lastPersonalizedShelfRefreshByKey[refreshKey];
-  if (lastRefreshAt != null && now.difference(lastRefreshAt) < _personalizedShelfRefreshMinInterval) {
+  if (lastRefreshAt != null &&
+      now.difference(lastRefreshAt) < _personalizedShelfRefreshMinInterval) {
     logger(
       'Skipping shelf refresh after $reason for $itemId in library $resolvedLibraryId: throttled.',
       tag: sourceTag,
@@ -74,7 +76,11 @@ Future<bool> refreshPersonalizedShelfForCompletedItem({
   }
 
   try {
-    await invalidateCachedLibraryItemEntries(container: container, itemId: itemId, libraryId: resolvedLibraryId);
+    await invalidateCachedLibraryItemEntries(
+      container: container,
+      itemId: itemId,
+      libraryId: resolvedLibraryId,
+    );
     await container
         .read(personalizedLibraryProvider(resolvedLibraryId).notifier)
         .refresh(resolvedLibraryId, bypassCache: true);

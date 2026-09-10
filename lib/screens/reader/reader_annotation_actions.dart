@@ -5,7 +5,9 @@ extension _ReaderAnnotationActions on _ReaderState {
     try {
       await epubController.deleteAnnotation(annotation);
       _readerSetState(() {
-        _epubAnnotations.removeWhere((a) => a.value == annotation.value && a.type == annotation.type);
+        _epubAnnotations.removeWhere(
+          (a) => a.value == annotation.value && a.type == annotation.type,
+        );
       });
       _scheduleAutoAnnotationSync(isEpubMode: true);
     } catch (e) {
@@ -13,7 +15,11 @@ extension _ReaderAnnotationActions on _ReaderState {
     }
   }
 
-  Future<void> _editEpubAnnotation(FoliateAnnotation annotation, {String? noteText, String? color}) async {
+  Future<void> _editEpubAnnotation(
+    FoliateAnnotation annotation, {
+    String? noteText,
+    String? color,
+  }) async {
     try {
       final updated = FoliateAnnotation(
         value: annotation.value,
@@ -24,7 +30,9 @@ extension _ReaderAnnotationActions on _ReaderState {
       await epubController.deleteAnnotation(annotation);
       await epubController.addAnnotation(updated);
       _readerSetState(() {
-        final idx = _epubAnnotations.indexWhere((a) => a.value == annotation.value && a.type == annotation.type);
+        final idx = _epubAnnotations.indexWhere(
+          (a) => a.value == annotation.value && a.type == annotation.type,
+        );
         if (idx >= 0) {
           _epubAnnotations[idx] = updated;
         }

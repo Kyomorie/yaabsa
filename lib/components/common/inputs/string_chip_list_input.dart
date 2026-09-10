@@ -79,7 +79,8 @@ class StringChipListInput extends StatefulWidget {
   final List<String> suggestions;
   final StringChipListInputValidator? validator;
   final StringChipListInputNormalizer? normalizer;
-  final FutureOr<String?> Function(String value, List<String> currentValues)? onTryAdd;
+  final FutureOr<String?> Function(String value, List<String> currentValues)?
+  onTryAdd;
   final String Function(String value)? chipLabelBuilder;
   final ValueChanged<String>? onChipTap;
 
@@ -203,7 +204,11 @@ class _StringChipListInputState extends State<StringChipListInput> {
     }
 
     final loweredValue = value.toLowerCase();
-    widget.onChanged(widget.values.where((entry) => entry.toLowerCase() != loweredValue).toList(growable: false));
+    widget.onChanged(
+      widget.values
+          .where((entry) => entry.toLowerCase() != loweredValue)
+          .toList(growable: false),
+    );
   }
 
   @override
@@ -227,13 +232,17 @@ class _StringChipListInputState extends State<StringChipListInput> {
         widget.emptyStateText != null &&
         widget.emptyStateText!.trim().isNotEmpty;
 
-    final decoration = yaabsaFieldDecoration(context, label: widget.label).copyWith(
-      enabled: widget.enabled,
-      helperText: widget.helperText,
-      errorText: _validationError,
-      floatingLabelBehavior: FloatingLabelBehavior.always,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-    );
+    final decoration = yaabsaFieldDecoration(context, label: widget.label)
+        .copyWith(
+          enabled: widget.enabled,
+          helperText: widget.helperText,
+          errorText: _validationError,
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 8,
+          ),
+        );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,7 +261,9 @@ class _StringChipListInputState extends State<StringChipListInput> {
                     side: BorderSide.none,
                     avatar: const Icon(Icons.add_rounded, size: 14),
                     label: Text(suggestion, style: theme.textTheme.bodySmall),
-                    onPressed: widget.enabled ? () => _addValue(suggestion) : null,
+                    onPressed: widget.enabled
+                        ? () => _addValue(suggestion)
+                        : null,
                   ),
               ],
             ),
@@ -269,15 +280,22 @@ class _StringChipListInputState extends State<StringChipListInput> {
               if (hasEmptyState)
                 Text(
                   widget.emptyStateText!,
-                  style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               for (final value in widget.values)
                 InputChip(
                   visualDensity: VisualDensity.compact,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   side: BorderSide.none,
-                  label: Text(widget.chipLabelBuilder?.call(value) ?? value, style: theme.textTheme.bodySmall),
-                  onPressed: widget.onChipTap == null ? null : () => widget.onChipTap!(value),
+                  label: Text(
+                    widget.chipLabelBuilder?.call(value) ?? value,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  onPressed: widget.onChipTap == null
+                      ? null
+                      : () => widget.onChipTap!(value),
                   onDeleted: widget.enabled ? () => _removeValue(value) : null,
                 ),
               if (widget.enabled) _buildInlineInput(context),

@@ -53,7 +53,10 @@ class ReaderAnnotationTile extends StatelessWidget {
         'CFI: ${cfi.length > 30 ? '${cfi.substring(0, 30)}...' : cfi}',
         style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
       ),
-      trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: onRemove),
+      trailing: IconButton(
+        icon: const Icon(Icons.delete_outline),
+        onPressed: onRemove,
+      ),
     );
   }
 }

@@ -2,11 +2,23 @@ import 'package:flutter/foundation.dart';
 
 enum UploadFileKind { item, other, ignored }
 
-enum UploadItemStatus { ready, checkingPaths, warning, uploading, success, failed, canceled }
+enum UploadItemStatus {
+  ready,
+  checkingPaths,
+  warning,
+  uploading,
+  success,
+  failed,
+  canceled,
+}
 
 @immutable
 class UploadMetadataSuggestion {
-  const UploadMetadataSuggestion({required this.title, required this.author, required this.series});
+  const UploadMetadataSuggestion({
+    required this.title,
+    required this.author,
+    required this.series,
+  });
 
   final String title;
   final String author;
@@ -64,7 +76,10 @@ class UploadItemDraft {
   final UploadMetadataSuggestion? pendingMetadata;
   final String? message;
 
-  List<UploadPickedFile> get uploadFiles => <UploadPickedFile>[...itemFiles, ...otherFiles];
+  List<UploadPickedFile> get uploadFiles => <UploadPickedFile>[
+    ...itemFiles,
+    ...otherFiles,
+  ];
 
   UploadItemDraft copyWith({
     String? title,
@@ -94,11 +109,14 @@ class UploadItemDraft {
       ignoredFiles: ignoredFiles ?? this.ignoredFiles,
       status: status ?? this.status,
       progress: progress ?? this.progress,
-      uploadSpeedBytesPerSecond: uploadSpeedBytesPerSecond ?? this.uploadSpeedBytesPerSecond,
+      uploadSpeedBytesPerSecond:
+          uploadSpeedBytesPerSecond ?? this.uploadSpeedBytesPerSecond,
       uploadedBytes: uploadedBytes ?? this.uploadedBytes,
       totalBytes: totalBytes ?? this.totalBytes,
       sourceDescription: sourceDescription ?? this.sourceDescription,
-      pendingMetadata: clearPendingMetadata ? null : (pendingMetadata ?? this.pendingMetadata),
+      pendingMetadata: clearPendingMetadata
+          ? null
+          : (pendingMetadata ?? this.pendingMetadata),
       message: clearMessage ? null : (message ?? this.message),
     );
   }

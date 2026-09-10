@@ -11,7 +11,8 @@ import 'package:yaabsa/util/library_item_mutation_helpers.dart';
 part 'library_author_provider.g.dart';
 
 const int _authorsPerPage = 32;
-const String defaultLibraryAuthorInclude = 'rssfeed,numEpisodesIncomplete,share';
+const String defaultLibraryAuthorInclude =
+    'rssfeed,numEpisodesIncomplete,share';
 const String defaultAuthorDetailsInclude = 'items,series';
 
 @immutable
@@ -107,12 +108,18 @@ class LibraryAuthorsNotifier extends _$LibraryAuthorsNotifier {
     }
 
     final fetchedAuthors = data.results
-        .where((author) => author.id.trim().isNotEmpty && author.name.trim().isNotEmpty)
+        .where(
+          (author) =>
+              author.id.trim().isNotEmpty && author.name.trim().isNotEmpty,
+        )
         .toList(growable: false);
     final totalResults = data.total;
     final newItems = page == 0
         ? fetchedAuthors
-        : <LibraryAuthor>[...(currentVal?.items ?? const <LibraryAuthor>[]), ...fetchedAuthors];
+        : <LibraryAuthor>[
+            ...(currentVal?.items ?? const <LibraryAuthor>[]),
+            ...fetchedAuthors,
+          ];
 
     return LibraryAuthorsState(
       items: newItems,
@@ -164,7 +171,10 @@ class LibraryAuthorsNotifier extends _$LibraryAuthorsNotifier {
     int initialDesc = defaultAuthorSortDesc,
     String? initialInclude = defaultLibraryAuthorInclude,
   }) async {
-    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (previous, next) {
+    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (
+      previous,
+      next,
+    ) {
       if (next == null) {
         return;
       }
@@ -180,18 +190,22 @@ class LibraryAuthorsNotifier extends _$LibraryAuthorsNotifier {
       if (!affectsList) return;
 
       final pagesToRefresh = <int>{};
-      final prevAuthors = next.previousItem?.media?.bookMedia?.metadata.authors ?? [];
+      final prevAuthors =
+          next.previousItem?.media?.bookMedia?.metadata.authors ?? [];
       final newAuthors = next.item?.media?.bookMedia?.metadata.authors ?? [];
-      final prevPodAuthor = next.previousItem?.media?.podcastMedia?.metadata.author;
+      final prevPodAuthor =
+          next.previousItem?.media?.podcastMedia?.metadata.author;
       final newPodAuthor = next.item?.media?.podcastMedia?.metadata.author;
 
       for (int i = 0; i < currentState.items.length; i++) {
         final author = currentState.items[i];
 
         final wasInAuthor =
-            prevAuthors.any((a) => a.id == author.id) || (prevPodAuthor != null && prevPodAuthor == author.name);
+            prevAuthors.any((a) => a.id == author.id) ||
+            (prevPodAuthor != null && prevPodAuthor == author.name);
         final isInAuthor =
-            newAuthors.any((a) => a.id == author.id) || (newPodAuthor != null && newPodAuthor == author.name);
+            newAuthors.any((a) => a.id == author.id) ||
+            (newPodAuthor != null && newPodAuthor == author.name);
 
         if (wasInAuthor || isInAuthor) {
           pagesToRefresh.add(i ~/ _authorsPerPage);
@@ -202,12 +216,18 @@ class LibraryAuthorsNotifier extends _$LibraryAuthorsNotifier {
         for (final page in pagesToRefresh) {
           _refetchSpecificPage(page);
         }
-      } else if (next.type == LibraryItemMutationType.added || next.type == LibraryItemMutationType.updated) {
+      } else if (next.type == LibraryItemMutationType.added ||
+          next.type == LibraryItemMutationType.updated) {
         _refetchSpecificPage(0);
       }
     });
 
-    return _fetchAuthors(0, sort: initialSort, desc: initialDesc, include: initialInclude);
+    return _fetchAuthors(
+      0,
+      sort: initialSort,
+      desc: initialDesc,
+      include: initialInclude,
+    );
   }
 
   Future<void> _refetchSpecificPage(int page) async {
@@ -240,19 +260,26 @@ class LibraryAuthorsNotifier extends _$LibraryAuthorsNotifier {
       final startIndex = page * _authorsPerPage;
 
       if (startIndex < newItems.length) {
-        final endIndex = (startIndex + _authorsPerPage).clamp(0, newItems.length);
+        final endIndex = (startIndex + _authorsPerPage).clamp(
+          0,
+          newItems.length,
+        );
         newItems.replaceRange(startIndex, endIndex, fetchedItems);
       } else if (startIndex == newItems.length) {
         newItems.addAll(fetchedItems);
       }
 
-      state = AsyncData(currentState.copyWith(items: newItems, totalItems: data.total));
+      state = AsyncData(
+        currentState.copyWith(items: newItems, totalItems: data.total),
+      );
     } catch (_) {}
   }
 
   Future<void> fetchNextPage() async {
     final currentState = state.value;
-    if (currentState == null || !currentState.hasNextPage || currentState.isLoadingNextPage) {
+    if (currentState == null ||
+        !currentState.hasNextPage ||
+        currentState.isLoadingNextPage) {
       return;
     }
 
@@ -267,11 +294,20 @@ class LibraryAuthorsNotifier extends _$LibraryAuthorsNotifier {
       );
       state = AsyncData(nextPage);
     } catch (e, s) {
-      state = AsyncData(currentState.copyWith(isLoadingNextPage: false, error: e, stackTrace: s));
+      state = AsyncData(
+        currentState.copyWith(
+          isLoadingNextPage: false,
+          error: e,
+          stackTrace: s,
+        ),
+      );
     }
   }
 
-  Future<void> refresh({bool withLoading = true, bool forceServer = false}) async {
+  Future<void> refresh({
+    bool withLoading = true,
+    bool forceServer = false,
+  }) async {
     await _refetch(withLoading: withLoading, forceServer: forceServer);
   }
 
@@ -309,7 +345,10 @@ class LibraryAuthorDetails extends _$LibraryAuthorDetails {
   Future<AuthorDetails> build(String authorId) async {
     final absApi = ref.watch(absApiProvider);
 
-    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (previous, next) {
+    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (
+      previous,
+      next,
+    ) {
       if (next != null && mutationAffectsAuthor(next, authorId)) {
         ref.invalidateSelf();
       }
@@ -319,10 +358,15 @@ class LibraryAuthorDetails extends _$LibraryAuthorDetails {
       throw Exception('User not authenticated or API not available.');
     }
 
-    final response = await absApi.getLibraryApi().getAuthorById(authorId, include: defaultAuthorDetailsInclude);
+    final response = await absApi.getLibraryApi().getAuthorById(
+      authorId,
+      include: defaultAuthorDetailsInclude,
+    );
     final data = response.data;
     if (data == null) {
-      throw Exception('No author details received from API for author $authorId.');
+      throw Exception(
+        'No author details received from API for author $authorId.',
+      );
     }
 
     return data;

@@ -35,8 +35,12 @@ abstract class LibraryItemState with _$LibraryItemState {
   }) = _LibraryItemState;
 }
 
-const defaultLibraryItemsRequest = LibraryItemsRequest(limit: _itemsPerPage, page: 0);
-final Map<String, LibraryItem> _liveLibraryItemSnapshotById = <String, LibraryItem>{};
+const defaultLibraryItemsRequest = LibraryItemsRequest(
+  limit: _itemsPerPage,
+  page: 0,
+);
+final Map<String, LibraryItem> _liveLibraryItemSnapshotById =
+    <String, LibraryItem>{};
 final Set<String> _removedLibraryItemIds = <String>{};
 
 LibraryItem? getLiveLibraryItemSnapshot(String itemId) {
@@ -63,20 +67,26 @@ class LibraryItemsNotifier extends _$LibraryItemsNotifier {
     }
 
     final currentVal = state.asData?.value;
-    final resolvedSort = sort ?? currentVal?.sort ?? defaultLibrarySortWireValue;
+    final resolvedSort =
+        sort ?? currentVal?.sort ?? defaultLibrarySortWireValue;
     final resolvedDesc = desc ?? currentVal?.desc ?? defaultLibrarySortDesc;
     final request = LibraryItemsRequest(
       limit: _itemsPerPage,
       page: page,
       sort: resolvedSort,
       desc: resolvedDesc,
-      filter: normalizeLibraryFilterQuery(useCurrentFilterFallback ? (filter ?? currentVal?.filter) : filter),
+      filter: normalizeLibraryFilterQuery(
+        useCurrentFilterFallback ? (filter ?? currentVal?.filter) : filter,
+      ),
       collapseseries: collapseseries ?? currentVal?.collapseseries,
       include: include ?? currentVal?.include,
     );
 
     try {
-      final response = await absApi.getLibraryApi().getLibraryItems(libraryId, request);
+      final response = await absApi.getLibraryApi().getLibraryItems(
+        libraryId,
+        request,
+      );
       final data = response.data;
       if (data == null) {
         throw Exception('No data received from API');
@@ -85,7 +95,10 @@ class LibraryItemsNotifier extends _$LibraryItemsNotifier {
       final totalResults = data.total ?? 0;
       final List<LibraryItem> newItems = page == 0
           ? List<LibraryItem>.from(data.results)
-          : <LibraryItem>[...(currentVal?.items ?? <LibraryItem>[]), ...data.results];
+          : <LibraryItem>[
+              ...(currentVal?.items ?? <LibraryItem>[]),
+              ...data.results,
+            ];
 
       return LibraryItemState(
         items: newItems,
@@ -114,7 +127,10 @@ class LibraryItemsNotifier extends _$LibraryItemsNotifier {
     int? initialCollapseSeries,
     String? initialInclude,
   }) async {
-    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (previous, next) {
+    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (
+      previous,
+      next,
+    ) {
       if (next == null) {
         return;
       }
@@ -156,7 +172,13 @@ class LibraryItemsNotifier extends _$LibraryItemsNotifier {
       );
       state = AsyncData(nextPageData);
     } catch (e, s) {
-      state = AsyncData(currentState.copyWith(isLoadingNextPage: false, error: e, stackTrace: s));
+      state = AsyncData(
+        currentState.copyWith(
+          isLoadingNextPage: false,
+          error: e,
+          stackTrace: s,
+        ),
+      );
     }
   }
 
@@ -198,7 +220,9 @@ class LibraryItemsNotifier extends _$LibraryItemsNotifier {
         stateLibraryId.isNotEmpty &&
         mutationLibraryId != stateLibraryId;
 
-    final existingIndex = currentLoadedState.items.indexWhere((item) => item.id == mutation.itemId);
+    final existingIndex = currentLoadedState.items.indexWhere(
+      (item) => item.id == mutation.itemId,
+    );
     if (hasLibraryMismatch && existingIndex == -1) {
       return;
     }
@@ -287,20 +311,35 @@ class LibraryItemsNotifier extends _$LibraryItemsNotifier {
 
     final newFilter = clearFilter
         ? null
-        : (filter ?? (currentLoadedState != null ? currentLoadedState.filter : initialFilter));
+        : (filter ??
+              (currentLoadedState != null
+                  ? currentLoadedState.filter
+                  : initialFilter));
     var newSort =
-        sort ?? (currentLoadedState != null ? currentLoadedState.sort : initialSort) ?? defaultLibrarySortWireValue;
+        sort ??
+        (currentLoadedState != null ? currentLoadedState.sort : initialSort) ??
+        defaultLibrarySortWireValue;
     var newDesc =
-        desc ?? (currentLoadedState != null ? currentLoadedState.desc : initialDesc) ?? defaultLibrarySortDesc;
+        desc ??
+        (currentLoadedState != null ? currentLoadedState.desc : initialDesc) ??
+        defaultLibrarySortDesc;
 
-    if (newSort == LibrarySortValue.sequence.wireValue && !_isSeriesFilterQuery(newFilter)) {
+    if (newSort == LibrarySortValue.sequence.wireValue &&
+        !_isSeriesFilterQuery(newFilter)) {
       newSort = defaultLibrarySortWireValue;
       newDesc = defaultLibrarySortDesc;
     }
 
     final newCollapseSeries =
-        collapseseries ?? (currentLoadedState != null ? currentLoadedState.collapseseries : initialCollapseSeries);
-    final newInclude = include ?? (currentLoadedState != null ? currentLoadedState.include : initialInclude);
+        collapseseries ??
+        (currentLoadedState != null
+            ? currentLoadedState.collapseseries
+            : initialCollapseSeries);
+    final newInclude =
+        include ??
+        (currentLoadedState != null
+            ? currentLoadedState.include
+            : initialInclude);
 
     if (currentLoadedState == null) {
       state = const AsyncValue.loading();
@@ -351,13 +390,20 @@ class LibraryItemsNotifier extends _$LibraryItemsNotifier {
     final currentLoadedState = state.asData?.value;
     final targetLibraryId = currentLoadedState?.libraryId ?? libraryId;
     final refreshSort =
-        (currentLoadedState != null ? currentLoadedState.sort : initialSort) ?? defaultLibrarySortWireValue;
-    final refreshDesc = (currentLoadedState != null ? currentLoadedState.desc : initialDesc) ?? defaultLibrarySortDesc;
-    final refreshFilter = currentLoadedState != null ? currentLoadedState.filter : initialFilter;
+        (currentLoadedState != null ? currentLoadedState.sort : initialSort) ??
+        defaultLibrarySortWireValue;
+    final refreshDesc =
+        (currentLoadedState != null ? currentLoadedState.desc : initialDesc) ??
+        defaultLibrarySortDesc;
+    final refreshFilter = currentLoadedState != null
+        ? currentLoadedState.filter
+        : initialFilter;
     final refreshCollapseSeries = currentLoadedState != null
         ? currentLoadedState.collapseseries
         : initialCollapseSeries;
-    final refreshInclude = currentLoadedState != null ? currentLoadedState.include : initialInclude;
+    final refreshInclude = currentLoadedState != null
+        ? currentLoadedState.include
+        : initialInclude;
 
     if (currentLoadedState == null) {
       state = const AsyncValue.loading();
@@ -391,11 +437,18 @@ bool _isSeriesFilterQuery(String? filter) {
 }
 
 @riverpod
-Future<LibraryItem> libraryItem(Ref ref, String itemId, {String? episodeId}) async {
+Future<LibraryItem> libraryItem(
+  Ref ref,
+  String itemId, {
+  String? episodeId,
+}) async {
   final absApi = ref.watch(absApiProvider);
   final db = ref.read(appDatabaseProvider);
 
-  ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (previous, next) {
+  ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (
+    previous,
+    next,
+  ) {
     if (next == null) {
       return;
     }
@@ -435,22 +488,35 @@ Future<LibraryItem> libraryItem(Ref ref, String itemId, {String? episodeId}) asy
     throw Exception('User not authenticated or API not available.');
   }
 
-  final download = await db.getStoredDownload(itemId, absApi.user!.id, episodeId: episodeId);
+  final download = await db.getStoredDownload(
+    itemId,
+    absApi.user!.id,
+    episodeId: episodeId,
+  );
   if (download != null && download.item != null) {
     final resolvedCoverPath = await resolveDisplayCoverPath(
       download.coverPath,
       cacheKey: '${absApi.user!.id}:$itemId:${episodeId ?? 'item'}',
     );
 
-    logger('Returning local download for item $itemId', tag: 'libraryItemProvider', level: InfoLevel.debug);
-    final localItem = _withLocalCoverPath(download.item!, resolvedCoverPath ?? download.coverPath);
+    logger(
+      'Returning local download for item $itemId',
+      tag: 'libraryItemProvider',
+      level: InfoLevel.debug,
+    );
+    final localItem = _withLocalCoverPath(
+      download.item!,
+      resolvedCoverPath ?? download.coverPath,
+    );
     _liveLibraryItemSnapshotById[itemId] = localItem;
     _removedLibraryItemIds.remove(itemId);
     return localItem;
   }
 
   try {
-    final response = await absApi.getLibraryItemApi().getLibraryItem(itemId: itemId);
+    final response = await absApi.getLibraryItemApi().getLibraryItem(
+      itemId: itemId,
+    );
     final data = response.data;
     if (data == null) {
       throw Exception('No data received from API for item $itemId');
@@ -482,7 +548,9 @@ LibraryItem _withLocalCoverPath(LibraryItem item, String? coverPathOverride) {
     }
 
     return item.copyWith(
-      media: media.copyWith(bookMedia: bookMedia.copyWith(coverPath: normalizedCoverPath)),
+      media: media.copyWith(
+        bookMedia: bookMedia.copyWith(coverPath: normalizedCoverPath),
+      ),
     );
   }
 
@@ -493,7 +561,9 @@ LibraryItem _withLocalCoverPath(LibraryItem item, String? coverPathOverride) {
     }
 
     return item.copyWith(
-      media: media.copyWith(podcastMedia: podcastMedia.copyWith(coverPath: normalizedCoverPath)),
+      media: media.copyWith(
+        podcastMedia: podcastMedia.copyWith(coverPath: normalizedCoverPath),
+      ),
     );
   }
 
@@ -515,6 +585,8 @@ Stream<Set<String>> completedDownloadItemIds(Ref ref) {
 bool completedDownloadForItem(Ref ref, String itemId, {String? episodeId}) {
   final completedId = episodeId ?? itemId;
   return ref.watch(
-    completedDownloadItemIdsProvider.select((asyncIds) => asyncIds.asData?.value.contains(completedId) ?? false),
+    completedDownloadItemIdsProvider.select(
+      (asyncIds) => asyncIds.asData?.value.contains(completedId) ?? false,
+    ),
   );
 }

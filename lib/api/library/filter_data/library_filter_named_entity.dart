@@ -10,5 +10,6 @@ abstract class LibraryFilterNamedEntity with _$LibraryFilterNamedEntity {
     @JsonKey(name: 'name') required String name,
   }) = _LibraryFilterNamedEntity;
 
-  factory LibraryFilterNamedEntity.fromJson(Map<String, dynamic> json) => _$LibraryFilterNamedEntityFromJson(json);
+  factory LibraryFilterNamedEntity.fromJson(Map<String, dynamic> json) =>
+      _$LibraryFilterNamedEntityFromJson(json);
 }

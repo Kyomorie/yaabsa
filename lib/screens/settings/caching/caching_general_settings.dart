@@ -13,9 +13,16 @@ class CachingGeneralSettings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cachingSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.caching)).asData?.value;
-    final cachingDefault = defaultSettings[SettingKeys.caching] as bool? ?? true;
-    final isCachingEnabled = SettingsParser.decodeValue<bool>(cachingSetting, cachingDefault);
+    final cachingSetting = ref
+        .watch(globalSettingByKeyProvider(SettingKeys.caching))
+        .asData
+        ?.value;
+    final cachingDefault =
+        defaultSettings[SettingKeys.caching] as bool? ?? true;
+    final isCachingEnabled = SettingsParser.decodeValue<bool>(
+      cachingSetting,
+      cachingDefault,
+    );
 
     return SettingsPageScaffold(
       title: 'Caching - General',
@@ -27,10 +34,14 @@ class CachingGeneralSettings extends ConsumerWidget {
           title: 'Caching Options',
           topPadding: 0,
           settings: [
-            const SettingSwitchTile(label: 'Enable caching', settingKey: SettingKeys.caching),
+            const SettingSwitchTile(
+              label: 'Enable caching',
+              settingKey: SettingKeys.caching,
+            ),
             SettingSwitchTile(
               label: 'Speedup mode',
-              subtitle: 'Combine caching with background refreshes to load faster',
+              subtitle:
+                  'Combine caching with background refreshes to load faster',
               disabledReason: 'Enable response caching to use speedup mode',
               settingKey: SettingKeys.boostLoading,
               enabled: isCachingEnabled,

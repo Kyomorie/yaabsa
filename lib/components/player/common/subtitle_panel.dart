@@ -12,7 +12,11 @@ import 'package:yaabsa/util/subtitles/subtitle_parser.dart';
 import 'package:yaabsa/util/subtitles/subtitle_segment_spans.dart';
 
 class SubtitlePanel extends ConsumerWidget {
-  const SubtitlePanel({super.key, this.compact = false, this.openContinuousModeOnTap = true});
+  const SubtitlePanel({
+    super.key,
+    this.compact = false,
+    this.openContinuousModeOnTap = true,
+  });
 
   final bool compact;
   final bool openContinuousModeOnTap;
@@ -28,7 +32,8 @@ class SubtitlePanel extends ConsumerWidget {
     final subtitlesEnabled = settingsManager.getUserSetting<bool>(
       userId,
       SettingKeys.subtitlesEnabled,
-      defaultValue: defaultSettings[SettingKeys.subtitlesEnabled] as bool? ?? false,
+      defaultValue:
+          defaultSettings[SettingKeys.subtitlesEnabled] as bool? ?? false,
     );
     if (!subtitlesEnabled) {
       return const SizedBox.shrink();
@@ -37,12 +42,15 @@ class SubtitlePanel extends ConsumerWidget {
     final speakerHighlightingEnabled = settingsManager.getUserSetting<bool>(
       userId,
       SettingKeys.subtitleSpeakerHighlighting,
-      defaultValue: defaultSettings[SettingKeys.subtitleSpeakerHighlighting] as bool? ?? true,
+      defaultValue:
+          defaultSettings[SettingKeys.subtitleSpeakerHighlighting] as bool? ??
+          true,
     );
     final readAlongEnabled = settingsManager.getUserSetting<bool>(
       userId,
       SettingKeys.subtitleReadAlong,
-      defaultValue: defaultSettings[SettingKeys.subtitleReadAlong] as bool? ?? true,
+      defaultValue:
+          defaultSettings[SettingKeys.subtitleReadAlong] as bool? ?? true,
     );
 
     return StreamBuilder(
@@ -70,7 +78,9 @@ class SubtitlePanel extends ConsumerWidget {
             }
 
             final document = loaded.document;
-            final canHighlightSpeaker = speakerHighlightingEnabled && document.supportsSpeakerHighlighting;
+            final canHighlightSpeaker =
+                speakerHighlightingEnabled &&
+                document.supportsSpeakerHighlighting;
             final canReadAlong = readAlongEnabled && document.supportsReadAlong;
 
             return StreamBuilder<PlayerState>(
@@ -78,7 +88,10 @@ class SubtitlePanel extends ConsumerWidget {
               initialData: audioHandler.playerControlState,
               builder: (context, stateSnapshot) {
                 final state = stateSnapshot.data;
-                final isPlaying = state != null && state.playing && state.processingState == ProcessingState.ready;
+                final isPlaying =
+                    state != null &&
+                    state.playing &&
+                    state.processingState == ProcessingState.ready;
                 if (!isPlaying) {
                   final emptyPanel = _SubtitleContainer(
                     compact: compact,
@@ -102,8 +115,12 @@ class SubtitlePanel extends ConsumerWidget {
                     }
 
                     final cue = document.cues[cueIndex];
-                    final accentColor = canHighlightSpeaker && cue.speaker?.isNotEmpty == true
-                        ? _speakerColorFor(cue.speaker!, Theme.of(context).colorScheme)
+                    final accentColor =
+                        canHighlightSpeaker && cue.speaker?.isNotEmpty == true
+                        ? _speakerColorFor(
+                            cue.speaker!,
+                            Theme.of(context).colorScheme,
+                          )
                         : null;
 
                     final panelChild = _SubtitleContainer(
@@ -159,8 +176,15 @@ class SubtitlePanel extends ConsumerWidget {
 
   Color _speakerColorFor(String speaker, ColorScheme colorScheme) {
     final normalized = speaker.trim().toLowerCase();
-    final hash = normalized.codeUnits.fold<int>(0, (value, unit) => (value * 31 + unit) & 0x7fffffff);
-    final colors = <Color>[colorScheme.primary, colorScheme.secondary, colorScheme.tertiary];
+    final hash = normalized.codeUnits.fold<int>(
+      0,
+      (value, unit) => (value * 31 + unit) & 0x7fffffff,
+    );
+    final colors = <Color>[
+      colorScheme.primary,
+      colorScheme.secondary,
+      colorScheme.tertiary,
+    ];
     return colors[hash % colors.length];
   }
 }
@@ -185,7 +209,10 @@ class _SubtitleContainer extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.65)),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant
+                .withValues(alpha: 0.65),
+          ),
         ),
         child: child,
       ),
@@ -214,9 +241,13 @@ class _SubtitleCueView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cue = document.cues[cueIndex];
     final colorScheme = Theme.of(context).colorScheme;
-    final currentCueStyle = (compact ? Theme.of(context).textTheme.bodyMedium : Theme.of(context).textTheme.bodyLarge)
-        ?.copyWith(height: 1.35);
-    final baseStyle = currentCueStyle ?? const TextStyle(fontSize: 16, height: 1.35);
+    final currentCueStyle =
+        (compact
+                ? Theme.of(context).textTheme.bodyMedium
+                : Theme.of(context).textTheme.bodyLarge)
+            ?.copyWith(height: 1.35);
+    final baseStyle =
+        currentCueStyle ?? const TextStyle(fontSize: 16, height: 1.35);
     final activeStyle = baseStyle.copyWith(
       color: colorScheme.primary,
       backgroundColor: colorScheme.primary.withValues(alpha: 0.18),
@@ -226,7 +257,8 @@ class _SubtitleCueView extends StatelessWidget {
     if (readAlongEnabled && cue.segments.isNotEmpty) {
       final spans = <TextSpan>[];
       for (final segment in cue.segments) {
-        final isActive = currentPosition >= segment.start && currentPosition < segment.end;
+        final isActive =
+            currentPosition >= segment.start && currentPosition < segment.end;
         spans.addAll(
           buildSubtitleSegmentSpans(
             text: segment.text,
@@ -245,7 +277,10 @@ class _SubtitleCueView extends StatelessWidget {
       content = Text(cue.text, textAlign: TextAlign.center, style: baseStyle);
     }
 
-    final cueWindow = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [content]);
+    final cueWindow = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [content],
+    );
 
     return SingleChildScrollView(child: cueWindow);
   }

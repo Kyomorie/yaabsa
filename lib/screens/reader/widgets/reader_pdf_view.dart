@@ -32,7 +32,11 @@ class ReaderPdfView extends StatefulWidget {
   final int initialPage;
   final ValueChanged<int> onPageFocused;
   final ValueChanged<PdfTextSelection> onTextSelectionChange;
-  final void Function(PdfViewerContextMenuBuilderParams, List<ContextMenuButtonItem>) customizeContextMenuItems;
+  final void Function(
+    PdfViewerContextMenuBuilderParams,
+    List<ContextMenuButtonItem>,
+  )
+  customizeContextMenuItems;
   final PdfPageOverlaysBuilder buildPageOverlays;
   final PdfViewerGeneralTapHandler onGeneralTap;
   final ValueChanged<PdfDocument> onDocumentReady;
@@ -47,13 +51,19 @@ class _ReaderPdfViewState extends State<ReaderPdfView> {
   int? _lastSnappedPage;
 
   Future<void> _snapToPage(int pageNumber) async {
-    if (_isSnappingPage || !widget.controller.isReady || _lastSnappedPage == pageNumber) {
+    if (_isSnappingPage ||
+        !widget.controller.isReady ||
+        _lastSnappedPage == pageNumber) {
       return;
     }
 
     _isSnappingPage = true;
     try {
-      await widget.controller.goToPage(pageNumber: pageNumber, anchor: PdfPageAnchor.all, duration: Duration.zero);
+      await widget.controller.goToPage(
+        pageNumber: pageNumber,
+        anchor: PdfPageAnchor.all,
+        duration: Duration.zero,
+      );
       _lastSnappedPage = pageNumber;
     } finally {
       _isSnappingPage = false;
@@ -70,7 +80,10 @@ class _ReaderPdfViewState extends State<ReaderPdfView> {
       return;
     }
 
-    await widget.controller.goToPage(pageNumber: currentPage - 1, anchor: PdfPageAnchor.all);
+    await widget.controller.goToPage(
+      pageNumber: currentPage - 1,
+      anchor: PdfPageAnchor.all,
+    );
   }
 
   Future<void> _goToNextPage() async {
@@ -84,7 +97,10 @@ class _ReaderPdfViewState extends State<ReaderPdfView> {
       return;
     }
 
-    await widget.controller.goToPage(pageNumber: currentPage + 1, anchor: PdfPageAnchor.all);
+    await widget.controller.goToPage(
+      pageNumber: currentPage + 1,
+      anchor: PdfPageAnchor.all,
+    );
   }
 
   @override
@@ -99,7 +115,8 @@ class _ReaderPdfViewState extends State<ReaderPdfView> {
       pageAnchorEnd: PdfPageAnchor.all,
       // TODO: Check the use of smart
       sizeDelegateProvider: PdfViewerSizeDelegateProviderLegacy(
-        calculateInitialZoom: (document, controller, fitZoom, coverZoom) => fitZoom,
+        calculateInitialZoom: (document, controller, fitZoom, coverZoom) =>
+            fitZoom,
       ),
       scrollByMouseWheel: 0.0,
       onViewerReady: (document, controller) async {
@@ -127,7 +144,10 @@ class _ReaderPdfViewState extends State<ReaderPdfView> {
         widget.onPageFocused(pageNumber);
         unawaited(_snapToPage(pageNumber));
       },
-      textSelectionParams: PdfTextSelectionParams(enabled: true, onTextSelectionChange: widget.onTextSelectionChange),
+      textSelectionParams: PdfTextSelectionParams(
+        enabled: true,
+        onTextSelectionChange: widget.onTextSelectionChange,
+      ),
       customizeContextMenuItems: widget.customizeContextMenuItems,
       pageOverlaysBuilder: widget.buildPageOverlays,
       onGeneralTap: widget.onGeneralTap,
@@ -145,7 +165,10 @@ class _ReaderPdfViewState extends State<ReaderPdfView> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(value: value, color: Theme.of(context).colorScheme.primary),
+              CircularProgressIndicator(
+                value: value,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 16),
               Text(text, style: Theme.of(context).textTheme.titleMedium),
             ],
@@ -177,7 +200,11 @@ class _ReaderPdfViewState extends State<ReaderPdfView> {
       onPreviousPage: _goToPreviousPage,
       onNextPage: _goToNextPage,
       canGoPrevious: isViewerReady && (currentPage ?? 1) > 1,
-      canGoNext: isViewerReady && pageCount > 0 && currentPage != null && currentPage < pageCount,
+      canGoNext:
+          isViewerReady &&
+          pageCount > 0 &&
+          currentPage != null &&
+          currentPage < pageCount,
       interceptPointerScrollForPaging: true,
     );
   }

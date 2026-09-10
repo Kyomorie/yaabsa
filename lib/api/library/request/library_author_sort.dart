@@ -1,7 +1,13 @@
 const String defaultAuthorSortWireValue = 'name';
 const int defaultAuthorSortDesc = 0;
 
-enum LibraryAuthorSortValue { authorFirstLast, authorLastFirst, numBooks, addedAt, updatedAt }
+enum LibraryAuthorSortValue {
+  authorFirstLast,
+  authorLastFirst,
+  numBooks,
+  addedAt,
+  updatedAt,
+}
 
 extension LibraryAuthorSortValueX on LibraryAuthorSortValue {
   String get wireValue => switch (this) {
@@ -21,7 +27,8 @@ extension LibraryAuthorSortValueX on LibraryAuthorSortValue {
   };
 
   bool get defaultsToAscending => switch (this) {
-    LibraryAuthorSortValue.authorFirstLast || LibraryAuthorSortValue.authorLastFirst => true,
+    LibraryAuthorSortValue.authorFirstLast ||
+    LibraryAuthorSortValue.authorLastFirst => true,
     _ => false,
   };
 
@@ -44,21 +51,34 @@ class LibraryAuthorSortSelection {
   bool get isDescending => desc == 1;
 }
 
-const List<LibraryAuthorSortValue> libraryAuthorSortOptions = <LibraryAuthorSortValue>[
-  LibraryAuthorSortValue.authorFirstLast,
-  LibraryAuthorSortValue.authorLastFirst,
-  LibraryAuthorSortValue.numBooks,
-  LibraryAuthorSortValue.addedAt,
-  LibraryAuthorSortValue.updatedAt,
-];
+const List<LibraryAuthorSortValue> libraryAuthorSortOptions =
+    <LibraryAuthorSortValue>[
+      LibraryAuthorSortValue.authorFirstLast,
+      LibraryAuthorSortValue.authorLastFirst,
+      LibraryAuthorSortValue.numBooks,
+      LibraryAuthorSortValue.addedAt,
+      LibraryAuthorSortValue.updatedAt,
+    ];
 
-LibraryAuthorSortSelection resolveLibraryAuthorSortSelection({required String? activeSort, required int? activeDesc}) {
+LibraryAuthorSortSelection resolveLibraryAuthorSortSelection({
+  required String? activeSort,
+  required int? activeDesc,
+}) {
   final selectedSort = _resolveSortValue(activeSort);
-  return LibraryAuthorSortSelection(sort: selectedSort.wireValue, desc: _resolveSortDesc(activeDesc, selectedSort));
+  return LibraryAuthorSortSelection(
+    sort: selectedSort.wireValue,
+    desc: _resolveSortDesc(activeDesc, selectedSort),
+  );
 }
 
-String buildLibraryAuthorSortLabel({required String? activeSort, required int? activeDesc}) {
-  final selection = resolveLibraryAuthorSortSelection(activeSort: activeSort, activeDesc: activeDesc);
+String buildLibraryAuthorSortLabel({
+  required String? activeSort,
+  required int? activeDesc,
+}) {
+  final selection = resolveLibraryAuthorSortSelection(
+    activeSort: activeSort,
+    activeDesc: activeDesc,
+  );
   final sortValue = LibraryAuthorSortValueX.tryParse(selection.sort);
   if (sortValue == null) {
     return selection.sort;
@@ -76,7 +96,9 @@ LibraryAuthorSortValue _resolveSortValue(String? rawSort) {
     }
   }
 
-  final defaultSort = LibraryAuthorSortValueX.tryParse(defaultAuthorSortWireValue);
+  final defaultSort = LibraryAuthorSortValueX.tryParse(
+    defaultAuthorSortWireValue,
+  );
   if (defaultSort != null) {
     return defaultSort;
   }

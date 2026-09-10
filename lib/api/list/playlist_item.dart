@@ -14,5 +14,6 @@ abstract class PlaylistItem with _$PlaylistItem {
     @JsonKey(name: "libraryItem") LibraryItem? libraryItem,
   }) = _PlaylistItem;
 
-  factory PlaylistItem.fromJson(Map<String, dynamic> json) => _$PlaylistItemFromJson(json);
+  factory PlaylistItem.fromJson(Map<String, dynamic> json) =>
+      _$PlaylistItemFromJson(json);
 }

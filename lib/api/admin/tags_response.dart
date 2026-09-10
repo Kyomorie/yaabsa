@@ -18,8 +18,11 @@ List<String> _stringListFromJson(dynamic value) {
 @freezed
 abstract class TagsResponse with _$TagsResponse {
   const factory TagsResponse({
-    @JsonKey(name: 'tags', fromJson: _stringListFromJson) @Default(<String>[]) List<String> tags,
+    @JsonKey(name: 'tags', fromJson: _stringListFromJson)
+    @Default(<String>[])
+    List<String> tags,
   }) = _TagsResponse;
 
-  factory TagsResponse.fromJson(Map<String, dynamic> json) => _$TagsResponseFromJson(json);
+  factory TagsResponse.fromJson(Map<String, dynamic> json) =>
+      _$TagsResponseFromJson(json);
 }

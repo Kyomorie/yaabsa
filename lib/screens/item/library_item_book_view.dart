@@ -32,7 +32,11 @@ import 'package:yaabsa/util/item_view_navigation.dart';
 import 'package:yaabsa/util/server_management_preferences.dart';
 
 class LibraryItemBookView extends ConsumerWidget {
-  const LibraryItemBookView({super.key, required this.item, required this.canDownload});
+  const LibraryItemBookView({
+    super.key,
+    required this.item,
+    required this.canDownload,
+  });
 
   final LibraryItem item;
   final bool canDownload;
@@ -46,11 +50,16 @@ class LibraryItemBookView extends ConsumerWidget {
 
     final libraryItemApi = api.getLibraryItemApi();
     final coverHeaders = normalizeImageRequestHeaders(api.dio.options.headers);
-    Widget coverWidget = libraryItemApi.getLibraryItemCover(item.id, item: item);
+    Widget coverWidget = libraryItemApi.getLibraryItemCover(
+      item.id,
+      item: item,
+    );
 
     final progressByKey = ref.watch(mediaProgressProvider).asData?.value;
     final itemProgress = progressByKey?[item.id];
-    final progressValue = (itemProgress?.progress ?? 0).clamp(0.0, 1.0).toDouble();
+    final progressValue = (itemProgress?.progress ?? 0)
+        .clamp(0.0, 1.0)
+        .toDouble();
     if (progressValue > 0) {
       coverWidget = Stack(
         fit: StackFit.expand,
@@ -60,7 +69,11 @@ class LibraryItemBookView extends ConsumerWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: LinearProgressIndicator(value: progressValue, minHeight: 6, backgroundColor: Colors.black45),
+            child: LinearProgressIndicator(
+              value: progressValue,
+              minHeight: 6,
+              backgroundColor: Colors.black45,
+            ),
           ),
         ],
       );
@@ -73,7 +86,11 @@ class LibraryItemBookView extends ConsumerWidget {
               onTap: () {
                 openCoverZoomView(
                   context,
-                  coverUri: libraryItemApi.getCoverUri(item.id, item: item, raw: true),
+                  coverUri: libraryItemApi.getCoverUri(
+                    item.id,
+                    item: item,
+                    raw: true,
+                  ),
                   requestHeaders: coverHeaders,
                   semanticsLabel: item.title,
                 );
@@ -92,7 +109,9 @@ class LibraryItemBookView extends ConsumerWidget {
     final ebookFile = bookMedia?.ebookFile;
 
     final durationSeconds = item.media?.duration() ?? 0;
-    final duration = durationSeconds > 0 ? Duration(seconds: durationSeconds.round()) : null;
+    final duration = durationSeconds > 0
+        ? Duration(seconds: durationSeconds.round())
+        : null;
     final sizeBytes = bookMedia?.size ?? item.size;
 
     final horizontalPadding = context.isMobile
@@ -113,24 +132,38 @@ class LibraryItemBookView extends ConsumerWidget {
       tags: bookMedia?.tags,
       duration: duration,
       sizeBytes: sizeBytes,
-      onFilterTap: (filter) => openLibraryWithFilter(context, ref, filter: filter),
+      onFilterTap: (filter) =>
+          openLibraryWithFilter(context, ref, filter: filter),
     );
-    final isItemFinished = progressByKey != null && isLibraryItemFinished(item, progressByKey);
+    final isItemFinished =
+        progressByKey != null && isLibraryItemFinished(item, progressByKey);
 
     final currentUser = ref.watch(currentUserProvider).value;
     ref.watch(userSettingsWatcherProvider);
-    final managementPreferences = readServerManagementPreferences(ref, currentUser?.id);
-    final canEditItems = (currentUser?.permissions.update ?? false) && managementPreferences.editItemsEnabled;
-    final canUseMatchTools = canEditItems && managementPreferences.allowMatchesQuickMatchesEnabled;
-    final filterData = item.libraryId == null ? null : ref.watch(libraryFilterDataProvider(item.libraryId!)).value;
+    final managementPreferences = readServerManagementPreferences(
+      ref,
+      currentUser?.id,
+    );
+    final canEditItems =
+        (currentUser?.permissions.update ?? false) &&
+        managementPreferences.editItemsEnabled;
+    final canUseMatchTools =
+        canEditItems && managementPreferences.allowMatchesQuickMatchesEnabled;
+    final filterData = item.libraryId == null
+        ? null
+        : ref.watch(libraryFilterDataProvider(item.libraryId!)).value;
     final canAddToPlaylist = canAddLibraryItemToPlaylist(item, currentUser?.id);
     final canAddToCollection = canAddLibraryItemToCollection(
       item,
-      canUpdate: (currentUser?.permissions.update ?? false) && managementPreferences.collectionsEnabled,
+      canUpdate:
+          (currentUser?.permissions.update ?? false) &&
+          managementPreferences.collectionsEnabled,
     );
     final canDeleteItem = canDeleteAudiobook(
       item: item,
-      hasDeletePermission: (currentUser?.permissions.delete ?? false) && managementPreferences.deleteItemsEnabled,
+      hasDeletePermission:
+          (currentUser?.permissions.delete ?? false) &&
+          managementPreferences.deleteItemsEnabled,
     );
     final appDatabase = ref.watch(appDatabaseProvider);
     final storedDownloadsStream = currentUser == null
@@ -142,13 +175,16 @@ class LibraryItemBookView extends ConsumerWidget {
       initialData: const <TaskRecord>[],
       builder: (context, taskSnapshot) {
         final activeTasks = taskSnapshot.data ?? const <TaskRecord>[];
-        final isDownloadInProgress = activeTasks.any((task) => downloadHandler.taskBelongsToItem(task, item.id));
+        final isDownloadInProgress = activeTasks.any(
+          (task) => downloadHandler.taskBelongsToItem(task, item.id),
+        );
 
         return StreamBuilder<List<InternalDownload>>(
           stream: storedDownloadsStream,
           initialData: const <InternalDownload>[],
           builder: (context, storedSnapshot) {
-            final storedDownloads = storedSnapshot.data ?? const <InternalDownload>[];
+            final storedDownloads =
+                storedSnapshot.data ?? const <InternalDownload>[];
             final storedDownload = _findBookDownload(storedDownloads, item.id);
             final isDownloaded = storedDownload?.isComplete ?? false;
 
@@ -156,25 +192,39 @@ class LibraryItemBookView extends ConsumerWidget {
               stream: audioHandler.queueSnapshotStream,
               initialData: audioHandler.queueSnapshot,
               builder: (context, queueSnapshot) {
-                final isQueued = queueSnapshot.data?.entries.any((entry) => entry.item.itemId == item.id) ?? false;
+                final isQueued =
+                    queueSnapshot.data?.entries.any(
+                      (entry) => entry.item.itemId == item.id,
+                    ) ??
+                    false;
                 return StreamBuilder<PlayerState>(
                   stream: audioHandler.playerControlStateStream,
                   initialData: audioHandler.playerControlState,
                   builder: (context, playerStateSnapshot) {
-                    final isCurrentItem = audioHandler.currentMediaItem?.itemId == item.id;
-                    final isPlayingCurrentItem = isCurrentItem && (playerStateSnapshot.data?.playing ?? false);
+                    final isCurrentItem =
+                        audioHandler.currentMediaItem?.itemId == item.id;
+                    final isPlayingCurrentItem =
+                        isCurrentItem &&
+                        (playerStateSnapshot.data?.playing ?? false);
 
                     return StreamBuilder<bool>(
                       stream: audioHandler.queueTransitionLoadingStream,
                       initialData: audioHandler.queueTransitionLoading,
                       builder: (context, queueTransitionSnapshot) {
                         final isQueueTransitionLoading =
-                            queueTransitionSnapshot.data ?? audioHandler.queueTransitionLoading;
+                            queueTransitionSnapshot.data ??
+                            audioHandler.queueTransitionLoading;
                         final isLoadingCurrentItem =
-                            isQueueTransitionLoading && audioHandler.isQueueTransitionForItem(item.id);
+                            isQueueTransitionLoading &&
+                            audioHandler.isQueueTransitionForItem(item.id);
 
                         return SingleChildScrollView(
-                          padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 16),
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalPadding,
+                            8,
+                            horizontalPadding,
+                            16,
+                          ),
                           child: Center(
                             child: ConstrainedBox(
                               constraints: BoxConstraints(maxWidth: maxWidth),
@@ -190,12 +240,15 @@ class LibraryItemBookView extends ConsumerWidget {
                                       hasAudio: hasAudio,
                                       hasBook: hasBook,
                                       canDownload: canDownload,
-                                      isDownloadInProgress: isDownloadInProgress,
+                                      isDownloadInProgress:
+                                          isDownloadInProgress,
                                       isDownloaded: isDownloaded,
                                       isQueued: isQueued,
                                       isCurrentItem: isCurrentItem,
-                                      isPlayingCurrentItem: isPlayingCurrentItem,
-                                      isLoadingCurrentItem: isLoadingCurrentItem,
+                                      isPlayingCurrentItem:
+                                          isPlayingCurrentItem,
+                                      isLoadingCurrentItem:
+                                          isLoadingCurrentItem,
                                       queueEnabled: !isCurrentItem,
                                       onPlay: () {
                                         if (isCurrentItem) {
@@ -210,7 +263,8 @@ class LibraryItemBookView extends ConsumerWidget {
                                       },
                                       onRead: () {
                                         if (!kIsWeb && Platform.isLinux) {
-                                          final bookMedia = item.media?.bookMedia;
+                                          final bookMedia =
+                                              item.media?.bookMedia;
                                           final candidates = <String?>[
                                             bookMedia?.ebookFile?.ebookFormat,
                                             bookMedia?.ebookFormat,
@@ -218,18 +272,25 @@ class LibraryItemBookView extends ConsumerWidget {
                                           ];
                                           bool isPdf = false;
                                           for (final candidate in candidates) {
-                                            final normalized = candidate?.trim().toLowerCase() ?? '';
+                                            final normalized =
+                                                candidate
+                                                    ?.trim()
+                                                    .toLowerCase() ??
+                                                '';
                                             if (normalized == 'pdf') {
                                               isPdf = true;
                                               break;
                                             }
                                           }
                                           if (!isPdf) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Only PDF reading is currently supported on Linux'),
-                                              ),
-                                            );
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Only PDF reading is currently supported on Linux',
+                                                    ),
+                                                  ),
+                                                );
                                             return;
                                           }
                                         }
@@ -237,59 +298,95 @@ class LibraryItemBookView extends ConsumerWidget {
                                       },
                                       onDownload: () async {
                                         try {
-                                          await triggerBookDownload(context, ref, item.id);
+                                          await triggerBookDownload(
+                                            context,
+                                            ref,
+                                            item.id,
+                                          );
                                           if (!context.mounted) {
                                             return;
                                           }
                                           ScaffoldMessenger.of(context)
-                                              .showSnackBar(const SnackBar(content: Text('Download added to queue.')));
+                                              .showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Download added to queue.',
+                                                  ),
+                                                ),
+                                              );
                                         } catch (e) {
                                           if (!context.mounted) {
                                             return;
                                           }
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(SnackBar(content: Text('Could not start download: $e')));
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Could not start download: $e',
+                                              ),
+                                            ),
+                                          );
                                         }
                                       },
                                       onDeleteDownload: () async {
-                                        if (currentUser == null || storedDownload == null) {
+                                        if (currentUser == null ||
+                                            storedDownload == null) {
                                           return;
                                         }
                                         try {
-                                          final result = await runWithLoadingSnackBar(
-                                            context: context,
-                                            message: 'Deleting downloaded files...',
-                                            action: () => downloadHandler.deleteDownloadedItem(
-                                              storedDownload,
-                                              userId: currentUser.id,
-                                            ),
-                                          );
+                                          final result =
+                                              await runWithLoadingSnackBar(
+                                                context: context,
+                                                message: 'Deleting downloaded files...',
+                                                action: () => downloadHandler
+                                                    .deleteDownloadedItem(
+                                                      storedDownload,
+                                                      userId: currentUser.id,
+                                                    ),
+                                              );
                                           if (!context.mounted) {
                                             return;
                                           }
-                                          final failedSuffix = result.failedFiles > 0
+                                          final failedSuffix =
+                                              result.failedFiles > 0
                                               ? ' ${result.failedFiles} file(s) could not be removed.'
                                               : '';
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
-                                              content: Text('Deleted ${result.deletedFiles} file(s).$failedSuffix'),
+                                              content: Text(
+                                                'Deleted ${result.deletedFiles} file(s).$failedSuffix',
+                                              ),
                                             ),
                                           );
                                         } catch (e) {
                                           if (!context.mounted) {
                                             return;
                                           }
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(SnackBar(content: Text('Could not delete download: $e')));
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Could not delete download: $e',
+                                              ),
+                                            ),
+                                          );
                                         }
                                       },
                                       onQueueToggle: () {
                                         if (isQueued) {
-                                          audioHandler.removeFromQueueByItemId(item.id);
+                                          audioHandler.removeFromQueueByItemId(
+                                            item.id,
+                                          );
                                           return;
                                         }
 
-                                        audioHandler.addLibraryItemToQueue(item);
+                                        audioHandler.addLibraryItemToQueue(
+                                          item,
+                                        );
                                       },
                                       showMarkAsUnfinished: isItemFinished,
                                       showEditItem: canEditItems,
@@ -308,21 +405,34 @@ class LibraryItemBookView extends ConsumerWidget {
                                             );
                                             return;
                                           case ItemMoreAction.quickMatch:
-                                            await quickMatchSingleItem(context: context, ref: ref, item: item);
+                                            await quickMatchSingleItem(
+                                              context: context,
+                                              ref: ref,
+                                              item: item,
+                                            );
                                             return;
                                           case ItemMoreAction.manualMatch:
                                             await openSingleLibraryItemEditorDialog(
                                               context: context,
                                               item: item,
                                               filterData: filterData,
-                                              initialTab: LibraryItemEditorTab.match,
+                                              initialTab:
+                                                  LibraryItemEditorTab.match,
                                             );
                                             return;
                                           case ItemMoreAction.markAsFinished:
-                                            await markLibraryItemAsFinished(context: context, ref: ref, item: item);
+                                            await markLibraryItemAsFinished(
+                                              context: context,
+                                              ref: ref,
+                                              item: item,
+                                            );
                                             return;
                                           case ItemMoreAction.markAsUnfinished:
-                                            await markLibraryItemAsUnfinished(context: context, ref: ref, item: item);
+                                            await markLibraryItemAsUnfinished(
+                                              context: context,
+                                              ref: ref,
+                                              item: item,
+                                            );
                                             return;
                                           case ItemMoreAction.addToPlaylist:
                                             await addLibraryItemToPlaylist(
@@ -337,7 +447,11 @@ class LibraryItemBookView extends ConsumerWidget {
                                               context: context,
                                               ref: ref,
                                               item: item,
-                                              canUpdate: currentUser?.permissions.update ?? false,
+                                              canUpdate:
+                                                  currentUser
+                                                      ?.permissions
+                                                      .update ??
+                                                  false,
                                             );
                                             return;
                                           case ItemMoreAction.deleteItem:
@@ -353,7 +467,10 @@ class LibraryItemBookView extends ConsumerWidget {
                                               return;
                                             }
                                             context.push(
-                                              PlayHistoryView.location(itemId: item.id, itemTitle: item.title),
+                                              PlayHistoryView.location(
+                                                itemId: item.id,
+                                                itemTitle: item.title,
+                                              ),
                                             );
                                             return;
                                           case ItemMoreAction.select:
@@ -373,7 +490,9 @@ class LibraryItemBookView extends ConsumerWidget {
                                     onChapterTap: (chapter) {
                                       audioHandler.playItemFromPosition(
                                         itemId: item.id,
-                                        position: Duration(seconds: chapter.start.round()),
+                                        position: Duration(
+                                          seconds: chapter.start.round(),
+                                        ),
                                       );
                                     },
                                   ),
@@ -401,7 +520,10 @@ class LibraryItemBookView extends ConsumerWidget {
     );
   }
 
-  InternalDownload? _findBookDownload(List<InternalDownload> downloads, String itemId) {
+  InternalDownload? _findBookDownload(
+    List<InternalDownload> downloads,
+    String itemId,
+  ) {
     for (final download in downloads) {
       final targetId = download.item?.id ?? download.episode?.libraryItemId;
       if (targetId == itemId && download.episode == null) {

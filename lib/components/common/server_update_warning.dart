@@ -5,22 +5,40 @@ import 'package:yaabsa/provider/core/server_update_provider.dart';
 import 'package:yaabsa/provider/core/user_providers.dart';
 import 'package:yaabsa/util/setting_key.dart';
 
-enum ServerUpdateWarningVariant { mobile, sidebarCollapsed, sidebarTablet, sidebarDesktop }
+enum ServerUpdateWarningVariant {
+  mobile,
+  sidebarCollapsed,
+  sidebarTablet,
+  sidebarDesktop,
+}
 
 class ServerUpdateWarning extends ConsumerWidget {
-  const ServerUpdateWarning({super.key, required this.variant, required this.latestVersion});
+  const ServerUpdateWarning({
+    super.key,
+    required this.variant,
+    required this.latestVersion,
+  });
 
   final ServerUpdateWarningVariant variant;
   final String latestVersion;
 
-  static void showUpdateDetailsDialog(BuildContext context, WidgetRef ref, String latestVersion) {
+  static void showUpdateDetailsDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String latestVersion,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Server Update Available'),
-        content: Text('A new update (version $latestVersion) is available for your Audiobookshelf server.'),
+        content: Text(
+          'A new update (version $latestVersion) is available for your Audiobookshelf server.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
           TextButton(
             onPressed: () {
               ref.read(serverUpdateStateProvider.notifier).dismiss();
@@ -40,14 +58,18 @@ class ServerUpdateWarning extends ConsumerWidget {
     if (currentUser == null) return const SizedBox.shrink();
 
     final currentVersion = currentUser.setting?.version;
-    if (currentVersion == null || currentVersion.trim().isEmpty) return const SizedBox.shrink();
+    if (currentVersion == null || currentVersion.trim().isEmpty)
+      return const SizedBox.shrink();
 
     final dismissedVersion =
         ref
             .watch(
               StreamProvider.autoDispose<String>(
                 (ref) => db
-                    .watchUserSetting(currentUser.id, SettingKeys.dismissedUpdateServerVersion)
+                    .watchUserSetting(
+                      currentUser.id,
+                      SettingKeys.dismissedUpdateServerVersion,
+                    )
                     .map((entry) => entry?.value ?? ''),
               ),
             )
@@ -69,12 +91,19 @@ class ServerUpdateWarning extends ConsumerWidget {
             color: colorScheme.errorContainer,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 2)),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
           child: Row(
             children: [
-              Icon(Icons.system_update_rounded, color: colorScheme.onErrorContainer),
+              Icon(
+                Icons.system_update_rounded,
+                color: colorScheme.onErrorContainer,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -83,20 +112,34 @@ class ServerUpdateWarning extends ConsumerWidget {
                   children: [
                     Text(
                       'Server Update Available',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colorScheme.onErrorContainer),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: colorScheme.onErrorContainer,
+                      ),
                     ),
                     Text(
                       'Version $latestVersion is ready',
-                      style: TextStyle(fontSize: 12, color: colorScheme.onErrorContainer.withValues(alpha: 0.85)),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onErrorContainer.withValues(
+                          alpha: 0.85,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
               TextButton(
-                onPressed: () => ref.read(serverUpdateStateProvider.notifier).dismiss(),
+                onPressed: () =>
+                    ref.read(serverUpdateStateProvider.notifier).dismiss(),
                 child: Text(
                   'Dismiss',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onErrorContainer),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onErrorContainer,
+                  ),
                 ),
               ),
             ],
@@ -122,7 +165,11 @@ class ServerUpdateWarning extends ConsumerWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        Icon(Icons.system_update_rounded, size: 16, color: colorScheme.error),
+                        Icon(
+                          Icons.system_update_rounded,
+                          size: 16,
+                          color: colorScheme.error,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -141,14 +188,18 @@ class ServerUpdateWarning extends ConsumerWidget {
                     icon: const Icon(Icons.close_rounded, size: 16),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    onPressed: () => ref.read(serverUpdateStateProvider.notifier).dismiss(),
+                    onPressed: () =>
+                        ref.read(serverUpdateStateProvider.notifier).dismiss(),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
               Text(
                 'Version $latestVersion is available.',
-                style: TextStyle(fontSize: 12, color: colorScheme.onErrorContainer),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: colorScheme.onErrorContainer,
+                ),
               ),
             ],
           ),
@@ -164,7 +215,11 @@ class ServerUpdateWarning extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(Icons.system_update_rounded, size: 22, color: colorScheme.error),
+                Icon(
+                  Icons.system_update_rounded,
+                  size: 22,
+                  color: colorScheme.error,
+                ),
                 const SizedBox(height: 2),
                 Text(
                   'Update $latestVersion',
@@ -185,7 +240,8 @@ class ServerUpdateWarning extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 4.0),
             child: IconButton(
               icon: Icon(Icons.system_update_rounded, color: colorScheme.error),
-              onPressed: () => showUpdateDetailsDialog(context, ref, latestVersion),
+              onPressed: () =>
+                  showUpdateDetailsDialog(context, ref, latestVersion),
             ),
           ),
         );

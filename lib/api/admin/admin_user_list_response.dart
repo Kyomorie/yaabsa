@@ -6,10 +6,12 @@ part 'admin_user_list_response.g.dart';
 
 @freezed
 abstract class AdminUserListResponse with _$AdminUserListResponse {
-  const factory AdminUserListResponse({@JsonKey(name: 'users') @Default(<AdminUser>[]) List<AdminUser> users}) =
-      _AdminUserListResponse;
+  const factory AdminUserListResponse({
+    @JsonKey(name: 'users') @Default(<AdminUser>[]) List<AdminUser> users,
+  }) = _AdminUserListResponse;
 
-  factory AdminUserListResponse.fromJson(Map<String, dynamic> json) => _$AdminUserListResponseFromJson(json);
+  factory AdminUserListResponse.fromJson(Map<String, dynamic> json) =>
+      _$AdminUserListResponseFromJson(json);
 
   factory AdminUserListResponse.fromResponse(Object? payload) {
     if (payload is List<Object?>) {

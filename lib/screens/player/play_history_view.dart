@@ -8,7 +8,12 @@ import 'package:yaabsa/screens/player/play_history_local_tab.dart';
 import 'package:yaabsa/util/globals.dart';
 
 class PlayHistoryView extends ConsumerWidget {
-  const PlayHistoryView({super.key, this.itemId, this.episodeId, this.itemTitle});
+  const PlayHistoryView({
+    super.key,
+    this.itemId,
+    this.episodeId,
+    this.itemTitle,
+  });
 
   static const routeName = '/play-history';
 
@@ -16,7 +21,11 @@ class PlayHistoryView extends ConsumerWidget {
   final String? episodeId;
   final String? itemTitle;
 
-  static String location({required String itemId, String? episodeId, String? itemTitle}) {
+  static String location({
+    required String itemId,
+    String? episodeId,
+    String? itemTitle,
+  }) {
     final query = <String, String>{'itemId': itemId};
     if (episodeId != null && episodeId.trim().isNotEmpty) {
       query['episodeId'] = episodeId;
@@ -34,7 +43,9 @@ class PlayHistoryView extends ConsumerWidget {
     final currentMedia = audioHandler.currentMediaItem;
     final resolvedItemId = itemId ?? currentMedia?.itemId;
     final resolvedEpisodeId = episodeId ?? currentMedia?.episodeId;
-    final resolvedTitle = (itemTitle?.trim().isNotEmpty ?? false) ? itemTitle!.trim() : currentMedia?.title;
+    final resolvedTitle = (itemTitle?.trim().isNotEmpty ?? false)
+        ? itemTitle!.trim()
+        : currentMedia?.title;
 
     if (user == null || resolvedItemId == null) {
       return const _PlayHistoryUnavailableView();
@@ -49,7 +60,12 @@ class PlayHistoryView extends ConsumerWidget {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1100),
             child: Padding(
-              padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 0),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                8,
+                horizontalPadding,
+                0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -70,12 +86,18 @@ class PlayHistoryView extends ConsumerWidget {
                         ExpressiveTabViewItem(
                           id: 'activity',
                           label: 'Activity',
-                          child: PlayHistoryLocalTab(itemId: resolvedItemId, episodeId: resolvedEpisodeId),
+                          child: PlayHistoryLocalTab(
+                            itemId: resolvedItemId,
+                            episodeId: resolvedEpisodeId,
+                          ),
                         ),
                         ExpressiveTabViewItem(
                           id: 'sessions',
                           label: 'Sessions',
-                          child: _PlayHistorySessionsTab(itemId: resolvedItemId, episodeId: resolvedEpisodeId),
+                          child: _PlayHistorySessionsTab(
+                            itemId: resolvedItemId,
+                            episodeId: resolvedEpisodeId,
+                          ),
                         ),
                       ],
                     ),
@@ -104,14 +126,22 @@ class _PlayHistoryUnavailableView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.history_rounded, size: 40, color: colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.history_rounded,
+                size: 40,
+                color: colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(height: 12),
-              Text('Nothing to show yet', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Nothing to show yet',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 6),
               Text(
                 'Start playing an audiobook or podcast, then open its history again.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -122,7 +152,10 @@ class _PlayHistoryUnavailableView extends StatelessWidget {
 }
 
 class _PlayHistorySessionsTab extends ConsumerWidget {
-  const _PlayHistorySessionsTab({required this.itemId, required this.episodeId});
+  const _PlayHistorySessionsTab({
+    required this.itemId,
+    required this.episodeId,
+  });
 
   final String itemId;
   final String? episodeId;
@@ -132,7 +165,10 @@ class _PlayHistorySessionsTab extends ConsumerWidget {
     final itemAsync = ref.watch(libraryItemProvider(itemId));
 
     return itemAsync.when(
-      data: (item) => LibraryItemListeningSessionsTab(item: item, initialEpisodeId: episodeId),
+      data: (item) => LibraryItemListeningSessionsTab(
+        item: item,
+        initialEpisodeId: episodeId,
+      ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => _SessionLoadError(error: error),
     );
@@ -153,16 +189,24 @@ class _SessionLoadError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off_rounded, size: 36, color: colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.cloud_off_rounded,
+              size: 36,
+              color: colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 12),
-            Text('Could not load sessions', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Could not load sessions',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 6),
             Text(
               error.toString(),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),

@@ -85,7 +85,9 @@ class _ScrollToTopButtonState extends State<ScrollToTopButton> {
             curve: Curves.easeOut,
             opacity: _isVisible ? 1 : 0,
             child: Material(
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.92),
+              color: colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.92,
+              ),
               shape: const CircleBorder(),
               elevation: 2,
               child: InkWell(
@@ -94,7 +96,10 @@ class _ScrollToTopButtonState extends State<ScrollToTopButton> {
                 child: SizedBox(
                   width: 42,
                   height: 42,
-                  child: Icon(Icons.keyboard_arrow_up_rounded, color: colorScheme.onSurfaceVariant),
+                  child: Icon(
+                    Icons.keyboard_arrow_up_rounded,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),

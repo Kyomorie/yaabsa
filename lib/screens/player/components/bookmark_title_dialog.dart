@@ -2,18 +2,28 @@ import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/util/extensions.dart';
 
 class BookmarkTitleDialog extends StatefulWidget {
-  const BookmarkTitleDialog({super.key, required this.bookmarkTime, this.initialText = ''});
+  const BookmarkTitleDialog({
+    super.key,
+    required this.bookmarkTime,
+    this.initialText = '',
+  });
 
   final Duration bookmarkTime;
   final String initialText;
 
   bool get isEditing => initialText.trim().isNotEmpty;
 
-  static Future<String?> show(BuildContext context, {required Duration bookmarkTime, String initialText = ''}) {
+  static Future<String?> show(
+    BuildContext context, {
+    required Duration bookmarkTime,
+    String initialText = '',
+  }) {
     return showDialog<String>(
       context: context,
-      builder: (BuildContext dialogContext) =>
-          BookmarkTitleDialog(bookmarkTime: bookmarkTime, initialText: initialText),
+      builder: (BuildContext dialogContext) => BookmarkTitleDialog(
+        bookmarkTime: bookmarkTime,
+        initialText: initialText,
+      ),
     );
   }
 
@@ -64,11 +74,16 @@ class _BookmarkTitleDialogState extends State<BookmarkTitleDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Icon(
-                  widget.isEditing ? Icons.edit_note_rounded : Icons.bookmark_add_rounded,
+                  widget.isEditing
+                      ? Icons.edit_note_rounded
+                      : Icons.bookmark_add_rounded,
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
-                Text(widget.bookmarkTime.toPlaybackTimeString(), style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  widget.bookmarkTime.toPlaybackTimeString(),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -91,10 +106,15 @@ class _BookmarkTitleDialogState extends State<BookmarkTitleDialog> {
         ),
       ),
       actions: <Widget>[
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton.icon(
           onPressed: isValid ? _submit : null,
-          icon: Icon(widget.isEditing ? Icons.check_rounded : Icons.add_rounded),
+          icon: Icon(
+            widget.isEditing ? Icons.check_rounded : Icons.add_rounded,
+          ),
           label: Text(widget.isEditing ? 'Save' : 'Add bookmark'),
         ),
       ],

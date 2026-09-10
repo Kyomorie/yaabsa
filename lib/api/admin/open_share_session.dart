@@ -19,10 +19,14 @@ List<OpenShareSession> openShareSessionsFromDynamic(dynamic value) {
         }
 
         if (rawSession is Map) {
-          return OpenShareSession.fromJson(Map<String, dynamic>.from(rawSession));
+          return OpenShareSession.fromJson(
+            Map<String, dynamic>.from(rawSession),
+          );
         }
 
-        throw FormatException('Share session at index ${entry.key} is not a JSON object');
+        throw FormatException(
+          'Share session at index ${entry.key} is not a JSON object',
+        );
       })
       .toList(growable: false);
 }
@@ -57,7 +61,9 @@ abstract class OpenShareSession with _$OpenShareSession {
       mediaPlayer: json['mediaPlayer'] as String?,
       deviceInfo: json['deviceInfo'] == null
           ? null
-          : DeviceInfo.fromJson(Map<String, dynamic>.from(json['deviceInfo'] as Map)),
+          : DeviceInfo.fromJson(
+              Map<String, dynamic>.from(json['deviceInfo'] as Map),
+            ),
       currentTime: (json['currentTime'] as num?)?.toDouble(),
       startedAt: json['startedAt'] as int?,
       updatedAt: json['updatedAt'] as int?,

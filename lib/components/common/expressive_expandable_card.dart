@@ -63,9 +63,18 @@ class ExpressiveExpandableCard extends StatelessWidget {
                 ),
           subtitle: subtitle == null
               ? null
-              : Text(subtitle!, style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)),
+              : Text(
+                  subtitle!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
           children: [
-            Divider(height: 1, thickness: 1, color: colorScheme.outlineVariant.withValues(alpha: 0.35)),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+            ),
             ...children,
           ],
         ),

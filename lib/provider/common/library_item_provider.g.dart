@@ -12,7 +12,8 @@ part of 'library_item_provider.dart';
 @ProviderFor(LibraryItemsNotifier)
 final libraryItemsProvider = LibraryItemsNotifierFamily._();
 
-final class LibraryItemsNotifierProvider extends $AsyncNotifierProvider<LibraryItemsNotifier, LibraryItemState> {
+final class LibraryItemsNotifierProvider
+    extends $AsyncNotifierProvider<LibraryItemsNotifier, LibraryItemState> {
   LibraryItemsNotifierProvider._({
     required LibraryItemsNotifierFamily super.from,
     required (
@@ -57,7 +58,8 @@ final class LibraryItemsNotifierProvider extends $AsyncNotifierProvider<LibraryI
   }
 }
 
-String _$libraryItemsNotifierHash() => r'34d50421183274fb46054bff6bdc4d55d3fbc11b';
+String _$libraryItemsNotifierHash() =>
+    r'34d50421183274fb46054bff6bdc4d55d3fbc11b';
 
 final class LibraryItemsNotifierFamily extends $Family
     with
@@ -136,7 +138,8 @@ abstract class _$LibraryItemsNotifier extends $AsyncNotifier<LibraryItemState> {
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<LibraryItemState>, LibraryItemState>;
+    final ref =
+        this.ref as $Ref<AsyncValue<LibraryItemState>, LibraryItemState>;
     final element =
         ref.element
             as $ClassProviderElement<
@@ -162,16 +165,24 @@ abstract class _$LibraryItemsNotifier extends $AsyncNotifier<LibraryItemState> {
 @ProviderFor(libraryItem)
 final libraryItemProvider = LibraryItemFamily._();
 
-final class LibraryItemProvider extends $FunctionalProvider<AsyncValue<LibraryItem>, LibraryItem, FutureOr<LibraryItem>>
+final class LibraryItemProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<LibraryItem>,
+          LibraryItem,
+          FutureOr<LibraryItem>
+        >
     with $FutureModifier<LibraryItem>, $FutureProvider<LibraryItem> {
-  LibraryItemProvider._({required LibraryItemFamily super.from, required (String, {String? episodeId}) super.argument})
-    : super(
-        retry: null,
-        name: r'libraryItemProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+  LibraryItemProvider._({
+    required LibraryItemFamily super.from,
+    required (String, {String? episodeId}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'libraryItemProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$libraryItemHash();
@@ -185,7 +196,9 @@ final class LibraryItemProvider extends $FunctionalProvider<AsyncValue<LibraryIt
 
   @$internal
   @override
-  $FutureProviderElement<LibraryItem> $createElement($ProviderPointer pointer) => $FutureProviderElement(pointer);
+  $FutureProviderElement<LibraryItem> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<LibraryItem> create(Ref ref) {
@@ -207,7 +220,11 @@ final class LibraryItemProvider extends $FunctionalProvider<AsyncValue<LibraryIt
 String _$libraryItemHash() => r'544db28d602bc543bf31832700b848174523805d';
 
 final class LibraryItemFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<LibraryItem>, (String, {String? episodeId})> {
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<LibraryItem>,
+          (String, {String? episodeId})
+        > {
   LibraryItemFamily._()
     : super(
         retry: null,
@@ -218,7 +235,10 @@ final class LibraryItemFamily extends $Family
       );
 
   LibraryItemProvider call(String itemId, {String? episodeId}) =>
-      LibraryItemProvider._(argument: (itemId, episodeId: episodeId), from: this);
+      LibraryItemProvider._(
+        argument: (itemId, episodeId: episodeId),
+        from: this,
+      );
 
   @override
   String toString() => r'libraryItemProvider';
@@ -228,7 +248,12 @@ final class LibraryItemFamily extends $Family
 final completedDownloadItemIdsProvider = CompletedDownloadItemIdsProvider._();
 
 final class CompletedDownloadItemIdsProvider
-    extends $FunctionalProvider<AsyncValue<Set<String>>, Set<String>, Stream<Set<String>>>
+    extends
+        $FunctionalProvider<
+          AsyncValue<Set<String>>,
+          Set<String>,
+          Stream<Set<String>>
+        >
     with $FutureModifier<Set<String>>, $StreamProvider<Set<String>> {
   CompletedDownloadItemIdsProvider._()
     : super(
@@ -246,7 +271,9 @@ final class CompletedDownloadItemIdsProvider
 
   @$internal
   @override
-  $StreamProviderElement<Set<String>> $createElement($ProviderPointer pointer) => $StreamProviderElement(pointer);
+  $StreamProviderElement<Set<String>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
 
   @override
   Stream<Set<String>> create(Ref ref) {
@@ -254,12 +281,15 @@ final class CompletedDownloadItemIdsProvider
   }
 }
 
-String _$completedDownloadItemIdsHash() => r'aca295e2457fdd4cbf3fa79c15e004d1c577f99e';
+String _$completedDownloadItemIdsHash() =>
+    r'aca295e2457fdd4cbf3fa79c15e004d1c577f99e';
 
 @ProviderFor(completedDownloadForItem)
 final completedDownloadForItemProvider = CompletedDownloadForItemFamily._();
 
-final class CompletedDownloadForItemProvider extends $FunctionalProvider<bool, bool, bool> with $Provider<bool> {
+final class CompletedDownloadForItemProvider
+    extends $FunctionalProvider<bool, bool, bool>
+    with $Provider<bool> {
   CompletedDownloadForItemProvider._({
     required CompletedDownloadForItemFamily super.from,
     required (String, {String? episodeId}) super.argument,
@@ -283,22 +313,31 @@ final class CompletedDownloadForItemProvider extends $FunctionalProvider<bool, b
 
   @$internal
   @override
-  $ProviderElement<bool> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   bool create(Ref ref) {
     final argument = this.argument as (String, {String? episodeId});
-    return completedDownloadForItem(ref, argument.$1, episodeId: argument.episodeId);
+    return completedDownloadForItem(
+      ref,
+      argument.$1,
+      episodeId: argument.episodeId,
+    );
   }
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(bool value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<bool>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return other is CompletedDownloadForItemProvider && other.argument == argument;
+    return other is CompletedDownloadForItemProvider &&
+        other.argument == argument;
   }
 
   @override
@@ -307,7 +346,8 @@ final class CompletedDownloadForItemProvider extends $FunctionalProvider<bool, b
   }
 }
 
-String _$completedDownloadForItemHash() => r'f79d491f16d030ac2b6ce2e9784c86e6a37f9c1a';
+String _$completedDownloadForItemHash() =>
+    r'f79d491f16d030ac2b6ce2e9784c86e6a37f9c1a';
 
 final class CompletedDownloadForItemFamily extends $Family
     with $FunctionalFamilyOverride<bool, (String, {String? episodeId})> {
@@ -321,7 +361,10 @@ final class CompletedDownloadForItemFamily extends $Family
       );
 
   CompletedDownloadForItemProvider call(String itemId, {String? episodeId}) =>
-      CompletedDownloadForItemProvider._(argument: (itemId, episodeId: episodeId), from: this);
+      CompletedDownloadForItemProvider._(
+        argument: (itemId, episodeId: episodeId),
+        from: this,
+      );
 
   @override
   String toString() => r'completedDownloadForItemProvider';

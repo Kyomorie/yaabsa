@@ -20,10 +20,12 @@ class RemoveAuthorsWithoutBooksTool extends ConsumerStatefulWidget {
   final String libraryId;
 
   @override
-  ConsumerState<RemoveAuthorsWithoutBooksTool> createState() => _RemoveAuthorsWithoutBooksToolState();
+  ConsumerState<RemoveAuthorsWithoutBooksTool> createState() =>
+      _RemoveAuthorsWithoutBooksToolState();
 }
 
-class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWithoutBooksTool> {
+class _RemoveAuthorsWithoutBooksToolState
+    extends ConsumerState<RemoveAuthorsWithoutBooksTool> {
   bool _isRunning = false;
 
   @override
@@ -35,7 +37,11 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
         ? false
         : ref
               .read(settingsManagerProvider.notifier)
-              .getUserSetting<bool>(currentUser.id, SettingKeys.toolsRemoveAuthorsWithoutBooks, defaultValue: false);
+              .getUserSetting<bool>(
+                currentUser.id,
+                SettingKeys.toolsRemoveAuthorsWithoutBooks,
+                defaultValue: false,
+              );
     final canDeleteAuthors = currentUser?.permissions.delete ?? false;
 
     if (!removeAuthorsWithoutBooksEnabled || !canDeleteAuthors) {
@@ -45,9 +51,15 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
     return FilledButton.icon(
       onPressed: _isRunning ? null : _removeAuthorsWithoutBooks,
       icon: _isRunning
-          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2))
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2.2),
+            )
           : const Icon(Icons.cleaning_services_outlined),
-      label: Text(_isRunning ? 'Checking Authors...' : 'Remove Authors Without Books'),
+      label: Text(
+        _isRunning ? 'Checking Authors...' : 'Remove Authors Without Books',
+      ),
     );
   }
 
@@ -63,7 +75,11 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
     final messenger = ScaffoldMessenger.of(context);
     final api = ref.read(absApiProvider);
     if (api == null) {
-      messenger.showSnackBar(const SnackBar(content: Text('You are offline. Please reconnect and try again.')));
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('You are offline. Please reconnect and try again.'),
+        ),
+      );
       if (mounted) {
         setState(() {
           _isRunning = false;
@@ -73,7 +89,10 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
     }
 
     final progress = ValueNotifier<_AuthorCleanupProgress>(
-      const _AuthorCleanupProgress(title: 'Scanning Authors', message: 'Preparing to load authors...'),
+      const _AuthorCleanupProgress(
+        title: 'Scanning Authors',
+        message: 'Preparing to load authors...',
+      ),
     );
     var progressDialogOpen = false;
 
@@ -105,7 +124,9 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
 
     try {
       openProgressDialog();
-      final authorsWithoutBooks = await _loadAuthorsWithoutBooks(progress: progress);
+      final authorsWithoutBooks = await _loadAuthorsWithoutBooks(
+        progress: progress,
+      );
 
       closeProgressDialog();
       if (!mounted) {
@@ -117,7 +138,9 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
         return;
       }
 
-      final confirmed = await _showConfirmDeleteAuthorsDialog(authorsWithoutBooks);
+      final confirmed = await _showConfirmDeleteAuthorsDialog(
+        authorsWithoutBooks,
+      );
       if (!confirmed || !mounted) {
         return;
       }
@@ -150,12 +173,19 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
       }
 
       ref.invalidate(libraryFilterDataProvider(widget.libraryId));
-      await ref.read(libraryAuthorsProvider(widget.libraryId).notifier).refresh(withLoading: false);
+      await ref
+          .read(libraryAuthorsProvider(widget.libraryId).notifier)
+          .refresh(withLoading: false);
 
       final failedCount = failedAuthors.length;
-      final message = StringBuffer('Deleted $deletedCount author(s) without books.');
+      final message = StringBuffer(
+        'Deleted $deletedCount author(s) without books.',
+      );
       if (failedCount > 0) {
-        final preview = failedAuthors.take(4).map((author) => author.name).join(', ');
+        final preview = failedAuthors
+            .take(4)
+            .map((author) => author.name)
+            .join(', ');
         final suffix = failedCount > 4 ? ', ...' : '';
         message.write(' $failedCount failed: $preview$suffix');
       }
@@ -164,7 +194,11 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
     } catch (error) {
       closeProgressDialog();
       if (mounted) {
-        messenger.showSnackBar(SnackBar(content: Text('Could not remove authors without books: $error')));
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Could not remove authors without books: $error'),
+          ),
+        );
       }
     } finally {
       progress.dispose();
@@ -182,7 +216,12 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
       builder: (dialogContext) => AlertDialog(
         title: const Text('No Authors To Remove'),
         content: const Text('No authors with 0 books were found.'),
-        actions: [TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Close'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -232,10 +271,12 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
 
       progress.value = _AuthorCleanupProgress(
         title: 'Scanning Authors',
-        message: 'Checked $scannedAuthors author(s), found ${resultById.length} with 0 books.',
+        message:
+            'Checked $scannedAuthors author(s), found ${resultById.length} with 0 books.',
       );
 
-      final reachedEndByCount = payload.total > 0 && scannedAuthors >= payload.total;
+      final reachedEndByCount =
+          payload.total > 0 && scannedAuthors >= payload.total;
       final reachedEndByPage = pageAuthors.length < _authorCleanupPageSize;
       final reachedEndBySortBoundary = pageAuthors.last.numBooks > 0;
       if (reachedEndByCount || reachedEndByPage || reachedEndBySortBoundary) {
@@ -250,25 +291,33 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
     return results;
   }
 
-  Future<bool> _showConfirmDeleteAuthorsDialog(List<LibraryAuthor> authors) async {
+  Future<bool> _showConfirmDeleteAuthorsDialog(
+    List<LibraryAuthor> authors,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: Text('Delete ${authors.length} Author${authors.length == 1 ? '' : 's'}?'),
+          title: Text(
+            'Delete ${authors.length} Author${authors.length == 1 ? '' : 's'}?',
+          ),
           content: SizedBox(
             width: 460,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('These authors have 0 books and will be removed permanently:'),
+                const Text(
+                  'These authors have 0 books and will be removed permanently:',
+                ),
                 const SizedBox(height: 10),
                 Container(
                   constraints: const BoxConstraints(maxHeight: 260),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Theme.of(dialogContext).colorScheme.outlineVariant),
+                    border: Border.all(
+                      color: Theme.of(dialogContext).colorScheme.outlineVariant,
+                    ),
                   ),
                   child: _AuthorDeletionPreviewList(authors: authors),
                 ),
@@ -276,7 +325,10 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
               child: Text('Delete ${authors.length}'),
@@ -291,7 +343,12 @@ class _RemoveAuthorsWithoutBooksToolState extends ConsumerState<RemoveAuthorsWit
 }
 
 class _AuthorCleanupProgress {
-  const _AuthorCleanupProgress({required this.title, required this.message, this.completed, this.total});
+  const _AuthorCleanupProgress({
+    required this.title,
+    required this.message,
+    this.completed,
+    this.total,
+  });
 
   final String title;
   final String message;
@@ -327,7 +384,11 @@ class _AuthorCleanupProgressDialog extends StatelessWidget {
                 if (hasBoundedProgress)
                   LinearProgressIndicator(value: progressValue, minHeight: 6)
                 else
-                  const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4)),
+                  const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2.4),
+                  ),
                 if (hasBoundedProgress && value.completed != null) ...[
                   const SizedBox(height: 10),
                   Text('${value.completed}/${value.total}'),
@@ -347,10 +408,12 @@ class _AuthorDeletionPreviewList extends StatefulWidget {
   final List<LibraryAuthor> authors;
 
   @override
-  State<_AuthorDeletionPreviewList> createState() => _AuthorDeletionPreviewListState();
+  State<_AuthorDeletionPreviewList> createState() =>
+      _AuthorDeletionPreviewListState();
 }
 
-class _AuthorDeletionPreviewListState extends State<_AuthorDeletionPreviewList> {
+class _AuthorDeletionPreviewListState
+    extends State<_AuthorDeletionPreviewList> {
   late final ScrollController _scrollController;
 
   @override
@@ -379,7 +442,11 @@ class _AuthorDeletionPreviewListState extends State<_AuthorDeletionPreviewList> 
           final author = widget.authors[index];
           return ListTile(
             dense: true,
-            title: Text(author.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+            title: Text(
+              author.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             trailing: Text(_bookCountLabel(author.numBooks)),
           );
         },
@@ -388,4 +455,5 @@ class _AuthorDeletionPreviewListState extends State<_AuthorDeletionPreviewList> 
   }
 }
 
-String _bookCountLabel(int numBooks) => '$numBooks ${numBooks == 1 ? 'book' : 'books'}';
+String _bookCountLabel(int numBooks) =>
+    '$numBooks ${numBooks == 1 ? 'book' : 'books'}';

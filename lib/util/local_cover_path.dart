@@ -36,7 +36,10 @@ Uri? parseCoverPathUri(String? rawPath) {
   return parsed;
 }
 
-Future<String?> resolveDisplayCoverPath(String? rawPath, {required String cacheKey}) async {
+Future<String?> resolveDisplayCoverPath(
+  String? rawPath, {
+  required String cacheKey,
+}) async {
   if (kIsWeb) {
     return rawPath;
   }
@@ -71,8 +74,12 @@ Future<String?> resolveDisplayCoverPath(String? rawPath, {required String cacheK
     }
 
     final safeKey = cacheKey.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
-    final resolvedKey = safeKey.isEmpty ? '${cacheKey.hashCode.abs()}' : safeKey;
-    final tempFile = File(p.join(Directory.systemTemp.path, 'yaabsa_cover_$resolvedKey.img'));
+    final resolvedKey = safeKey.isEmpty
+        ? '${cacheKey.hashCode.abs()}'
+        : safeKey;
+    final tempFile = File(
+      p.join(Directory.systemTemp.path, 'yaabsa_cover_$resolvedKey.img'),
+    );
 
     await tempFile.parent.create(recursive: true);
     final copiedUri = await downloader.uri.copyFile(activatedUri, tempFile.uri);

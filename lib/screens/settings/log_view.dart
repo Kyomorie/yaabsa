@@ -12,19 +12,24 @@ class LogView extends HookWidget {
 
   void _copyRawLogs(BuildContext context, List<LogEntry> logs) {
     if (logs.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No logs to copy.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('No logs to copy.')));
       return;
     }
 
     final rawLogs = formatLogsForExport(logs);
     Clipboard.setData(ClipboardData(text: rawLogs));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Raw logs copied to clipboard!')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Raw logs copied to clipboard!')),
+    );
   }
 
   void _copyGitHubLogs(BuildContext context, List<LogEntry> logs) {
     final buffer = StringBuffer();
     buffer.writeln('<details>');
-    buffer.writeln('<summary>Logs (${logs.length} ${logs.length == 1 ? 'entry' : 'entries'})</summary>');
+    buffer.writeln(
+      '<summary>Logs (${logs.length} ${logs.length == 1 ? 'entry' : 'entries'})</summary>',
+    );
     buffer.writeln('');
     buffer.writeln('```text');
     if (logs.isNotEmpty) {
@@ -36,13 +41,17 @@ class LogView extends HookWidget {
     buffer.writeln('</details>');
 
     Clipboard.setData(ClipboardData(text: buffer.toString()));
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('GitHub formatted logs copied to clipboard!')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('GitHub formatted logs copied to clipboard!'),
+      ),
+    );
   }
 
   Future<void> _exportLogs(BuildContext context, List<LogEntry> logs) async {
     if (logs.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No logs to export.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('No logs to export.')));
       return;
     }
 
@@ -72,13 +81,19 @@ class LogView extends HookWidget {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to export logs: $error')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to export logs: $error')));
     }
   }
 
   void _scrollToTop(ScrollController controller) {
     if (controller.hasClients) {
-      controller.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+      controller.animateTo(
+        0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
@@ -99,11 +114,17 @@ class LogView extends HookWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.5)),
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 2.5),
+            ),
             const SizedBox(height: 10),
             Text(
               'Loading logs...',
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -114,13 +135,19 @@ class LogView extends HookWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.article_outlined, size: 44, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
+          Icon(
+            Icons.article_outlined,
+            size: 44,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+          ),
           const SizedBox(height: 10),
           Text('No logs yet', style: theme.textTheme.titleMedium),
           const SizedBox(height: 6),
           Text(
             'Logs will appear here as they are generated.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -142,7 +169,9 @@ class LogView extends HookWidget {
     final colorScheme = theme.colorScheme;
 
     useEffect(() {
-      if (logs.isNotEmpty && scrollController.hasClients && autoScrollEnabled.value) {
+      if (logs.isNotEmpty &&
+          scrollController.hasClients &&
+          autoScrollEnabled.value) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (scrollController.hasClients) {
             _scrollToBottom(scrollController);
@@ -159,12 +188,19 @@ class LogView extends HookWidget {
       children: [
         const LocalLogSettingsSection(),
         Padding(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 0),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            12,
+            horizontalPadding,
+            0,
+          ),
           child: Container(
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+              ),
             ),
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -196,9 +232,19 @@ class LogView extends HookWidget {
                                 }
                               },
                         icon: isExporting.value
-                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Icon(Icons.save_alt_outlined, size: 18),
-                        label: Text(isExporting.value ? 'Exporting .log...' : 'Export .log'),
+                        label: Text(
+                          isExporting.value
+                              ? 'Exporting .log...'
+                              : 'Export .log',
+                        ),
                       ),
                     ],
                   ),
@@ -206,7 +252,10 @@ class LogView extends HookWidget {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: colorScheme.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(999),
@@ -219,12 +268,16 @@ class LogView extends HookWidget {
                       const Spacer(),
                       IconButton(
                         tooltip: 'Scroll to top',
-                        onPressed: logs.isEmpty ? null : () => _scrollToTop(scrollController),
+                        onPressed: logs.isEmpty
+                            ? null
+                            : () => _scrollToTop(scrollController),
                         icon: const Icon(Icons.vertical_align_top_rounded),
                       ),
                       IconButton(
                         tooltip: 'Scroll to bottom',
-                        onPressed: logs.isEmpty ? null : () => _scrollToBottom(scrollController),
+                        onPressed: logs.isEmpty
+                            ? null
+                            : () => _scrollToBottom(scrollController),
                         icon: const Icon(Icons.vertical_align_bottom_rounded),
                       ),
                       const SizedBox(width: 4),
@@ -241,16 +294,28 @@ class LogView extends HookWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(horizontalPadding, 12, horizontalPadding, 0),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            12,
+            horizontalPadding,
+            0,
+          ),
           child: Container(
             height: listHeight,
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+              ),
             ),
             child: logs.isEmpty
-                ? _buildEmptyState(context, isLoading: streamSnapshot.connectionState == ConnectionState.waiting)
+                ? _buildEmptyState(
+                    context,
+                    isLoading:
+                        streamSnapshot.connectionState ==
+                        ConnectionState.waiting,
+                  )
                 : Scrollbar(
                     controller: scrollController,
                     thumbVisibility: true,

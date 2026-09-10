@@ -47,7 +47,9 @@ class AdminServerSettings extends ConsumerWidget {
 
             final isAdminUser = _isAdminType(currentUser.type);
             final serverUrl = currentUser.server?.url.trim();
-            final managedServer = serverUrl == null || serverUrl.isEmpty ? 'unknown server' : serverUrl;
+            final managedServer = serverUrl == null || serverUrl.isEmpty
+                ? 'unknown server'
+                : serverUrl;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -60,85 +62,154 @@ class AdminServerSettings extends ConsumerWidget {
                       icon: Icons.settings_outlined,
                       title: 'Server Configuration',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerConfigurationSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () => context.push(
+                              AdminServerConfigurationSettings.routeName,
+                            )
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.library_add_outlined,
                       title: 'Libraries',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerLibrariesSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () => context.push(
+                              AdminServerLibrariesSettings.routeName,
+                            )
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.receipt_long_outlined,
                       title: 'Logs',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerLogsSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () =>
+                                context.push(AdminServerLogsSettings.routeName)
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.backup_table_outlined,
                       title: 'Backups',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerBackupsSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () => context.push(
+                              AdminServerBackupsSettings.routeName,
+                            )
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.group_outlined,
                       title: 'Users',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerUsersSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () =>
+                                context.push(AdminServerUsersSettings.routeName)
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.key_outlined,
                       title: 'API Keys',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerApiKeysSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () => context.push(
+                              AdminServerApiKeysSettings.routeName,
+                            )
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.query_stats_rounded,
                       title: 'Sessions',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerSessionsSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () => context.push(
+                              AdminServerSessionsSettings.routeName,
+                            )
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.rss_feed_rounded,
                       title: 'RSS Feeds',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerRssFeedsSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () => context.push(
+                              AdminServerRssFeedsSettings.routeName,
+                            )
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.alternate_email_rounded,
                       title: 'E-Mail / E-Reader',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerEmailSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () =>
+                                context.push(AdminServerEmailSettings.routeName)
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.verified_user_outlined,
                       title: 'Authentication',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerAuthenticationSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () => context.push(
+                              AdminServerAuthenticationSettings.routeName,
+                            )
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.category_outlined,
                       title: 'Item Metadata Utils',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminItemMetadataUtilsSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () => context.push(
+                              AdminItemMetadataUtilsSettings.routeName,
+                            )
+                          : null,
                     ),
                     SettingsNavigationItem(
                       icon: Icons.insert_chart_outlined_rounded,
                       title: 'Library Stats',
                       enabled: isAdminUser,
-                      disabledReason: isAdminUser ? null : 'Requires an admin account',
-                      onTap: isAdminUser ? () => context.push(AdminServerLibraryStatsSettings.routeName) : null,
+                      disabledReason: isAdminUser
+                          ? null
+                          : 'Requires an admin account',
+                      onTap: isAdminUser
+                          ? () => context.push(
+                              AdminServerLibraryStatsSettings.routeName,
+                            )
+                          : null,
                     ),
                   ],
                 ),

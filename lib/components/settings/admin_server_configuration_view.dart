@@ -14,10 +14,12 @@ class AdminServerConfigurationView extends ConsumerStatefulWidget {
   const AdminServerConfigurationView({super.key});
 
   @override
-  ConsumerState<AdminServerConfigurationView> createState() => _AdminServerConfigurationViewState();
+  ConsumerState<AdminServerConfigurationView> createState() =>
+      _AdminServerConfigurationViewState();
 }
 
-class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfigurationView> {
+class _AdminServerConfigurationViewState
+    extends ConsumerState<AdminServerConfigurationView> {
   static const String _settingsId = 'server-settings';
 
   static const List<String> _dateFormatLabels = <String>[
@@ -40,7 +42,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
     'dd MMM yyyy',
     'dd MMMM yyyy',
   ];
-  static const List<String> _timeFormatLabels = <String>['h:mma (am/pm)', 'HH:mm (24-hour)'];
+  static const List<String> _timeFormatLabels = <String>[
+    'h:mma (am/pm)',
+    'HH:mm (24-hour)',
+  ];
   static const List<String> _timeFormatValues = <String>['h:mma', 'HH:mm'];
   static const List<String> _languageValues = <String>[
     'ar',
@@ -122,7 +127,8 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
   static const String _operationLanguage = 'language';
   static const String _operationScannerParseSubtitle = 'scannerParseSubtitle';
   static const String _operationScannerFindCovers = 'scannerFindCovers';
-  static const String _operationScannerPreferMatchedMetadata = 'scannerPreferMatchedMetadata';
+  static const String _operationScannerPreferMatchedMetadata =
+      'scannerPreferMatchedMetadata';
   static const String _operationScannerDisableWatcher = 'scannerDisableWatcher';
   static const String _operationAllowedOrigins = 'allowedOrigins';
 
@@ -172,7 +178,9 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
       port: uri.hasPort ? uri.port : null,
     );
     final serialized = normalizedUri.toString();
-    return serialized.endsWith('/') ? serialized.substring(0, serialized.length - 1) : serialized;
+    return serialized.endsWith('/')
+        ? serialized.substring(0, serialized.length - 1)
+        : serialized;
   }
 
   String? _validateCorsOrigin(String value) {
@@ -191,7 +199,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
       return 'Only http and https origins are supported.';
     }
 
-    if ((uri.path.isNotEmpty && uri.path != '/') || uri.hasQuery || uri.hasFragment || uri.userInfo.isNotEmpty) {
+    if ((uri.path.isNotEmpty && uri.path != '/') ||
+        uri.hasQuery ||
+        uri.hasFragment ||
+        uri.userInfo.isNotEmpty) {
       return 'Origin must not include path, query, fragment, or user info.';
     }
 
@@ -270,8 +281,12 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
         return;
       }
 
-      final message = _resolveErrorMessage(error, fallback: 'Failed to load server settings.');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      final message = _resolveErrorMessage(
+        error,
+        fallback: 'Failed to load server settings.',
+      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -281,7 +296,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
     }
   }
 
-  Future<void> _updateServerSettings({required String operationKey, required ServerSettings settingsUpdate}) async {
+  Future<void> _updateServerSettings({
+    required String operationKey,
+    required ServerSettings settingsUpdate,
+  }) async {
     if (_savingOperations.contains(operationKey)) {
       return;
     }
@@ -296,7 +314,9 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
         throw StateError('No active API client.');
       }
 
-      final response = await api.getAdminApi().updateServerSettings(settingsUpdate: settingsUpdate);
+      final response = await api.getAdminApi().updateServerSettings(
+        settingsUpdate: settingsUpdate,
+      );
       final updatedSettings = response.data;
 
       if (!mounted) {
@@ -315,8 +335,12 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
         return;
       }
 
-      final message = _resolveErrorMessage(error, fallback: 'Failed to update server settings.');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      final message = _resolveErrorMessage(
+        error,
+        fallback: 'Failed to update server settings.',
+      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -326,14 +350,18 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
     }
   }
 
-  Future<void> _updateSortingPrefixes(List<String> sortingPrefixes, {List<String>? fallbackSortingPrefixes}) async {
+  Future<void> _updateSortingPrefixes(
+    List<String> sortingPrefixes, {
+    List<String>? fallbackSortingPrefixes,
+  }) async {
     if (_savingOperations.contains(_operationSortingPrefixes)) {
       return;
     }
 
     if (sortingPrefixes.isEmpty) {
       const message = 'At least one sorting prefix is required.';
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text(message)));
       return;
     }
 
@@ -347,7 +375,9 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
         throw StateError('No active API client.');
       }
 
-      final response = await api.getAdminApi().updateSortingPrefixes(sortingPrefixes: sortingPrefixes);
+      final response = await api.getAdminApi().updateSortingPrefixes(
+        sortingPrefixes: sortingPrefixes,
+      );
       final updatedSettings = response.data?.serverSettings;
 
       if (!mounted) {
@@ -366,13 +396,19 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
         return;
       }
 
-      final message = _resolveErrorMessage(error, fallback: 'Failed to update sorting prefixes.');
+      final message = _resolveErrorMessage(
+        error,
+        fallback: 'Failed to update sorting prefixes.',
+      );
       if (fallbackSortingPrefixes != null && _settings != null) {
         setState(() {
-          _settings = _settings!.copyWith(sortingPrefixes: fallbackSortingPrefixes);
+          _settings = _settings!.copyWith(
+            sortingPrefixes: fallbackSortingPrefixes,
+          );
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -382,7 +418,8 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
     }
   }
 
-  bool _isSaving(String operationKey) => _savingOperations.contains(operationKey);
+  bool _isSaving(String operationKey) =>
+      _savingOperations.contains(operationKey);
 
   @override
   Widget build(BuildContext context) {
@@ -427,7 +464,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
             child: Row(
               children: [
                 const Expanded(child: Text('Failed to load server settings.')),
-                TextButton(onPressed: () => unawaited(_loadServerSettings()), child: const Text('Retry')),
+                TextButton(
+                  onPressed: () => unawaited(_loadServerSettings()),
+                  child: const Text('Retry'),
+                ),
               ],
             ),
           );
@@ -436,11 +476,24 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
         final settings = _settings!;
         final scannerWatcherDisabled = settings.scannerDisableWatcher ?? false;
         final sortingIgnorePrefix = settings.sortingIgnorePrefix ?? false;
-        final sortingPrefixes = _normalizeSortingPrefixes(settings.sortingPrefixes ?? const <String>[]);
-        final selectedDateFormat = _resolveSelection(_dateFormatValues, settings.dateFormat);
-        final selectedTimeFormat = _resolveSelection(_timeFormatValues, settings.timeFormat);
-        final selectedLanguage = _resolveSelection(_languageValues, settings.language);
-        final allowedOrigins = _normalizeCorsOrigins(settings.allowedOrigins ?? const <String>[]);
+        final sortingPrefixes = _normalizeSortingPrefixes(
+          settings.sortingPrefixes ?? const <String>[],
+        );
+        final selectedDateFormat = _resolveSelection(
+          _dateFormatValues,
+          settings.dateFormat,
+        );
+        final selectedTimeFormat = _resolveSelection(
+          _timeFormatValues,
+          settings.timeFormat,
+        );
+        final selectedLanguage = _resolveSelection(
+          _languageValues,
+          settings.language,
+        );
+        final allowedOrigins = _normalizeCorsOrigins(
+          settings.allowedOrigins ?? const <String>[],
+        );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -461,7 +514,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                           unawaited(
                             _updateServerSettings(
                               operationKey: _operationStoreCoverWithItem,
-                              settingsUpdate: ServerSettings(id: _settingsId, storeCoverWithItem: nextValue),
+                              settingsUpdate: ServerSettings(
+                                id: _settingsId,
+                                storeCoverWithItem: nextValue,
+                              ),
                             ),
                           );
                         },
@@ -477,7 +533,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                           unawaited(
                             _updateServerSettings(
                               operationKey: _operationStoreMetadataWithItem,
-                              settingsUpdate: ServerSettings(id: _settingsId, storeMetadataWithItem: nextValue),
+                              settingsUpdate: ServerSettings(
+                                id: _settingsId,
+                                storeMetadataWithItem: nextValue,
+                              ),
                             ),
                           );
                         },
@@ -493,21 +552,29 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                           unawaited(
                             _updateServerSettings(
                               operationKey: _operationSortingIgnorePrefix,
-                              settingsUpdate: ServerSettings(id: _settingsId, sortingIgnorePrefix: nextValue),
+                              settingsUpdate: ServerSettings(
+                                id: _settingsId,
+                                sortingIgnorePrefix: nextValue,
+                              ),
                             ),
                           );
                         },
                 ),
                 if (sortingIgnorePrefix)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
                     child: StringChipListInput(
                       label: 'Prefixes to Ignore (case insensitive)',
                       values: sortingPrefixes,
                       enabled: !_isSaving(_operationSortingPrefixes),
                       normalizer: (value) => value.trim().toLowerCase(),
                       onChanged: (nextValues) {
-                        final normalizedPrefixes = _normalizeSortingPrefixes(nextValues);
+                        final normalizedPrefixes = _normalizeSortingPrefixes(
+                          nextValues,
+                        );
                         if (normalizedPrefixes.isEmpty) {
                           unawaited(_updateSortingPrefixes(normalizedPrefixes));
                           return;
@@ -515,10 +582,15 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
 
                         final fallbackPrefixes = sortingPrefixes;
                         setState(() {
-                          _settings = _settings?.copyWith(sortingPrefixes: normalizedPrefixes);
+                          _settings = _settings?.copyWith(
+                            sortingPrefixes: normalizedPrefixes,
+                          );
                         });
                         unawaited(
-                          _updateSortingPrefixes(normalizedPrefixes, fallbackSortingPrefixes: fallbackPrefixes),
+                          _updateSortingPrefixes(
+                            normalizedPrefixes,
+                            fallbackSortingPrefixes: fallbackPrefixes,
+                          ),
                         );
                       },
                     ),
@@ -539,7 +611,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                     unawaited(
                       _updateServerSettings(
                         operationKey: _operationDateFormat,
-                        settingsUpdate: ServerSettings(id: _settingsId, dateFormat: nextValue),
+                        settingsUpdate: ServerSettings(
+                          id: _settingsId,
+                          dateFormat: nextValue,
+                        ),
                       ),
                     );
                   },
@@ -555,7 +630,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                     unawaited(
                       _updateServerSettings(
                         operationKey: _operationTimeFormat,
-                        settingsUpdate: ServerSettings(id: _settingsId, timeFormat: nextValue),
+                        settingsUpdate: ServerSettings(
+                          id: _settingsId,
+                          timeFormat: nextValue,
+                        ),
                       ),
                     );
                   },
@@ -571,7 +649,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                     unawaited(
                       _updateServerSettings(
                         operationKey: _operationLanguage,
-                        settingsUpdate: ServerSettings(id: _settingsId, language: nextValue),
+                        settingsUpdate: ServerSettings(
+                          id: _settingsId,
+                          language: nextValue,
+                        ),
                       ),
                     );
                   },
@@ -592,7 +673,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                           unawaited(
                             _updateServerSettings(
                               operationKey: _operationScannerParseSubtitle,
-                              settingsUpdate: ServerSettings(id: _settingsId, scannerParseSubtitle: nextValue),
+                              settingsUpdate: ServerSettings(
+                                id: _settingsId,
+                                scannerParseSubtitle: nextValue,
+                              ),
                             ),
                           );
                         },
@@ -608,7 +692,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                           unawaited(
                             _updateServerSettings(
                               operationKey: _operationScannerFindCovers,
-                              settingsUpdate: ServerSettings(id: _settingsId, scannerFindCovers: nextValue),
+                              settingsUpdate: ServerSettings(
+                                id: _settingsId,
+                                scannerFindCovers: nextValue,
+                              ),
                             ),
                           );
                         },
@@ -618,21 +705,25 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                   subtitle: 'Overwrite existing details with matched metadata during Quick Match',
                   value: settings.scannerPreferMatchedMetadata ?? false,
                   isLoading: _isSaving(_operationScannerPreferMatchedMetadata),
-                  onValueChanged: _isSaving(_operationScannerPreferMatchedMetadata)
+                  onValueChanged:
+                      _isSaving(_operationScannerPreferMatchedMetadata)
                       ? null
                       : (nextValue) {
                           unawaited(
                             _updateServerSettings(
-                              operationKey: _operationScannerPreferMatchedMetadata,
-                              settingsUpdate: ServerSettings(id: _settingsId, scannerPreferMatchedMetadata: nextValue),
+                              operationKey:
+                                  _operationScannerPreferMatchedMetadata,
+                              settingsUpdate: ServerSettings(
+                                id: _settingsId,
+                                scannerPreferMatchedMetadata: nextValue,
+                              ),
                             ),
                           );
                         },
                 ),
                 SettingSwitchTile.remote(
                   label: 'Automatically scan libraries for changes',
-                  subtitle:
-                      'Automatically add or update items when file changes are detected (requires server restart)',
+                  subtitle: 'Automatically add or update items when file changes are detected (requires server restart)',
                   value: !scannerWatcherDisabled,
                   isLoading: _isSaving(_operationScannerDisableWatcher),
                   onValueChanged: _isSaving(_operationScannerDisableWatcher)
@@ -641,7 +732,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                           unawaited(
                             _updateServerSettings(
                               operationKey: _operationScannerDisableWatcher,
-                              settingsUpdate: ServerSettings(id: _settingsId, scannerDisableWatcher: !nextValue),
+                              settingsUpdate: ServerSettings(
+                                id: _settingsId,
+                                scannerDisableWatcher: !nextValue,
+                              ),
                             ),
                           );
                         },
@@ -652,7 +746,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
               title: 'Security',
               settings: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   child: StringChipListInput(
                     label: 'Allowed CORS Origins',
                     values: allowedOrigins,
@@ -660,11 +757,16 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
                     validator: _validateCorsOrigin,
                     normalizer: _normalizeCorsOrigin,
                     onChanged: (nextValues) {
-                      final normalizedOrigins = _normalizeCorsOrigins(nextValues);
+                      final normalizedOrigins = _normalizeCorsOrigins(
+                        nextValues,
+                      );
                       unawaited(
                         _updateServerSettings(
                           operationKey: _operationAllowedOrigins,
-                          settingsUpdate: ServerSettings(id: _settingsId, allowedOrigins: normalizedOrigins),
+                          settingsUpdate: ServerSettings(
+                            id: _settingsId,
+                            allowedOrigins: normalizedOrigins,
+                          ),
                         ),
                       );
                     },
@@ -681,7 +783,10 @@ class _AdminServerConfigurationViewState extends ConsumerState<AdminServerConfig
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          'Failed to load user data: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       ),
     );
   }

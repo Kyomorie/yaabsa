@@ -12,10 +12,18 @@ part of 'library_author_provider.dart';
 @ProviderFor(LibraryAuthorsNotifier)
 final libraryAuthorsProvider = LibraryAuthorsNotifierFamily._();
 
-final class LibraryAuthorsNotifierProvider extends $AsyncNotifierProvider<LibraryAuthorsNotifier, LibraryAuthorsState> {
+final class LibraryAuthorsNotifierProvider
+    extends
+        $AsyncNotifierProvider<LibraryAuthorsNotifier, LibraryAuthorsState> {
   LibraryAuthorsNotifierProvider._({
     required LibraryAuthorsNotifierFamily super.from,
-    required (String, {String initialSort, int initialDesc, String? initialInclude}) super.argument,
+    required (
+      String, {
+      String initialSort,
+      int initialDesc,
+      String? initialInclude,
+    })
+    super.argument,
   }) : super(
          retry: null,
          name: r'libraryAuthorsProvider',
@@ -40,7 +48,8 @@ final class LibraryAuthorsNotifierProvider extends $AsyncNotifierProvider<Librar
 
   @override
   bool operator ==(Object other) {
-    return other is LibraryAuthorsNotifierProvider && other.argument == argument;
+    return other is LibraryAuthorsNotifierProvider &&
+        other.argument == argument;
   }
 
   @override
@@ -49,7 +58,8 @@ final class LibraryAuthorsNotifierProvider extends $AsyncNotifierProvider<Librar
   }
 }
 
-String _$libraryAuthorsNotifierHash() => r'068319995b737dc1afc400b009a834e8f6af8756';
+String _$libraryAuthorsNotifierHash() =>
+    r'068319995b737dc1afc400b009a834e8f6af8756';
 
 final class LibraryAuthorsNotifierFamily extends $Family
     with
@@ -58,7 +68,12 @@ final class LibraryAuthorsNotifierFamily extends $Family
           AsyncValue<LibraryAuthorsState>,
           LibraryAuthorsState,
           FutureOr<LibraryAuthorsState>,
-          (String, {String initialSort, int initialDesc, String? initialInclude})
+          (
+            String, {
+            String initialSort,
+            int initialDesc,
+            String? initialInclude,
+          })
         > {
   LibraryAuthorsNotifierFamily._()
     : super(
@@ -75,7 +90,12 @@ final class LibraryAuthorsNotifierFamily extends $Family
     int initialDesc = defaultAuthorSortDesc,
     String? initialInclude = defaultLibraryAuthorInclude,
   }) => LibraryAuthorsNotifierProvider._(
-    argument: (libraryId, initialSort: initialSort, initialDesc: initialDesc, initialInclude: initialInclude),
+    argument: (
+      libraryId,
+      initialSort: initialSort,
+      initialDesc: initialDesc,
+      initialInclude: initialInclude,
+    ),
     from: this,
   );
 
@@ -83,8 +103,16 @@ final class LibraryAuthorsNotifierFamily extends $Family
   String toString() => r'libraryAuthorsProvider';
 }
 
-abstract class _$LibraryAuthorsNotifier extends $AsyncNotifier<LibraryAuthorsState> {
-  late final _$args = ref.$arg as (String, {String initialSort, int initialDesc, String? initialInclude});
+abstract class _$LibraryAuthorsNotifier
+    extends $AsyncNotifier<LibraryAuthorsState> {
+  late final _$args =
+      ref.$arg
+          as (
+            String, {
+            String initialSort,
+            int initialDesc,
+            String? initialInclude,
+          });
   String get libraryId => _$args.$1;
   String get initialSort => _$args.initialSort;
   int get initialDesc => _$args.initialDesc;
@@ -99,7 +127,8 @@ abstract class _$LibraryAuthorsNotifier extends $AsyncNotifier<LibraryAuthorsSta
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<LibraryAuthorsState>, LibraryAuthorsState>;
+    final ref =
+        this.ref as $Ref<AsyncValue<LibraryAuthorsState>, LibraryAuthorsState>;
     final element =
         ref.element
             as $ClassProviderElement<
@@ -123,15 +152,18 @@ abstract class _$LibraryAuthorsNotifier extends $AsyncNotifier<LibraryAuthorsSta
 @ProviderFor(LibraryAuthorDetails)
 final libraryAuthorDetailsProvider = LibraryAuthorDetailsFamily._();
 
-final class LibraryAuthorDetailsProvider extends $AsyncNotifierProvider<LibraryAuthorDetails, AuthorDetails> {
-  LibraryAuthorDetailsProvider._({required LibraryAuthorDetailsFamily super.from, required String super.argument})
-    : super(
-        retry: null,
-        name: r'libraryAuthorDetailsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+final class LibraryAuthorDetailsProvider
+    extends $AsyncNotifierProvider<LibraryAuthorDetails, AuthorDetails> {
+  LibraryAuthorDetailsProvider._({
+    required LibraryAuthorDetailsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'libraryAuthorDetailsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$libraryAuthorDetailsHash();
@@ -158,7 +190,8 @@ final class LibraryAuthorDetailsProvider extends $AsyncNotifierProvider<LibraryA
   }
 }
 
-String _$libraryAuthorDetailsHash() => r'5fc64254e9792d183e2f68a6e3605a6a79767e9d';
+String _$libraryAuthorDetailsHash() =>
+    r'5fc64254e9792d183e2f68a6e3605a6a79767e9d';
 
 final class LibraryAuthorDetailsFamily extends $Family
     with
@@ -178,7 +211,8 @@ final class LibraryAuthorDetailsFamily extends $Family
         isAutoDispose: true,
       );
 
-  LibraryAuthorDetailsProvider call(String authorId) => LibraryAuthorDetailsProvider._(argument: authorId, from: this);
+  LibraryAuthorDetailsProvider call(String authorId) =>
+      LibraryAuthorDetailsProvider._(argument: authorId, from: this);
 
   @override
   String toString() => r'libraryAuthorDetailsProvider';

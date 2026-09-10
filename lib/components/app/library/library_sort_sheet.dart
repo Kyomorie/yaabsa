@@ -17,7 +17,10 @@ class LibrarySortSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final options = getLibrarySortOptions(libraryMediaType: libraryMediaType, activeFilter: activeFilter);
+    final options = getLibrarySortOptions(
+      libraryMediaType: libraryMediaType,
+      activeFilter: activeFilter,
+    );
     final currentSelection = resolveLibrarySortSelection(
       libraryMediaType: libraryMediaType,
       activeFilter: activeFilter,
@@ -25,7 +28,9 @@ class LibrarySortSheet extends StatelessWidget {
       activeDesc: activeSortDesc,
     );
     final selectedSort = LibrarySortValueX.tryParse(currentSelection.sort);
-    final double listHeight = (options.length * 48.0).clamp(180.0, 360.0).toDouble();
+    final double listHeight = (options.length * 48.0)
+        .clamp(180.0, 360.0)
+        .toDouble();
     final colorScheme = Theme.of(context).colorScheme;
 
     return SafeArea(
@@ -39,7 +44,13 @@ class LibrarySortSheet extends StatelessWidget {
               child: Row(
                 children: [
                   const Expanded(
-                    child: Text('Sort Library', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      'Sort Library',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   IconButton(
                     tooltip: 'Close',
@@ -59,9 +70,13 @@ class LibrarySortSheet extends StatelessWidget {
                   final isSelected = option == selectedSort;
                   final isDescending = currentSelection.desc == 1;
                   final isRandom = option == LibrarySortValue.random;
-                  final trailingText = isSelected && !isRandom ? (isDescending ? 'DESC' : 'ASC') : null;
+                  final trailingText = isSelected && !isRandom
+                      ? (isDescending ? 'DESC' : 'ASC')
+                      : null;
                   final trailingIcon = isSelected && !isRandom
-                      ? (isDescending ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded)
+                      ? (isDescending
+                            ? Icons.arrow_downward_rounded
+                            : Icons.arrow_upward_rounded)
                       : null;
 
                   return ListTile(
@@ -80,11 +95,19 @@ class LibrarySortSheet extends StatelessWidget {
                           ),
                         if (trailingIcon != null) ...[
                           const SizedBox(width: 4),
-                          Icon(trailingIcon, size: 16, color: colorScheme.onSurfaceVariant),
+                          Icon(
+                            trailingIcon,
+                            size: 16,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
                         ],
                         if (isSelected) ...[
                           const SizedBox(width: 6),
-                          Icon(Icons.check_rounded, size: 18, color: colorScheme.primary),
+                          Icon(
+                            Icons.check_rounded,
+                            size: 18,
+                            color: colorScheme.primary,
+                          ),
                         ],
                       ],
                     ),

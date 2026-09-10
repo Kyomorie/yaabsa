@@ -6,10 +6,13 @@ part of 'reorder_library_entry_request.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_ReorderLibraryEntryRequest _$ReorderLibraryEntryRequestFromJson(Map<String, dynamic> json) =>
-    _ReorderLibraryEntryRequest(id: json['id'] as String, newOrder: (json['newOrder'] as num).toInt());
+_ReorderLibraryEntryRequest _$ReorderLibraryEntryRequestFromJson(
+  Map<String, dynamic> json,
+) => _ReorderLibraryEntryRequest(
+  id: json['id'] as String,
+  newOrder: (json['newOrder'] as num).toInt(),
+);
 
-Map<String, dynamic> _$ReorderLibraryEntryRequestToJson(_ReorderLibraryEntryRequest instance) => <String, dynamic>{
-  'id': instance.id,
-  'newOrder': instance.newOrder,
-};
+Map<String, dynamic> _$ReorderLibraryEntryRequestToJson(
+  _ReorderLibraryEntryRequest instance,
+) => <String, dynamic>{'id': instance.id, 'newOrder': instance.newOrder};

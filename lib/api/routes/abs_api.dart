@@ -34,32 +34,43 @@ class ABSApi {
     return dio.options.baseUrl;
   }
 
-  ABSApi({Dio? dio, String? basePathOverride, List<Interceptor>? interceptors, this.user})
-    : dio =
-          dio ??
-          createNativeDio(
-            options: BaseOptions(
-              baseUrl: basePathOverride ?? basePath,
-              connectTimeout: const Duration(milliseconds: 5000),
-              receiveTimeout: const Duration(milliseconds: 3000),
-            ),
-          ) {
+  ABSApi({
+    Dio? dio,
+    String? basePathOverride,
+    List<Interceptor>? interceptors,
+    this.user,
+  }) : dio =
+           dio ??
+           createNativeDio(
+             options: BaseOptions(
+               baseUrl: basePathOverride ?? basePath,
+               connectTimeout: const Duration(milliseconds: 5000),
+               receiveTimeout: const Duration(milliseconds: 3000),
+             ),
+           ) {
     if (interceptors != null) {
       this.dio.interceptors.addAll(interceptors);
     } else {
-      this.dio.interceptors.addAll([OAuthInterceptor(), BearerAuthInterceptor()]);
+      this.dio.interceptors.addAll([
+        OAuthInterceptor(),
+        BearerAuthInterceptor(),
+      ]);
     }
   }
 
   void setOAuthToken(String name, String token) {
     if (dio.interceptors.any((i) => i is OAuthInterceptor)) {
-      (dio.interceptors.firstWhere((i) => i is OAuthInterceptor) as OAuthInterceptor).tokens[name] = token;
+      (dio.interceptors.firstWhere(
+        (i) => i is OAuthInterceptor,
+      ) as OAuthInterceptor).tokens[name] = token;
     }
   }
 
   void setBearerAuth(String name, String token) {
     if (dio.interceptors.any((i) => i is BearerAuthInterceptor)) {
-      (dio.interceptors.firstWhere((i) => i is BearerAuthInterceptor) as BearerAuthInterceptor).tokens[name] = token;
+      (dio.interceptors.firstWhere(
+        (i) => i is BearerAuthInterceptor,
+      ) as BearerAuthInterceptor).tokens[name] = token;
     }
   }
 
@@ -125,7 +136,12 @@ class ABSApi {
     );
 
     try {
-      final response = await dio.request<Object>(route, data: bodyData, options: options, cancelToken: cancelToken);
+      final response = await dio.request<Object>(
+        route,
+        data: bodyData,
+        options: options,
+        cancelToken: cancelToken,
+      );
       T? responseData;
 
       if (fromJson != null) {
@@ -174,7 +190,9 @@ class ABSApi {
       if (key != null && queryParams.containsKey(key)) {
         return queryParams.remove(key).toString();
       } else {
-        throw ArgumentError("Missing required parameter: $key for route $route");
+        throw ArgumentError(
+          "Missing required parameter: $key for route $route",
+        );
       }
     });
 
@@ -189,7 +207,11 @@ class ABSApi {
         .toString();
 
     try {
-      final response = await dio.request<Object>(uri, options: options, cancelToken: cancelToken);
+      final response = await dio.request<Object>(
+        uri,
+        options: options,
+        cancelToken: cancelToken,
+      );
 
       T? responseData;
       final rawResponse = _normalizeResponsePayload(response.data);
@@ -234,9 +256,16 @@ class ABSApi {
     );
 
     try {
-      final response = await dio.request<Object>(route, options: options, cancelToken: cancelToken, data: data);
+      final response = await dio.request<Object>(
+        route,
+        options: options,
+        cancelToken: cancelToken,
+        data: data,
+      );
 
-      return response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300;
+      return response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300;
     } catch (error) {
       if (error is DioException && error.response != null) {}
       return false;
@@ -265,7 +294,12 @@ class ABSApi {
       contentType: 'application/json',
     );
 
-    final response = await dio.request<Object>(route, options: options, cancelToken: cancelToken, data: data);
+    final response = await dio.request<Object>(
+      route,
+      options: options,
+      cancelToken: cancelToken,
+      data: data,
+    );
     T? responseData;
 
     if (fromJson != null) {
@@ -308,7 +342,12 @@ class ABSApi {
     );
 
     try {
-      final response = await dio.request<Object>(route, data: bodyData, options: options, cancelToken: cancelToken);
+      final response = await dio.request<Object>(
+        route,
+        data: bodyData,
+        options: options,
+        cancelToken: cancelToken,
+      );
       T? responseData;
 
       if (fromJson != null) {

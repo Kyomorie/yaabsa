@@ -33,7 +33,9 @@ abstract class Server with _$Server {
     ServerConnection activeConnection = ServerConnection.external,
   }) {
     final externalUri = _parseServerUri(externalAddress);
-    final localUri = localAddress == null ? null : _tryParseServerUri(localAddress);
+    final localUri = localAddress == null
+        ? null
+        : _tryParseServerUri(localAddress);
 
     return Server(
       externalHost: externalUri.host,
@@ -44,15 +46,21 @@ abstract class Server with _$Server {
       localHost: localUri?.host,
       localPort: localUri?.port,
       localSsl: localUri == null ? null : localUri.scheme == 'https',
-      localSubdirectory: localUri == null ? null : _normalizeSubdirectory(localUri.path),
+      localSubdirectory: localUri == null
+          ? null
+          : _normalizeSubdirectory(localUri.path),
       activeConnection: activeConnection,
     );
   }
 
   bool get hasLocalConnection =>
-      localHost != null && localHost!.trim().isNotEmpty && localPort != null && localSsl != null;
+      localHost != null &&
+      localHost!.trim().isNotEmpty &&
+      localPort != null &&
+      localSsl != null;
 
-  bool get usesLocalConnection => activeConnection == ServerConnection.local && hasLocalConnection;
+  bool get usesLocalConnection =>
+      activeConnection == ServerConnection.local && hasLocalConnection;
 
   String get host => usesLocalConnection ? localHost! : externalHost;
 
@@ -60,7 +68,8 @@ abstract class Server with _$Server {
 
   bool get ssl => usesLocalConnection ? localSsl! : externalSsl;
 
-  String? get subdirectory => usesLocalConnection ? localSubdirectory : externalSubdirectory;
+  String? get subdirectory =>
+      usesLocalConnection ? localSubdirectory : externalSubdirectory;
 
   String get externalUrl {
     return _buildServerUrl(
@@ -76,10 +85,20 @@ abstract class Server with _$Server {
       return null;
     }
 
-    return _buildServerUrl(host: localHost!, port: localPort!, ssl: localSsl!, subdirectory: localSubdirectory);
+    return _buildServerUrl(
+      host: localHost!,
+      port: localPort!,
+      ssl: localSsl!,
+      subdirectory: localSubdirectory,
+    );
   }
 
-  String get url => _buildServerUrl(host: host, port: port, ssl: ssl, subdirectory: subdirectory);
+  String get url => _buildServerUrl(
+    host: host,
+    port: port,
+    ssl: ssl,
+    subdirectory: subdirectory,
+  );
 
   void setConnection(ServerConnection nextConnection) {
     if (nextConnection == ServerConnection.local && !hasLocalConnection) {
@@ -105,14 +124,20 @@ Uri? _tryParseServerUri(String input) {
     return null;
   }
 
-  final withScheme = trimmedInput.contains('://') ? trimmedInput : 'https://$trimmedInput';
+  final withScheme = trimmedInput.contains('://')
+      ? trimmedInput
+      : 'https://$trimmedInput';
   final uri = Uri.tryParse(withScheme);
   if (uri == null || uri.host.isEmpty) {
     return null;
   }
 
-  final pathSegments = uri.pathSegments.where((segment) => segment.trim().isNotEmpty).toList(growable: false);
-  final normalizedPath = pathSegments.isEmpty ? '' : '/${pathSegments.join('/')}';
+  final pathSegments = uri.pathSegments
+      .where((segment) => segment.trim().isNotEmpty)
+      .toList(growable: false);
+  final normalizedPath = pathSegments.isEmpty
+      ? ''
+      : '/${pathSegments.join('/')}';
 
   return uri.replace(path: normalizedPath, query: null, fragment: null);
 }
@@ -134,7 +159,12 @@ String? _normalizeSubdirectory(String? rawValue) {
   return segments.join('/');
 }
 
-String _buildServerUrl({required String host, required int port, required bool ssl, String? subdirectory}) {
+String _buildServerUrl({
+  required String host,
+  required int port,
+  required bool ssl,
+  String? subdirectory,
+}) {
   final normalizedSubdirectory = _normalizeSubdirectory(subdirectory);
   final uri = Uri(
     scheme: ssl ? 'https' : 'http',
@@ -144,5 +174,7 @@ String _buildServerUrl({required String host, required int port, required bool s
   );
 
   final asString = uri.toString();
-  return asString.endsWith('/') ? asString.substring(0, asString.length - 1) : asString;
+  return asString.endsWith('/')
+      ? asString.substring(0, asString.length - 1)
+      : asString;
 }

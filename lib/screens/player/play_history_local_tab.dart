@@ -11,13 +11,18 @@ import 'package:yaabsa/util/extensions.dart';
 import 'package:yaabsa/util/globals.dart';
 
 class PlayHistoryLocalTab extends ConsumerStatefulWidget {
-  const PlayHistoryLocalTab({super.key, required this.itemId, required this.episodeId});
+  const PlayHistoryLocalTab({
+    super.key,
+    required this.itemId,
+    required this.episodeId,
+  });
 
   final String itemId;
   final String? episodeId;
 
   @override
-  ConsumerState<PlayHistoryLocalTab> createState() => _PlayHistoryLocalTabState();
+  ConsumerState<PlayHistoryLocalTab> createState() =>
+      _PlayHistoryLocalTabState();
 }
 
 class _PlayHistoryLocalTabState extends ConsumerState<PlayHistoryLocalTab> {
@@ -84,7 +89,9 @@ class _PlayHistoryLocalTabState extends ConsumerState<PlayHistoryLocalTab> {
           child: CustomScrollView(
             controller: _scrollController,
             slivers: [
-              SliverToBoxAdapter(child: _buildHistoryHeader(context, history.length)),
+              SliverToBoxAdapter(
+                child: _buildHistoryHeader(context, history.length),
+              ),
               SliverList.builder(
                 itemCount: groupedHistory.length,
                 itemBuilder: (context, index) => _DateSection(
@@ -111,12 +118,14 @@ class _PlayHistoryLocalTabState extends ConsumerState<PlayHistoryLocalTab> {
           Expanded(
             child: Text(
               'On this device',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
           Text(
             '$eventCount ${eventCount == 1 ? 'event' : 'events'}',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.labelMedium
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -139,7 +148,11 @@ class _PlayHistoryLocalTabState extends ConsumerState<PlayHistoryLocalTab> {
 
     for (final entry in history) {
       final localCreated = entry.created.toLocal();
-      final day = DateTime(localCreated.year, localCreated.month, localCreated.day);
+      final day = DateTime(
+        localCreated.year,
+        localCreated.month,
+        localCreated.day,
+      );
       final currentDay = activeDay;
       if (currentDay == null || !_isSameDay(currentDay, day)) {
         flushDay();
@@ -148,11 +161,18 @@ class _PlayHistoryLocalTabState extends ConsumerState<PlayHistoryLocalTab> {
 
       final type = playerHistoryTypeFromName(entry.type);
       final canJoinPrevious =
-          type.category == PlayerHistoryCategory.sync && activeEvents.isNotEmpty && activeEvents.last.type == type;
+          type.category == PlayerHistoryCategory.sync &&
+          activeEvents.isNotEmpty &&
+          activeEvents.last.type == type;
       if (canJoinPrevious) {
         activeEvents.last.entries.add(entry);
       } else {
-        activeEvents.add(LocalHistoryEventGroup(type: type, entries: <PlayerHistoryEntry>[entry]));
+        activeEvents.add(
+          LocalHistoryEventGroup(
+            type: type,
+            entries: <PlayerHistoryEntry>[entry],
+          ),
+        );
       }
     }
 
@@ -181,7 +201,10 @@ class _PlayHistoryLocalTabState extends ConsumerState<PlayHistoryLocalTab> {
       await PlayerHistoryHandler.addPlayerHistory(
         PlayerHistoryType.seek,
         position: entry.currentTime.toDuration,
-        details: <String, Object?>{'toPosition': entry.currentTime, 'source': 'history'},
+        details: <String, Object?>{
+          'toPosition': entry.currentTime,
+          'source': 'history',
+        },
       );
       if (!mounted) {
         return;
@@ -190,13 +213,20 @@ class _PlayHistoryLocalTabState extends ConsumerState<PlayHistoryLocalTab> {
       return;
     }
 
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Could not start playback from this position.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not start playback from this position.'),
+      ),
+    );
   }
 }
 
 class _DateSection extends StatelessWidget {
-  const _DateSection({required this.group, required this.pendingEntryId, required this.onPlayFromHere});
+  const _DateSection({
+    required this.group,
+    required this.pendingEntryId,
+    required this.onPlayFromHere,
+  });
 
   final _DateGroup group;
   final int? pendingEntryId;
@@ -212,19 +242,32 @@ class _DateSection extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 0, 4, 7),
-            child: Text(_dateLabel(group.date), style: Theme.of(context).textTheme.titleSmall),
+            child: Text(
+              _dateLabel(group.date),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
           Card(
             margin: EdgeInsets.zero,
             elevation: 0,
             color: colorScheme.surfaceContainerLow,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
             clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
-                for (var index = 0; index < group.eventGroups.length; index++) ...[
+                for (
+                  var index = 0;
+                  index < group.eventGroups.length;
+                  index++
+                ) ...[
                   if (index > 0)
-                    Divider(height: 1, indent: 64, color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                    Divider(
+                      height: 1,
+                      indent: 64,
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    ),
                   PlayHistoryEventGroupTile(
                     group: group.eventGroups[index],
                     pendingEntryId: pendingEntryId,
@@ -252,7 +295,11 @@ class _DateSection extends StatelessWidget {
 }
 
 class _HistoryMessage extends StatelessWidget {
-  const _HistoryMessage({required this.icon, required this.title, required this.message});
+  const _HistoryMessage({
+    required this.icon,
+    required this.title,
+    required this.message,
+  });
 
   final IconData icon;
   final String title;
@@ -269,14 +316,19 @@ class _HistoryMessage extends StatelessWidget {
           children: [
             Icon(icon, size: 38, color: colorScheme.onSurfaceVariant),
             const SizedBox(height: 12),
-            Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 6),
             Text(
               message,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodyMedium
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -293,5 +345,7 @@ class _DateGroup {
 }
 
 bool _isSameDay(DateTime left, DateTime right) {
-  return left.year == right.year && left.month == right.month && left.day == right.day;
+  return left.year == right.year &&
+      left.month == right.month &&
+      left.day == right.day;
 }

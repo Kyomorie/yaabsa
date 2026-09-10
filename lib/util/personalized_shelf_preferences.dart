@@ -113,7 +113,10 @@ class PersonalizedShelfPreferences {
   final List<String> orderedSectionIds;
   final Set<String> hiddenSectionIds;
 
-  PersonalizedShelfPreferences withVisibility(String sectionId, bool isVisible) {
+  PersonalizedShelfPreferences withVisibility(
+    String sectionId,
+    bool isVisible,
+  ) {
     final nextHiddenSectionIds = hiddenSectionIds.toSet();
     if (isVisible) {
       nextHiddenSectionIds.remove(sectionId);
@@ -129,7 +132,10 @@ class PersonalizedShelfPreferences {
   }
 
   PersonalizedShelfPreferences reordered(int oldIndex, int newIndex) {
-    if (oldIndex < 0 || oldIndex >= orderedSectionIds.length || newIndex < 0 || newIndex >= orderedSectionIds.length) {
+    if (oldIndex < 0 ||
+        oldIndex >= orderedSectionIds.length ||
+        newIndex < 0 ||
+        newIndex >= orderedSectionIds.length) {
       return this;
     }
 
@@ -158,7 +164,9 @@ class PersonalizedShelfPreferencesCodec {
     }
   }
 
-  static List<PersonalizedShelfSection> configurableSectionsFor(HomeLibraryMediaType mediaType) {
+  static List<PersonalizedShelfSection> configurableSectionsFor(
+    HomeLibraryMediaType mediaType,
+  ) {
     switch (mediaType) {
       case HomeLibraryMediaType.book:
         return const [
@@ -188,7 +196,9 @@ class PersonalizedShelfPreferencesCodec {
     return encode(defaults);
   }
 
-  static PersonalizedShelfPreferences defaultsFor(HomeLibraryMediaType mediaType) {
+  static PersonalizedShelfPreferences defaultsFor(
+    HomeLibraryMediaType mediaType,
+  ) {
     final configurableSectionIds = configurableSectionsFor(mediaType)
         .map((section) => section.id)
         .toList(growable: false);
@@ -196,11 +206,16 @@ class PersonalizedShelfPreferencesCodec {
     return PersonalizedShelfPreferences(
       mediaType: mediaType,
       orderedSectionIds: List<String>.unmodifiable(configurableSectionIds),
-      hiddenSectionIds: Set<String>.unmodifiable(_alwaysHiddenSectionIdsFor(mediaType)),
+      hiddenSectionIds: Set<String>.unmodifiable(
+        _alwaysHiddenSectionIdsFor(mediaType),
+      ),
     );
   }
 
-  static PersonalizedShelfPreferences decode(String? rawValue, HomeLibraryMediaType mediaType) {
+  static PersonalizedShelfPreferences decode(
+    String? rawValue,
+    HomeLibraryMediaType mediaType,
+  ) {
     final fallback = defaultsFor(mediaType);
     if (rawValue == null || rawValue.trim().isEmpty) {
       return fallback;
@@ -219,7 +234,9 @@ class PersonalizedShelfPreferencesCodec {
       if (rawOrder is List) {
         for (final rawSectionId in rawOrder) {
           final sectionId = rawSectionId?.toString().trim();
-          if (sectionId == null || sectionId.isEmpty || orderedSectionIds.contains(sectionId)) {
+          if (sectionId == null ||
+              sectionId.isEmpty ||
+              orderedSectionIds.contains(sectionId)) {
             continue;
           }
 
@@ -240,7 +257,11 @@ class PersonalizedShelfPreferencesCodec {
         }
       }
 
-      return _normalize(mediaType: mediaType, orderedSectionIds: orderedSectionIds, hiddenSectionIds: hiddenSectionIds);
+      return _normalize(
+        mediaType: mediaType,
+        orderedSectionIds: orderedSectionIds,
+        hiddenSectionIds: hiddenSectionIds,
+      );
     } catch (_) {
       return fallback;
     }
@@ -257,8 +278,11 @@ class PersonalizedShelfPreferencesCodec {
         .where((sectionId) => normalized.hiddenSectionIds.contains(sectionId))
         .toList(growable: false);
 
-    final hiddenExtras = normalized.hiddenSectionIds.where((sectionId) => !orderedHidden.contains(sectionId)).toList()
-      ..sort();
+    final hiddenExtras =
+        normalized.hiddenSectionIds
+            .where((sectionId) => !orderedHidden.contains(sectionId))
+            .toList()
+          ..sort();
 
     final payload = <String, dynamic>{
       _orderKey: normalized.orderedSectionIds,
@@ -279,7 +303,8 @@ class PersonalizedShelfPreferencesCodec {
 
     final normalizedOrder = <String>[];
     for (final sectionId in orderedSectionIds) {
-      if (configurableSectionIds.contains(sectionId) && !normalizedOrder.contains(sectionId)) {
+      if (configurableSectionIds.contains(sectionId) &&
+          !normalizedOrder.contains(sectionId)) {
         normalizedOrder.add(sectionId);
       }
     }
@@ -306,7 +331,9 @@ class PersonalizedShelfPreferencesCodec {
     );
   }
 
-  static Set<String> _alwaysHiddenSectionIdsFor(HomeLibraryMediaType mediaType) {
+  static Set<String> _alwaysHiddenSectionIdsFor(
+    HomeLibraryMediaType mediaType,
+  ) {
     switch (mediaType) {
       case HomeLibraryMediaType.book:
         return const <String>{_newestEpisodesSectionId};

@@ -12,7 +12,8 @@ abstract class AbsTaskListResponse with _$AbsTaskListResponse {
     @JsonKey(name: 'queuedTaskData') AbsQueuedTaskData? queuedTaskData,
   }) = _AbsTaskListResponse;
 
-  factory AbsTaskListResponse.fromJson(Map<String, dynamic> json) => _$AbsTaskListResponseFromJson(json);
+  factory AbsTaskListResponse.fromJson(Map<String, dynamic> json) =>
+      _$AbsTaskListResponseFromJson(json);
 }
 
 @freezed
@@ -23,14 +24,18 @@ abstract class AbsQueuedTaskData with _$AbsQueuedTaskData {
     List<AbsQueuedEmbedMetadataTaskData> embedMetadata,
   }) = _AbsQueuedTaskData;
 
-  factory AbsQueuedTaskData.fromJson(Map<String, dynamic> json) => _$AbsQueuedTaskDataFromJson(json);
+  factory AbsQueuedTaskData.fromJson(Map<String, dynamic> json) =>
+      _$AbsQueuedTaskDataFromJson(json);
 }
 
 @freezed
-abstract class AbsQueuedEmbedMetadataTaskData with _$AbsQueuedEmbedMetadataTaskData {
+abstract class AbsQueuedEmbedMetadataTaskData
+    with _$AbsQueuedEmbedMetadataTaskData {
   const factory AbsQueuedEmbedMetadataTaskData({
-    @JsonKey(name: 'libraryItemId', fromJson: jsonStringFromDynamic) String? libraryItemId,
-    @JsonKey(name: 'libraryId', fromJson: jsonStringFromDynamic) String? libraryId,
+    @JsonKey(name: 'libraryItemId', fromJson: jsonStringFromDynamic)
+    String? libraryItemId,
+    @JsonKey(name: 'libraryId', fromJson: jsonStringFromDynamic)
+    String? libraryId,
   }) = _AbsQueuedEmbedMetadataTaskData;
 
   factory AbsQueuedEmbedMetadataTaskData.fromJson(Map<String, dynamic> json) =>

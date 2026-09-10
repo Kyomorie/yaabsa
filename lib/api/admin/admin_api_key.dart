@@ -16,7 +16,9 @@ abstract class AdminApiKey with _$AdminApiKey {
     @JsonKey(name: 'expiresAt') DateTime? expiresAt,
     @JsonKey(name: 'lastUsedAt') DateTime? lastUsedAt,
     @JsonKey(name: 'isActive') @Default(false) bool isActive,
-    @JsonKey(name: 'permissions') @Default(AdminUserPermissions()) AdminUserPermissions permissions,
+    @JsonKey(name: 'permissions')
+    @Default(AdminUserPermissions())
+    AdminUserPermissions permissions,
     @JsonKey(name: 'createdAt') DateTime? createdAt,
     @JsonKey(name: 'updatedAt') DateTime? updatedAt,
     @JsonKey(name: 'userId') required String userId,
@@ -26,7 +28,8 @@ abstract class AdminApiKey with _$AdminApiKey {
     @JsonKey(name: 'apiKey') String? apiKey,
   }) = _AdminApiKey;
 
-  factory AdminApiKey.fromJson(Map<String, dynamic> json) => _$AdminApiKeyFromJson(json);
+  factory AdminApiKey.fromJson(Map<String, dynamic> json) =>
+      _$AdminApiKeyFromJson(json);
 
   bool get isExpired {
     final value = expiresAt;

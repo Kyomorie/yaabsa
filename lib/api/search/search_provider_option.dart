@@ -10,5 +10,6 @@ abstract class SearchProviderOption with _$SearchProviderOption {
     @JsonKey(name: 'text') required String text,
   }) = _SearchProviderOption;
 
-  factory SearchProviderOption.fromJson(Map<String, dynamic> json) => _$SearchProviderOptionFromJson(json);
+  factory SearchProviderOption.fromJson(Map<String, dynamic> json) =>
+      _$SearchProviderOptionFromJson(json);
 }

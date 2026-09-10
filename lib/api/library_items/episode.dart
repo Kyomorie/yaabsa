@@ -25,13 +25,16 @@ abstract class Episode with _$Episode {
     @JsonKey(name: "pubDate") String? pubDate,
     @JsonKey(name: "audioFile") AudioFile? audioFile,
     @JsonKey(name: "audioTrack") AudioTrack? audioTrack,
-    @JsonKey(name: "publishedAt", fromJson: jsonIntFromDynamic) int? publishedAt,
+    @JsonKey(name: "publishedAt", fromJson: jsonIntFromDynamic)
+    int? publishedAt,
     @JsonKey(name: "addedAt", fromJson: jsonIntFromDynamic) int? addedAt,
     @JsonKey(name: "updatedAt", fromJson: jsonIntFromDynamic) int? updatedAt,
-    @JsonKey(name: "duration", fromJson: jsonDoubleFromDynamic) double? duration,
+    @JsonKey(name: "duration", fromJson: jsonDoubleFromDynamic)
+    double? duration,
     @JsonKey(name: "size", fromJson: jsonIntFromDynamic) int? size,
     @JsonKey(name: "podcast") PodcastMinified? podcast,
   }) = _Episode;
 
-  factory Episode.fromJson(Map<String, dynamic> json) => _$EpisodeFromJson(json);
+  factory Episode.fromJson(Map<String, dynamic> json) =>
+      _$EpisodeFromJson(json);
 }

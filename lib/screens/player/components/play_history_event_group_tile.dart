@@ -5,7 +5,8 @@ import 'package:yaabsa/util/audio_handler/player_history_handler.dart';
 import 'package:yaabsa/util/extensions.dart';
 
 class LocalHistoryEventGroup {
-  LocalHistoryEventGroup({required this.type, required this.entries}) : assert(entries.isNotEmpty);
+  LocalHistoryEventGroup({required this.type, required this.entries})
+    : assert(entries.isNotEmpty);
 
   final PlayerHistoryType type;
   final List<PlayerHistoryEntry> entries;
@@ -16,7 +17,12 @@ class LocalHistoryEventGroup {
 }
 
 class PlayHistoryEventGroupTile extends StatelessWidget {
-  const PlayHistoryEventGroupTile({super.key, required this.group, required this.onPlayFromHere, this.pendingEntryId});
+  const PlayHistoryEventGroupTile({
+    super.key,
+    required this.group,
+    required this.onPlayFromHere,
+    this.pendingEntryId,
+  });
 
   final LocalHistoryEventGroup group;
   final ValueChanged<PlayerHistoryEntry> onPlayFromHere;
@@ -38,17 +44,21 @@ class PlayHistoryEventGroupTile extends StatelessWidget {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        key: PageStorageKey<String>('history-${group.type.name}-${group.latestEntry.id}-${group.entries.length}'),
+        key: PageStorageKey<String>(
+          'history-${group.type.name}-${group.latestEntry.id}-${group.entries.length}',
+        ),
         tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
         leading: _EventIcon(type: group.type, color: eventColor),
         title: Text(
           _eventTitle(group.type),
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          style: Theme.of(context).textTheme.titleSmall
+              ?.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
           '${group.entries.length} events',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: colorScheme.onSurfaceVariant),
         ),
         children: [
           for (final entry in group.entries)
@@ -101,20 +111,23 @@ class _HistoryEventRow extends StatelessWidget {
                         _eventTitle(type),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                        style: Theme.of(context).textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       _timeLabel(entry),
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                      style: Theme.of(context).textTheme.labelMedium
+                          ?.copyWith(color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
                 const SizedBox(height: 3),
                 Text(
                   _eventDescription(entry, type),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -126,7 +139,10 @@ class _HistoryEventRow extends StatelessWidget {
               visualDensity: VisualDensity.compact,
               onPressed: pending ? null : () => onPlayFromHere(entry),
               icon: pending
-                  ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.play_arrow_rounded),
             ),
           ],
@@ -160,7 +176,8 @@ class _GroupedEventDetail extends StatelessWidget {
           Expanded(
             child: Text(
               '${_timeLabel(entry)} • ${_eventDescription(entry, type)}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ),
           if (canPlay)
@@ -169,7 +186,10 @@ class _GroupedEventDetail extends StatelessWidget {
               visualDensity: VisualDensity.compact,
               onPressed: pending ? null : () => onPlayFromHere(entry),
               icon: pending
-                  ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.play_arrow_rounded, size: 20),
             ),
         ],
@@ -189,17 +209,22 @@ class _EventIcon extends StatelessWidget {
     return Container(
       width: 38,
       height: 38,
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.13), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(12),
+      ),
       alignment: Alignment.center,
       child: Icon(_eventIcon(type), size: 20, color: color),
     );
   }
 }
 
-String _timeLabel(PlayerHistoryEntry entry) => DateFormat.Hms().format(entry.created.toLocal());
+String _timeLabel(PlayerHistoryEntry entry) =>
+    DateFormat.Hms().format(entry.created.toLocal());
 
-String _positionLabel(num seconds) =>
-    Duration(microseconds: (seconds.toDouble() * Duration.microsecondsPerSecond).round()).toHhMmString();
+String _positionLabel(num seconds) => Duration(
+  microseconds: (seconds.toDouble() * Duration.microsecondsPerSecond).round(),
+).toHhMmString();
 
 num? _numberDetail(Map<String, dynamic> details, String key) {
   final value = details[key];
@@ -242,11 +267,15 @@ String _eventDescription(PlayerHistoryEntry entry, PlayerHistoryType type) {
           : '${previousSpeed.toStringAsFixed(2)}× - ${speed.toStringAsFixed(2)}×';
     case PlayerHistoryType.sleepTimerStarted:
       if (details['source'] == 'resume') {
-        return duration == null ? 'Resumed' : '${_positionLabel(duration)} left';
+        return duration == null
+            ? 'Resumed'
+            : '${_positionLabel(duration)} left';
       }
       return duration == null ? 'Started' : 'For ${_positionLabel(duration)}';
     case PlayerHistoryType.sleepTimerAutoStarted:
-      return duration == null ? 'Auto-started' : 'For ${_positionLabel(duration)}';
+      return duration == null
+          ? 'Auto-started'
+          : 'For ${_positionLabel(duration)}';
     case PlayerHistoryType.sleepTimerExtended:
       if (additional != null && remaining != null) {
         return '+${_positionLabel(additional)} • ${_positionLabel(remaining)} left';
@@ -258,9 +287,13 @@ String _eventDescription(PlayerHistoryEntry entry, PlayerHistoryType type) {
           : details['source'] == 'reset'
           ? 'Reset with'
           : 'Stopped with';
-      return remaining == null ? 'Stopped' : '$prefix ${_positionLabel(remaining)} left';
+      return remaining == null
+          ? 'Stopped'
+          : '$prefix ${_positionLabel(remaining)} left';
     case PlayerHistoryType.sleepTimerExpired:
-      return details['action'] == 'pause' ? 'Paused playback' : 'Stopped playback';
+      return details['action'] == 'pause'
+          ? 'Paused playback'
+          : 'Stopped playback';
     case PlayerHistoryType.sync:
       return 'Synced at $position';
     case PlayerHistoryType.syncOffline:
@@ -358,5 +391,6 @@ Color _eventColor(ColorScheme colorScheme, PlayerHistoryType type) {
 }
 
 bool _canPlayFrom(PlayerHistoryType type) {
-  return type.category == PlayerHistoryCategory.playback && type != PlayerHistoryType.completed;
+  return type.category == PlayerHistoryCategory.playback &&
+      type != PlayerHistoryType.completed;
 }

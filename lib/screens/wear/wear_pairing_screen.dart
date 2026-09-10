@@ -54,12 +54,19 @@ class _WearPairingScreenState extends State<WearPairingScreen> {
             children: [
               Text(
                 'Welcome',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Connect to your Audiobookshelf.',
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurface.withValues(alpha: 0.70)),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: colorScheme.onSurface.withValues(alpha: 0.70),
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
@@ -68,7 +75,10 @@ class _WearPairingScreenState extends State<WearPairingScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Sign in on your phone\nto continue...',
-                  style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withValues(alpha: 0.54)),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurface.withValues(alpha: 0.54),
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ] else ...[
@@ -78,7 +88,10 @@ class _WearPairingScreenState extends State<WearPairingScreen> {
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
                     shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
                   ),
                   child: const Text('Continue on phone'),
                 ),

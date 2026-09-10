@@ -5,7 +5,8 @@ part 'bluetooth_audio_devices_provider.g.dart';
 
 @riverpod
 Future<List<BluetoothAudioDevice>> bluetoothAudioDevices(Ref ref) async {
-  final rawDevices = await autoResumeMethodChannel.invokeListMethod<Map<Object?, Object?>>('getBondedAudioDevices');
+  final rawDevices = await autoResumeMethodChannel
+      .invokeListMethod<Map<Object?, Object?>>('getBondedAudioDevices');
   final addresses = <String>{};
   final devices = <BluetoothAudioDevice>[];
 
@@ -17,7 +18,9 @@ Future<List<BluetoothAudioDevice>> bluetoothAudioDevices(Ref ref) async {
   }
 
   devices.sort((first, second) {
-    final byName = first.name.toLowerCase().compareTo(second.name.toLowerCase());
+    final byName = first.name.toLowerCase().compareTo(
+      second.name.toLowerCase(),
+    );
     return byName != 0 ? byName : first.address.compareTo(second.address);
   });
   return devices;

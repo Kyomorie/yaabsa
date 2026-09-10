@@ -1,7 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 
 class StatsNavigationPanel extends StatelessWidget {
-  const StatsNavigationPanel({super.key, required this.title, required this.icon, required this.onTap});
+  const StatsNavigationPanel({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.onTap,
+  });
 
   final String title;
   final IconData icon;

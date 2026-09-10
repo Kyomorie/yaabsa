@@ -47,7 +47,8 @@ class AuthorGridCard extends StatelessWidget {
           if (subtitle != null && !subtitle!.isEmpty)
             AdditionalInformationText(
               subtitle: subtitle!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
         ],
       ),
@@ -55,6 +56,10 @@ class AuthorGridCard extends StatelessWidget {
 
     return onTap == null
         ? cardContent
-        : InkWell(onTap: onTap, borderRadius: BorderRadius.circular(16), child: cardContent);
+        : InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: cardContent,
+          );
   }
 }

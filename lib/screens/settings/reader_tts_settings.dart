@@ -94,22 +94,37 @@ class _ReaderTtsSettingsState extends ConsumerState<ReaderTtsSettings> {
               label: 'Speech Rate',
               description: 'Adjust the TTS speech rate multiplier',
               values: const [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0],
-              valueLabels: const ['0.5x', '0.75x', '1.0x (Normal)', '1.25x', '1.5x', '1.75x', '2.0x'],
+              valueLabels: const [
+                '0.5x',
+                '0.75x',
+                '1.0x (Normal)',
+                '1.25x',
+                '1.5x',
+                '1.75x',
+                '2.0x',
+              ],
               settingKey: SettingKeys.readerTtsRate,
             ),
             if (_isLoadingTts)
               const Center(
-                child: Padding(padding: EdgeInsets.symmetric(vertical: 16.0), child: CircularProgressIndicator()),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                  child: CircularProgressIndicator(),
+                ),
               )
             else ...[
               SettingDropdown<String>(
                 label: 'TTS Language',
                 description: 'Select the language for text-to-speech',
                 values: _languages.isNotEmpty ? _languages : const ['en-US'],
-                valueLabels: _languages.isNotEmpty ? _languages : const ['en-US'],
+                valueLabels: _languages.isNotEmpty
+                    ? _languages
+                    : const ['en-US'],
                 settingKey: SettingKeys.readerTtsLanguage,
                 onChanged: (lang) {
-                  ref.read(settingsManagerProvider.notifier).setGlobalSetting<String>(SettingKeys.readerTtsVoice, '');
+                  ref
+                      .read(settingsManagerProvider.notifier)
+                      .setGlobalSetting<String>(SettingKeys.readerTtsVoice, '');
                 },
               ),
               Consumer(
@@ -123,9 +138,20 @@ class _ReaderTtsSettingsState extends ConsumerState<ReaderTtsSettings> {
                   }
 
                   final currentLang =
-                      ref.watch(globalSettingByKeyProvider(SettingKeys.readerTtsLanguage)).value ?? 'en-US';
+                      ref
+                          .watch(
+                            globalSettingByKeyProvider(
+                              SettingKeys.readerTtsLanguage,
+                            ),
+                          )
+                          .value ??
+                      'en-US';
                   final filteredVoices = _voices
-                      .where((v) => v['locale'] == currentLang || v['locale']!.startsWith('$currentLang-'))
+                      .where(
+                        (v) =>
+                            v['locale'] == currentLang ||
+                            v['locale']!.startsWith('$currentLang-'),
+                      )
                       .toList();
 
                   final values = ['', ...filteredVoices.map((v) => v['name']!)];
@@ -135,7 +161,9 @@ class _ReaderTtsSettingsState extends ConsumerState<ReaderTtsSettings> {
                     final name = voice['name']!;
                     final isLocal = name.toLowerCase().endsWith('local');
                     final isNetwork = name.toLowerCase().endsWith('network');
-                    final typeLabel = isLocal ? ' (Local)' : (isNetwork ? ' (Network)' : '');
+                    final typeLabel = isLocal
+                        ? ' (Local)'
+                        : (isNetwork ? ' (Network)' : '');
 
                     if (name.toLowerCase().contains('-x-')) {
                       displayLabels.add('Voice $voiceIndex$typeLabel');

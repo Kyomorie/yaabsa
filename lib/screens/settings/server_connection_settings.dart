@@ -22,10 +22,12 @@ class ServerConnectionSettings extends ConsumerStatefulWidget {
   static const String routeName = '/settings/server-connection';
 
   @override
-  ConsumerState<ServerConnectionSettings> createState() => _ServerConnectionSettingsState();
+  ConsumerState<ServerConnectionSettings> createState() =>
+      _ServerConnectionSettingsState();
 }
 
-class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSettings> {
+class _ServerConnectionSettingsState
+    extends ConsumerState<ServerConnectionSettings> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _externalServerController;
@@ -66,7 +68,9 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
     _localServerController.text = user.server?.localUrl ?? '';
     _usernameController.text = user.username;
     _passwordController.clear();
-    _customHeaders = Map<String, String>.from(user.server?.headers ?? const <String, String>{});
+    _customHeaders = Map<String, String>.from(
+      user.server?.headers ?? const <String, String>{},
+    );
   }
 
   ABSApi _buildServerApi(String baseUrl, {Map<String, String>? serverHeaders}) {
@@ -83,16 +87,24 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
     );
   }
 
-  Server _buildUpdatedServer(User user, {required String externalUrl, required String? localUrl}) {
-    final previousConnection = user.server?.activeConnection ?? ServerConnection.external;
-    final nextConnection = previousConnection == ServerConnection.local && localUrl != null
+  Server _buildUpdatedServer(
+    User user, {
+    required String externalUrl,
+    required String? localUrl,
+  }) {
+    final previousConnection =
+        user.server?.activeConnection ?? ServerConnection.external;
+    final nextConnection =
+        previousConnection == ServerConnection.local && localUrl != null
         ? ServerConnection.local
         : ServerConnection.external;
 
     return Server.fromExternalAddress(
       externalAddress: externalUrl,
       localAddress: localUrl,
-      headers: _customHeaders.isEmpty ? null : Map<String, String>.from(_customHeaders),
+      headers: _customHeaders.isEmpty
+          ? null
+          : Map<String, String>.from(_customHeaders),
       activeConnection: nextConnection,
     );
   }
@@ -120,7 +132,8 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
 
   void _removeHeader(String headerName) {
     setState(() {
-      _customHeaders = Map<String, String>.from(_customHeaders)..remove(headerName);
+      _customHeaders = Map<String, String>.from(_customHeaders)
+        ..remove(headerName);
     });
   }
 
@@ -134,28 +147,44 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
       return;
     }
 
-    final normalizedExternal = _normalizeServerAddress(_externalServerController.text.trim());
+    final normalizedExternal = _normalizeServerAddress(
+      _externalServerController.text.trim(),
+    );
     if (normalizedExternal == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Please enter a valid external server URL.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid external server URL.'),
+        ),
+      );
       return;
     }
 
     final localInput = _localServerController.text.trim();
-    final normalizedLocal = localInput.isEmpty ? null : _normalizeServerAddress(localInput);
+    final normalizedLocal = localInput.isEmpty
+        ? null
+        : _normalizeServerAddress(localInput);
     if (localInput.isNotEmpty && normalizedLocal == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Please enter a valid local server URL or leave it blank.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please enter a valid local server URL or leave it blank.',
+          ),
+        ),
+      );
       return;
     }
 
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
-    final wantsCredentialUpdate = username != currentUser.username || password.trim().isNotEmpty;
+    final wantsCredentialUpdate =
+        username != currentUser.username || password.trim().isNotEmpty;
 
     if (wantsCredentialUpdate && password.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Enter password to update username or credentials.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter password to update username or credentials.'),
+        ),
+      );
       return;
     }
 
@@ -172,20 +201,29 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
       );
 
       if (wantsCredentialUpdate) {
-        final loginResponse = await _buildServerApi(normalizedExternal, serverHeaders: updatedServer.headers)
-            .getMeApi()
-            .login(
-              loginRequest: LoginRequest(username: username, password: password),
+        final loginResponse =
+            await _buildServerApi(
+              normalizedExternal,
+              serverHeaders: updatedServer.headers,
+            ).getMeApi().login(
+              loginRequest: LoginRequest(
+                username: username,
+                password: password,
+              ),
               returnTokens: true,
             );
 
         final loginData = loginResponse.data;
         if (loginData == null) {
-          throw const FormatException('Credential validation returned no data.');
+          throw const FormatException(
+            'Credential validation returned no data.',
+          );
         }
 
         if (loginData.user.id != currentUser.id) {
-          throw const FormatException('Credentials belong to a different account. Use Add Account instead.');
+          throw const FormatException(
+            'Credentials belong to a different account. Use Add Account instead.',
+          );
         }
 
         updatedUser = loginData.user.copyWith(
@@ -208,21 +246,33 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Server settings saved.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Server settings saved.')));
       _passwordController.clear();
     } on DioException catch (e) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(_parseDioErrorMessage(e, fallback: 'Failed to save server settings.'))));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _parseDioErrorMessage(
+              e,
+              fallback: 'Failed to save server settings.',
+            ),
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save server settings: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save server settings: $e')),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -232,7 +282,11 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
     }
   }
 
-  Widget _buildSettingsSection(BuildContext context, {required String title, required Widget child}) {
+  Widget _buildSettingsSection(
+    BuildContext context, {
+    required String title,
+    required Widget child,
+  }) {
     final theme = Theme.of(context);
 
     return SettingsNavigationSection(
@@ -246,7 +300,12 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 16),
               child,
             ],
@@ -282,7 +341,9 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
           return null;
         }
         final normalized = _normalizeServerAddress(trimmed);
-        return normalized == null ? 'Enter a valid local URL or leave blank.' : null;
+        return normalized == null
+            ? 'Enter a valid local URL or leave blank.'
+            : null;
       },
     );
 
@@ -290,7 +351,13 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         context.isMobile
-            ? Column(children: [externalField, const SizedBox(height: 12), localField])
+            ? Column(
+                children: [
+                  externalField,
+                  const SizedBox(height: 12),
+                  localField,
+                ],
+              )
             : Row(
                 children: [
                   Expanded(child: externalField),
@@ -301,7 +368,8 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
         const SizedBox(height: 12),
         Text(
           'When a local address is available, the app prefers it and falls back to the external address when needed.',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -318,7 +386,8 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
           enabled: !_isSaving,
           label: 'Username',
           prefixIcon: const Icon(Icons.person_outline_rounded),
-          validator: (value) => (value ?? '').trim().isEmpty ? 'Username cannot be empty.' : null,
+          validator: (value) =>
+              (value ?? '').trim().isEmpty ? 'Username cannot be empty.' : null,
         ),
         const SizedBox(height: 12),
         StyledTextFormField(
@@ -337,13 +406,19 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
                       _obscurePassword = !_obscurePassword;
                     });
                   },
-            icon: Icon(_obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded),
+            icon: Icon(
+              _obscurePassword
+                  ? Icons.visibility_off_rounded
+                  : Icons.visibility_rounded,
+            ),
           ),
         ),
         const SizedBox(height: 12),
         Text(
           'Leave the password empty to keep your current credentials.',
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -358,13 +433,18 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
         onPressed: _isSaving ? null : () => _save(user),
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         icon: _isSaving
             ? SizedBox(
                 width: 18,
                 height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.onPrimary),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: colorScheme.onPrimary,
+                ),
               )
             : const Icon(Icons.save_outlined),
         label: Text(_isSaving ? 'Saving changes…' : 'Save changes'),
@@ -390,19 +470,28 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
                 padding: const EdgeInsets.all(20),
                 child: Card(
                   margin: EdgeInsets.zero,
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  color: colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.5,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
-                        Icon(Icons.person_off_rounded, size: 40, color: colorScheme.onSurfaceVariant),
+                        Icon(
+                          Icons.person_off_rounded,
+                          size: 40,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                         const SizedBox(height: 12),
                         const Text('No active user'),
                         const SizedBox(height: 4),
                         Text(
                           'Sign in before editing server settings.',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -415,13 +504,22 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
             _initializeFromUser(user);
 
             return Padding(
-              padding: EdgeInsets.fromLTRB(context.isMobile ? 12 : 20, 8, context.isMobile ? 12 : 20, 24),
+              padding: EdgeInsets.fromLTRB(
+                context.isMobile ? 12 : 20,
+                8,
+                context.isMobile ? 12 : 20,
+                24,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildSettingsSection(context, title: 'Server endpoints', child: _buildConnectionFields(context)),
+                    _buildSettingsSection(
+                      context,
+                      title: 'Server endpoints',
+                      child: _buildConnectionFields(context),
+                    ),
                     const SizedBox(height: 12),
                     _buildSettingsSection(
                       context,
@@ -451,7 +549,10 @@ class _ServerConnectionSettingsState extends ConsumerState<ServerConnectionSetti
             padding: EdgeInsets.all(32),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) => Padding(padding: const EdgeInsets.all(20), child: Text('Failed to load user: $error')),
+          error: (error, _) => Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text('Failed to load user: $error'),
+          ),
         ),
       ],
     );
@@ -470,18 +571,31 @@ String? _normalizeServerAddress(String input) {
     return null;
   }
 
-  final pathSegments = uri.pathSegments.where((segment) => segment.trim().isNotEmpty).toList(growable: false);
-  final normalizedPath = pathSegments.isEmpty ? '' : '/${pathSegments.join('/')}';
+  final pathSegments = uri.pathSegments
+      .where((segment) => segment.trim().isNotEmpty)
+      .toList(growable: false);
+  final normalizedPath = pathSegments.isEmpty
+      ? ''
+      : '/${pathSegments.join('/')}';
 
-  final normalized = uri.replace(path: normalizedPath, query: null, fragment: null).toString();
-  return normalized.endsWith('/') ? normalized.substring(0, normalized.length - 1) : normalized;
+  final normalized = uri
+      .replace(path: normalizedPath, query: null, fragment: null)
+      .toString();
+  return normalized.endsWith('/')
+      ? normalized.substring(0, normalized.length - 1)
+      : normalized;
 }
 
-String _parseDioErrorMessage(DioException exception, {required String fallback}) {
+String _parseDioErrorMessage(
+  DioException exception, {
+  required String fallback,
+}) {
   final responseData = exception.response?.data;
 
   if (responseData is Map<String, dynamic>) {
-    final message = responseData['message']?.toString() ?? responseData['error']?.toString();
+    final message =
+        responseData['message']?.toString() ??
+        responseData['error']?.toString();
     if (message != null && message.isNotEmpty) {
       return message;
     }

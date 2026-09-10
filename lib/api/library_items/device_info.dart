@@ -14,5 +14,6 @@ abstract class DeviceInfo with _$DeviceInfo {
     @JsonKey(name: "sdkVersion") String? sdkVersion,
   }) = _DeviceInfo;
 
-  factory DeviceInfo.fromJson(Map<String, dynamic> json) => _$DeviceInfoFromJson(json);
+  factory DeviceInfo.fromJson(Map<String, dynamic> json) =>
+      _$DeviceInfoFromJson(json);
 }

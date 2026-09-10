@@ -1,7 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 
 class NarratorCard extends StatelessWidget {
-  const NarratorCard({super.key, required this.name, this.subtitle, this.onTap});
+  const NarratorCard({
+    super.key,
+    required this.name,
+    this.subtitle,
+    this.onTap,
+  });
 
   final String name;
   final String? subtitle;
@@ -21,9 +26,14 @@ class NarratorCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.7)),
+              border: Border.all(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.7),
+              ),
             ),
-            child: Icon(Icons.record_voice_over_rounded, color: colorScheme.primary),
+            child: Icon(
+              Icons.record_voice_over_rounded,
+              color: colorScheme.primary,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -43,7 +53,8 @@ class NarratorCard extends StatelessWidget {
                     subtitle!.trim(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                 ],
               ],
@@ -51,7 +62,10 @@ class NarratorCard extends StatelessWidget {
           ),
           if (onTap != null) ...[
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right_rounded, color: colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ],
         ],
       ),
@@ -60,7 +74,9 @@ class NarratorCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: onTap == null ? cardChild : InkWell(onTap: onTap, child: cardChild),
+      child: onTap == null
+          ? cardChild
+          : InkWell(onTap: onTap, child: cardChild),
     );
   }
 }

@@ -32,7 +32,8 @@ class AppearanceSettings extends StatelessWidget {
             SettingsNavigationItem(
               icon: Icons.tune_rounded,
               title: 'Navigation',
-              subtitle: 'Configure displayed tabs, their order, and the default view',
+              subtitle:
+                  'Configure displayed tabs, their order, and the default view',
               onTap: () => context.push(LibraryViewsSettings.routeName),
             ),
           ],

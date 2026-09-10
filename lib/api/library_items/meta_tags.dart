@@ -25,5 +25,6 @@ abstract class MetaTags with _$MetaTags {
     @JsonKey(name: "tagPodcastType") String? tagPodcastType,
   }) = _MetaTags;
 
-  factory MetaTags.fromJson(Map<String, dynamic> json) => _$MetaTagsFromJson(json);
+  factory MetaTags.fromJson(Map<String, dynamic> json) =>
+      _$MetaTagsFromJson(json);
 }

@@ -27,7 +27,11 @@ import 'package:yaabsa/util/server_management_preferences.dart';
 import 'package:yaabsa/util/setting_key.dart';
 
 class CollectionDetailView extends HookConsumerWidget {
-  const CollectionDetailView({required this.collectionId, super.key, this.initialEntry});
+  const CollectionDetailView({
+    required this.collectionId,
+    super.key,
+    this.initialEntry,
+  });
 
   final String collectionId;
   final MultiBookEntryData? initialEntry;
@@ -38,7 +42,11 @@ class CollectionDetailView extends HookConsumerWidget {
     final selectedLibrary = ref.watch(selectedLibraryProvider);
     final serverReachable = ref.watch(serverStatusProvider).value ?? false;
     if (selectedLibrary == null) {
-      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
+      return const Center(
+        child: Text(
+          'No library selected. Please select a library via the switcher.',
+        ),
+      );
     }
 
     final api = ref.watch(absApiProvider);
@@ -48,8 +56,15 @@ class CollectionDetailView extends HookConsumerWidget {
 
     final libraryId = selectedLibrary.id;
     final allCollectionsAsync = ref.watch(collectionsProvider(libraryId));
-    final resolvedCollection = _resolveCollection(collectionId, allCollectionsAsync.value?.items);
-    final resolvedEntry = _resolveEntry(collectionId, initialEntry, resolvedCollection);
+    final resolvedCollection = _resolveCollection(
+      collectionId,
+      allCollectionsAsync.value?.items,
+    );
+    final resolvedEntry = _resolveEntry(
+      collectionId,
+      initialEntry,
+      resolvedCollection,
+    );
 
     if (resolvedCollection == null) {
       if (allCollectionsAsync.isLoading) {
@@ -58,14 +73,20 @@ class CollectionDetailView extends HookConsumerWidget {
       if (allCollectionsAsync.hasError) {
         if (!serverReachable) {
           return ConnectionIssueView.offline(
-            onRetry: () => ref.read(collectionsProvider(libraryId).notifier).refresh(withLoading: true),
+            onRetry: () => ref
+                .read(collectionsProvider(libraryId).notifier)
+                .refresh(withLoading: true),
           );
         }
 
         return ConnectionIssueView.requestFailed(
-          error: allCollectionsAsync.error ?? Exception('Unknown collection loading error.'),
+          error:
+              allCollectionsAsync.error ??
+              Exception('Unknown collection loading error.'),
           title: 'Collection details could not be loaded',
-          onRetry: () => ref.read(collectionsProvider(libraryId).notifier).refresh(withLoading: true),
+          onRetry: () => ref
+              .read(collectionsProvider(libraryId).notifier)
+              .refresh(withLoading: true),
         );
       }
 
@@ -79,16 +100,27 @@ class CollectionDetailView extends HookConsumerWidget {
     final collectionItems = resolvedCollection.items ?? const [];
     final currentUser = ref.watch(currentUserProvider).value;
     ref.watch(userSettingsWatcherProvider);
-    final managementPreferences = readServerManagementPreferences(ref, currentUser?.id);
-    final collectionsManagementEnabled = managementPreferences.collectionsEnabled;
-    final hasCollectionManagementPermission = currentUser?.permissions.update ?? false;
-    final canEditCollection = hasCollectionManagementPermission && collectionsManagementEnabled;
-    final canDeleteCollection = hasCollectionManagementPermission && collectionsManagementEnabled;
+    final managementPreferences = readServerManagementPreferences(
+      ref,
+      currentUser?.id,
+    );
+    final collectionsManagementEnabled =
+        managementPreferences.collectionsEnabled;
+    final hasCollectionManagementPermission =
+        currentUser?.permissions.update ?? false;
+    final canEditCollection =
+        hasCollectionManagementPermission && collectionsManagementEnabled;
+    final canDeleteCollection =
+        hasCollectionManagementPermission && collectionsManagementEnabled;
     final showShuffleButton =
         currentUser != null &&
         ref
             .read(settingsManagerProvider.notifier)
-            .getUserSetting<bool>(currentUser.id, SettingKeys.showShuffleButton, defaultValue: false);
+            .getUserSetting<bool>(
+              currentUser.id,
+              SettingKeys.showShuffleButton,
+              defaultValue: false,
+            );
     final description = resolvedCollection.description?.trim();
 
     return LibraryGridLayoutBuilder(
@@ -115,7 +147,8 @@ class CollectionDetailView extends HookConsumerWidget {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
-                  if (showShuffleButton && hasRandomPlaybackTarget(collectionItems))
+                  if (showShuffleButton &&
+                      hasRandomPlaybackTarget(collectionItems))
                     IconButton.filledTonal(
                       onPressed: () => unawaited(
                         playRandomLibraryItemOrEpisode(
@@ -138,7 +171,8 @@ class CollectionDetailView extends HookConsumerWidget {
                         action: action,
                       ),
                       itemBuilder: (context) {
-                        final items = <PopupMenuEntry<_CollectionDetailAction>>[];
+                        final items =
+                            <PopupMenuEntry<_CollectionDetailAction>>[];
                         if (canEditCollection) {
                           items.add(
                             const PopupMenuItem<_CollectionDetailAction>(
@@ -175,24 +209,36 @@ class CollectionDetailView extends HookConsumerWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     description,
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
             if (collectionItems.isEmpty)
-              const Expanded(child: Center(child: Text('No books found in this collection.')))
+              const Expanded(
+                child: Center(
+                  child: Text('No books found in this collection.'),
+                ),
+              )
             else
               Expanded(
                 child: Stack(
                   children: [
                     Positioned.fill(
                       child: RefreshIndicator(
-                        onRefresh: () => ref.read(collectionsProvider(libraryId).notifier).refresh(withLoading: false),
+                        onRefresh: () => ref
+                            .read(collectionsProvider(libraryId).notifier)
+                            .refresh(withLoading: false),
                         child: AlignedGridView.count(
                           controller: scrollController,
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 16),
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalPadding,
+                            0,
+                            horizontalPadding,
+                            16,
+                          ),
                           crossAxisCount: gridLayout.crossAxisCount,
                           mainAxisSpacing: appGridSpacing,
                           crossAxisSpacing: appGridSpacing,
@@ -230,7 +276,10 @@ class CollectionDetailView extends HookConsumerWidget {
   }
 }
 
-Collection? _resolveCollection(String collectionId, List<Collection>? allCollections) {
+Collection? _resolveCollection(
+  String collectionId,
+  List<Collection>? allCollections,
+) {
   if (allCollections == null) return null;
 
   for (final collection in allCollections) {
@@ -242,7 +291,11 @@ Collection? _resolveCollection(String collectionId, List<Collection>? allCollect
   return null;
 }
 
-MultiBookEntryData? _resolveEntry(String collectionId, MultiBookEntryData? initialEntry, Collection? collection) {
+MultiBookEntryData? _resolveEntry(
+  String collectionId,
+  MultiBookEntryData? initialEntry,
+  Collection? collection,
+) {
   if (initialEntry != null && initialEntry.id == collectionId) {
     return initialEntry;
   }
@@ -263,13 +316,28 @@ Future<void> _handleCollectionAction({
 }) async {
   switch (action) {
     case _CollectionDetailAction.editBooks:
-      await _editCollectionBooks(context: context, ref: ref, libraryId: libraryId, collection: collection);
+      await _editCollectionBooks(
+        context: context,
+        ref: ref,
+        libraryId: libraryId,
+        collection: collection,
+      );
       break;
     case _CollectionDetailAction.edit:
-      await _editCollection(context: context, ref: ref, libraryId: libraryId, collection: collection);
+      await _editCollection(
+        context: context,
+        ref: ref,
+        libraryId: libraryId,
+        collection: collection,
+      );
       break;
     case _CollectionDetailAction.delete:
-      await _deleteCollection(context: context, ref: ref, libraryId: libraryId, collection: collection);
+      await _deleteCollection(
+        context: context,
+        ref: ref,
+        libraryId: libraryId,
+        collection: collection,
+      );
       break;
   }
 }
@@ -291,7 +359,9 @@ Future<void> _editCollectionBooks({
         .read(collectionsProvider(libraryId).notifier)
         .replaceBooksInCollection(
           collection.id,
-          currentBookIds: collectionItems.map((item) => item.id).toList(growable: false),
+          currentBookIds: collectionItems
+              .map((item) => item.id)
+              .toList(growable: false),
           desiredBookIds: bookIds,
         ),
     successMessage: 'Collection books updated.',
@@ -328,7 +398,9 @@ Future<void> _deleteCollection({
     context: context,
     title: 'Delete collection?',
     message: '"${collection.name}" will be permanently removed.',
-    onDelete: () => ref.read(collectionsProvider(libraryId).notifier).deleteCollection(collection.id),
+    onDelete: () => ref
+        .read(collectionsProvider(libraryId).notifier)
+        .deleteCollection(collection.id),
     successMessage: 'Collection deleted.',
     errorFallback: 'Could not delete collection.',
     popOnSuccess: true,

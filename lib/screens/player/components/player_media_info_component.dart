@@ -31,12 +31,17 @@ class PlayerMediaInfoComponent extends StatelessWidget {
     final textAlign = textAlignMode.textAlign;
     final crossAxis = textAlignMode.crossAxisAlignment;
 
-    final titleStyle = Theme.of(context).textTheme.titleMedium
-        ?.copyWith(fontSize: (Theme.of(context).textTheme.titleLarge?.fontSize ?? 16) * resolvedScale);
+    final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+      fontSize:
+          (Theme.of(context).textTheme.titleLarge?.fontSize ?? 16) *
+          resolvedScale,
+    );
 
     final detailStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
       color: Theme.of(context).colorScheme.onSurfaceVariant,
-      fontSize: (Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14) * (resolvedScale * 0.9),
+      fontSize:
+          (Theme.of(context).textTheme.bodyLarge?.fontSize ?? 14) *
+          (resolvedScale * 0.9),
     );
 
     final seriesText = media.series == null || media.series!.trim().isEmpty
@@ -74,7 +79,8 @@ class PlayerMediaInfoComponent extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: titleStyle,
             ),
-            if (showAuthor && media.author?.trim().isNotEmpty == true) ...<Widget>[
+            if (showAuthor &&
+                media.author?.trim().isNotEmpty == true) ...<Widget>[
               const SizedBox(height: 4),
               Text(
                 media.author!.trim(),

@@ -73,7 +73,8 @@ class SettingsNavigationSection extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     final List<Widget> allItems = [
-      for (var index = 0; index < items.length; index++) _SettingsNavigationTile(item: items[index]),
+      for (var index = 0; index < items.length; index++)
+        _SettingsNavigationTile(item: items[index]),
       ...settings,
       ...children,
     ];
@@ -83,18 +84,23 @@ class SettingsNavigationSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showSectionTitle) SettingsSectionTitle(title: title, topPadding: topPadding),
+        if (showSectionTitle)
+          SettingsSectionTitle(title: title, topPadding: topPadding),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           child: Column(
             children: [
               for (var index = 0; index < allItems.length; index++)
                 Padding(
-                  padding: EdgeInsets.only(bottom: index == allItems.length - 1 ? 0 : 2),
+                  padding: EdgeInsets.only(
+                    bottom: index == allItems.length - 1 ? 0 : 2,
+                  ),
                   child: ClipRRect(
                     borderRadius: _getBorderRadius(index, allItems.length),
                     child: Material(
-                      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                      color: colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.5,
+                      ),
                       child: allItems[index],
                     ),
                   ),
@@ -119,7 +125,10 @@ class _SettingsNavigationTile extends StatelessWidget {
 
     final subtitleParts = <String>[
       if (item.subtitle != null && item.subtitle!.isNotEmpty) item.subtitle!,
-      if (!isEnabled && item.disabledReason != null && item.disabledReason!.isNotEmpty) item.disabledReason!,
+      if (!isEnabled &&
+          item.disabledReason != null &&
+          item.disabledReason!.isNotEmpty)
+        item.disabledReason!,
     ];
 
     return Material(
@@ -132,7 +141,9 @@ class _SettingsNavigationTile extends StatelessWidget {
             children: [
               Icon(
                 item.icon,
-                color: isEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
+                color: isEnabled
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
                 size: 22,
               ),
               const SizedBox(width: 16),
@@ -144,15 +155,22 @@ class _SettingsNavigationTile extends StatelessWidget {
                       item.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w500,
-                        color: isEnabled ? colorScheme.onSurface : colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                        color: isEnabled
+                            ? colorScheme.onSurface
+                            : colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.6,
+                              ),
                       ),
                     ),
                     if (subtitleParts.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Text(
                         subtitleParts.join('\n'),
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.78)),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.78,
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -163,7 +181,9 @@ class _SettingsNavigationTile extends StatelessWidget {
                   Icon(
                     Icons.chevron_right_rounded,
                     size: 20,
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: isEnabled ? 0.6 : 0.38),
+                    color: colorScheme.onSurfaceVariant.withValues(
+                      alpha: isEnabled ? 0.6 : 0.38,
+                    ),
                   ),
             ],
           ),

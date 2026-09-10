@@ -6,8 +6,10 @@ part 'search_providers_response.g.dart';
 
 @freezed
 abstract class SearchProvidersResponse with _$SearchProvidersResponse {
-  const factory SearchProvidersResponse({@JsonKey(name: 'providers') required SearchProviders providers}) =
-      _SearchProvidersResponse;
+  const factory SearchProvidersResponse({
+    @JsonKey(name: 'providers') required SearchProviders providers,
+  }) = _SearchProvidersResponse;
 
-  factory SearchProvidersResponse.fromJson(Map<String, dynamic> json) => _$SearchProvidersResponseFromJson(json);
+  factory SearchProvidersResponse.fromJson(Map<String, dynamic> json) =>
+      _$SearchProvidersResponseFromJson(json);
 }

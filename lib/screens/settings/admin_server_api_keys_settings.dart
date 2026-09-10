@@ -33,7 +33,8 @@ class AdminServerApiKeysSettings extends StatelessWidget {
               Expanded(
                 child: Text(
                   'API Keys',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],

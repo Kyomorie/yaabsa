@@ -51,8 +51,13 @@ class PlayerAdaptiveView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final headers = api == null ? const <String, String>{} : normalizeImageRequestHeaders(api!.dio.options.headers);
-    final coverProvider = coverImageProviderFromUri(media.cover, requestHeaders: headers);
+    final headers = api == null
+        ? const <String, String>{}
+        : normalizeImageRequestHeaders(api!.dio.options.headers);
+    final coverProvider = coverImageProviderFromUri(
+      media.cover,
+      requestHeaders: headers,
+    );
     final backgroundProvider = !immersiveColors || coverProvider == null
         ? null
         : ResizeImage.resizeIfNeeded(96, 96, coverProvider);
@@ -64,11 +69,15 @@ class PlayerAdaptiveView extends StatelessWidget {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final coverSurface = immersiveColors
             ? Color.alphaBlend(
-                (palette?.primary ?? colors.primaryContainer).withValues(alpha: isDark ? 0.5 : 0.22),
+                (palette?.primary ?? colors.primaryContainer).withValues(
+                  alpha: isDark ? 0.5 : 0.22,
+                ),
                 colors.surface,
               )
             : colors.surface;
-        final systemBarBrightness = ThemeData.estimateBrightnessForColor(coverSurface);
+        final systemBarBrightness = ThemeData.estimateBrightnessForColor(
+          coverSurface,
+        );
         WidgetsBinding.instance.addPostFrameCallback((_) {
           onNavigationBarColorChanged(coverSurface);
         });
@@ -76,10 +85,13 @@ class PlayerAdaptiveView extends StatelessWidget {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle(
             statusBarColor: Colors.transparent,
-            statusBarIconBrightness: systemBarBrightness == Brightness.dark ? Brightness.light : Brightness.dark,
+            statusBarIconBrightness: systemBarBrightness == Brightness.dark
+                ? Brightness.light
+                : Brightness.dark,
             systemNavigationBarColor: Colors.transparent,
             systemNavigationBarDividerColor: Colors.transparent,
-            systemNavigationBarIconBrightness: systemBarBrightness == Brightness.dark
+            systemNavigationBarIconBrightness:
+                systemBarBrightness == Brightness.dark
                 ? Brightness.light
                 : Brightness.dark,
             systemNavigationBarContrastEnforced: false,
@@ -95,20 +107,40 @@ class PlayerAdaptiveView extends StatelessWidget {
                       imageFilter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
                       child: Opacity(
                         opacity: isDark ? 0.5 : 0.25,
-                        child: Image(image: backgroundProvider, fit: BoxFit.cover),
+                        child: Image(
+                          image: backgroundProvider,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ColoredBox(
-                color: immersiveColors ? coverSurface.withValues(alpha: isDark ? 0.68 : 0.78) : coverSurface,
+                color: immersiveColors
+                    ? coverSurface.withValues(alpha: isDark ? 0.68 : 0.78)
+                    : coverSurface,
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    return switch (resolveAdaptivePlayerLayout(context, constraints)) {
-                      AdaptivePlayerLayout.compactPortrait => _buildPortrait(context, constraints),
-                      AdaptivePlayerLayout.compactLandscape => _buildLandscape(context, constraints),
-                      AdaptivePlayerLayout.medium => _buildMedium(context, constraints),
-                      AdaptivePlayerLayout.expanded => _buildExpanded(context, constraints),
+                    return switch (resolveAdaptivePlayerLayout(
+                      context,
+                      constraints,
+                    )) {
+                      AdaptivePlayerLayout.compactPortrait => _buildPortrait(
+                        context,
+                        constraints,
+                      ),
+                      AdaptivePlayerLayout.compactLandscape => _buildLandscape(
+                        context,
+                        constraints,
+                      ),
+                      AdaptivePlayerLayout.medium => _buildMedium(
+                        context,
+                        constraints,
+                      ),
+                      AdaptivePlayerLayout.expanded => _buildExpanded(
+                        context,
+                        constraints,
+                      ),
                     };
                   },
                 ),
@@ -132,7 +164,11 @@ class PlayerAdaptiveView extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     heightFactor: 1,
-                    child: PlayerActionBar(actions: actions, hasChapters: hasChapters, grouped: true),
+                    child: PlayerActionBar(
+                      actions: actions,
+                      hasChapters: hasChapters,
+                      grouped: true,
+                    ),
                   ),
                 ),
             ],
@@ -152,28 +188,46 @@ class PlayerAdaptiveView extends StatelessWidget {
     final leftPadding = horizontalPadding + safePadding.left;
     final rightPadding = horizontalPadding + safePadding.right;
     final topPadding = safePadding.top;
-    final bottomPadding = safePadding.bottom + (_minimalistic || _showMobileFullActionBar(context) ? 68.0 : 16.0);
-    final maxArtworkSize = (constraints.maxWidth - leftPadding - rightPadding).clamp(
-      0.0,
-      _compactCover ? 280.0 : 360.0,
-    );
+    final bottomPadding =
+        safePadding.bottom +
+        (_minimalistic || _showMobileFullActionBar(context) ? 68.0 : 16.0);
+    final maxArtworkSize = (constraints.maxWidth - leftPadding - rightPadding)
+        .clamp(0.0, _compactCover ? 280.0 : 360.0);
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(leftPadding, topPadding, rightPadding, bottomPadding),
+      padding: EdgeInsets.fromLTRB(
+        leftPadding,
+        topPadding,
+        rightPadding,
+        bottomPadding,
+      ),
       child: Column(
         children: <Widget>[
           Flexible(
             flex: 5,
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxArtworkSize, maxHeight: maxArtworkSize),
+              constraints: BoxConstraints(
+                maxWidth: maxArtworkSize,
+                maxHeight: maxArtworkSize,
+              ),
               child: AspectRatio(
                 aspectRatio: 1,
-                child: _Artwork(api: api, media: media, size: maxArtworkSize, compact: _compactCover),
+                child: _Artwork(
+                  api: api,
+                  media: media,
+                  size: maxArtworkSize,
+                  compact: _compactCover,
+                ),
               ),
             ),
           ),
           SizedBox(height: _minimalistic ? 10 : 16),
-          _MediaDetails(media: media, centered: true, compact: _minimalistic, dense: true),
+          _MediaDetails(
+            media: media,
+            centered: true,
+            compact: _minimalistic,
+            dense: true,
+          ),
           SizedBox(height: _minimalistic ? 10 : 16),
           _PlaybackPanel(
             transportMode: transportMode,
@@ -195,16 +249,27 @@ class PlayerAdaptiveView extends StatelessWidget {
         ? 60.0
         : 8.0;
     final bottomPadding = safePadding.bottom + reservedBottom;
-    final artworkSize = (constraints.maxHeight - topPadding - bottomPadding).clamp(120.0, 280.0);
+    final artworkSize = (constraints.maxHeight - topPadding - bottomPadding)
+        .clamp(120.0, 280.0);
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(20 + safePadding.left, topPadding, 20 + safePadding.right, bottomPadding),
+      padding: EdgeInsets.fromLTRB(
+        20 + safePadding.left,
+        topPadding,
+        20 + safePadding.right,
+        bottomPadding,
+      ),
       child: Row(
         children: <Widget>[
           Expanded(
             flex: _compactCover ? 4 : 5,
             child: Center(
-              child: _Artwork(api: api, media: media, size: artworkSize, compact: _compactCover),
+              child: _Artwork(
+                api: api,
+                media: media,
+                size: artworkSize,
+                compact: _compactCover,
+              ),
             ),
           ),
           const SizedBox(width: 24),
@@ -216,7 +281,12 @@ class PlayerAdaptiveView extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    _MediaDetails(media: media, centered: false, compact: true, dense: context.isMobile),
+                    _MediaDetails(
+                      media: media,
+                      centered: false,
+                      compact: true,
+                      dense: context.isMobile,
+                    ),
                     const SizedBox(height: 8),
                     _PlaybackPanel(
                       transportMode: transportMode,
@@ -228,7 +298,9 @@ class PlayerAdaptiveView extends StatelessWidget {
                 );
                 return SingleChildScrollView(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: panelConstraints.maxHeight),
+                    constraints: BoxConstraints(
+                      minHeight: panelConstraints.maxHeight,
+                    ),
                     child: Align(alignment: Alignment.centerLeft, child: panel),
                   ),
                 );
@@ -268,10 +340,10 @@ class PlayerAdaptiveView extends StatelessWidget {
                       child: _Artwork(
                         api: api,
                         media: media,
-                        size: (constraints.maxWidth * (_compactCover ? 0.28 : 0.34)).clamp(
-                          220.0,
-                          _compactCover ? 320.0 : 390.0,
-                        ),
+                        size:
+                            (constraints.maxWidth *
+                                    (_compactCover ? 0.28 : 0.34))
+                                .clamp(220.0, _compactCover ? 320.0 : 390.0),
                         compact: _compactCover,
                       ),
                     ),
@@ -282,7 +354,11 @@ class PlayerAdaptiveView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        _MediaDetails(media: media, centered: false, compact: _minimalistic),
+                        _MediaDetails(
+                          media: media,
+                          centered: false,
+                          compact: _minimalistic,
+                        ),
                         const SizedBox(height: 28),
                         _PlaybackPanel(
                           transportMode: transportMode,
@@ -330,10 +406,10 @@ class PlayerAdaptiveView extends StatelessWidget {
                       child: _Artwork(
                         api: api,
                         media: media,
-                        size: (constraints.maxHeight * (_compactCover ? 0.44 : 0.56)).clamp(
-                          280.0,
-                          _compactCover ? 350.0 : 430.0,
-                        ),
+                        size:
+                            (constraints.maxHeight *
+                                    (_compactCover ? 0.44 : 0.56))
+                                .clamp(280.0, _compactCover ? 350.0 : 430.0),
                         compact: _compactCover,
                       ),
                     ),
@@ -344,7 +420,11 @@ class PlayerAdaptiveView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        _MediaDetails(media: media, centered: false, compact: _minimalistic),
+                        _MediaDetails(
+                          media: media,
+                          centered: false,
+                          compact: _minimalistic,
+                        ),
                         const SizedBox(height: 30),
                         _PlaybackPanel(
                           transportMode: transportMode,
@@ -353,19 +433,25 @@ class PlayerAdaptiveView extends StatelessWidget {
                           compact: _minimalistic,
                           showActionLabels: false,
                           actionOverrides: <PlayerActionType, VoidCallback>{
-                            PlayerActionType.bookmarks: () => showDesktopPlayerSidePanel(
-                              context,
-                              type: DesktopPlayerPanelType.bookmarks,
-                              media: media,
-                            ),
+                            PlayerActionType.bookmarks: () =>
+                                showDesktopPlayerSidePanel(
+                                  context,
+                                  type: DesktopPlayerPanelType.bookmarks,
+                                  media: media,
+                                ),
                             if (hasChapters)
-                              PlayerActionType.chapter: () => showDesktopPlayerSidePanel(
-                                context,
-                                type: DesktopPlayerPanelType.chapters,
-                                media: media,
-                              ),
+                              PlayerActionType.chapter: () =>
+                                  showDesktopPlayerSidePanel(
+                                    context,
+                                    type: DesktopPlayerPanelType.chapters,
+                                    media: media,
+                                  ),
                             PlayerActionType.queue: () =>
-                                showDesktopPlayerSidePanel(context, type: DesktopPlayerPanelType.queue, media: media),
+                                showDesktopPlayerSidePanel(
+                                  context,
+                                  type: DesktopPlayerPanelType.queue,
+                                  media: media,
+                                ),
                           },
                         ),
                       ],
@@ -382,7 +468,12 @@ class PlayerAdaptiveView extends StatelessWidget {
 }
 
 class _Artwork extends StatelessWidget {
-  const _Artwork({required this.api, required this.media, required this.size, required this.compact});
+  const _Artwork({
+    required this.api,
+    required this.media,
+    required this.size,
+    required this.compact,
+  });
 
   final ABSApi? api;
   final InternalMedia media;
@@ -405,13 +496,22 @@ class _Artwork extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: PlayerCoverComponent(api: api, media: media, fitMode: PlayerCoverFitMode.width),
+      child: PlayerCoverComponent(
+        api: api,
+        media: media,
+        fitMode: PlayerCoverFitMode.width,
+      ),
     );
   }
 }
 
 class _MediaDetails extends StatelessWidget {
-  const _MediaDetails({required this.media, required this.centered, required this.compact, this.dense = false});
+  const _MediaDetails({
+    required this.media,
+    required this.centered,
+    required this.compact,
+    this.dense = false,
+  });
 
   final InternalMedia media;
   final bool centered;
@@ -425,7 +525,9 @@ class _MediaDetails extends StatelessWidget {
       showAuthor: true,
       showNarrator: false,
       showSeries: true,
-      textAlignMode: centered ? PlayerMetadataTextAlign.center : PlayerMetadataTextAlign.start,
+      textAlignMode: centered
+          ? PlayerMetadataTextAlign.center
+          : PlayerMetadataTextAlign.start,
       fontScale: dense ? 0.95 : (compact ? 1 : 1.22),
       titleMaxLines: 3,
       detailMaxLines: 2,
@@ -453,8 +555,12 @@ class _PlaybackPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDesktop = context.isDesktop;
-    final seekTrackHeight = isDesktop ? (compact ? 8.0 : 9.0) : (compact ? 6.0 : 7.0);
-    final seekLabelFontSize = isDesktop ? (compact ? 14.0 : 15.0) : (compact ? 12.0 : 13.0);
+    final seekTrackHeight = isDesktop
+        ? (compact ? 8.0 : 9.0)
+        : (compact ? 6.0 : 7.0);
+    final seekLabelFontSize = isDesktop
+        ? (compact ? 14.0 : 15.0)
+        : (compact ? 12.0 : 13.0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

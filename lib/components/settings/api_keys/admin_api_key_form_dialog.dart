@@ -16,7 +16,8 @@ Future<CreateAdminApiKeyRequest?> showCreateAdminApiKeyDialog(
   return showDialog<CreateAdminApiKeyRequest>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => _CreateAdminApiKeyDialog(users: users, initialUserId: initialUserId),
+    builder: (_) =>
+        _CreateAdminApiKeyDialog(users: users, initialUserId: initialUserId),
   );
 }
 
@@ -33,13 +34,17 @@ Future<UpdateAdminApiKeyRequest?> showUpdateAdminApiKeyDialog(
 }
 
 class _CreateAdminApiKeyDialog extends StatefulWidget {
-  const _CreateAdminApiKeyDialog({required this.users, required this.initialUserId});
+  const _CreateAdminApiKeyDialog({
+    required this.users,
+    required this.initialUserId,
+  });
 
   final List<SessionUserSummary> users;
   final String initialUserId;
 
   @override
-  State<_CreateAdminApiKeyDialog> createState() => _CreateAdminApiKeyDialogState();
+  State<_CreateAdminApiKeyDialog> createState() =>
+      _CreateAdminApiKeyDialogState();
 }
 
 class _CreateAdminApiKeyDialogState extends State<_CreateAdminApiKeyDialog> {
@@ -60,7 +65,9 @@ class _CreateAdminApiKeyDialogState extends State<_CreateAdminApiKeyDialog> {
     _nameController = TextEditingController();
     _expiresDaysController = TextEditingController();
 
-    final hasInitialUser = widget.users.any((user) => user.id == widget.initialUserId);
+    final hasInitialUser = widget.users.any(
+      (user) => user.id == widget.initialUserId,
+    );
     _selectedUserId = hasInitialUser
         ? widget.initialUserId
         : widget.users.isNotEmpty
@@ -78,7 +85,9 @@ class _CreateAdminApiKeyDialogState extends State<_CreateAdminApiKeyDialog> {
   List<YaabsaDropdownOption<String>> _userOptions() {
     final sortedUsers = List<SessionUserSummary>.from(widget.users)
       ..sort((left, right) {
-        final byName = left.username.toLowerCase().compareTo(right.username.toLowerCase());
+        final byName = left.username.toLowerCase().compareTo(
+          right.username.toLowerCase(),
+        );
         if (byName != 0) {
           return byName;
         }
@@ -151,7 +160,9 @@ class _CreateAdminApiKeyDialogState extends State<_CreateAdminApiKeyDialog> {
     }
 
     final expiresInDays = int.tryParse(_expiresDaysController.text.trim());
-    final expiresInSeconds = _neverExpires ? null : expiresInDays! * 24 * 60 * 60;
+    final expiresInSeconds = _neverExpires
+        ? null
+        : expiresInDays! * 24 * 60 * 60;
 
     Navigator.of(context).pop(
       CreateAdminApiKeyRequest(
@@ -210,7 +221,9 @@ class _CreateAdminApiKeyDialogState extends State<_CreateAdminApiKeyDialog> {
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('API key is active'),
-                subtitle: const Text('Inactive keys cannot authenticate API requests.'),
+                subtitle: const Text(
+                  'Inactive keys cannot authenticate API requests.',
+                ),
                 value: _isActive,
                 onChanged: (value) {
                   setState(() {
@@ -245,7 +258,9 @@ class _CreateAdminApiKeyDialogState extends State<_CreateAdminApiKeyDialog> {
                       return;
                     }
                     setState(() {
-                      _expiresInError = _validateExpiresInDays(_expiresDaysController.text);
+                      _expiresInError = _validateExpiresInDays(
+                        _expiresDaysController.text,
+                      );
                     });
                   },
                 ),
@@ -254,8 +269,15 @@ class _CreateAdminApiKeyDialogState extends State<_CreateAdminApiKeyDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-        FilledButton.icon(onPressed: _submit, icon: const Icon(Icons.key_rounded), label: const Text('Create key')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          onPressed: _submit,
+          icon: const Icon(Icons.key_rounded),
+          label: const Text('Create key'),
+        ),
       ],
     );
   }
@@ -268,7 +290,8 @@ class _UpdateAdminApiKeyDialog extends StatefulWidget {
   final List<SessionUserSummary> users;
 
   @override
-  State<_UpdateAdminApiKeyDialog> createState() => _UpdateAdminApiKeyDialogState();
+  State<_UpdateAdminApiKeyDialog> createState() =>
+      _UpdateAdminApiKeyDialogState();
 }
 
 class _UpdateAdminApiKeyDialogState extends State<_UpdateAdminApiKeyDialog> {
@@ -279,7 +302,9 @@ class _UpdateAdminApiKeyDialogState extends State<_UpdateAdminApiKeyDialog> {
   List<YaabsaDropdownOption<String>> _userOptions() {
     final sortedUsers = List<SessionUserSummary>.from(widget.users)
       ..sort((left, right) {
-        final byName = left.username.toLowerCase().compareTo(right.username.toLowerCase());
+        final byName = left.username.toLowerCase().compareTo(
+          right.username.toLowerCase(),
+        );
         if (byName != 0) {
           return byName;
         }
@@ -309,7 +334,8 @@ class _UpdateAdminApiKeyDialogState extends State<_UpdateAdminApiKeyDialog> {
   }
 
   bool get _hasChanges {
-    return _selectedUserId != widget.apiKey.userId || _isActive != widget.apiKey.isActive;
+    return _selectedUserId != widget.apiKey.userId ||
+        _isActive != widget.apiKey.isActive;
   }
 
   void _submit() {
@@ -320,7 +346,9 @@ class _UpdateAdminApiKeyDialogState extends State<_UpdateAdminApiKeyDialog> {
       return;
     }
 
-    Navigator.of(context).pop(UpdateAdminApiKeyRequest(userId: _selectedUserId, isActive: _isActive));
+    Navigator.of(context).pop(
+      UpdateAdminApiKeyRequest(userId: _selectedUserId, isActive: _isActive),
+    );
   }
 
   @override
@@ -338,7 +366,10 @@ class _UpdateAdminApiKeyDialogState extends State<_UpdateAdminApiKeyDialog> {
             children: [
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(widget.apiKey.name, style: Theme.of(context).textTheme.titleMedium),
+                title: Text(
+                  widget.apiKey.name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 subtitle: Text('Current owner: $currentOwner'),
               ),
               const SizedBox(height: 6),
@@ -351,13 +382,19 @@ class _UpdateAdminApiKeyDialogState extends State<_UpdateAdminApiKeyDialog> {
                     _validationError = null;
                   });
                 },
-                decoration: yaabsaFieldDecoration(context, label: 'Owner', hintText: 'Select key owner'),
+                decoration: yaabsaFieldDecoration(
+                  context,
+                  label: 'Owner',
+                  hintText: 'Select key owner',
+                ),
               ),
               const SizedBox(height: 8),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('API key is active'),
-                subtitle: const Text('Inactive keys cannot authenticate API requests.'),
+                subtitle: const Text(
+                  'Inactive keys cannot authenticate API requests.',
+                ),
                 value: _isActive,
                 onChanged: (value) {
                   setState(() {
@@ -370,19 +407,27 @@ class _UpdateAdminApiKeyDialogState extends State<_UpdateAdminApiKeyDialog> {
                 widget.apiKey.expiresAt == null
                     ? 'Expires: Never'
                     : 'Expires: ${formatDateTimeLabel(widget.apiKey.expiresAt)}',
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
-              if (_validationError != null && _validationError!.trim().isNotEmpty) ...[
+              if (_validationError != null &&
+                  _validationError!.trim().isNotEmpty) ...[
                 const SizedBox(height: 8),
-                Text(_validationError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                Text(
+                  _validationError!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ],
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton.icon(
           onPressed: _hasChanges ? _submit : null,
           icon: const Icon(Icons.save_outlined),

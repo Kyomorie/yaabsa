@@ -14,7 +14,10 @@ class QuickMatchPreviewHeader extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('Preview changes', style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            'Preview changes',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const Spacer(),
           IconButton(
             tooltip: 'Close',
@@ -44,8 +47,14 @@ class QuickMatchPreviewSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actionButtons = <Widget>[
-      TextButton(onPressed: onSelectAll, child: const Text('Select all changes')),
-      TextButton(onPressed: onClearSelection, child: const Text('Clear selection')),
+      TextButton(
+        onPressed: onSelectAll,
+        child: const Text('Select all changes'),
+      ),
+      TextButton(
+        onPressed: onClearSelection,
+        child: const Text('Clear selection'),
+      ),
     ];
 
     if (context.isMobile) {
@@ -111,12 +120,19 @@ class QuickMatchPreviewActionRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          TextButton(onPressed: applying ? null : onClose, child: const Text('Close')),
+          TextButton(
+            onPressed: applying ? null : onClose,
+            child: const Text('Close'),
+          ),
           const SizedBox(width: 8),
           FilledButton.icon(
             onPressed: applying ? null : onApply,
             icon: applying
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2))
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2.2),
+                  )
                 : const Icon(Icons.checklist_rounded),
             label: Text(applyLabel),
           ),
@@ -137,7 +153,9 @@ class QuickMatchPreviewLoading extends StatelessWidget {
     final progressText = (completed != null && total != null)
         ? 'Searching matches... ($completed/$total completed)'
         : 'Searching matches...';
-    final progressPercent = (completed != null && total != null && total! > 0) ? (completed! / total!) : null;
+    final progressPercent = (completed != null && total != null && total! > 0)
+        ? (completed! / total!)
+        : null;
 
     return Center(
       child: Padding(
@@ -148,10 +166,17 @@ class QuickMatchPreviewLoading extends StatelessWidget {
             if (progressPercent != null) ...[
               SizedBox(
                 width: 200,
-                child: LinearProgressIndicator(value: progressPercent, borderRadius: BorderRadius.circular(4)),
+                child: LinearProgressIndicator(
+                  value: progressPercent,
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
             ] else ...[
-              const SizedBox(width: 26, height: 26, child: CircularProgressIndicator(strokeWidth: 2.4)),
+              const SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(strokeWidth: 2.4),
+              ),
             ],
             const SizedBox(height: 14),
             Text(progressText),
@@ -175,7 +200,8 @@ class QuickMatchPreviewFailure extends StatelessWidget {
         child: Text(
           'Could not load preview: $error',
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.error),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: Theme.of(context).colorScheme.error),
         ),
       ),
     );
@@ -183,7 +209,11 @@ class QuickMatchPreviewFailure extends StatelessWidget {
 }
 
 class QuickMatchPreviewNoResultCard extends StatelessWidget {
-  const QuickMatchPreviewNoResultCard({super.key, required this.item, required this.error});
+  const QuickMatchPreviewNoResultCard({
+    super.key,
+    required this.item,
+    required this.error,
+  });
 
   final LibraryItem item;
   final String? error;
@@ -209,12 +239,20 @@ class QuickMatchPreviewNoResultCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(999),
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest,
                   ),
-                  child: Text('No match', style: Theme.of(context).textTheme.labelSmall),
+                  child: Text(
+                    'No match',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
                 ),
               ],
             ),
@@ -232,7 +270,8 @@ class QuickMatchPreviewNoResultCard extends StatelessWidget {
               error == null
                   ? 'No metadata result was returned for this item with the selected provider.'
                   : 'Metadata search failed: $error',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: Theme.of(context).colorScheme.error),
             ),
           ],
         ),
@@ -302,7 +341,9 @@ class QuickMatchPreviewResultCard extends StatelessWidget {
                 Checkbox(
                   value: selected,
                   visualDensity: VisualDensity.compact,
-                  onChanged: selectable ? (value) => onSelectionChanged(value ?? false) : null,
+                  onChanged: selectable
+                      ? (value) => onSelectionChanged(value ?? false)
+                      : null,
                 ),
               ],
             ),
@@ -315,7 +356,9 @@ class QuickMatchPreviewResultCard extends StatelessWidget {
                   _CoverCard(label: 'Before cover', child: buildCurrentCover()),
                   _CoverCard(
                     label: 'After cover',
-                    child: coverWillChange ? _networkCoverPreview(context, result.coverUrl!) : buildCurrentCover(),
+                    child: coverWillChange
+                        ? _networkCoverPreview(context, result.coverUrl!)
+                        : buildCurrentCover(),
                   ),
                 ],
               ),
@@ -323,7 +366,8 @@ class QuickMatchPreviewResultCard extends StatelessWidget {
             if (rows.isEmpty)
               Text(
                 'No metadata field changes detected for this item.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: colorScheme.onSurfaceVariant),
               )
             else
               QuickMatchComparisonTable(rows: rows),
@@ -342,7 +386,10 @@ class QuickMatchPreviewResultCard extends StatelessWidget {
         child: Image.network(
           url,
           fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => quickMatchFallbackCoverPlaceholder(context, icon: Icons.broken_image_rounded),
+          errorBuilder: (_, _, _) => quickMatchFallbackCoverPlaceholder(
+            context,
+            icon: Icons.broken_image_rounded,
+          ),
         ),
       ),
     );
@@ -366,7 +413,9 @@ class QuickMatchComparisonTable extends StatelessWidget {
           Container(
             padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
             decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(10),
+              ),
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
             child: LayoutBuilder(
@@ -374,9 +423,19 @@ class QuickMatchComparisonTable extends StatelessWidget {
                 if (constraints.maxWidth < 640) {
                   return Row(
                     children: [
-                      Expanded(child: Text('Before', style: Theme.of(context).textTheme.labelMedium)),
+                      Expanded(
+                        child: Text(
+                          'Before',
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                      ),
                       const SizedBox(width: 10),
-                      Expanded(child: Text('After', style: Theme.of(context).textTheme.labelMedium)),
+                      Expanded(
+                        child: Text(
+                          'After',
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                      ),
                     ],
                   );
                 }
@@ -384,9 +443,19 @@ class QuickMatchComparisonTable extends StatelessWidget {
                 return Row(
                   children: [
                     const SizedBox(width: 150),
-                    Expanded(child: Text('Before', style: Theme.of(context).textTheme.labelMedium)),
+                    Expanded(
+                      child: Text(
+                        'Before',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: Text('After', style: Theme.of(context).textTheme.labelMedium)),
+                    Expanded(
+                      child: Text(
+                        'After',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ),
                   ],
                 );
               },
@@ -439,7 +508,13 @@ class _ComparisonRowTile extends StatelessWidget {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: 150, child: Text(row.label, style: Theme.of(context).textTheme.labelLarge)),
+              SizedBox(
+                width: 150,
+                child: Text(
+                  row.label,
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+              ),
               Expanded(child: _valueText(context, row.before)),
               const SizedBox(width: 10),
               Expanded(child: _valueText(context, row.after)),
@@ -480,7 +555,10 @@ class _CoverCard extends StatelessWidget {
   }
 }
 
-Widget quickMatchFallbackCoverPlaceholder(BuildContext context, {required IconData icon}) {
+Widget quickMatchFallbackCoverPlaceholder(
+  BuildContext context, {
+  required IconData icon,
+}) {
   return Container(
     width: quickMatchCoverPreviewSize,
     height: quickMatchCoverPreviewSize,
@@ -489,6 +567,10 @@ Widget quickMatchFallbackCoverPlaceholder(BuildContext context, {required IconDa
       borderRadius: BorderRadius.circular(8),
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
     ),
-    child: Icon(icon, size: 22, color: Theme.of(context).colorScheme.onSurfaceVariant),
+    child: Icon(
+      icon,
+      size: 22,
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    ),
   );
 }

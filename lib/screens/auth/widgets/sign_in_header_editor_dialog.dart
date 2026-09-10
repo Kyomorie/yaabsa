@@ -15,7 +15,9 @@ Future<SignInHeaderEntry?> showSignInHeaderEditorDialog({
 }) async {
   final keyController = TextEditingController(text: originalHeaderName ?? '');
   final valueController = TextEditingController(
-    text: originalHeaderName == null ? '' : (existingHeaders[originalHeaderName] ?? ''),
+    text: originalHeaderName == null
+        ? ''
+        : (existingHeaders[originalHeaderName] ?? ''),
   );
 
   try {
@@ -27,7 +29,9 @@ Future<SignInHeaderEntry?> showSignInHeaderEditorDialog({
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(originalHeaderName == null ? 'Add Header' : 'Edit Header'),
+              title: Text(
+                originalHeaderName == null ? 'Add Header' : 'Edit Header',
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -48,13 +52,21 @@ Future<SignInHeaderEntry?> showSignInHeaderEditorDialog({
                     const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(dialogError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                      child: Text(
+                        dialogError!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
                     ),
                   ],
                 ],
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
                 FilledButton(
                   onPressed: () {
                     final key = keyController.text.trim();
@@ -69,7 +81,8 @@ Future<SignInHeaderEntry?> showSignInHeaderEditorDialog({
 
                     final hasDuplicate = existingHeaders.keys.any(
                       (existingKey) =>
-                          existingKey.toLowerCase() == key.toLowerCase() && existingKey != originalHeaderName,
+                          existingKey.toLowerCase() == key.toLowerCase() &&
+                          existingKey != originalHeaderName,
                     );
                     if (hasDuplicate) {
                       setDialogState(() {
@@ -78,7 +91,8 @@ Future<SignInHeaderEntry?> showSignInHeaderEditorDialog({
                       return;
                     }
 
-                    Navigator.of(dialogContext).pop(SignInHeaderEntry(name: key, value: value));
+                    Navigator.of(dialogContext)
+                        .pop(SignInHeaderEntry(name: key, value: value));
                   },
                   child: const Text('Save'),
                 ),

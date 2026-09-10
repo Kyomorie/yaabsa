@@ -21,8 +21,10 @@ abstract class PersonalizedLibrary with _$PersonalizedLibrary {
     ShelfEntry<Author>? newestAuthors,
     ShelfEntry<Episode>? newestEpisodes,
     ShelfEntry<LibraryItem>? continueSeries,
-    @Default(<ShelfEntry<LibraryItem>>[]) List<ShelfEntry<LibraryItem>> extraLibraryShelves,
-    @Default(<ShelfEntry<Episode>>[]) List<ShelfEntry<Episode>> extraEpisodeShelves,
+    @Default(<ShelfEntry<LibraryItem>>[])
+    List<ShelfEntry<LibraryItem>> extraLibraryShelves,
+    @Default(<ShelfEntry<Episode>>[])
+    List<ShelfEntry<Episode>> extraEpisodeShelves,
   }) = _PersonalizedLibrary;
 
   factory PersonalizedLibrary.fromJson(List<dynamic> jsonList) {
@@ -88,20 +90,29 @@ abstract class PersonalizedLibrary with _$PersonalizedLibrary {
           default:
             final shelfType = itemJson['type'] as String?;
             if (shelfType == 'book' || shelfType == 'podcast') {
-              tempExtraLibraryShelves.add(_parseLibraryItemShelfEntry(itemJson));
+              tempExtraLibraryShelves.add(
+                _parseLibraryItemShelfEntry(itemJson),
+              );
             } else if (shelfType == 'episodes' || shelfType == 'episode') {
-              final episodeShelfAsLibraryItems = _parseLibraryItemShelfEntry(itemJson);
+              final episodeShelfAsLibraryItems = _parseLibraryItemShelfEntry(
+                itemJson,
+              );
               if (episodeShelfAsLibraryItems.entities.isNotEmpty) {
                 tempExtraLibraryShelves.add(episodeShelfAsLibraryItems);
               } else {
                 tempExtraEpisodeShelves.add(_parseEpisodeShelfEntry(itemJson));
               }
             } else {
-              logger('Warning: Unknown shelf ID encountered: $id', level: InfoLevel.warning);
+              logger(
+                'Warning: Unknown shelf ID encountered: $id',
+                level: InfoLevel.warning,
+              );
             }
         }
       } else {
-        throw FormatException('Invalid item in JSON list: Expected Map<String, dynamic>, got ${itemJson.runtimeType}');
+        throw FormatException(
+          'Invalid item in JSON list: Expected Map<String, dynamic>, got ${itemJson.runtimeType}',
+        );
       }
     }
 
@@ -120,7 +131,9 @@ abstract class PersonalizedLibrary with _$PersonalizedLibrary {
   }
 }
 
-ShelfEntry<LibraryItem> _parseLibraryItemShelfEntry(Map<String, dynamic> itemJson) {
+ShelfEntry<LibraryItem> _parseLibraryItemShelfEntry(
+  Map<String, dynamic> itemJson,
+) {
   final parsedItems = <LibraryItem>[];
   final rawEntities = itemJson['entities'];
 
@@ -136,7 +149,9 @@ ShelfEntry<LibraryItem> _parseLibraryItemShelfEntry(Map<String, dynamic> itemJso
       }
 
       try {
-        parsedItems.add(LibraryItem.fromJson(_normalizeLibraryItemShelfEntity(rawEntity)));
+        parsedItems.add(
+          LibraryItem.fromJson(_normalizeLibraryItemShelfEntity(rawEntity)),
+        );
       } catch (e, s) {
         logger(
           'Skipping malformed library entity in shelf ${itemJson['id']}: $e\n$s',
@@ -148,7 +163,9 @@ ShelfEntry<LibraryItem> _parseLibraryItemShelfEntry(Map<String, dynamic> itemJso
   }
 
   final rawType = itemJson['type'] as String?;
-  final shelfType = const ShelfTypeConverter().fromJson(rawType == null || rawType.isEmpty ? 'book' : rawType);
+  final shelfType = const ShelfTypeConverter().fromJson(
+    rawType == null || rawType.isEmpty ? 'book' : rawType,
+  );
 
   return ShelfEntry<LibraryItem>(
     id: itemJson['id'] as String? ?? 'library-items',
@@ -160,7 +177,9 @@ ShelfEntry<LibraryItem> _parseLibraryItemShelfEntry(Map<String, dynamic> itemJso
   );
 }
 
-Map<String, dynamic> _normalizeLibraryItemShelfEntity(Map<String, dynamic> entityJson) {
+Map<String, dynamic> _normalizeLibraryItemShelfEntity(
+  Map<String, dynamic> entityJson,
+) {
   final normalized = Map<String, dynamic>.from(entityJson);
   final rawMedia = entityJson['media'];
 
@@ -169,7 +188,8 @@ Map<String, dynamic> _normalizeLibraryItemShelfEntity(Map<String, dynamic> entit
   }
 
   final mediaJson = Map<String, dynamic>.from(rawMedia);
-  final libraryItemId = entityJson['id']?.toString() ?? entityJson['libraryItemId']?.toString();
+  final libraryItemId =
+      entityJson['id']?.toString() ?? entityJson['libraryItemId']?.toString();
   if (libraryItemId != null && libraryItemId.isNotEmpty) {
     mediaJson['libraryItemId'] ??= libraryItemId;
   }
@@ -238,16 +258,21 @@ ShelfEntry<Episode> _parseEpisodeShelfEntry(Map<String, dynamic> itemJson) {
   );
 }
 
-Map<String, dynamic>? _extractEpisodeShelfEntity(Map<String, dynamic> rawEntity) {
+Map<String, dynamic>? _extractEpisodeShelfEntity(
+  Map<String, dynamic> rawEntity,
+) {
   final recentEpisode = rawEntity['recentEpisode'];
   if (recentEpisode is Map<String, dynamic>) {
     final episodeJson = Map<String, dynamic>.from(recentEpisode);
-    episodeJson['libraryItemId'] ??= recentEpisode['libraryItemId'] ?? rawEntity['id'];
+    episodeJson['libraryItemId'] ??=
+        recentEpisode['libraryItemId'] ?? rawEntity['id'];
     episodeJson['id'] ??= recentEpisode['id'];
     return episodeJson;
   }
 
-  if (rawEntity.containsKey('libraryItemId') || rawEntity.containsKey('audioFile') || rawEntity.containsKey('title')) {
+  if (rawEntity.containsKey('libraryItemId') ||
+      rawEntity.containsKey('audioFile') ||
+      rawEntity.containsKey('title')) {
     return Map<String, dynamic>.from(rawEntity);
   }
 
@@ -265,8 +290,10 @@ abstract class ShelfEntry<T> with _$ShelfEntry<T> {
     @JsonKey(name: "entities") required List<T> entities,
   }) = _ShelfEntry;
 
-  factory ShelfEntry.fromJson(Map<String, dynamic> json, T Function(Object?) fromJsonT) =>
-      _$ShelfEntryFromJson(json, fromJsonT);
+  factory ShelfEntry.fromJson(
+    Map<String, dynamic> json,
+    T Function(Object?) fromJsonT,
+  ) => _$ShelfEntryFromJson(json, fromJsonT);
 }
 
 enum ShelfType {

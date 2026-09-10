@@ -13,10 +13,16 @@ const int _seriesBooksPerPage = 20;
 const String _defaultSeriesBooksSort = 'sequence';
 const int _defaultSeriesBooksDesc = 0;
 
-final seriesByIdProvider = FutureProvider.family<Series, String>((ref, seriesId) async {
+final seriesByIdProvider = FutureProvider.family<Series, String>((
+  ref,
+  seriesId,
+) async {
   final absApi = ref.watch(absApiProvider);
 
-  ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (previous, next) {
+  ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (
+    previous,
+    next,
+  ) {
     if (next != null && mutationAffectsSeries(next, seriesId)) {
       ref.invalidateSelf();
     }
@@ -105,7 +111,9 @@ class SeriesBooksArgs {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is SeriesBooksArgs && other.libraryId == libraryId && other.seriesId == seriesId;
+    return other is SeriesBooksArgs &&
+        other.libraryId == libraryId &&
+        other.seriesId == seriesId;
   }
 
   @override
@@ -168,9 +176,12 @@ class SeriesBooksState {
   }
 }
 
-final seriesBooksProvider = AsyncNotifierProvider.family<SeriesBooksNotifier, SeriesBooksState, SeriesBooksArgs>(
-  SeriesBooksNotifier.new,
-);
+final seriesBooksProvider =
+    AsyncNotifierProvider.family<
+      SeriesBooksNotifier,
+      SeriesBooksState,
+      SeriesBooksArgs
+    >(SeriesBooksNotifier.new);
 
 class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
   SeriesBooksNotifier(this.args);
@@ -178,7 +189,12 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
   final SeriesBooksArgs args;
   bool _isEnsuringIndex = false;
 
-  Future<SeriesBooksState> _fetchPage(int page, {String? sort, int? desc, bool forceServer = false}) async {
+  Future<SeriesBooksState> _fetchPage(
+    int page, {
+    String? sort,
+    int? desc,
+    bool forceServer = false,
+  }) async {
     final absApi = ref.read(absApiProvider);
     if (absApi == null) {
       throw Exception('User not authenticated or API not available.');
@@ -190,7 +206,10 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
       page: page,
       sort: sort ?? currentVal?.sort ?? _defaultSeriesBooksSort,
       desc: desc ?? currentVal?.desc ?? _defaultSeriesBooksDesc,
-      filter: LibraryFilter.grouped(LibraryFilterGroup.series, args.seriesId).queryValue,
+      filter: LibraryFilter.grouped(
+        LibraryFilterGroup.series,
+        args.seriesId,
+      ).queryValue,
       collapseseries: 0,
     );
 
@@ -209,7 +228,10 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
 
     final newItems = page == 0
         ? List<LibraryItem>.from(fetchedItems)
-        : <LibraryItem>[...(currentVal?.items ?? const <LibraryItem>[]), ...fetchedItems];
+        : <LibraryItem>[
+            ...(currentVal?.items ?? const <LibraryItem>[]),
+            ...fetchedItems,
+          ];
 
     return SeriesBooksState(
       items: newItems,
@@ -226,7 +248,10 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
 
   @override
   Future<SeriesBooksState> build() async {
-    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (previous, next) {
+    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (
+      previous,
+      next,
+    ) {
       if (next == null) {
         return;
       }
@@ -246,12 +271,17 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
       if (index != -1) {
         final page = index ~/ _seriesBooksPerPage;
         _refetchSpecificPage(page);
-      } else if (next.type == LibraryItemMutationType.added || next.type == LibraryItemMutationType.updated) {
+      } else if (next.type == LibraryItemMutationType.added ||
+          next.type == LibraryItemMutationType.updated) {
         _refetchSpecificPage(0);
       }
     });
 
-    return _fetchPage(0, sort: _defaultSeriesBooksSort, desc: _defaultSeriesBooksDesc);
+    return _fetchPage(
+      0,
+      sort: _defaultSeriesBooksSort,
+      desc: _defaultSeriesBooksDesc,
+    );
   }
 
   Future<void> _refetchSpecificPage(int page) async {
@@ -267,11 +297,18 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
         page: page,
         sort: currentState.sort,
         desc: currentState.desc,
-        filter: LibraryFilter.grouped(LibraryFilterGroup.series, args.seriesId).queryValue,
+        filter: LibraryFilter.grouped(
+          LibraryFilterGroup.series,
+          args.seriesId,
+        ).queryValue,
         collapseseries: 0,
       );
 
-      final response = await absApi.getLibraryApi().getLibraryItems(args.libraryId, request, extra: {'noCache': true});
+      final response = await absApi.getLibraryApi().getLibraryItems(
+        args.libraryId,
+        request,
+        extra: {'noCache': true},
+      );
 
       final data = response.data;
       if (data == null) return;
@@ -281,33 +318,56 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
       final startIndex = page * _seriesBooksPerPage;
 
       if (startIndex < newItems.length) {
-        final endIndex = (startIndex + _seriesBooksPerPage).clamp(0, newItems.length);
+        final endIndex = (startIndex + _seriesBooksPerPage).clamp(
+          0,
+          newItems.length,
+        );
         newItems.replaceRange(startIndex, endIndex, fetchedItems);
       } else if (startIndex == newItems.length) {
         newItems.addAll(fetchedItems);
       }
 
-      state = AsyncData(currentState.copyWith(items: newItems, totalItems: data.total ?? currentState.totalItems));
+      state = AsyncData(
+        currentState.copyWith(
+          items: newItems,
+          totalItems: data.total ?? currentState.totalItems,
+        ),
+      );
     } catch (_) {}
   }
 
   Future<void> fetchNextPage() async {
     final currentState = state.value;
-    if (currentState == null || !currentState.hasNextPage || currentState.isLoadingNextPage) {
+    if (currentState == null ||
+        !currentState.hasNextPage ||
+        currentState.isLoadingNextPage) {
       return;
     }
 
     state = AsyncData(currentState.copyWith(isLoadingNextPage: true));
 
     try {
-      final nextPage = await _fetchPage(currentState.currentPage + 1, sort: currentState.sort, desc: currentState.desc);
+      final nextPage = await _fetchPage(
+        currentState.currentPage + 1,
+        sort: currentState.sort,
+        desc: currentState.desc,
+      );
       state = AsyncData(nextPage);
     } catch (e, s) {
-      state = AsyncData(currentState.copyWith(isLoadingNextPage: false, error: e, stackTrace: s));
+      state = AsyncData(
+        currentState.copyWith(
+          isLoadingNextPage: false,
+          error: e,
+          stackTrace: s,
+        ),
+      );
     }
   }
 
-  Future<void> refresh({bool withLoading = true, bool forceServer = false}) async {
+  Future<void> refresh({
+    bool withLoading = true,
+    bool forceServer = false,
+  }) async {
     final currentState = state.value;
     if (currentState == null) return;
 
@@ -316,7 +376,12 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
     }
 
     try {
-      final refreshed = await _fetchPage(0, sort: currentState.sort, desc: currentState.desc, forceServer: forceServer);
+      final refreshed = await _fetchPage(
+        0,
+        sort: currentState.sort,
+        desc: currentState.desc,
+        forceServer: forceServer,
+      );
       state = AsyncData(refreshed);
     } catch (e, s) {
       state = AsyncError(e, s);
@@ -340,7 +405,13 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
       final sorted = await _fetchPage(0, sort: newSort, desc: resolvedDesc);
       state = AsyncData(sorted);
     } catch (e, s) {
-      state = AsyncData(currentState.copyWith(isLoadingNextPage: false, error: e, stackTrace: s));
+      state = AsyncData(
+        currentState.copyWith(
+          isLoadingNextPage: false,
+          error: e,
+          stackTrace: s,
+        ),
+      );
     }
   }
 
@@ -368,7 +439,10 @@ class SeriesBooksNotifier extends AsyncNotifier<SeriesBooksState> {
   }
 }
 
-final seriesProvider = AsyncNotifierProvider.family<SeriesNotifier, SeriesState, String>(SeriesNotifier.new);
+final seriesProvider =
+    AsyncNotifierProvider.family<SeriesNotifier, SeriesState, String>(
+      SeriesNotifier.new,
+    );
 
 class SeriesNotifier extends AsyncNotifier<SeriesState> {
   SeriesNotifier(this.libraryId);
@@ -414,7 +488,10 @@ class SeriesNotifier extends AsyncNotifier<SeriesState> {
 
     final newItems = page == 0
         ? List<Series>.from(fetchedSeries)
-        : <Series>[...(currentVal?.items ?? const <Series>[]), ...fetchedSeries];
+        : <Series>[
+            ...(currentVal?.items ?? const <Series>[]),
+            ...fetchedSeries,
+          ];
 
     return SeriesState(
       items: newItems,
@@ -432,7 +509,10 @@ class SeriesNotifier extends AsyncNotifier<SeriesState> {
 
   @override
   Future<SeriesState> build() async {
-    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (previous, next) {
+    ref.listen<LibraryItemMutation?>(libraryItemMutationProvider, (
+      previous,
+      next,
+    ) {
       if (next == null) {
         return;
       }
@@ -460,7 +540,8 @@ class SeriesNotifier extends AsyncNotifier<SeriesState> {
         for (final page in pagesToRefresh) {
           _refetchSpecificPage(page);
         }
-      } else if (next.type == LibraryItemMutationType.added || next.type == LibraryItemMutationType.updated) {
+      } else if (next.type == LibraryItemMutationType.added ||
+          next.type == LibraryItemMutationType.updated) {
         _refetchSpecificPage(0);
       }
     });
@@ -485,7 +566,11 @@ class SeriesNotifier extends AsyncNotifier<SeriesState> {
         include: currentState.include,
       );
 
-      final response = await absApi.getLibraryApi().getLibrarySeries(libraryId, request, extra: {'noCache': true});
+      final response = await absApi.getLibraryApi().getLibrarySeries(
+        libraryId,
+        request,
+        extra: {'noCache': true},
+      );
 
       final data = response.data;
       if (data == null) return;
@@ -495,19 +580,26 @@ class SeriesNotifier extends AsyncNotifier<SeriesState> {
       final startIndex = page * _seriesPerPage;
 
       if (startIndex < newItems.length) {
-        final endIndex = (startIndex + _seriesPerPage).clamp(0, newItems.length);
+        final endIndex = (startIndex + _seriesPerPage).clamp(
+          0,
+          newItems.length,
+        );
         newItems.replaceRange(startIndex, endIndex, fetchedItems);
       } else if (startIndex == newItems.length) {
         newItems.addAll(fetchedItems);
       }
 
-      state = AsyncData(currentState.copyWith(items: newItems, totalItems: data.total));
+      state = AsyncData(
+        currentState.copyWith(items: newItems, totalItems: data.total),
+      );
     } catch (_) {}
   }
 
   Future<void> fetchNextPage() async {
     final currentState = state.value;
-    if (currentState == null || !currentState.hasNextPage || currentState.isLoadingNextPage) {
+    if (currentState == null ||
+        !currentState.hasNextPage ||
+        currentState.isLoadingNextPage) {
       return;
     }
 
@@ -523,11 +615,20 @@ class SeriesNotifier extends AsyncNotifier<SeriesState> {
       );
       state = AsyncData(nextPage);
     } catch (e, s) {
-      state = AsyncData(currentState.copyWith(isLoadingNextPage: false, error: e, stackTrace: s));
+      state = AsyncData(
+        currentState.copyWith(
+          isLoadingNextPage: false,
+          error: e,
+          stackTrace: s,
+        ),
+      );
     }
   }
 
-  Future<void> refresh({bool withLoading = true, bool forceServer = false}) async {
+  Future<void> refresh({
+    bool withLoading = true,
+    bool forceServer = false,
+  }) async {
     final currentState = state.value;
     if (currentState == null) return;
 
@@ -564,10 +665,21 @@ class SeriesNotifier extends AsyncNotifier<SeriesState> {
     state = AsyncData(currentState.copyWith(isLoadingNextPage: true));
 
     try {
-      final sorted = await _fetchSeries(0, sort: newSort, desc: resolvedDesc, filter: currentState.filter);
+      final sorted = await _fetchSeries(
+        0,
+        sort: newSort,
+        desc: resolvedDesc,
+        filter: currentState.filter,
+      );
       state = AsyncData(sorted);
     } catch (e, s) {
-      state = AsyncData(currentState.copyWith(isLoadingNextPage: false, error: e, stackTrace: s));
+      state = AsyncData(
+        currentState.copyWith(
+          isLoadingNextPage: false,
+          error: e,
+          stackTrace: s,
+        ),
+      );
     }
   }
 
@@ -589,7 +701,13 @@ class SeriesNotifier extends AsyncNotifier<SeriesState> {
       );
       state = AsyncData(filtered);
     } catch (e, s) {
-      state = AsyncData(currentState.copyWith(isLoadingNextPage: false, error: e, stackTrace: s));
+      state = AsyncData(
+        currentState.copyWith(
+          isLoadingNextPage: false,
+          error: e,
+          stackTrace: s,
+        ),
+      );
     }
   }
 
@@ -611,7 +729,13 @@ class SeriesNotifier extends AsyncNotifier<SeriesState> {
       );
       state = AsyncData(cleared);
     } catch (e, s) {
-      state = AsyncData(currentState.copyWith(isLoadingNextPage: false, error: e, stackTrace: s));
+      state = AsyncData(
+        currentState.copyWith(
+          isLoadingNextPage: false,
+          error: e,
+          stackTrace: s,
+        ),
+      );
     }
   }
 

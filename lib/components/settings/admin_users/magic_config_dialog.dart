@@ -1,7 +1,8 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -73,7 +74,8 @@ class _MagicConfigDialogState extends State<_MagicConfigDialog> {
     _selectedServerUrl = widget.serverUrl;
   }
 
-  bool get _canShareQrFile => kIsWeb || defaultTargetPlatform != TargetPlatform.linux;
+  bool get _canShareQrFile =>
+      kIsWeb || defaultTargetPlatform != TargetPlatform.linux;
 
   Future<XFile?> _buildQrFile(String value) async {
     if (!_canShareQrFile) {
@@ -96,14 +98,22 @@ class _MagicConfigDialogState extends State<_MagicConfigDialog> {
       return null;
     }
 
-    final bytes = imageData.buffer.asUint8List(imageData.offsetInBytes, imageData.lengthInBytes);
-    return XFile.fromData(bytes, mimeType: 'image/png', name: 'yaabsa-authentication-code.png');
+    final bytes = imageData.buffer.asUint8List(
+      imageData.offsetInBytes,
+      imageData.lengthInBytes,
+    );
+    return XFile.fromData(
+      bytes,
+      mimeType: 'image/png',
+      name: 'yaabsa-authentication-code.png',
+    );
   }
 
   Future<void> _generate() async {
     if (_includePassword && !_passwordAcknowledged) {
       setState(() {
-        _error = 'Please acknowledge the password-sharing risk before continuing.';
+        _error =
+            'Please acknowledge the password-sharing risk before continuing.';
       });
       return;
     }
@@ -198,8 +208,11 @@ class _MagicConfigDialogState extends State<_MagicConfigDialog> {
       return;
     }
     if (qrFile == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('QR-code sharing is unavailable on this platform.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('QR-code sharing is unavailable on this platform.'),
+        ),
+      );
       return;
     }
 
@@ -217,11 +230,14 @@ class _MagicConfigDialogState extends State<_MagicConfigDialog> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Authentication Code copied.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Authentication Code copied.')),
+    );
   }
 
   Rect? _shareOrigin(BuildContext context) {
-    if (defaultTargetPlatform != TargetPlatform.iOS && defaultTargetPlatform != TargetPlatform.macOS) {
+    if (defaultTargetPlatform != TargetPlatform.iOS &&
+        defaultTargetPlatform != TargetPlatform.macOS) {
       return null;
     }
     final renderObject = context.findRenderObject();
@@ -250,13 +266,20 @@ class _MagicConfigDialogState extends State<_MagicConfigDialog> {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
-              if (widget.localServerUrl != null && widget.localServerUrl != widget.serverUrl)
+              if (widget.localServerUrl != null &&
+                  widget.localServerUrl != widget.serverUrl)
                 DropdownButtonFormField<String>(
                   initialValue: _selectedServerUrl,
                   decoration: const InputDecoration(labelText: 'Server URL'),
                   items: [
-                    DropdownMenuItem(value: widget.serverUrl, child: Text('${widget.serverUrl} (external)')),
-                    DropdownMenuItem(value: widget.localServerUrl, child: Text('${widget.localServerUrl} (local)')),
+                    DropdownMenuItem(
+                      value: widget.serverUrl,
+                      child: Text('${widget.serverUrl} (external)'),
+                    ),
+                    DropdownMenuItem(
+                      value: widget.localServerUrl,
+                      child: Text('${widget.localServerUrl} (local)'),
+                    ),
                   ],
                   onChanged: _isGenerating
                       ? null
@@ -270,7 +293,8 @@ class _MagicConfigDialogState extends State<_MagicConfigDialog> {
                           });
                         },
                 ),
-              if (widget.localServerUrl != null && widget.localServerUrl != widget.serverUrl)
+              if (widget.localServerUrl != null &&
+                  widget.localServerUrl != widget.serverUrl)
                 const SizedBox(height: 16),
               if (widget.allowPassword && widget.password != null)
                 _MagicConfigOption(
@@ -349,7 +373,10 @@ class _MagicConfigDialogState extends State<_MagicConfigDialog> {
                 const SizedBox(height: 12),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final qrSize = math.min(constraints.maxWidth, context.isMobile ? 320.0 : 420.0);
+                    final qrSize = math.min(
+                      constraints.maxWidth,
+                      context.isMobile ? 320.0 : 420.0,
+                    );
                     return Center(
                       child: QrImageView(
                         data: generated,
@@ -365,7 +392,11 @@ class _MagicConfigDialogState extends State<_MagicConfigDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                SelectableText(generated, maxLines: 5, style: Theme.of(context).textTheme.bodySmall),
+                SelectableText(
+                  generated,
+                  maxLines: 5,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   alignment: WrapAlignment.end,
@@ -396,11 +427,16 @@ class _MagicConfigDialogState extends State<_MagicConfigDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: _isGenerating ? null : () => Navigator.pop(context), child: const Text('Close')),
+        TextButton(
+          onPressed: _isGenerating ? null : () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
         if (generated == null)
           FilledButton(
             onPressed: _isGenerating ? null : _generate,
-            child: Text(_isGenerating ? 'Generating...' : 'Generate Authentication Code'),
+            child: Text(
+              _isGenerating ? 'Generating...' : 'Generate Authentication Code',
+            ),
           ),
       ],
     );
@@ -425,7 +461,11 @@ class _MagicConfigOption extends StatelessWidget {
 }
 
 class _AcknowledgementTile extends StatelessWidget {
-  const _AcknowledgementTile({required this.value, required this.text, required this.onChanged});
+  const _AcknowledgementTile({
+    required this.value,
+    required this.text,
+    required this.onChanged,
+  });
 
   final bool value;
   final String text;
@@ -438,7 +478,9 @@ class _AcknowledgementTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: CheckboxListTile(
         value: value,
-        onChanged: onChanged == null ? null : (next) => onChanged!(next ?? false),
+        onChanged: onChanged == null
+            ? null
+            : (next) => onChanged!(next ?? false),
         controlAffinity: ListTileControlAffinity.leading,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

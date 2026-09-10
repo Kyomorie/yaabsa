@@ -70,7 +70,12 @@ PdfRect? _normalizeRect(double left, double top, double right, double bottom) {
     return null;
   }
 
-  return PdfRect(_roundCoordinate(left), _roundCoordinate(top), _roundCoordinate(right), _roundCoordinate(bottom));
+  return PdfRect(
+    _roundCoordinate(left),
+    _roundCoordinate(top),
+    _roundCoordinate(right),
+    _roundCoordinate(bottom),
+  );
 }
 
 PdfRect? _parseRectFromLegacyMap(Map rawRect) {
@@ -124,7 +129,9 @@ List<PdfRect> _compactRects(List<PdfRect> sourceRects) {
   }
 
   final normalized = sourceRects
-      .map((rect) => _normalizeRect(rect.left, rect.top, rect.right, rect.bottom))
+      .map(
+        (rect) => _normalizeRect(rect.left, rect.top, rect.right, rect.bottom),
+      )
       .whereType<PdfRect>()
       .toList(growable: false);
   if (normalized.isEmpty) {
@@ -243,9 +250,13 @@ class PdfAnnotationEntry {
         .map((rect) => rect.bounds)
         .where((r) => r.isNotEmpty)
         .toList(growable: false);
-    final sourceRects = fragmentRects.isNotEmpty ? fragmentRects : <PdfRect>[range.bounds];
+    final sourceRects = fragmentRects.isNotEmpty
+        ? fragmentRects
+        : <PdfRect>[range.bounds];
     final compactRects = _compactRects(sourceRects);
-    final rects = compactRects.isNotEmpty ? compactRects : _compactRects(<PdfRect>[range.bounds]);
+    final rects = compactRects.isNotEmpty
+        ? compactRects
+        : _compactRects(<PdfRect>[range.bounds]);
 
     return PdfAnnotationEntry(
       type: type,
@@ -260,7 +271,9 @@ class PdfAnnotationEntry {
     );
   }
 
-  static PdfAnnotationEntry? fromInternalAnnotation(InternalAnnotation annotation) {
+  static PdfAnnotationEntry? fromInternalAnnotation(
+    InternalAnnotation annotation,
+  ) {
     final payload = _decodePdfAnnotationPayload(annotation.cfi);
     if (payload == null) {
       return null;
@@ -271,7 +284,12 @@ class PdfAnnotationEntry {
     final start = _toInt(payload['s'] ?? payload['start']);
     final end = _toInt(payload['e'] ?? payload['end']);
     final rawRects = payload['r'] ?? payload['rects'];
-    if (pageNumber == null || pageNumber < 1 || start == null || end == null || start >= end || rawRects is! List) {
+    if (pageNumber == null ||
+        pageNumber < 1 ||
+        start == null ||
+        end == null ||
+        start >= end ||
+        rawRects is! List) {
       return null;
     }
 
@@ -298,7 +316,9 @@ class PdfAnnotationEntry {
     if (type == AnnotationType.bookmark) {
       type = AnnotationType.highlight;
     }
-    if (type == null || (type != AnnotationType.highlight && type != AnnotationType.underline)) {
+    if (type == null ||
+        (type != AnnotationType.highlight &&
+            type != AnnotationType.underline)) {
       return null;
     }
 
@@ -324,7 +344,9 @@ class PdfAnnotationEntry {
       rects: normalizedRects,
       color: annotation.color ?? defaultColor,
       opacity: annotation.opacity ?? defaultOpacity,
-      noteText: normalizedText != null && normalizedText.isNotEmpty ? normalizedText : null,
+      noteText: normalizedText != null && normalizedText.isNotEmpty
+          ? normalizedText
+          : null,
       thickness: type == AnnotationType.underline ? annotation.thickness : null,
     );
   }

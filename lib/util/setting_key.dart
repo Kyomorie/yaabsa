@@ -12,40 +12,59 @@ class SettingKeys {
   static const String appLogLevel = 'app_log_level';
   static const String bufferSize = 'buffer_size';
   static const String keepScreenOn = 'keep_screen_on';
-  static const String keepWebsocketConnectionInBackground = 'keep_websocket_connection_in_background';
+  static const String keepWebsocketConnectionInBackground =
+      'keep_websocket_connection_in_background';
   static const String lockMediaNotification = 'lock_media_notification';
   static const String mediaNotificationType = 'media_notification_type';
   static const String mediaNotificationPages = 'media_notification_pages';
-  static const String showNotificationMoreButton = 'show_notification_more_button';
-  static const String autoPlayLastPlayedOnLaunch = 'auto_play_last_played_on_launch';
-  static const String showLastPlayedMiniPlayerAlways = 'show_last_played_mini_player_always';
+  static const String showNotificationMoreButton =
+      'show_notification_more_button';
+  static const String autoPlayLastPlayedOnLaunch =
+      'auto_play_last_played_on_launch';
+  static const String showLastPlayedMiniPlayerAlways =
+      'show_last_played_mini_player_always';
   static const String language = 'language';
   static const String sidebarCollapsed = 'sidebar_collapsed';
   static const String autoQueue = 'auto_queue';
-  static const String autoQueueIncludeSeriesOutsideContext = 'auto_queue_include_series_outside_context';
+  static const String autoQueueIncludeSeriesOutsideContext =
+      'auto_queue_include_series_outside_context';
   static const String queueIntent = 'queue_intent_v2';
   static const String sleepTimerExpireAction = 'sleep_timer_expire_action';
-  static const String sleepTimerAutoRewindMinutes = 'sleep_timer_auto_rewind_minutes';
+  static const String sleepTimerAutoRewindMinutes =
+      'sleep_timer_auto_rewind_minutes';
   static const String sleepTimerFadeOutEnabled = 'sleep_timer_fade_out_enabled';
-  static const String sleepTimerAutoRestartEnabled = 'sleep_timer_auto_restart_enabled';
-  static const String sleepTimerAutoRestartUseTimeRange = 'sleep_timer_auto_restart_use_time_range';
-  static const String sleepTimerAutoRestartRangeStartMinutes = 'sleep_timer_auto_restart_range_start_minutes';
-  static const String sleepTimerAutoRestartRangeEndMinutes = 'sleep_timer_auto_restart_range_end_minutes';
-  static const String sleepTimerLastDurationMinutes = 'sleep_timer_last_duration_minutes';
-  static const String sleepTimerAutoRestartSuppressed = 'sleep_timer_auto_restart_suppressed';
+  static const String sleepTimerAutoRestartEnabled =
+      'sleep_timer_auto_restart_enabled';
+  static const String sleepTimerAutoRestartUseTimeRange =
+      'sleep_timer_auto_restart_use_time_range';
+  static const String sleepTimerAutoRestartRangeStartMinutes =
+      'sleep_timer_auto_restart_range_start_minutes';
+  static const String sleepTimerAutoRestartRangeEndMinutes =
+      'sleep_timer_auto_restart_range_end_minutes';
+  static const String sleepTimerLastDurationMinutes =
+      'sleep_timer_last_duration_minutes';
+  static const String sleepTimerAutoRestartSuppressed =
+      'sleep_timer_auto_restart_suppressed';
   static const String sleepTimerShowMarker = 'sleep_timer_show_marker';
   static const String sleepTimerMarker = 'sleep_timer_marker';
   static const String smartRewindEnabled = 'smart_rewind_enabled';
-  static const String smartRewindShortPauseThresholdSeconds = 'smart_rewind_short_pause_threshold_seconds';
-  static const String smartRewindLongPauseThresholdSeconds = 'smart_rewind_long_pause_threshold_seconds';
-  static const String smartRewindShortRewindSeconds = 'smart_rewind_short_rewind_seconds';
-  static const String smartRewindMediumRewindSeconds = 'smart_rewind_medium_rewind_seconds';
-  static const String smartRewindLongRewindSeconds = 'smart_rewind_long_rewind_seconds';
+  static const String smartRewindShortPauseThresholdSeconds =
+      'smart_rewind_short_pause_threshold_seconds';
+  static const String smartRewindLongPauseThresholdSeconds =
+      'smart_rewind_long_pause_threshold_seconds';
+  static const String smartRewindShortRewindSeconds =
+      'smart_rewind_short_rewind_seconds';
+  static const String smartRewindMediumRewindSeconds =
+      'smart_rewind_medium_rewind_seconds';
+  static const String smartRewindLongRewindSeconds =
+      'smart_rewind_long_rewind_seconds';
   static const String libraryGridScale = 'library_grid_scale';
-  static const String autoResumeOnBluetoothConnection = 'auto_resume_on_bluetooth_connection';
+  static const String autoResumeOnBluetoothConnection =
+      'auto_resume_on_bluetooth_connection';
   static const String restrictAutoResumeToSelectedBluetoothDevices =
       'restrict_auto_resume_to_selected_bluetooth_devices';
-  static const String autoResumeBluetoothDeviceAddresses = 'auto_resume_bluetooth_device_addresses';
+  static const String autoResumeBluetoothDeviceAddresses =
+      'auto_resume_bluetooth_device_addresses';
 
   // User-Specific Settings
   static const String syncInterval = 'sync_interval';
@@ -54,32 +73,54 @@ class SettingKeys {
   static const String collapseSeries = 'collapse_series';
   static const String downloadPath = 'download_path';
   static const String homeBookViewPreferences = 'home_book_view_preferences';
-  static const String homePodcastViewPreferences = 'home_podcast_view_preferences';
-  static const String libraryViewSubtitlePreferences = 'library_view_subtitle_preferences';
-  static const String seriesViewSubtitlePreferences = 'series_view_subtitle_preferences';
-  static const String authorsViewSubtitlePreferences = 'authors_view_subtitle_preferences';
-  static const String androidAutoLibrarySortDescending = 'android_auto_library_sort_descending';
-  static const String androidAutoLibrarySortField = 'android_auto_library_sort_field';
-  static const String androidAutoPodcastSortDescending = 'android_auto_podcast_sort_descending';
-  static const String androidAutoPodcastSortField = 'android_auto_podcast_sort_field';
-  static const String androidAutoGroupByLetters = 'android_auto_group_by_letters';
-  static const String personalizedShelfShowPlayVisibleButton = 'personalized_shelf_show_play_visible_button';
+  static const String homePodcastViewPreferences =
+      'home_podcast_view_preferences';
+  static const String libraryViewSubtitlePreferences =
+      'library_view_subtitle_preferences';
+  static const String seriesViewSubtitlePreferences =
+      'series_view_subtitle_preferences';
+  static const String authorsViewSubtitlePreferences =
+      'authors_view_subtitle_preferences';
+  static const String androidAutoLibrarySortDescending =
+      'android_auto_library_sort_descending';
+  static const String androidAutoLibrarySortField =
+      'android_auto_library_sort_field';
+  static const String androidAutoPodcastSortDescending =
+      'android_auto_podcast_sort_descending';
+  static const String androidAutoPodcastSortField =
+      'android_auto_podcast_sort_field';
+  static const String androidAutoGroupByLetters =
+      'android_auto_group_by_letters';
+  static const String personalizedShelfShowPlayVisibleButton =
+      'personalized_shelf_show_play_visible_button';
   static const String showShuffleButton = 'show_shuffle_button';
-  static const String personalizedShelfBookSectionsPreferences = 'personalized_shelf_book_sections_preferences';
-  static const String personalizedShelfPodcastSectionsPreferences = 'personalized_shelf_podcast_sections_preferences';
+  static const String personalizedShelfBookSectionsPreferences =
+      'personalized_shelf_book_sections_preferences';
+  static const String personalizedShelfPodcastSectionsPreferences =
+      'personalized_shelf_podcast_sections_preferences';
   static const String waitForSync = 'wait_for_sync';
   static const String progressPerChapter = 'progress_per_chapter';
-  static const String serverManagementCollections = 'server_management_collections';
-  static const String serverManagementDeleteItems = 'server_management_delete_items';
-  static const String serverManagementEditItems = 'server_management_edit_items';
-  static const String serverManagementEditChapters = 'server_management_edit_chapters';
-  static const String serverManagementUploadItems = 'server_management_upload_items';
-  static const String serverManagementAllowMatchesQuickMatches = 'server_management_allow_matches_quick_matches';
-  static const String toolsRemoveAuthorsWithoutBooks = 'tools_remove_authors_without_books';
-  static const String toolsForceMetadataRefresh = 'tools_force_metadata_refresh';
-  static const String toolsMatchAudiobookChapters = 'tools_match_audiobook_chapters';
+  static const String serverManagementCollections =
+      'server_management_collections';
+  static const String serverManagementDeleteItems =
+      'server_management_delete_items';
+  static const String serverManagementEditItems =
+      'server_management_edit_items';
+  static const String serverManagementEditChapters =
+      'server_management_edit_chapters';
+  static const String serverManagementUploadItems =
+      'server_management_upload_items';
+  static const String serverManagementAllowMatchesQuickMatches =
+      'server_management_allow_matches_quick_matches';
+  static const String toolsRemoveAuthorsWithoutBooks =
+      'tools_remove_authors_without_books';
+  static const String toolsForceMetadataRefresh =
+      'tools_force_metadata_refresh';
+  static const String toolsMatchAudiobookChapters =
+      'tools_match_audiobook_chapters';
   static const String toolsSplitGenresTags = 'tools_split_genres_tags';
-  static const String manualMatchLastConfiguration = 'manual_match_last_configuration';
+  static const String manualMatchLastConfiguration =
+      'manual_match_last_configuration';
   static const String shakeToResetSleepTimer = 'shake_to_reset_sleep_timer';
   static const String shakeToRewind = 'shake_to_rewind';
   static const String shakeSensitivity = 'shake_sensitivity';
@@ -95,7 +136,8 @@ class SettingKeys {
   static const String cacheRouteLibraryItems = 'cache_route_library_items';
   static const String cacheRouteItemById = 'cache_route_item_by_id';
   static const String cacheRouteItemChild = 'cache_route_item_child';
-  static const String cacheRouteLibraryFilterData = 'cache_route_library_filter_data';
+  static const String cacheRouteLibraryFilterData =
+      'cache_route_library_filter_data';
   static const String cacheRouteLibrarySeries = 'cache_route_library_series';
   static const String cacheRoutePlaylists = 'cache_route_playlists';
   static const String cacheRouteCollections = 'cache_route_collections';
@@ -111,7 +153,8 @@ class SettingKeys {
   static const String equalizerBandGains = 'equalizer_band_gains';
   static const String playerSeekBarMode = 'player_seek_bar_mode';
   static const String playerSeekBarMarkerMode = 'player_seek_bar_marker_mode';
-  static const String playerSeekBarShowChapterMarkers = 'player_seek_bar_show_chapter_markers';
+  static const String playerSeekBarShowChapterMarkers =
+      'player_seek_bar_show_chapter_markers';
   static const String playerLayoutConfig = 'player_layout_config';
   static const String playerLayoutMode = 'player_layout_mode';
   static const String playerLayoutModeExplicit = 'player_layout_mode_explicit';
@@ -125,16 +168,21 @@ class SettingKeys {
   static const String mobilePlayerRightAction = 'mobile_player_right_action';
   static const String miniPlayerActions = 'mini_player_actions';
   static const String lastPlayedQueueItem = 'last_played_queue_item';
-  static const String lastPlayedMiniPlayerSnapshot = 'last_played_mini_player_snapshot';
-  static const String podcastEpisodeProgressFilter = 'podcast_episode_progress_filter';
+  static const String lastPlayedMiniPlayerSnapshot =
+      'last_played_mini_player_snapshot';
+  static const String podcastEpisodeProgressFilter =
+      'podcast_episode_progress_filter';
 
   static const String subtitlesEnabled = 'subtitles_enabled';
-  static const String subtitleSpeakerHighlighting = 'subtitle_speaker_highlighting';
+  static const String subtitleSpeakerHighlighting =
+      'subtitle_speaker_highlighting';
   static const String subtitleReadAlong = 'subtitle_read_along';
   static const String checkForServerUpdates = 'check_for_server_updates';
-  static const String dismissedUpdateServerVersion = 'dismissed_update_server_version';
+  static const String dismissedUpdateServerVersion =
+      'dismissed_update_server_version';
   static const String latestServerVersion = 'latest_server_version';
-  static const String nextServerVersionCheckAllowed = 'next_server_version_check_allowed';
+  static const String nextServerVersionCheckAllowed =
+      'next_server_version_check_allowed';
   static const String playerShowRemainingTime = 'player_show_remaining_time';
   static const String podcastEpisodeSortMode = 'podcast_episode_sort_mode';
   static const String readerTheme = 'reader_theme';
@@ -149,10 +197,12 @@ class SettingKeys {
   static const String loopMode = 'loop_mode';
   static const String mixQueue = 'mix_queue';
   static const String showPlayerLoopShuffle = 'show_player_loop_shuffle';
-  static const String showSkipInsteadOfFastForward = 'show_skip_instead_of_fast_forward';
+  static const String showSkipInsteadOfFastForward =
+      'show_skip_instead_of_fast_forward';
   static const String desktopSkipControlsSeek = 'desktop_skip_controls_seek';
   static const String downloadTypePreference = 'download_type_preference';
-  static const String downloadContinueListeningAndSeries = 'download_continue_shelf';
+  static const String downloadContinueListeningAndSeries =
+      'download_continue_shelf';
   static const String downloadOnlyOnWifi = 'download_only_on_wifi';
   static const String downloadMaxParallel = 'download_max_parallel';
 }
@@ -184,7 +234,8 @@ final defaultSettings = {
   SettingKeys.keepWebsocketConnectionInBackground: !_defaultEnableOnMobile,
   SettingKeys.lockMediaNotification: false,
   SettingKeys.mediaNotificationType: MediaNotificationType.full.name,
-  SettingKeys.mediaNotificationPages: '[["rewind", "fastForward", "speed", "stop"]]',
+  SettingKeys.mediaNotificationPages:
+      '[["rewind", "fastForward", "speed", "stop"]]',
   SettingKeys.showNotificationMoreButton: false,
   SettingKeys.autoPlayLastPlayedOnLaunch: false,
   SettingKeys.showLastPlayedMiniPlayerAlways: false,
@@ -222,8 +273,7 @@ final defaultSettings = {
   SettingKeys.collapseSeries: false,
   SettingKeys.downloadPath: null,
   SettingKeys.homeBookViewPreferences: '{"default":"shelf","order":["shelf","library","collections","playlists","series","authors","narrators"],"hidden":[]}',
-  SettingKeys.homePodcastViewPreferences:
-      '{"default":"shelf","order":["shelf","latestEpisodes","library","collections","playlists"],"hidden":[]}',
+  SettingKeys.homePodcastViewPreferences: '{"default":"shelf","order":["shelf","latestEpisodes","library","collections","playlists"],"hidden":[]}',
   SettingKeys.libraryViewSubtitlePreferences: '{"mode":"sort","fields":[]}',
   SettingKeys.seriesViewSubtitlePreferences: '{"mode":"sort","fields":[]}',
   SettingKeys.authorsViewSubtitlePreferences: '{"mode":"sort","fields":[]}',
@@ -235,8 +285,7 @@ final defaultSettings = {
   SettingKeys.personalizedShelfShowPlayVisibleButton: false,
   SettingKeys.showShuffleButton: false,
   SettingKeys.personalizedShelfBookSectionsPreferences: '{"order":["continue-listening","continue-series","recently-added","discover","listen-again","recent-series","newest-authors"],"hidden":["newest-episodes"]}',
-  SettingKeys.personalizedShelfPodcastSectionsPreferences:
-      '{"order":["continue-listening","newest-episodes","listen-again","recently-added","discover"],"hidden":[]}',
+  SettingKeys.personalizedShelfPodcastSectionsPreferences: '{"order":["continue-listening","newest-episodes","listen-again","recently-added","discover"],"hidden":[]}',
   SettingKeys.waitForSync: true,
   SettingKeys.progressPerChapter: false,
   SettingKeys.serverManagementCollections: true,
@@ -289,7 +338,8 @@ final defaultSettings = {
   SettingKeys.playerImmersiveColors: true,
   SettingKeys.fullPlayerTransportMode: 'both',
   SettingKeys.miniPlayerTransportMode: 'both',
-  SettingKeys.fullPlayerActions: 'speed,bookmarks,chapter,volume,sleepTimer,queue',
+  SettingKeys.fullPlayerActions:
+      'speed,bookmarks,chapter,volume,sleepTimer,queue',
   SettingKeys.mobilePlayerLeftAction: 'speed',
   SettingKeys.mobilePlayerRightAction: 'sleepTimer',
   SettingKeys.miniPlayerActions: 'speed,sleepTimer',
@@ -335,7 +385,8 @@ enum AppThemeMode {
     final normalized = value.trim().toLowerCase();
 
     for (final mode in AppThemeMode.values) {
-      if (mode.name == normalized || 'appthememode.${mode.name}' == normalized) {
+      if (mode.name == normalized ||
+          'appthememode.${mode.name}' == normalized) {
         return mode;
       }
     }
@@ -378,7 +429,8 @@ enum AppThemePreset {
     }
 
     for (final preset in AppThemePreset.values) {
-      if (preset.name == normalized || 'appthemepreset.${preset.name}' == normalized) {
+      if (preset.name == normalized ||
+          'appthemepreset.${preset.name}' == normalized) {
         return preset;
       }
     }
@@ -562,7 +614,8 @@ enum SeekBarMarkerMode {
   }
 
   bool get showBookmarks {
-    return this == SeekBarMarkerMode.bookmarks || this == SeekBarMarkerMode.both;
+    return this == SeekBarMarkerMode.bookmarks ||
+        this == SeekBarMarkerMode.both;
   }
 
   String get label {

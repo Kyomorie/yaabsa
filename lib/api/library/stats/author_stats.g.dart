@@ -12,8 +12,9 @@ _AuthorStats _$AuthorStatsFromJson(Map<String, dynamic> json) => _AuthorStats(
   count: jsonIntRequiredFromDynamic(json['count']),
 );
 
-Map<String, dynamic> _$AuthorStatsToJson(_AuthorStats instance) => <String, dynamic>{
-  'id': instance.id,
-  'name': instance.name,
-  'count': instance.count,
-};
+Map<String, dynamic> _$AuthorStatsToJson(_AuthorStats instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'count': instance.count,
+    };

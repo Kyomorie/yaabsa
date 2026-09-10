@@ -1,7 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 
 class ReaderColorPickerSheet extends StatelessWidget {
-  const ReaderColorPickerSheet({super.key, required this.title, required this.colors, required this.onColorSelected});
+  const ReaderColorPickerSheet({
+    super.key,
+    required this.title,
+    required this.colors,
+    required this.onColorSelected,
+  });
 
   final String title;
   final List<Color> colors;
@@ -19,12 +24,20 @@ class ReaderColorPickerSheet extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             'Colors:',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(

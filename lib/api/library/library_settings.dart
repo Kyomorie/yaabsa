@@ -17,11 +17,16 @@ abstract class LibrarySettings with _$LibrarySettings {
     @JsonKey(name: "hideSingleBookSeries") bool? hideSingleBookSeries,
     @JsonKey(name: "onlyShowLaterBooksInContinueSeries") bool? showLaterBooks,
     @JsonKey(name: "podcastSearchRegion") String? podcastSearchRegion,
-    @JsonKey(name: "markAsFinishedTimeRemaining", fromJson: jsonIntFromDynamic) int? markAsFinishedTimeRemaining,
-    @JsonKey(name: "markAsFinishedPercentComplete", fromJson: jsonDoubleFromDynamic)
+    @JsonKey(name: "markAsFinishedTimeRemaining", fromJson: jsonIntFromDynamic)
+    int? markAsFinishedTimeRemaining,
+    @JsonKey(
+      name: "markAsFinishedPercentComplete",
+      fromJson: jsonDoubleFromDynamic,
+    )
     double? markAsFinishedPercentComplete,
     @JsonKey(name: "metadataPrecedence") List<String>? metadataPrecedence,
   }) = _LibrarySettings;
 
-  factory LibrarySettings.fromJson(Map<String, dynamic> json) => _$LibrarySettingsFromJson(json);
+  factory LibrarySettings.fromJson(Map<String, dynamic> json) =>
+      _$LibrarySettingsFromJson(json);
 }

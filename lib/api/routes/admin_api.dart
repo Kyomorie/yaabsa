@@ -52,12 +52,19 @@ class AdminApi {
   Map<String, dynamic> _upsertRequestBody(AdminUserUpsertRequest payload) {
     final normalizedType = payload.type.trim().toLowerCase();
     final isSupportedType =
-        normalizedType == 'admin' || normalizedType == 'user' || normalizedType == 'guest' || normalizedType == 'root';
+        normalizedType == 'admin' ||
+        normalizedType == 'user' ||
+        normalizedType == 'guest' ||
+        normalizedType == 'root';
     final resolvedType = isSupportedType ? normalizedType : 'user';
 
     final permissions = payload.permissions;
-    final librariesAccessible = permissions.accessAllLibraries ? const <String>[] : payload.librariesAccessible;
-    final itemTagsSelected = permissions.accessAllTags ? const <String>[] : payload.itemTagsSelected;
+    final librariesAccessible = permissions.accessAllLibraries
+        ? const <String>[]
+        : payload.librariesAccessible;
+    final itemTagsSelected = permissions.accessAllTags
+        ? const <String>[]
+        : payload.itemTagsSelected;
 
     final permissionsPayload = Map<String, dynamic>.from(permissions.toJson())
       ..remove('librariesAccessible')
@@ -127,7 +134,11 @@ class AdminApi {
     );
 
     try {
-      final response = await _dio.request<Object>(route, options: options, cancelToken: cancelToken);
+      final response = await _dio.request<Object>(
+        route,
+        options: options,
+        cancelToken: cancelToken,
+      );
       final statusCode = response.statusCode;
       return statusCode != null && statusCode >= 200 && statusCode < 300;
     } catch (_) {
@@ -143,7 +154,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiDeleteRequestWithResponse(
       route: route,
-      fromJson: (data) => MetadataTermUpdateResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          MetadataTermUpdateResponse.fromJson(data as Map<String, dynamic>),
       dio: _dio,
       cancelToken: cancelToken,
       headers: headers,
@@ -175,7 +187,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/tasks',
-      fromJson: (data) => AbsTaskListResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AbsTaskListResponse.fromJson(data as Map<String, dynamic>),
       queryParams: {'include': includeQueue ? 'queue' : null},
       dio: _dio,
       cancelToken: cancelToken,
@@ -207,7 +220,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/api-keys',
-      fromJson: (data) => AdminApiKeysResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AdminApiKeysResponse.fromJson(data as Map<String, dynamic>),
       queryParams: const <String, dynamic>{},
       dio: _dio,
       cancelToken: cancelToken,
@@ -223,7 +237,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/backups',
-      fromJson: (data) => AdminBackupsResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AdminBackupsResponse.fromJson(data as Map<String, dynamic>),
       queryParams: const <String, dynamic>{},
       dio: _dio,
       cancelToken: cancelToken,
@@ -239,7 +254,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/feeds',
-      fromJson: (data) => AdminRssFeedsResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AdminRssFeedsResponse.fromJson(data as Map<String, dynamic>),
       queryParams: const <String, dynamic>{},
       dio: _dio,
       cancelToken: cancelToken,
@@ -255,7 +271,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/auth-settings',
-      fromJson: (data) => AdminAuthenticationSettings.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AdminAuthenticationSettings.fromJson(data as Map<String, dynamic>),
       queryParams: const <String, dynamic>{},
       dio: _dio,
       cancelToken: cancelToken,
@@ -264,7 +281,8 @@ class AdminApi {
     );
   }
 
-  Future<Response<UpdateAdminAuthenticationSettingsResponse>> updateAuthenticationSettings({
+  Future<Response<UpdateAdminAuthenticationSettingsResponse>>
+  updateAuthenticationSettings({
     required UpdateAdminAuthenticationSettingsRequest payload,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -272,8 +290,11 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiPatchRequest(
       route: '/api/auth-settings',
-      fromJson: (data) => UpdateAdminAuthenticationSettingsResponse.fromJson(data as Map<String, dynamic>),
-      bodyData: Map<String, dynamic>.from(payload.toJson())..removeWhere((key, value) => value == null),
+      fromJson: (data) => UpdateAdminAuthenticationSettingsResponse.fromJson(
+        data as Map<String, dynamic>,
+      ),
+      bodyData: Map<String, dynamic>.from(payload.toJson())
+        ..removeWhere((key, value) => value == null),
       dio: _dio,
       cancelToken: cancelToken,
       headers: headers,
@@ -289,7 +310,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/auth/openid/config',
-      fromJson: (data) => AdminOpenIdIssuerConfig.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AdminOpenIdIssuerConfig.fromJson(data as Map<String, dynamic>),
       queryParams: <String, dynamic>{'issuer': issuer},
       dio: _dio,
       cancelToken: cancelToken,
@@ -305,7 +327,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/emails/settings',
-      fromJson: (data) => AdminEmailSettingsResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AdminEmailSettingsResponse.fromJson(data as Map<String, dynamic>),
       queryParams: const <String, dynamic>{},
       dio: _dio,
       cancelToken: cancelToken,
@@ -322,8 +345,10 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiPatchRequest(
       route: '/api/emails/settings',
-      fromJson: (data) => AdminEmailSettingsResponse.fromJson(data as Map<String, dynamic>),
-      bodyData: Map<String, dynamic>.from(payload.toJson())..removeWhere((key, value) => value == null),
+      fromJson: (data) =>
+          AdminEmailSettingsResponse.fromJson(data as Map<String, dynamic>),
+      bodyData: Map<String, dynamic>.from(payload.toJson())
+        ..removeWhere((key, value) => value == null),
       dio: _dio,
       cancelToken: cancelToken,
       headers: headers,
@@ -366,7 +391,9 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiPostRequest(
       route: '/api/emails/ereader-devices',
-      fromJson: (data) => AdminEmailEreaderDevicesResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) => AdminEmailEreaderDevicesResponse.fromJson(
+        data as Map<String, dynamic>,
+      ),
       bodyData: payload.toJson(),
       dio: _dio,
       cancelToken: cancelToken,
@@ -412,7 +439,8 @@ class AdminApi {
     tmpDio.options.receiveTimeout = const Duration(minutes: 10);
     return ABSApi.makeApiPostRequest(
       route: '/api/backups',
-      fromJson: (data) => AdminBackupListResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AdminBackupListResponse.fromJson(data as Map<String, dynamic>),
       bodyData: const <String, dynamic>{},
       dio: tmpDio,
       cancelToken: cancelToken,
@@ -429,7 +457,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiDeleteRequestWithResponse(
       route: '/api/backups/$backupId',
-      fromJson: (data) => AdminBackupListResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AdminBackupListResponse.fromJson(data as Map<String, dynamic>),
       dio: _dio,
       cancelToken: cancelToken,
       headers: headers,
@@ -458,7 +487,9 @@ class AdminApi {
     );
 
     return Response<AdminBackupListResponse>(
-      data: AdminBackupListResponse.fromJson(response.data as Map<String, dynamic>),
+      data: AdminBackupListResponse.fromJson(
+        response.data as Map<String, dynamic>,
+      ),
       headers: response.headers,
       isRedirect: response.isRedirect,
       requestOptions: response.requestOptions,
@@ -482,7 +513,12 @@ class AdminApi {
       contentType: 'application/json',
     );
 
-    await _dio.request<Object>('/api/backups/path', data: payload.toJson(), options: options, cancelToken: cancelToken);
+    await _dio.request<Object>(
+      '/api/backups/path',
+      data: payload.toJson(),
+      options: options,
+      cancelToken: cancelToken,
+    );
   }
 
   Future<void> applyBackup({
@@ -498,7 +534,11 @@ class AdminApi {
       contentType: 'application/json',
     );
 
-    await _dio.request<Object>('/api/backups/$backupId/apply', options: options, cancelToken: cancelToken);
+    await _dio.request<Object>(
+      '/api/backups/$backupId/apply',
+      options: options,
+      cancelToken: cancelToken,
+    );
   }
 
   Future<Response<AdminApiKeyResponse>> createApiKey({
@@ -509,8 +549,10 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiPostRequest(
       route: '/api/api-keys',
-      fromJson: (data) => AdminApiKeyResponse.fromJson(data as Map<String, dynamic>),
-      bodyData: Map<String, dynamic>.from(payload.toJson())..removeWhere((key, value) => value == null),
+      fromJson: (data) =>
+          AdminApiKeyResponse.fromJson(data as Map<String, dynamic>),
+      bodyData: Map<String, dynamic>.from(payload.toJson())
+        ..removeWhere((key, value) => value == null),
       dio: _dio,
       cancelToken: cancelToken,
       headers: headers,
@@ -527,8 +569,10 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiPatchRequest(
       route: '/api/api-keys/$apiKeyId',
-      fromJson: (data) => AdminApiKeyResponse.fromJson(data as Map<String, dynamic>),
-      bodyData: Map<String, dynamic>.from(payload.toJson())..removeWhere((key, value) => value == null),
+      fromJson: (data) =>
+          AdminApiKeyResponse.fromJson(data as Map<String, dynamic>),
+      bodyData: Map<String, dynamic>.from(payload.toJson())
+        ..removeWhere((key, value) => value == null),
       dio: _dio,
       cancelToken: cancelToken,
       headers: headers,
@@ -751,7 +795,9 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/custom-metadata-providers',
-      fromJson: (data) => CustomMetadataProvidersResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) => CustomMetadataProvidersResponse.fromJson(
+        data as Map<String, dynamic>,
+      ),
       queryParams: {},
       dio: _dio,
       cancelToken: cancelToken,
@@ -760,7 +806,8 @@ class AdminApi {
     );
   }
 
-  Future<Response<CreateCustomMetadataProviderResponse>> createCustomMetadataProvider({
+  Future<Response<CreateCustomMetadataProviderResponse>>
+  createCustomMetadataProvider({
     required CreateCustomMetadataProviderRequest payload,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -769,7 +816,8 @@ class AdminApi {
     return ABSApi.makeApiPostRequest(
       route: '/api/custom-metadata-providers',
       fromJson: (data) => CreateCustomMetadataProviderResponse.fromJson(data),
-      bodyData: Map<String, dynamic>.from(payload.toJson())..removeWhere((key, value) => value == null),
+      bodyData: Map<String, dynamic>.from(payload.toJson())
+        ..removeWhere((key, value) => value == null),
       dio: _dio,
       cancelToken: cancelToken,
       headers: headers,
@@ -806,7 +854,9 @@ class AdminApi {
           return ServerSettings.fromJson(rawSettings);
         }
         if (rawSettings is Map) {
-          return ServerSettings.fromJson(Map<String, dynamic>.from(rawSettings));
+          return ServerSettings.fromJson(
+            Map<String, dynamic>.from(rawSettings),
+          );
         }
         return null;
       },
@@ -827,7 +877,8 @@ class AdminApi {
   }) async {
     return ABSApi.makeApiPatchRequest(
       route: '/api/sorting-prefixes',
-      fromJson: (data) => SortingPrefixesUpdateResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          SortingPrefixesUpdateResponse.fromJson(data as Map<String, dynamic>),
       bodyData: <String, dynamic>{'sortingPrefixes': sortingPrefixes},
       dio: _dio,
       cancelToken: cancelToken,

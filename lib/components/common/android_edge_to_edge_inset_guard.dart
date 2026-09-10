@@ -22,16 +22,27 @@ class AndroidEdgeToEdgeInsetGuard extends StatelessWidget {
     final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
     final bottomPadding = isKeyboardOpen
         ? mediaQuery.padding.bottom
-        : math.max(mediaQuery.padding.bottom, mediaQuery.systemGestureInsets.bottom);
+        : math.max(
+            mediaQuery.padding.bottom,
+            mediaQuery.systemGestureInsets.bottom,
+          );
     final bottomViewPadding = isKeyboardOpen
         ? mediaQuery.viewPadding.bottom
-        : math.max(mediaQuery.viewPadding.bottom, mediaQuery.systemGestureInsets.bottom);
+        : math.max(
+            mediaQuery.viewPadding.bottom,
+            mediaQuery.systemGestureInsets.bottom,
+          );
 
     final mergedPadding = mediaQuery.padding.copyWith(bottom: bottomPadding);
-    final mergedViewPadding = mediaQuery.viewPadding.copyWith(bottom: bottomViewPadding);
+    final mergedViewPadding = mediaQuery.viewPadding.copyWith(
+      bottom: bottomViewPadding,
+    );
 
     return MediaQuery(
-      data: mediaQuery.copyWith(padding: mergedPadding, viewPadding: mergedViewPadding),
+      data: mediaQuery.copyWith(
+        padding: mergedPadding,
+        viewPadding: mergedViewPadding,
+      ),
       child: child,
     );
   }

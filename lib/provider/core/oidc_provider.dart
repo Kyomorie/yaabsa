@@ -47,7 +47,11 @@ class OidcState extends _$OidcState {
           }
         })
         .catchError((dynamic err) {
-          logger('Failed to get initial app link: $err', tag: 'OidcProvider', level: InfoLevel.warning);
+          logger(
+            'Failed to get initial app link: $err',
+            tag: 'OidcProvider',
+            level: InfoLevel.warning,
+          );
         });
 
     _linkSubscription = appLinks.uriLinkStream.listen(
@@ -55,7 +59,11 @@ class OidcState extends _$OidcState {
         _handleIncomingUri(uri);
       },
       onError: (dynamic err) {
-        logger('Error in app links stream: $err', tag: 'OidcProvider', level: InfoLevel.warning);
+        logger(
+          'Error in app links stream: $err',
+          tag: 'OidcProvider',
+          level: InfoLevel.warning,
+        );
       },
     );
   }
@@ -68,12 +76,17 @@ class OidcState extends _$OidcState {
     }
   }
 
-  Future<void> initiateOidc({required String serverUrl, required Map<String, String> customHeaders}) async {
+  Future<void> initiateOidc({
+    required String serverUrl,
+    required Map<String, String> customHeaders,
+  }) async {
     state = const AsyncValue.loading();
     try {
       final codeVerifier = _generateCodeVerifier();
       final sessionState = _randomBase64Url(24);
-      final codeChallenge = _toBase64UrlNoPadding(sha256.convert(utf8.encode(codeVerifier)).bytes);
+      final codeChallenge = _toBase64UrlNoPadding(
+        sha256.convert(utf8.encode(codeVerifier)).bytes,
+      );
 
       final headers = buildRequestHeaders(serverHeaders: customHeaders);
       final dio = createNativeDio(
@@ -97,13 +110,16 @@ class OidcState extends _$OidcState {
         },
         options: Options(
           followRedirects: false,
-          validateStatus: (status) => status != null && status >= 200 && status < 400,
+          validateStatus: (status) =>
+              status != null && status >= 200 && status < 400,
         ),
       );
 
       final location = response.headers.value('location');
       if (location == null || location.isEmpty) {
-        throw Exception('Server did not return OIDC redirect location. OIDC is likely misconfigured on the server.');
+        throw Exception(
+          'Server did not return OIDC redirect location. OIDC is likely misconfigured on the server.',
+        );
       }
 
       final setCookie = _parseSetCookieHeaders(response.headers['set-cookie']);
@@ -120,8 +136,14 @@ class OidcState extends _$OidcState {
       const storage = FlutterSecureStorage();
       await storage.write(key: 'oidc_session', value: jsonEncode(session));
 
-      logger('OIDC flow initialized. Launching browser: $location', tag: 'OidcProvider');
-      final launched = await launchUrl(Uri.parse(location), mode: LaunchMode.externalApplication);
+      logger(
+        'OIDC flow initialized. Launching browser: $location',
+        tag: 'OidcProvider',
+      );
+      final launched = await launchUrl(
+        Uri.parse(location),
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched) {
         throw Exception('Could not launch OpenID login page in browser.');
       }
@@ -129,9 +151,18 @@ class OidcState extends _$OidcState {
       state = const AsyncValue.data(null);
     } catch (e, st) {
       final errorToSet = isAuthSecretsUnavailableError(e)
-          ? Exception(authSecretsUnavailableMessage(operation: 'saved', keyringLocked: isKeyringLockedError(e)))
+          ? Exception(
+              authSecretsUnavailableMessage(
+                operation: 'saved',
+                keyringLocked: isKeyringLockedError(e),
+              ),
+            )
           : formatOidcError(e);
-      logger('Failed to initiate OIDC flow: $errorToSet', tag: 'OidcProvider', level: InfoLevel.error);
+      logger(
+        'Failed to initiate OIDC flow: $errorToSet',
+        tag: 'OidcProvider',
+        level: InfoLevel.error,
+      );
       state = AsyncValue.error(errorToSet, st);
       throw errorToSet;
     }
@@ -145,13 +176,17 @@ class OidcState extends _$OidcState {
       final stateValue = queryParams['state'];
 
       if (code == null || stateValue == null) {
-        throw Exception('Authorization callback URL is missing code or state parameters.');
+        throw Exception(
+          'Authorization callback URL is missing code or state parameters.',
+        );
       }
 
       const storage = FlutterSecureStorage();
       final sessionJson = await storage.read(key: 'oidc_session');
       if (sessionJson == null) {
-        throw Exception('No active OIDC session context found in storage. Please try logging in again.');
+        throw Exception(
+          'No active OIDC session context found in storage. Please try logging in again.',
+        );
       }
 
       final session = jsonDecode(sessionJson) as Map<String, dynamic>;
@@ -161,15 +196,21 @@ class OidcState extends _$OidcState {
       final codeVerifier = session['codeVerifier'] as String;
       final serverUrl = session['serverUrl'] as String;
       final cookie = session['cookie'] as String?;
-      final customHeaders = Map<String, String>.from(session['customHeaders'] as Map);
+      final customHeaders = Map<String, String>.from(
+        session['customHeaders'] as Map,
+      );
       final timestamp = DateTime.parse(session['timestamp'] as String);
 
       if (DateTime.now().difference(timestamp) > const Duration(minutes: 5)) {
-        throw Exception('Authorization session timed out. Please try logging in again.');
+        throw Exception(
+          'Authorization session timed out. Please try logging in again.',
+        );
       }
 
       if (savedState != stateValue) {
-        throw Exception('State validation mismatch. Potential security breach or duplicate login flow.');
+        throw Exception(
+          'State validation mismatch. Potential security breach or duplicate login flow.',
+        );
       }
 
       final baseHeaders = buildRequestHeaders(serverHeaders: customHeaders);
@@ -187,10 +228,17 @@ class OidcState extends _$OidcState {
         ),
       );
 
-      logger('Requesting callback token exchange at: $serverUrl/auth/openid/callback', tag: 'OidcProvider');
+      logger(
+        'Requesting callback token exchange at: $serverUrl/auth/openid/callback',
+        tag: 'OidcProvider',
+      );
       final response = await dio.get<dynamic>(
         '/auth/openid/callback',
-        queryParameters: <String, dynamic>{'code': code, 'state': stateValue, 'code_verifier': codeVerifier},
+        queryParameters: <String, dynamic>{
+          'code': code,
+          'state': stateValue,
+          'code_verifier': codeVerifier,
+        },
       );
 
       final responseData = response.data;
@@ -199,7 +247,9 @@ class OidcState extends _$OidcState {
       }
 
       final loginData = Login.fromJson(responseData);
-      final loggedInUser = loginData.user.copyWith(setting: loginData.serverSettings);
+      final loggedInUser = loginData.user.copyWith(
+        setting: loginData.serverSettings,
+      );
       final serverDefaultLibraryId = loginData.userDefaultLibraryId;
 
       final token = loggedInUser.preferredAuthToken;
@@ -232,20 +282,34 @@ class OidcState extends _$OidcState {
 
       final normalizedDefaultLibraryId = serverDefaultLibraryId.trim();
       if (normalizedDefaultLibraryId.isNotEmpty) {
-        await db.setUserSetting(loggedInUser.id, 'selectedLibraryId', normalizedDefaultLibraryId);
+        await db.setUserSetting(
+          loggedInUser.id,
+          'selectedLibraryId',
+          normalizedDefaultLibraryId,
+        );
       }
 
       if (authenticatedApi != null) {
         try {
-          final librariesResponse = await authenticatedApi.getLibraryApi().getLibraries();
+          final librariesResponse = await authenticatedApi
+              .getLibraryApi()
+              .getLibraries();
           final libraries = librariesResponse.data?.libraries;
           if (libraries != null && libraries.isNotEmpty) {
             final hasValidDefault =
                 normalizedDefaultLibraryId.isNotEmpty &&
-                libraries.any((library) => library.id == normalizedDefaultLibraryId);
-            final selectedLibraryId = hasValidDefault ? normalizedDefaultLibraryId : libraries.first.id;
+                libraries.any(
+                  (library) => library.id == normalizedDefaultLibraryId,
+                );
+            final selectedLibraryId = hasValidDefault
+                ? normalizedDefaultLibraryId
+                : libraries.first.id;
             if (selectedLibraryId.isNotEmpty) {
-              await db.setUserSetting(loggedInUser.id, 'selectedLibraryId', selectedLibraryId);
+              await db.setUserSetting(
+                loggedInUser.id,
+                'selectedLibraryId',
+                selectedLibraryId,
+              );
             }
           }
         } catch (e, s) {
@@ -271,10 +335,17 @@ class OidcState extends _$OidcState {
     } catch (e, st) {
       final errorToSet = isAuthSecretsUnavailableError(e)
           ? Exception(
-              authSecretsUnavailableMessage(operation: 'loaded or saved', keyringLocked: isKeyringLockedError(e)),
+              authSecretsUnavailableMessage(
+                operation: 'loaded or saved',
+                keyringLocked: isKeyringLockedError(e),
+              ),
             )
           : formatOidcError(e);
-      logger('OIDC Callback exchange failed: $errorToSet', tag: 'OidcProvider', level: InfoLevel.error);
+      logger(
+        'OIDC Callback exchange failed: $errorToSet',
+        tag: 'OidcProvider',
+        level: InfoLevel.error,
+      );
       state = AsyncValue.error(errorToSet, st);
     }
   }
@@ -297,7 +368,8 @@ Object formatOidcError(Object e) {
 }
 
 String _generateCodeVerifier() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
   final random = Random.secure();
   return List.generate(64, (_) => chars[random.nextInt(chars.length)]).join();
 }
@@ -334,7 +406,15 @@ String? _parseSetCookieHeaders(List<String>? setCookieHeaders) {
             if (sub.isEmpty) continue;
             if (j > 0 && sub.contains('=')) {
               final key = sub.split('=').first.trim().toLowerCase();
-              final knownAttributes = {'path', 'domain', 'max-age', 'expires', 'samesite', 'secure', 'httponly'};
+              final knownAttributes = {
+                'path',
+                'domain',
+                'max-age',
+                'expires',
+                'samesite',
+                'secure',
+                'httponly',
+              };
               if (!knownAttributes.contains(key)) {
                 parsedCookies.add(sub);
               }

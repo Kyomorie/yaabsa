@@ -15,9 +15,16 @@ void syncDesktopTheme(Brightness brightness) {
   }
 
   try {
-    (_gtkSettings ??= GtkSettings()).setProperty(kGtkApplicationPreferDarkTheme, brightness == Brightness.dark);
+    (_gtkSettings ??= GtkSettings()).setProperty(
+      kGtkApplicationPreferDarkTheme,
+      brightness == Brightness.dark,
+    );
     _lastAppliedBrightness = brightness;
   } catch (error, stack) {
-    logger('Failed to sync the Linux GTK theme: $error\n$stack', tag: 'DesktopTheme', level: InfoLevel.warning);
+    logger(
+      'Failed to sync the Linux GTK theme: $error\n$stack',
+      tag: 'DesktopTheme',
+      level: InfoLevel.warning,
+    );
   }
 }

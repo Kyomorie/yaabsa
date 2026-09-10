@@ -5,11 +5,15 @@ part 'update_admin_email_ereader_devices_request.freezed.dart';
 part 'update_admin_email_ereader_devices_request.g.dart';
 
 @freezed
-abstract class UpdateAdminEmailEreaderDevicesRequest with _$UpdateAdminEmailEreaderDevicesRequest {
+abstract class UpdateAdminEmailEreaderDevicesRequest
+    with _$UpdateAdminEmailEreaderDevicesRequest {
   const factory UpdateAdminEmailEreaderDevicesRequest({
-    @JsonKey(name: 'ereaderDevices') @Default(<AdminEmailEreaderDevice>[]) List<AdminEmailEreaderDevice> ereaderDevices,
+    @JsonKey(name: 'ereaderDevices')
+    @Default(<AdminEmailEreaderDevice>[])
+    List<AdminEmailEreaderDevice> ereaderDevices,
   }) = _UpdateAdminEmailEreaderDevicesRequest;
 
-  factory UpdateAdminEmailEreaderDevicesRequest.fromJson(Map<String, dynamic> json) =>
-      _$UpdateAdminEmailEreaderDevicesRequestFromJson(json);
+  factory UpdateAdminEmailEreaderDevicesRequest.fromJson(
+    Map<String, dynamic> json,
+  ) => _$UpdateAdminEmailEreaderDevicesRequestFromJson(json);
 }

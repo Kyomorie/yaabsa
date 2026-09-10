@@ -5,7 +5,11 @@ import 'package:yaabsa/screens/main/stats/stats_activity_heatmap.dart';
 import 'package:yaabsa/screens/main/stats/stats_activity_range_chart.dart';
 
 class StatsActivitySection extends StatelessWidget {
-  const StatsActivitySection({super.key, required this.activityAsync, required this.onRefresh});
+  const StatsActivitySection({
+    super.key,
+    required this.activityAsync,
+    required this.onRefresh,
+  });
 
   final AsyncValue<ListeningActivityStats> activityAsync;
   final VoidCallback onRefresh;
@@ -21,7 +25,10 @@ class StatsActivitySection extends StatelessWidget {
           children: [
             StatsActivityRangeChart(activity: activity),
             const SizedBox(height: 24),
-            Text('Listening consistency', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Listening consistency',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 12),
             StatsActivityHeatmap(activity: activity, days: 365),
           ],
@@ -31,7 +38,10 @@ class StatsActivitySection extends StatelessWidget {
       error: (error, _) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Failed to load listening activity.', style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            'Failed to load listening activity.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           const SizedBox(height: 6),
           Text(
             error.toString(),

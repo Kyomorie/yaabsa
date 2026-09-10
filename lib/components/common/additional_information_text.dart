@@ -2,7 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/util/library_view_subtitles.dart';
 
 class AdditionalInformationText extends StatelessWidget {
-  const AdditionalInformationText({required this.subtitle, required this.style, super.key});
+  const AdditionalInformationText({
+    required this.subtitle,
+    required this.style,
+    super.key,
+  });
 
   final LibraryViewSubtitle subtitle;
   final TextStyle? style;
@@ -29,7 +33,13 @@ class AdditionalInformationText extends StatelessWidget {
       if (part.isStandalone) {
         flushInlineParts();
         children.add(
-          Text(part.displayText, maxLines: 1, overflow: TextOverflow.ellipsis, softWrap: false, style: style),
+          Text(
+            part.displayText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            style: style,
+          ),
         );
       } else {
         inlineParts.add(part.displayText);
@@ -37,6 +47,9 @@ class AdditionalInformationText extends StatelessWidget {
     }
     flushInlineParts();
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
   }
 }

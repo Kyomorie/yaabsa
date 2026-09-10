@@ -18,12 +18,19 @@ abstract class AdminUser with _$AdminUser {
     @JsonKey(name: 'lastSeen') int? lastSeen,
     @JsonKey(name: 'createdAt') int? createdAt,
     @JsonKey(name: 'hasOpenIDLink') bool? hasOpenIdLink,
-    @JsonKey(name: 'permissions') @Default(AdminUserPermissions()) AdminUserPermissions permissions,
-    @JsonKey(name: 'librariesAccessible') @Default(<String>[]) List<String> librariesAccessible,
-    @JsonKey(name: 'itemTagsSelected') @Default(<String>[]) List<String> itemTagsSelected,
+    @JsonKey(name: 'permissions')
+    @Default(AdminUserPermissions())
+    AdminUserPermissions permissions,
+    @JsonKey(name: 'librariesAccessible')
+    @Default(<String>[])
+    List<String> librariesAccessible,
+    @JsonKey(name: 'itemTagsSelected')
+    @Default(<String>[])
+    List<String> itemTagsSelected,
   }) = _AdminUser;
 
-  factory AdminUser.fromJson(Map<String, dynamic> json) => _$AdminUserFromJson(json);
+  factory AdminUser.fromJson(Map<String, dynamic> json) =>
+      _$AdminUserFromJson(json);
 
   static AdminUser? fromApiResponse(Object? payload) {
     if (payload is Map<String, dynamic>) {

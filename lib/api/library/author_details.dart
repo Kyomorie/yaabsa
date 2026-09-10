@@ -15,11 +15,16 @@ abstract class AuthorDetails with _$AuthorDetails {
     @JsonKey(name: 'libraryId') required String libraryId,
     @JsonKey(name: 'addedAt') required int addedAt,
     @JsonKey(name: 'updatedAt') required int updatedAt,
-    @JsonKey(name: 'series') @Default(<AuthorSeriesGroup>[]) List<AuthorSeriesGroup> series,
-    @JsonKey(name: 'libraryItems') @Default(<LibraryItem>[]) List<LibraryItem> libraryItems,
+    @JsonKey(name: 'series')
+    @Default(<AuthorSeriesGroup>[])
+    List<AuthorSeriesGroup> series,
+    @JsonKey(name: 'libraryItems')
+    @Default(<LibraryItem>[])
+    List<LibraryItem> libraryItems,
   }) = _AuthorDetails;
 
-  factory AuthorDetails.fromJson(Map<String, dynamic> json) => _$AuthorDetailsFromJson(json);
+  factory AuthorDetails.fromJson(Map<String, dynamic> json) =>
+      _$AuthorDetailsFromJson(json);
 }
 
 @freezed
@@ -30,5 +35,6 @@ abstract class AuthorSeriesGroup with _$AuthorSeriesGroup {
     @JsonKey(name: 'items') @Default(<LibraryItem>[]) List<LibraryItem> items,
   }) = _AuthorSeriesGroup;
 
-  factory AuthorSeriesGroup.fromJson(Map<String, dynamic> json) => _$AuthorSeriesGroupFromJson(json);
+  factory AuthorSeriesGroup.fromJson(Map<String, dynamic> json) =>
+      _$AuthorSeriesGroupFromJson(json);
 }

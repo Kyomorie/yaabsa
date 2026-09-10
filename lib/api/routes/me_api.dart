@@ -59,7 +59,10 @@ class MeApi {
     return ABSApi.makeApiPatchRequest<dynamic>(
       route: '/api/me/password',
       fromJson: (data) => data,
-      bodyData: <String, dynamic>{'password': password, 'newPassword': newPassword},
+      bodyData: <String, dynamic>{
+        'password': password,
+        'newPassword': newPassword,
+      },
       cancelToken: cancelToken,
       headers: requestHeaders,
       extra: extra,
@@ -90,7 +93,10 @@ class MeApi {
     Map<String, dynamic>? extra,
   }) async {
     final requestHeaders = <String, dynamic>{...?headers};
-    final requestExtra = <String, dynamic>{'skip_auth_refresh': true, ...?extra};
+    final requestExtra = <String, dynamic>{
+      'skip_auth_refresh': true,
+      ...?extra,
+    };
     if (refreshToken != null && refreshToken.isNotEmpty) {
       requestHeaders['x-refresh-token'] = refreshToken;
     }
@@ -115,7 +121,10 @@ class MeApi {
     Map<String, dynamic>? extra,
   }) async {
     final requestHeaders = <String, dynamic>{...?headers};
-    final requestExtra = <String, dynamic>{'skip_auth_refresh': true, ...?extra};
+    final requestExtra = <String, dynamic>{
+      'skip_auth_refresh': true,
+      ...?extra,
+    };
     if (refreshToken != null && refreshToken.isNotEmpty) {
       requestHeaders['x-refresh-token'] = refreshToken;
     }
@@ -207,7 +216,8 @@ class MeApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/me/progress',
-      fromJson: (data) => MediaProgressResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          MediaProgressResponse.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -224,7 +234,8 @@ class MeApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/me/items-in-progress',
-      fromJson: (data) => ItemsInProgress.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          ItemsInProgress.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -240,7 +251,8 @@ class MeApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/me/bookmarks',
-      fromJson: (data) => BookmarksResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          BookmarksResponse.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -257,7 +269,8 @@ class MeApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/me/bookmarks/$libraryItemId',
-      fromJson: (data) => BookmarksResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          BookmarksResponse.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -308,7 +321,8 @@ class MeApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/me/listening-sessions',
-      fromJson: (data) => ListeningSessionsPage.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          ListeningSessionsPage.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -327,7 +341,8 @@ class MeApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/users/$userId/listening-sessions',
-      fromJson: (data) => ListeningSessionsPage.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          ListeningSessionsPage.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -352,7 +367,8 @@ class MeApi {
 
     return ABSApi.makeApiGetRequest(
       route: route,
-      fromJson: (data) => ListeningSessionsPage.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          ListeningSessionsPage.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,

@@ -6,7 +6,9 @@ part of 'update_library_request.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_UpdateLibraryRequest _$UpdateLibraryRequestFromJson(Map<String, dynamic> json) => _UpdateLibraryRequest(
+_UpdateLibraryRequest _$UpdateLibraryRequestFromJson(
+  Map<String, dynamic> json,
+) => _UpdateLibraryRequest(
   name: json['name'] as String?,
   displayOrder: (json['displayOrder'] as num?)?.toInt(),
   icon: json['icon'] as String?,
@@ -14,13 +16,17 @@ _UpdateLibraryRequest _$UpdateLibraryRequestFromJson(Map<String, dynamic> json) 
   provider: json['provider'] as String?,
   settings: json['settings'] == null
       ? null
-      : UpdateLibrarySettingsRequest.fromJson(json['settings'] as Map<String, dynamic>),
+      : UpdateLibrarySettingsRequest.fromJson(
+          json['settings'] as Map<String, dynamic>,
+        ),
   folders: (json['folders'] as List<dynamic>?)
       ?.map((e) => LibraryFolderPayload.fromJson(e as Map<String, dynamic>))
       .toList(),
 );
 
-Map<String, dynamic> _$UpdateLibraryRequestToJson(_UpdateLibraryRequest instance) => <String, dynamic>{
+Map<String, dynamic> _$UpdateLibraryRequestToJson(
+  _UpdateLibraryRequest instance,
+) => <String, dynamic>{
   'name': ?instance.name,
   'displayOrder': ?instance.displayOrder,
   'icon': ?instance.icon,

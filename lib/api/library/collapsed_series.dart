@@ -14,5 +14,6 @@ abstract class CollapsedSeries with _$CollapsedSeries {
     @JsonKey(name: "libraryItemIds") List<String>? libraryItemIds,
   }) = _CollapsedSeries;
 
-  factory CollapsedSeries.fromJson(Map<String, dynamic> json) => _$CollapsedSeriesFromJson(json);
+  factory CollapsedSeries.fromJson(Map<String, dynamic> json) =>
+      _$CollapsedSeriesFromJson(json);
 }

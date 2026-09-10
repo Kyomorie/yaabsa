@@ -77,13 +77,17 @@ class AdminBackupSettingsPanel extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  backupLocation.trim().isEmpty ? 'Backup location unavailable.' : backupLocation,
+                  backupLocation.trim().isEmpty
+                      ? 'Backup location unavailable.'
+                      : backupLocation,
                   style: theme.textTheme.bodyMedium,
                   softWrap: true,
                 ),
               ),
               IconButton(
-                tooltip: canEditBackupPath ? 'Edit backup location' : 'Backup location locked',
+                tooltip: canEditBackupPath
+                    ? 'Edit backup location'
+                    : 'Backup location locked',
                 onPressed: canEditBackupPath ? onTogglePathEditing : null,
                 icon: const Icon(Icons.edit_outlined),
               ),
@@ -102,14 +106,23 @@ class AdminBackupSettingsPanel extends StatelessWidget {
           Row(
             children: [
               FilledButton.icon(
-                onPressed: canEditBackupPath && !isSavingBackupPath ? onSaveBackupPath : null,
+                onPressed: canEditBackupPath && !isSavingBackupPath
+                    ? onSaveBackupPath
+                    : null,
                 icon: isSavingBackupPath
-                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.save_outlined),
                 label: const Text('Save Path'),
               ),
               const SizedBox(width: 8),
-              OutlinedButton(onPressed: isSavingBackupPath ? null : onCancelPathEditing, child: const Text('Cancel')),
+              OutlinedButton(
+                onPressed: isSavingBackupPath ? null : onCancelPathEditing,
+                child: const Text('Cancel'),
+              ),
             ],
           ),
         ],
@@ -160,7 +173,11 @@ class AdminBackupSettingsPanel extends StatelessWidget {
             if (stacked) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [backupsToKeepField, const SizedBox(height: 6), maxBackupSizeField],
+                children: [
+                  backupsToKeepField,
+                  const SizedBox(height: 6),
+                  maxBackupSizeField,
+                ],
               );
             }
 
@@ -180,7 +197,11 @@ class AdminBackupSettingsPanel extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: isUpdatingSettings ? null : onSaveBackupSettings,
             icon: isUpdatingSettings
-                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.save_outlined),
             label: const Text('Save Backup Settings'),
           ),

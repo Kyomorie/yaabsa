@@ -15,8 +15,9 @@ class CueBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall
-            ?.copyWith(color: Theme.of(context).colorScheme.onSecondaryContainer),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSecondaryContainer,
+        ),
       ),
     );
   }

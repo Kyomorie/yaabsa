@@ -17,7 +17,12 @@ class StatsMetric {
 }
 
 class StatsMetricGrid extends StatelessWidget {
-  const StatsMetricGrid({super.key, required this.metrics, this.minimumTileWidth = 168, this.maximumColumns = 4});
+  const StatsMetricGrid({
+    super.key,
+    required this.metrics,
+    this.minimumTileWidth = 168,
+    this.maximumColumns = 4,
+  });
 
   final List<StatsMetric> metrics;
   final double minimumTileWidth;
@@ -29,9 +34,11 @@ class StatsMetricGrid extends StatelessWidget {
       builder: (context, constraints) {
         const spacing = 12.0;
         final availableWidth = constraints.maxWidth;
-        final possibleColumns = ((availableWidth + spacing) / (minimumTileWidth + spacing)).floor();
+        final possibleColumns =
+            ((availableWidth + spacing) / (minimumTileWidth + spacing)).floor();
         final columns = possibleColumns.clamp(1, maximumColumns);
-        final tileWidth = (availableWidth - ((columns - 1) * spacing)) / columns;
+        final tileWidth =
+            (availableWidth - ((columns - 1) * spacing)) / columns;
         final rows = <List<StatsMetric>>[];
         for (var index = 0; index < metrics.length; index += columns) {
           rows.add(metrics.skip(index).take(columns).toList(growable: false));
@@ -42,17 +49,25 @@ class StatsMetricGrid extends StatelessWidget {
           children: [
             for (var rowIndex = 0; rowIndex < rows.length; rowIndex++)
               Padding(
-                padding: EdgeInsets.only(bottom: rowIndex == rows.length - 1 ? 0 : spacing),
+                padding: EdgeInsets.only(
+                  bottom: rowIndex == rows.length - 1 ? 0 : spacing,
+                ),
                 child: IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      for (var columnIndex = 0; columnIndex < columns; columnIndex++) ...[
+                      for (
+                        var columnIndex = 0;
+                        columnIndex < columns;
+                        columnIndex++
+                      ) ...[
                         if (columnIndex > 0) const SizedBox(width: spacing),
                         SizedBox(
                           width: tileWidth,
                           child: columnIndex < rows[rowIndex].length
-                              ? _StatsMetricCard(metric: rows[rowIndex][columnIndex])
+                              ? _StatsMetricCard(
+                                  metric: rows[rowIndex][columnIndex],
+                                )
                               : const SizedBox.shrink(),
                         ),
                       ],
@@ -81,7 +96,9 @@ class _StatsMetricCard extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 112),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: metric.emphasized ? colors.primaryContainer : colors.surfaceContainer,
+        color: metric.emphasized
+            ? colors.primaryContainer
+            : colors.surfaceContainer,
         borderRadius: BorderRadius.circular(metric.emphasized ? 24 : 20),
         border: Border.all(
           color: metric.emphasized
@@ -92,7 +109,13 @@ class _StatsMetricCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(metric.icon, size: 22, color: metric.emphasized ? colors.onPrimaryContainer : colors.primary),
+          Icon(
+            metric.icon,
+            size: 22,
+            color: metric.emphasized
+                ? colors.onPrimaryContainer
+                : colors.primary,
+          ),
           const SizedBox(height: 16),
           Text(
             metric.value,
@@ -100,7 +123,9 @@ class _StatsMetricCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
-              color: metric.emphasized ? colors.onPrimaryContainer : colors.onSurface,
+              color: metric.emphasized
+                  ? colors.onPrimaryContainer
+                  : colors.onSurface,
             ),
           ),
           const SizedBox(height: 2),
@@ -109,7 +134,9 @@ class _StatsMetricCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: metric.emphasized ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+              color: metric.emphasized
+                  ? colors.onPrimaryContainer
+                  : colors.onSurfaceVariant,
             ),
           ),
           if (metric.supportingText case final supportingText?) ...[
@@ -119,7 +146,9 @@ class _StatsMetricCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelSmall?.copyWith(
-                color: metric.emphasized ? colors.onPrimaryContainer : colors.onSurfaceVariant,
+                color: metric.emphasized
+                    ? colors.onPrimaryContainer
+                    : colors.onSurfaceVariant,
               ),
             ),
           ],
@@ -156,7 +185,9 @@ class StatsSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.65)),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.65),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,14 +204,23 @@ class StatsSection extends StatelessWidget {
                     color: theme.colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(icon, size: 21, color: theme.colorScheme.onSecondaryContainer),
+                  child: Icon(
+                    icon,
+                    size: 21,
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
                 ),
                 const SizedBox(width: 12),
               ],
               Expanded(
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text(title, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
               if (trailing != null) ...[const SizedBox(width: 8), trailing!],
@@ -194,7 +234,12 @@ class StatsSection extends StatelessWidget {
 }
 
 class StatsRankedEntry {
-  const StatsRankedEntry({required this.label, required this.value, required this.trailing, this.onTap});
+  const StatsRankedEntry({
+    required this.label,
+    required this.value,
+    required this.trailing,
+    this.onTap,
+  });
 
   final String label;
   final double value;
@@ -236,12 +281,18 @@ class _StatsRankedListState extends State<StatsRankedList> {
     if (widget.entries.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text(widget.emptyMessage, style: Theme.of(context).textTheme.bodyMedium),
+        child: Text(
+          widget.emptyMessage,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
       );
     }
 
-    final sorted = List<StatsRankedEntry>.from(widget.entries)..sort((a, b) => b.value.compareTo(a.value));
-    final visible = _expanded ? sorted : sorted.take(widget.previewCount).toList(growable: false);
+    final sorted = List<StatsRankedEntry>.from(widget.entries)
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final visible = _expanded
+        ? sorted
+        : sorted.take(widget.previewCount).toList(growable: false);
     final maxValue = sorted.first.value <= 0 ? 1.0 : sorted.first.value;
     final canExpand = sorted.length > widget.previewCount;
 
@@ -259,8 +310,16 @@ class _StatsRankedListState extends State<StatsRankedList> {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: () => setState(() => _expanded = !_expanded),
-              icon: Icon(_expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded),
-              label: Text(_expanded ? 'Show less' : 'Show ${sorted.length - widget.previewCount} more'),
+              icon: Icon(
+                _expanded
+                    ? Icons.expand_less_rounded
+                    : Icons.expand_more_rounded,
+              ),
+              label: Text(
+                _expanded
+                    ? 'Show less'
+                    : 'Show ${sorted.length - widget.previewCount} more',
+              ),
             ),
           ),
         ],
@@ -270,7 +329,11 @@ class _StatsRankedListState extends State<StatsRankedList> {
 }
 
 class _StatsRankedRow extends StatelessWidget {
-  const _StatsRankedRow({required this.entry, required this.fraction, this.rank});
+  const _StatsRankedRow({
+    required this.entry,
+    required this.fraction,
+    this.rank,
+  });
 
   final StatsRankedEntry entry;
   final double fraction;
@@ -298,15 +361,27 @@ class _StatsRankedRow extends StatelessWidget {
                   ),
                   child: Text('$rank', style: theme.textTheme.labelMedium),
                 ),
-              Expanded(child: Text(entry.label, maxLines: 1, overflow: TextOverflow.ellipsis)),
+              Expanded(
+                child: Text(
+                  entry.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               const SizedBox(width: 12),
               Text(
                 entry.trailing,
-                style: theme.textTheme.labelMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
               if (entry.onTap != null) ...[
                 const SizedBox(width: 4),
-                Icon(Icons.chevron_right_rounded, size: 18, color: theme.colorScheme.onSurfaceVariant),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ],
             ],
           ),
@@ -327,12 +402,22 @@ class _StatsRankedRow extends StatelessWidget {
       return content;
     }
 
-    return InkWell(borderRadius: BorderRadius.circular(12), onTap: entry.onTap, child: content);
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: entry.onTap,
+      child: content,
+    );
   }
 }
 
 class StatsMessage extends StatelessWidget {
-  const StatsMessage({super.key, required this.title, required this.icon, this.message, this.action});
+  const StatsMessage({
+    super.key,
+    required this.title,
+    required this.icon,
+    this.message,
+    this.action,
+  });
 
   final String title;
   final String? message;
@@ -351,13 +436,19 @@ class StatsMessage extends StatelessWidget {
           children: [
             Icon(icon, size: 42, color: theme.colorScheme.primary),
             const SizedBox(height: 14),
-            Text(title, textAlign: TextAlign.center, style: theme.textTheme.titleMedium),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium,
+            ),
             if (message case final message?) ...[
               const SizedBox(height: 6),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
             if (action != null) ...[const SizedBox(height: 16), action!],

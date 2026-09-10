@@ -6,8 +6,10 @@ part 'bookmarks_response.g.dart';
 
 @freezed
 abstract class BookmarksResponse with _$BookmarksResponse {
-  const factory BookmarksResponse({@JsonKey(name: 'bookmarks') @Default(<Bookmark>[]) List<Bookmark> bookmarks}) =
-      _BookmarksResponse;
+  const factory BookmarksResponse({
+    @JsonKey(name: 'bookmarks') @Default(<Bookmark>[]) List<Bookmark> bookmarks,
+  }) = _BookmarksResponse;
 
-  factory BookmarksResponse.fromJson(Map<String, dynamic> json) => _$BookmarksResponseFromJson(json);
+  factory BookmarksResponse.fromJson(Map<String, dynamic> json) =>
+      _$BookmarksResponseFromJson(json);
 }

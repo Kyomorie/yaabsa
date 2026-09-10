@@ -25,7 +25,9 @@ class ParkedExperienceScreen extends StatelessWidget {
             tooltip: 'Logout',
             onPressed: () async {
               await containerRef.read(appDatabaseProvider).clearActiveUserId();
-              await audioHandler.androidAutoAuthenticationChanged(authenticated: false);
+              await audioHandler.androidAutoAuthenticationChanged(
+                authenticated: false,
+              );
             },
           ),
         ],
@@ -46,10 +48,14 @@ class ParkedExperienceScreen extends StatelessWidget {
                       label: const Text('Open Media Center'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        foregroundColor: Theme.of(context)
+                            .colorScheme
+                            .onPrimary,
                       ),
                       onPressed: () async {
-                        await AaosService.instance.launchMediaCenter(finishActivity: true);
+                        await AaosService.instance.launchMediaCenter(
+                          finishActivity: true,
+                        );
                       },
                     ),
                     const SizedBox(width: 16),

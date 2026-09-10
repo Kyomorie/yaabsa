@@ -5,7 +5,8 @@ part 'quick_match_library_item_response.freezed.dart';
 part 'quick_match_library_item_response.g.dart';
 
 @freezed
-abstract class QuickMatchLibraryItemResponse with _$QuickMatchLibraryItemResponse {
+abstract class QuickMatchLibraryItemResponse
+    with _$QuickMatchLibraryItemResponse {
   const factory QuickMatchLibraryItemResponse({
     @JsonKey(name: 'updated') @Default(false) bool updated,
     @JsonKey(name: 'libraryItem') LibraryItem? libraryItem,

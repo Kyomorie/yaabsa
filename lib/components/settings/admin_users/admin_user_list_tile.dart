@@ -94,7 +94,10 @@ class AdminUserListTile extends StatelessWidget {
       enabled: !isBusy,
       onSelected: _onActionSelected,
       itemBuilder: (_) => <PopupMenuEntry<AdminUserTileAction>>[
-        const PopupMenuItem<AdminUserTileAction>(value: AdminUserTileAction.edit, child: Text('Edit user')),
+        const PopupMenuItem<AdminUserTileAction>(
+          value: AdminUserTileAction.edit,
+          child: Text('Edit user'),
+        ),
         if (canToggleActive)
           PopupMenuItem<AdminUserTileAction>(
             value: AdminUserTileAction.toggleActive,
@@ -130,12 +133,19 @@ class AdminUserListTile extends StatelessWidget {
           if (!user.isRoot)
             OutlinedButton.icon(
               onPressed: isBusy ? null : onToggleActive,
-              icon: Icon(user.isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded, size: 18),
+              icon: Icon(
+                user.isActive
+                    ? Icons.block_rounded
+                    : Icons.check_circle_outline_rounded,
+                size: 18,
+              ),
               label: Text(user.isActive ? 'Disable' : 'Enable'),
             ),
           OutlinedButton.icon(
             onPressed: isBusy ? null : onDelete,
-            style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             icon: const Icon(Icons.delete_outline_rounded, size: 18),
             label: const Text('Delete'),
           ),
@@ -147,7 +157,9 @@ class AdminUserListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typeColor = _typeColor(context);
-    final statusColor = user.isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline;
+    final statusColor = user.isActive
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.outline;
     final email = user.email?.trim();
     final subtitleParts = <String>[
       (email?.isNotEmpty ?? false) ? (email ?? 'No email') : 'No email',
@@ -175,13 +187,19 @@ class AdminUserListTile extends StatelessWidget {
                         user.username,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
-                      AdminUserBadge(label: user.type.toUpperCase(), color: typeColor),
+                      AdminUserBadge(
+                        label: user.type.toUpperCase(),
+                        color: typeColor,
+                      ),
                       AdminUserBadge(
                         label: user.isActive ? 'ACTIVE' : 'DISABLED',
                         color: statusColor,
-                        icon: user.isActive ? Icons.check_circle_rounded : Icons.do_not_disturb_on_rounded,
+                        icon: user.isActive
+                            ? Icons.check_circle_rounded
+                            : Icons.do_not_disturb_on_rounded,
                       ),
                       if (user.hasLinkedOpenId)
                         AdminUserBadge(
@@ -194,14 +212,24 @@ class AdminUserListTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 if (isBusy)
-                  const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 else if (compactActions)
                   _buildCompactActions(),
               ],
             ),
             const SizedBox(height: 6),
-            Text(subtitleParts.join(' • '), style: Theme.of(context).textTheme.bodySmall),
-            if (!compactActions) ...[const SizedBox(height: 10), _buildWideActions(context)],
+            Text(
+              subtitleParts.join(' • '),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (!compactActions) ...[
+              const SizedBox(height: 10),
+              _buildWideActions(context),
+            ],
           ],
         ),
       ),

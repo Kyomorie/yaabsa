@@ -11,7 +11,10 @@ _AdminAuthenticationSettings _$AdminAuthenticationSettingsFromJson(
 ) => _AdminAuthenticationSettings(
   authLoginCustomMessage: json['authLoginCustomMessage'] as String?,
   authActiveAuthMethods:
-      (json['authActiveAuthMethods'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>['local'],
+      (json['authActiveAuthMethods'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>['local'],
   authOpenIdIssuerUrl: json['authOpenIDIssuerURL'] as String?,
   authOpenIdAuthorizationUrl: json['authOpenIDAuthorizationURL'] as String?,
   authOpenIdTokenUrl: json['authOpenIDTokenURL'] as String?,
@@ -20,20 +23,27 @@ _AdminAuthenticationSettings _$AdminAuthenticationSettingsFromJson(
   authOpenIdLogoutUrl: json['authOpenIDLogoutURL'] as String?,
   authOpenIdClientId: json['authOpenIDClientID'] as String?,
   authOpenIdClientSecret: json['authOpenIDClientSecret'] as String?,
-  authOpenIdTokenSigningAlgorithm: json['authOpenIDTokenSigningAlgorithm'] as String?,
+  authOpenIdTokenSigningAlgorithm:
+      json['authOpenIDTokenSigningAlgorithm'] as String?,
   authOpenIdButtonText: json['authOpenIDButtonText'] as String?,
   authOpenIdAutoLaunch: json['authOpenIDAutoLaunch'] as bool? ?? false,
   authOpenIdAutoRegister: json['authOpenIDAutoRegister'] as bool? ?? false,
   authOpenIdMatchExistingBy: json['authOpenIDMatchExistingBy'] as String?,
   authOpenIdMobileRedirectUris:
-      (json['authOpenIDMobileRedirectURIs'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
+      (json['authOpenIDMobileRedirectURIs'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
   authOpenIdGroupClaim: json['authOpenIDGroupClaim'] as String?,
   authOpenIdAdvancedPermsClaim: json['authOpenIDAdvancedPermsClaim'] as String?,
-  authOpenIdSubfolderForRedirectUrls: json['authOpenIDSubfolderForRedirectURLs'] as String?,
+  authOpenIdSubfolderForRedirectUrls:
+      json['authOpenIDSubfolderForRedirectURLs'] as String?,
   authOpenIdSamplePermissions: json['authOpenIDSamplePermissions'] as String?,
 );
 
-Map<String, dynamic> _$AdminAuthenticationSettingsToJson(_AdminAuthenticationSettings instance) => <String, dynamic>{
+Map<String, dynamic> _$AdminAuthenticationSettingsToJson(
+  _AdminAuthenticationSettings instance,
+) => <String, dynamic>{
   'authLoginCustomMessage': instance.authLoginCustomMessage,
   'authActiveAuthMethods': instance.authActiveAuthMethods,
   'authOpenIDIssuerURL': instance.authOpenIdIssuerUrl,
@@ -52,6 +62,7 @@ Map<String, dynamic> _$AdminAuthenticationSettingsToJson(_AdminAuthenticationSet
   'authOpenIDMobileRedirectURIs': instance.authOpenIdMobileRedirectUris,
   'authOpenIDGroupClaim': instance.authOpenIdGroupClaim,
   'authOpenIDAdvancedPermsClaim': instance.authOpenIdAdvancedPermsClaim,
-  'authOpenIDSubfolderForRedirectURLs': instance.authOpenIdSubfolderForRedirectUrls,
+  'authOpenIDSubfolderForRedirectURLs':
+      instance.authOpenIdSubfolderForRedirectUrls,
   'authOpenIDSamplePermissions': instance.authOpenIdSamplePermissions,
 };

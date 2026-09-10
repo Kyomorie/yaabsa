@@ -47,7 +47,11 @@ class PlaceholderPage extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Text(title, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.headlineMedium,
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
@@ -101,16 +105,30 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
   @override
   void initState() {
     super.initState();
-    _downloadsMenuItem = const NavigationItemConfig(icon: Icons.download, label: "Downloads", page: Downloads());
+    _downloadsMenuItem = const NavigationItemConfig(
+      icon: Icons.download,
+      label: "Downloads",
+      page: Downloads(),
+    );
     _advancedMenuItems = const [
-      NavigationItemConfig(icon: Icons.bar_chart_rounded, label: "Stats", page: StatsView()),
-      NavigationItemConfig(icon: Icons.settings, label: "Settings", page: MainSettingsScreen()),
+      NavigationItemConfig(
+        icon: Icons.bar_chart_rounded,
+        label: "Stats",
+        page: StatsView(),
+      ),
+      NavigationItemConfig(
+        icon: Icons.settings,
+        label: "Settings",
+        page: MainSettingsScreen(),
+      ),
     ];
 
     _currentlyDisplayedPageSource = _pageSourceFor(widget.child);
 
     final settings = containerRef.read(settingsManagerProvider.notifier);
-    _isSidebarCollapsed = settings.getGlobalSetting<bool>(SettingKeys.sidebarCollapsed);
+    _isSidebarCollapsed = settings.getGlobalSetting<bool>(
+      SettingKeys.sidebarCollapsed,
+    );
   }
 
   @override
@@ -128,24 +146,36 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
     }
   }
 
-  _PageSource _pageSourceFor(Widget? child) => child == null ? _PageSource.internal : _PageSource.child;
+  _PageSource _pageSourceFor(Widget? child) =>
+      child == null ? _PageSource.internal : _PageSource.child;
 
   List<NavigationItemConfig> _visibleAdvancedMenuItems() {
     return [_downloadsMenuItem, ..._advancedMenuItems];
   }
 
-  HomeNavigationPreferences _resolvePrimaryPreferences({required String? userId, required String? libraryMediaType}) {
-    final mediaType = HomeLibraryMediaType.fromLibraryMediaType(libraryMediaType);
+  HomeNavigationPreferences _resolvePrimaryPreferences({
+    required String? userId,
+    required String? libraryMediaType,
+  }) {
+    final mediaType = HomeLibraryMediaType.fromLibraryMediaType(
+      libraryMediaType,
+    );
     if (userId == null) {
       return HomeNavigationPreferencesCodec.defaultsFor(mediaType);
     }
 
     final settingKey = HomeNavigationPreferencesCodec.settingKeyFor(mediaType);
-    final encodedDefault = HomeNavigationPreferencesCodec.defaultEncodedFor(mediaType);
+    final encodedDefault = HomeNavigationPreferencesCodec.defaultEncodedFor(
+      mediaType,
+    );
 
     final rawSettingValue = ref
         .read(settingsManagerProvider.notifier)
-        .getUserSetting<String>(userId, settingKey, defaultValue: encodedDefault);
+        .getUserSetting<String>(
+          userId,
+          settingKey,
+          defaultValue: encodedDefault,
+        );
 
     return HomeNavigationPreferencesCodec.decode(rawSettingValue, mediaType);
   }
@@ -165,7 +195,11 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
   }
 
   NavigationItemConfig _navigationItemForPrimaryView(HomePrimaryView view) {
-    return NavigationItemConfig(icon: view.icon, label: view.label, page: _pageForPrimaryView(view));
+    return NavigationItemConfig(
+      icon: view.icon,
+      label: view.label,
+      page: _pageForPrimaryView(view),
+    );
   }
 
   Widget _pageForPrimaryView(HomePrimaryView view) {
@@ -191,8 +225,13 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
     }
   }
 
-  int _defaultPrimaryIndex(List<NavigationItemConfig> primaryItems, HomeNavigationPreferences primaryPreferences) {
-    final mappedDefaultIndex = primaryItems.indexWhere((item) => item.label == primaryPreferences.defaultView.label);
+  int _defaultPrimaryIndex(
+    List<NavigationItemConfig> primaryItems,
+    HomeNavigationPreferences primaryPreferences,
+  ) {
+    final mappedDefaultIndex = primaryItems.indexWhere(
+      (item) => item.label == primaryPreferences.defaultView.label,
+    );
     if (mappedDefaultIndex >= 0) {
       return mappedDefaultIndex;
     }
@@ -209,7 +248,8 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
     List<NavigationItemConfig> primaryItems,
     List<NavigationItemConfig> advancedMenuItems,
   ) {
-    if (_currentlyDisplayedPageSource == _PageSource.child && widget.child != null) {
+    if (_currentlyDisplayedPageSource == _PageSource.child &&
+        widget.child != null) {
       return widget.child!;
     }
     if (_searchQuery.isNotEmpty) {
@@ -232,11 +272,16 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
     return normalized == 'admin' || normalized == 'root';
   }
 
-  SidebarVariant _sidebarVariantFor({required bool isTablet, required bool isCollapsed}) {
+  SidebarVariant _sidebarVariantFor({
+    required bool isTablet,
+    required bool isCollapsed,
+  }) {
     if (isCollapsed) {
       return SidebarVariant.collapsed;
     }
-    return isTablet ? SidebarVariant.tabletExpanded : SidebarVariant.desktopExpanded;
+    return isTablet
+        ? SidebarVariant.tabletExpanded
+        : SidebarVariant.desktopExpanded;
   }
 
   void _onAppBarItemTapped(int index) {
@@ -269,7 +314,8 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
     final label = combined[index].label;
 
     final tabIntent = index < primaryItems.length
-        ? (HomePrimaryView.fromLabel(label)?.tabIntent ?? _tabIntentForLabel(label))
+        ? (HomePrimaryView.fromLabel(label)?.tabIntent ??
+              _tabIntentForLabel(label))
         : _tabIntentForLabel(label);
 
     setState(() {
@@ -310,7 +356,9 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
       return;
     }
 
-    context.go('/?tab=$tabIntent&intent=${DateTime.now().microsecondsSinceEpoch}');
+    context.go(
+      '/?tab=$tabIntent&intent=${DateTime.now().microsecondsSinceEpoch}',
+    );
   }
 
   void _submitSearch(String value) {
@@ -406,10 +454,18 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Leave upload page?'),
-          content: const Text('Leaving this page now cancels active uploads. Continue?'),
+          content: const Text(
+            'Leaving this page now cancels active uploads. Continue?',
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Stay here')),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Leave page')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Stay here'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Leave page'),
+            ),
           ],
         );
       },
@@ -476,18 +532,27 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider).value;
     final updateInfo = ref.watch(serverUpdateStateProvider).value;
-    final showUpdate = updateInfo != null && updateInfo.isUpdateAvailable && !updateInfo.isDismissed;
+    final showUpdate =
+        updateInfo != null &&
+        updateInfo.isUpdateAvailable &&
+        !updateInfo.isDismissed;
 
     if (AaosService.instance.currentState.isAutomotiveDevice) {
       final aaosQuery = GoRouterState.of(context).uri.queryParameters;
       final isSettingsRoute = aaosQuery['tab'] == 'settings';
 
       if (widget.child != null) {
-        return AaosSettingsScaffold(backTarget: AaosSettingsBackTarget.settingsHome, child: widget.child!);
+        return AaosSettingsScaffold(
+          backTarget: AaosSettingsBackTarget.settingsHome,
+          child: widget.child!,
+        );
       }
 
       if (isSettingsRoute) {
-        return const AaosSettingsScaffold(backTarget: AaosSettingsBackTarget.mediaCenter, child: MainSettingsScreen());
+        return const AaosSettingsScaffold(
+          backTarget: AaosSettingsBackTarget.mediaCenter,
+          child: MainSettingsScreen(),
+        );
       }
 
       if (currentUser != null && !_didRequestAaosMediaCenterLaunch) {
@@ -497,7 +562,9 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
             return;
           }
 
-          final launched = await AaosService.instance.launchMediaCenter(finishActivity: true);
+          final launched = await AaosService.instance.launchMediaCenter(
+            finishActivity: true,
+          );
           if (!mounted || launched) {
             return;
           }
@@ -508,14 +575,20 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
         return const _LayoutHomeStartupScreen();
       }
 
-      return const AaosSettingsScaffold(backTarget: AaosSettingsBackTarget.mediaCenter, child: MainSettingsScreen());
+      return const AaosSettingsScaffold(
+        backTarget: AaosSettingsBackTarget.mediaCenter,
+        child: MainSettingsScreen(),
+      );
     }
 
     final bool isMobile = context.isMobile;
     final bool isTablet = context.isTablet;
     final selectedLibrary = ref.watch(selectedLibraryProvider);
     ref.watch(userSettingsWatcherProvider);
-    final serverManagementPreferences = readServerManagementPreferences(ref, currentUser?.id);
+    final serverManagementPreferences = readServerManagementPreferences(
+      ref,
+      currentUser?.id,
+    );
     final canUpload =
         selectedLibrary != null &&
         (currentUser?.permissions.upload ?? false) &&
@@ -546,7 +619,9 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
     final queryParameters = GoRouterState.of(context).uri.queryParameters;
     final tabIntent = queryParameters['tab'];
     final intentKey = queryParameters['intent'] ?? tabIntent;
-    if (tabIntent != null && intentKey != null && intentKey != _lastConsumedTabIntent) {
+    if (tabIntent != null &&
+        intentKey != null &&
+        intentKey != _lastConsumedTabIntent) {
       final targetPrimaryView = HomePrimaryView.fromTabIntent(tabIntent);
       final targetLabel =
           targetPrimaryView?.label ??
@@ -557,29 +632,45 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
             _ => primaryPreferences.defaultView.label,
           };
 
-      final navigationItems = <NavigationItemConfig>[...primaryItems, ...advancedMenuItems];
-      final targetIndex = navigationItems.indexWhere((item) => item.label == targetLabel);
-      final fallbackIndex = _defaultPrimaryIndex(primaryItems, primaryPreferences);
+      final navigationItems = <NavigationItemConfig>[
+        ...primaryItems,
+        ...advancedMenuItems,
+      ];
+      final targetIndex = navigationItems.indexWhere(
+        (item) => item.label == targetLabel,
+      );
+      final fallbackIndex = _defaultPrimaryIndex(
+        primaryItems,
+        primaryPreferences,
+      );
       _lastConsumedTabIntent = intentKey;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() {
-          _selectedIndex = targetIndex >= 0 ? targetIndex : (fallbackIndex >= 0 ? fallbackIndex : 0);
+          _selectedIndex = targetIndex >= 0
+              ? targetIndex
+              : (fallbackIndex >= 0 ? fallbackIndex : 0);
           _currentlyDisplayedPageSource = _PageSource.internal;
           _isUploadPageVisible = false;
           _isUploadInProgress = false;
           _lastSelectedLabel = navigationItems.isNotEmpty
               ? (targetIndex >= 0
                     ? navigationItems[targetIndex].label
-                    : (fallbackIndex >= 0 ? navigationItems[fallbackIndex].label : navigationItems.first.label))
+                    : (fallbackIndex >= 0
+                          ? navigationItems[fallbackIndex].label
+                          : navigationItems.first.label))
               : _lastSelectedLabel;
         });
       });
     }
 
-    final shouldOpenUploadMode = queryParameters[LayoutHome.openUploadQueryKey] == LayoutHome.openUploadQueryValue;
+    final shouldOpenUploadMode =
+        queryParameters[LayoutHome.openUploadQueryKey] ==
+        LayoutHome.openUploadQueryValue;
     final uploadIntent = queryParameters[LayoutHome.uploadIntentQueryKey];
-    if (shouldOpenUploadMode && uploadIntent != null && uploadIntent != _lastConsumedUploadIntent) {
+    if (shouldOpenUploadMode &&
+        uploadIntent != null &&
+        uploadIntent != _lastConsumedUploadIntent) {
       _lastConsumedUploadIntent = uploadIntent;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || !canUpload) {
@@ -597,24 +688,33 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
       });
     }
 
-    final combinedItems = <NavigationItemConfig>[...primaryItems, ...advancedMenuItems];
+    final combinedItems = <NavigationItemConfig>[
+      ...primaryItems,
+      ...advancedMenuItems,
+    ];
     final maxIndex = combinedItems.length - 1;
 
     int computeSafeSelectedIndex() {
       if (_selectedIndex >= 0 && _selectedIndex <= maxIndex) {
         final matchesTrackedLabel =
-            _lastSelectedLabel == null || combinedItems[_selectedIndex].label == _lastSelectedLabel;
+            _lastSelectedLabel == null ||
+            combinedItems[_selectedIndex].label == _lastSelectedLabel;
         if (matchesTrackedLabel) {
           return _selectedIndex;
         }
       }
 
       if (_lastSelectedLabel != null) {
-        final mapped = combinedItems.indexWhere((it) => it.label == _lastSelectedLabel);
+        final mapped = combinedItems.indexWhere(
+          (it) => it.label == _lastSelectedLabel,
+        );
         if (mapped >= 0) return mapped;
       }
 
-      final fallbackPrimaryIndex = _defaultPrimaryIndex(primaryItems, primaryPreferences);
+      final fallbackPrimaryIndex = _defaultPrimaryIndex(
+        primaryItems,
+        primaryPreferences,
+      );
       if (fallbackPrimaryIndex >= 0) {
         return fallbackPrimaryIndex;
       }
@@ -629,15 +729,24 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
         if (!mounted) return;
         setState(() {
           _selectedIndex = safeSelectedIndex;
-          _lastSelectedLabel = combinedItems.isNotEmpty ? combinedItems[safeSelectedIndex].label : _lastSelectedLabel;
+          _lastSelectedLabel = combinedItems.isNotEmpty
+              ? combinedItems[safeSelectedIndex].label
+              : _lastSelectedLabel;
         });
       });
     }
 
     final bool canExpandSidebar = !isMobile;
     final bool isSidebarCollapsed = !canExpandSidebar || _isSidebarCollapsed;
-    final SidebarVariant sidebarVariant = _sidebarVariantFor(isTablet: isTablet, isCollapsed: isSidebarCollapsed);
-    final resolvedContent = _resolveCurrentContent(safeSelectedIndex, primaryItems, advancedMenuItems);
+    final SidebarVariant sidebarVariant = _sidebarVariantFor(
+      isTablet: isTablet,
+      isCollapsed: isSidebarCollapsed,
+    );
+    final resolvedContent = _resolveCurrentContent(
+      safeSelectedIndex,
+      primaryItems,
+      advancedMenuItems,
+    );
     final Widget currentContent = (canUpload && _isUploadPageVisible)
         ? LibraryUploadPanel(
             selectedLibrary: selectedLibrary,
@@ -646,7 +755,10 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
           )
         : resolvedContent;
     final multiSelectAppBarState = ref.watch(multiSelectAppBarProvider);
-    final playBar = PlayBar(includeBottomSafeArea: isMobile, attachedToBottom: isMobile);
+    final playBar = PlayBar(
+      includeBottomSafeArea: isMobile,
+      attachedToBottom: isMobile,
+    );
 
     if (isMobile) {
       return _wrapWithUploadPageBackHandling(
@@ -684,13 +796,19 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
                 builder: (context, snapshot) {
                   final showPlayer = snapshot.data == true;
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: LayoutHomeMobileNavBar.horizontalMargin),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: LayoutHomeMobileNavBar.horizontalMargin,
+                    ),
                     child: SafeArea(
                       top: false,
                       left: false,
                       right: false,
                       bottom: !showPlayer,
-                      minimum: EdgeInsets.only(bottom: showPlayer ? 8 : LayoutHomeMobileNavBar.floatingBottomMargin),
+                      minimum: EdgeInsets.only(
+                        bottom: showPlayer
+                            ? 8
+                            : LayoutHomeMobileNavBar.floatingBottomMargin,
+                      ),
                       child: LayoutHomeMobileNavBar(
                         items: primaryItems,
                         selectedIndex: safeSelectedIndex,
@@ -737,7 +855,8 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
                         state: multiSelectAppBarState,
                         showSidebarToggle: true,
                         isSidebarCollapsed: isSidebarCollapsed,
-                        onSidebarToggle: () => _setSidebarCollapsed(!isSidebarCollapsed),
+                        onSidebarToggle: () =>
+                            _setSidebarCollapsed(!isSidebarCollapsed),
                       )
                     else
                       LayoutHomeNonMobileAppBar(
@@ -748,9 +867,12 @@ class _LayoutHomeState extends ConsumerState<LayoutHome> {
                         onSearchChanged: _onSearchChanged,
                         onSearchSubmitted: _submitSearch,
                         onClearSearch: _clearSearch,
-                        onSidebarToggle: () => _setSidebarCollapsed(!isSidebarCollapsed),
+                        onSidebarToggle: () =>
+                            _setSidebarCollapsed(!isSidebarCollapsed),
                         showUploadButton: canUpload,
-                        onUploadPressed: canUpload ? _openOrCloseUploadPage : null,
+                        onUploadPressed: canUpload
+                            ? _openOrCloseUploadPage
+                            : null,
                       ),
                     Expanded(
                       child: Column(
@@ -776,6 +898,8 @@ class _LayoutHomeStartupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: SafeArea(child: LoadingView(showDownloadsShortcut: false)));
+    return const Scaffold(
+      body: SafeArea(child: LoadingView(showDownloadsShortcut: false)),
+    );
   }
 }

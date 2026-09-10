@@ -110,7 +110,8 @@ class StoredDownloads extends Table {
   TextColumn get episodeId => text().nullable()();
 
   TextColumn get download => text()();
-  TextColumn get downloadOrigin => text().withDefault(const Constant('manual'))();
+  TextColumn get downloadOrigin =>
+      text().withDefault(const Constant('manual'))();
   TextColumn get smartProfileIds => text().withDefault(const Constant('[]'))();
   IntColumn get managedBytes => integer().nullable()();
   IntColumn get completedAt => integer().nullable()();
@@ -206,7 +207,10 @@ class PlayerHistory extends Table {
 }
 
 class _StoredDownloadCacheEntry {
-  const _StoredDownloadCacheEntry({required this.signature, required this.value});
+  const _StoredDownloadCacheEntry({
+    required this.signature,
+    required this.value,
+  });
 
   final String signature;
   final Future<InternalDownload?> value;
@@ -238,23 +242,35 @@ class AppDatabase extends _$AppDatabase {
     : _authSecretStore = authSecretStore ?? AuthSecretStore(),
       super(impl.openConnection());
 
-  AppDatabase.connect(DatabaseConnection connection, {AuthSecretStore? authSecretStore})
-    : _authSecretStore = authSecretStore ?? AuthSecretStore(),
-      super(connection.executor);
+  AppDatabase.connect(
+    DatabaseConnection connection, {
+    AuthSecretStore? authSecretStore,
+  }) : _authSecretStore = authSecretStore ?? AuthSecretStore(),
+       super(connection.executor);
 
   final AuthSecretStore _authSecretStore;
-  final Map<String, _StoredDownloadCacheEntry> _storedDownloadCache = <String, _StoredDownloadCacheEntry>{};
-  final Map<String, Future<InternalDownload?>> _storedDownloadBaseCache = <String, Future<InternalDownload?>>{};
+  final Map<String, _StoredDownloadCacheEntry> _storedDownloadCache =
+      <String, _StoredDownloadCacheEntry>{};
+  final Map<String, Future<InternalDownload?>> _storedDownloadBaseCache =
+      <String, Future<InternalDownload?>>{};
   bool? _storedDownloadFilesAvailable;
 
   @override
   int get schemaVersion => 24;
 
-  Future<void> _addColumnIfMissing(Migrator migrator, TableInfo table, GeneratedColumn column) async {
+  Future<void> _addColumnIfMissing(
+    Migrator migrator,
+    TableInfo table,
+    GeneratedColumn column,
+  ) async {
     final tableName = table.actualTableName.replaceAll('"', '""');
-    final columns = await migrator.database.customSelect('PRAGMA table_info("$tableName")').get();
+    final columns = await migrator.database
+        .customSelect('PRAGMA table_info("$tableName")')
+        .get();
     final columnName = column.$name.toLowerCase();
-    final columnExists = columns.any((row) => row.read<String>('name').toLowerCase() == columnName);
+    final columnExists = columns.any(
+      (row) => row.read<String>('name').toLowerCase() == columnName,
+    );
     if (!columnExists) {
       await migrator.addColumn(table, column);
     }
@@ -307,7 +323,9 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(storedBookmarkSyncs);
       }
       if (from <= 18) {
-        await customStatement('ALTER TABLE stored_downloads RENAME TO _stored_downloads_old;');
+        await customStatement(
+          'ALTER TABLE stored_downloads RENAME TO _stored_downloads_old;',
+        );
         await m.createTable(storedDownloads);
         await customStatement(
           'INSERT INTO stored_downloads (item_id, user_id, episode_id, download) '
@@ -323,20 +341,42 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(smartDownloadSources);
         await m.createTable(smartDownloadClaims);
         if (from > 18) {
-          await _addColumnIfMissing(m, storedDownloads, storedDownloads.downloadOrigin);
-          await _addColumnIfMissing(m, storedDownloads, storedDownloads.smartProfileIds);
-          await _addColumnIfMissing(m, storedDownloads, storedDownloads.managedBytes);
-          await _addColumnIfMissing(m, storedDownloads, storedDownloads.completedAt);
+          await _addColumnIfMissing(
+            m,
+            storedDownloads,
+            storedDownloads.downloadOrigin,
+          );
+          await _addColumnIfMissing(
+            m,
+            storedDownloads,
+            storedDownloads.smartProfileIds,
+          );
+          await _addColumnIfMissing(
+            m,
+            storedDownloads,
+            storedDownloads.managedBytes,
+          );
+          await _addColumnIfMissing(
+            m,
+            storedDownloads,
+            storedDownloads.completedAt,
+          );
         }
       }
       if (from == 21) {
-        await _addColumnIfMissing(m, smartDownloadSources, smartDownloadSources.displayName);
+        await _addColumnIfMissing(
+          m,
+          smartDownloadSources,
+          smartDownloadSources.displayName,
+        );
       }
       if (from <= 22) {
         await m.createTable(storedDownloadFiles);
       }
       if (from >= 21 && from <= 23) {
-        await customStatement('ALTER TABLE smart_download_claims RENAME TO _smart_download_claims_old;');
+        await customStatement(
+          'ALTER TABLE smart_download_claims RENAME TO _smart_download_claims_old;',
+        );
         await m.createTable(smartDownloadClaims);
         await customStatement(
           'INSERT OR REPLACE INTO smart_download_claims '
@@ -354,7 +394,8 @@ class AppDatabase extends _$AppDatabase {
 
   // Player history management
   Future<void> addPlayerHistory(PlayerHistoryCompanion companion) {
-    return into(playerHistory).insert(companion, mode: InsertMode.insertOrIgnore);
+    return into(playerHistory)
+        .insert(companion, mode: InsertMode.insertOrIgnore);
   }
 
   Stream<List<PlayerHistoryEntry>> watchPlayerHistoryByItem(
@@ -363,7 +404,8 @@ class AppDatabase extends _$AppDatabase {
     String? episodeId,
     int limit = 1200,
   }) {
-    final query = select(playerHistory)..where((tbl) => tbl.itemId.equals(itemId) & tbl.userId.equals(userId));
+    final query = select(playerHistory)
+      ..where((tbl) => tbl.itemId.equals(itemId) & tbl.userId.equals(userId));
     if (episodeId != null) {
       query.where((tbl) => tbl.episodeId.equals(episodeId));
     } else {
@@ -381,7 +423,9 @@ class AppDatabase extends _$AppDatabase {
     required String userId,
     required String? episodeId,
   }) {
-    var whereClause = storedDownloads.itemId.equals(itemId) & storedDownloads.userId.equals(userId);
+    var whereClause =
+        storedDownloads.itemId.equals(itemId) &
+        storedDownloads.userId.equals(userId);
     if (episodeId != null) {
       whereClause = whereClause & storedDownloads.episodeId.equals(episodeId);
     } else {
@@ -395,9 +439,12 @@ class AppDatabase extends _$AppDatabase {
     required String userId,
     required String? episodeId,
   }) {
-    var whereClause = storedDownloadFiles.itemId.equals(itemId) & storedDownloadFiles.userId.equals(userId);
+    var whereClause =
+        storedDownloadFiles.itemId.equals(itemId) &
+        storedDownloadFiles.userId.equals(userId);
     if (episodeId != null) {
-      whereClause = whereClause & storedDownloadFiles.episodeId.equals(episodeId);
+      whereClause =
+          whereClause & storedDownloadFiles.episodeId.equals(episodeId);
     } else {
       whereClause = whereClause & storedDownloadFiles.episodeId.isNull();
     }
@@ -409,12 +456,20 @@ class AppDatabase extends _$AppDatabase {
     required String userId,
     required String? episodeId,
   }) {
-    return (select(
-      storedDownloadFiles,
-    )..where((tbl) => _storedDownloadFileWhereExpression(itemId: itemId, userId: userId, episodeId: episodeId))).get();
+    return (select(storedDownloadFiles)..where(
+          (tbl) => _storedDownloadFileWhereExpression(
+            itemId: itemId,
+            userId: userId,
+            episodeId: episodeId,
+          ),
+        ))
+        .get();
   }
 
-  InternalDownload _withStoredDownloadFiles(InternalDownload base, List<StoredDownloadFileEntry> files) {
+  InternalDownload _withStoredDownloadFiles(
+    InternalDownload base,
+    List<StoredDownloadFileEntry> files,
+  ) {
     final tracks = <InternalTrack>[];
     final auxiliaryPaths = <String>{};
     final sidecarPaths = <String>{};
@@ -425,7 +480,9 @@ class AppDatabase extends _$AppDatabase {
         try {
           final decoded = jsonDecode(trackJson);
           if (decoded is Map) {
-            tracks.add(InternalTrack.fromJson(Map<String, dynamic>.from(decoded)));
+            tracks.add(
+              InternalTrack.fromJson(Map<String, dynamic>.from(decoded)),
+            );
           }
         } catch (e, s) {
           logger(
@@ -466,12 +523,16 @@ class AppDatabase extends _$AppDatabase {
       if (decoded is Map) {
         final decodedMap = Map<String, dynamic>.from(decoded);
         final base = decodedMap[_storedDownloadStorageBaseKey];
-        if (decodedMap[_storedDownloadStorageVersionKey] == _storedDownloadStorageVersion && base is Map) {
+        if (decodedMap[_storedDownloadStorageVersionKey] ==
+                _storedDownloadStorageVersion &&
+            base is Map) {
           return InternalDownload.fromJson(Map<String, dynamic>.from(base));
         }
         return InternalDownload.fromJson(decodedMap);
       }
-      throw const FormatException('Stored download payload is not a JSON object');
+      throw const FormatException(
+        'Stored download payload is not a JSON object',
+      );
     } catch (e, s) {
       logger(
         'Failed to decode stored download itemId=$itemId userId=$userId episodeId=$episodeId: $e\n$s',
@@ -483,16 +544,23 @@ class AppDatabase extends _$AppDatabase {
   }
 
   bool _isNormalizedStoredDownload(String rawJson) {
-    return rawJson.trimLeft().startsWith('{"$_storedDownloadStorageVersionKey":$_storedDownloadStorageVersion,');
+    return rawJson.trimLeft().startsWith(
+      '{"$_storedDownloadStorageVersionKey":$_storedDownloadStorageVersion,',
+    );
   }
 
   bool _isStoredDownloadFilesUnavailable(Object error) {
     final message = error.toString().toLowerCase();
     return message.contains('stored_download_files') &&
-        (message.contains('no such table') || message.contains('no such column') || message.contains('does not exist'));
+        (message.contains('no such table') ||
+            message.contains('no such column') ||
+            message.contains('does not exist'));
   }
 
-  String _encodeNormalizedStoredDownload(InternalDownload download, {bool includeInlineFiles = false}) {
+  String _encodeNormalizedStoredDownload(
+    InternalDownload download, {
+    bool includeInlineFiles = false,
+  }) {
     final compactDownload = includeInlineFiles
         ? download
         : download.copyWith(
@@ -520,7 +588,9 @@ class AppDatabase extends _$AppDatabase {
     ].join('\u0000');
   }
 
-  Future<InternalDownload?> _decodeStoredDownloadOrNull(StoredDownloadsEntry entry) {
+  Future<InternalDownload?> _decodeStoredDownloadOrNull(
+    StoredDownloadsEntry entry,
+  ) {
     final key = _storedDownloadCacheKey(entry);
     final signature = _storedDownloadCacheSignature(entry);
     final cached = _storedDownloadCache[key];
@@ -529,24 +599,36 @@ class AppDatabase extends _$AppDatabase {
     }
 
     final value = _decodeStoredDownloadUncached(entry);
-    _storedDownloadCache[key] = _StoredDownloadCacheEntry(signature: signature, value: value);
+    _storedDownloadCache[key] = _StoredDownloadCacheEntry(
+      signature: signature,
+      value: value,
+    );
     return value;
   }
 
-  Future<InternalDownload?> _decodeNormalizedStoredDownloadBase(StoredDownloadsEntry entry) {
+  Future<InternalDownload?> _decodeNormalizedStoredDownloadBase(
+    StoredDownloadsEntry entry,
+  ) {
     final cached = _storedDownloadBaseCache[entry.download];
     if (cached != null) {
       return cached;
     }
 
     final value = Future<InternalDownload?>.value(
-      _decodeDownloadJsonOrNull(entry.download, itemId: entry.itemId, userId: entry.userId, episodeId: entry.episodeId),
+      _decodeDownloadJsonOrNull(
+        entry.download,
+        itemId: entry.itemId,
+        userId: entry.userId,
+        episodeId: entry.episodeId,
+      ),
     );
     _storedDownloadBaseCache[entry.download] = value;
     return value;
   }
 
-  Future<InternalDownload?> _decodeStoredDownloadUncached(StoredDownloadsEntry entry) async {
+  Future<InternalDownload?> _decodeStoredDownloadUncached(
+    StoredDownloadsEntry entry,
+  ) async {
     final decoded = _isNormalizedStoredDownload(entry.download)
         ? await _decodeNormalizedStoredDownloadBase(entry)
         : _decodeDownloadJsonOrNull(
@@ -591,20 +673,29 @@ class AppDatabase extends _$AppDatabase {
     final validTracks = (await Future.wait(
       resolvedDownload.tracks.map((track) async {
         final trackUrl = track.url;
-        return trackUrl != null && await _storedPathExists(trackUrl) ? track : null;
+        return trackUrl != null && await _storedPathExists(trackUrl)
+            ? track
+            : null;
       }),
     )).whereType<InternalTrack>().toList(growable: false);
 
     final validAuxiliaryPaths = (await Future.wait(
-      resolvedDownload.auxiliaryFilePaths.map((path) async => await _storedPathExists(path) ? path : null),
+      resolvedDownload.auxiliaryFilePaths.map(
+        (path) async => await _storedPathExists(path) ? path : null,
+      ),
     )).whereType<String>().toSet().toList(growable: false)..sort();
 
     final validSidecarPaths = (await Future.wait(
-      resolvedDownload.sidecarPaths.map((path) async => await _storedPathExists(path) ? path : null),
+      resolvedDownload.sidecarPaths.map(
+        (path) async => await _storedPathExists(path) ? path : null,
+      ),
     )).whereType<String>().toSet().toList(growable: false)..sort();
 
     final coverPath = resolvedDownload.coverPath;
-    final validCoverPath = coverPath != null && await _storedPathExists(coverPath) ? coverPath : null;
+    final validCoverPath =
+        coverPath != null && await _storedPathExists(coverPath)
+        ? coverPath
+        : null;
 
     return resolvedDownload.copyWith(
       tracks: validTracks,
@@ -622,13 +713,18 @@ class AppDatabase extends _$AppDatabase {
     try {
       final decoded = jsonDecode(raw);
       if (decoded is List) {
-        return decoded.whereType<String>().where((id) => id.trim().isNotEmpty).toList(growable: false);
+        return decoded
+            .whereType<String>()
+            .where((id) => id.trim().isNotEmpty)
+            .toList(growable: false);
       }
     } catch (_) {}
     return const <String>[];
   }
 
-  Future<List<InternalDownload>> _decodeStoredDownloads(Iterable<StoredDownloadsEntry> entries) async {
+  Future<List<InternalDownload>> _decodeStoredDownloads(
+    Iterable<StoredDownloadsEntry> entries,
+  ) async {
     final downloads = <InternalDownload>[];
     for (final entry in entries) {
       final parsed = await _decodeStoredDownloadOrNull(entry);
@@ -680,17 +776,29 @@ class AppDatabase extends _$AppDatabase {
     return _decodeStoredDownloads(entries);
   }
 
-  Future<List<InternalDownload>> getAllStoredDownloadsByUser(String userId) async {
-    final entries = await (select(storedDownloads)..where((tbl) => tbl.userId.equals(userId))).get();
+  Future<List<InternalDownload>> getAllStoredDownloadsByUser(
+    String userId,
+  ) async {
+    final entries = await (select(
+      storedDownloads,
+    )..where((tbl) => tbl.userId.equals(userId))).get();
     return _decodeStoredDownloads(entries);
   }
 
-  Future<List<StoredDownloadsEntry>> getStoredDownloadEntriesByUser(String userId) {
-    return (select(storedDownloads)..where((tbl) => tbl.userId.equals(userId))).get();
+  Future<List<StoredDownloadsEntry>> getStoredDownloadEntriesByUser(
+    String userId,
+  ) {
+    return (select(
+      storedDownloads,
+    )..where((tbl) => tbl.userId.equals(userId))).get();
   }
 
-  Future<List<SmartDownloadClaimEntry>> getSmartDownloadClaimsForReference(String itemId, String? episodeId) {
-    final query = select(smartDownloadClaims)..where((tbl) => tbl.itemId.equals(itemId));
+  Future<List<SmartDownloadClaimEntry>> getSmartDownloadClaimsForReference(
+    String itemId,
+    String? episodeId,
+  ) {
+    final query = select(smartDownloadClaims)
+      ..where((tbl) => tbl.itemId.equals(itemId));
     if (episodeId == null) {
       query.where((tbl) => tbl.episodeId.isNull());
     } else {
@@ -700,12 +808,20 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> deleteSmartDownloadClaimsForProfile(String profileId) {
-    return (delete(smartDownloadClaims)..where((tbl) => tbl.profileId.equals(profileId))).go();
+    return (delete(
+      smartDownloadClaims,
+    )..where((tbl) => tbl.profileId.equals(profileId))).go();
   }
 
-  Future<void> deleteSmartDownloadClaim(String profileId, String itemId, {String? episodeId}) {
+  Future<void> deleteSmartDownloadClaim(
+    String profileId,
+    String itemId, {
+    String? episodeId,
+  }) {
     final query = delete(smartDownloadClaims)
-      ..where((tbl) => tbl.profileId.equals(profileId) & tbl.itemId.equals(itemId));
+      ..where(
+        (tbl) => tbl.profileId.equals(profileId) & tbl.itemId.equals(itemId),
+      );
     if (episodeId == null) {
       query.where((tbl) => tbl.episodeId.isNull());
     } else {
@@ -714,22 +830,43 @@ class AppDatabase extends _$AppDatabase {
     return query.go();
   }
 
-  Future<List<InternalDownload>> getAllStoredDownloadsByUserForLibrary(String userId, String libraryId) async {
-    final entries = await (select(storedDownloads)..where((tbl) => tbl.userId.equals(userId))).get();
-    return (await _decodeStoredDownloads(entries)).where((d) => d.item?.libraryId == libraryId).toList();
+  Future<List<InternalDownload>> getAllStoredDownloadsByUserForLibrary(
+    String userId,
+    String libraryId,
+  ) async {
+    final entries = await (select(
+      storedDownloads,
+    )..where((tbl) => tbl.userId.equals(userId))).get();
+    return (await _decodeStoredDownloads(entries))
+        .where((d) => d.item?.libraryId == libraryId)
+        .toList();
   }
 
   Stream<List<InternalDownload>> watchStoredDownloadsByUser(String userId) {
-    final query = select(storedDownloads)..where((tbl) => tbl.userId.equals(userId));
-    return query.watch().distinct(_sameStoredDownloadEntries).asyncMap(_decodeStoredDownloads);
+    final query = select(storedDownloads)
+      ..where((tbl) => tbl.userId.equals(userId));
+    return query
+        .watch()
+        .distinct(_sameStoredDownloadEntries)
+        .asyncMap(_decodeStoredDownloads);
   }
 
-  Stream<List<InternalDownload>> watchStoredDownloadsByUserForItem(String userId, String itemId) {
-    final query = select(storedDownloads)..where((tbl) => tbl.userId.equals(userId) & tbl.itemId.equals(itemId));
-    return query.watch().distinct(_sameStoredDownloadEntries).asyncMap(_decodeStoredDownloads);
+  Stream<List<InternalDownload>> watchStoredDownloadsByUserForItem(
+    String userId,
+    String itemId,
+  ) {
+    final query = select(storedDownloads)
+      ..where((tbl) => tbl.userId.equals(userId) & tbl.itemId.equals(itemId));
+    return query
+        .watch()
+        .distinct(_sameStoredDownloadEntries)
+        .asyncMap(_decodeStoredDownloads);
   }
 
-  bool _sameStoredDownloadEntries(List<StoredDownloadsEntry> left, List<StoredDownloadsEntry> right) {
+  bool _sameStoredDownloadEntries(
+    List<StoredDownloadsEntry> left,
+    List<StoredDownloadsEntry> right,
+  ) {
     if (left.length != right.length) {
       return false;
     }
@@ -751,7 +888,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Stream<Set<String>> watchCompletedDownloadItemIdsByUser(String userId) {
-    final query = select(storedDownloads)..where((tbl) => tbl.userId.equals(userId));
+    final query = select(storedDownloads)
+      ..where((tbl) => tbl.userId.equals(userId));
     return query
         .watch()
         .distinct(_sameStoredDownloadEntries)
@@ -772,8 +910,13 @@ class AppDatabase extends _$AppDatabase {
         .distinct(_sameStringSet);
   }
 
-  Future<InternalDownload?> getStoredDownload(String itemId, String userId, {String? episodeId}) async {
-    final query = select(storedDownloads)..where((tbl) => tbl.itemId.equals(itemId) & tbl.userId.equals(userId));
+  Future<InternalDownload?> getStoredDownload(
+    String itemId,
+    String userId, {
+    String? episodeId,
+  }) async {
+    final query = select(storedDownloads)
+      ..where((tbl) => tbl.itemId.equals(itemId) & tbl.userId.equals(userId));
     if (episodeId != null) {
       query.where((tbl) => tbl.episodeId.equals(episodeId));
     }
@@ -799,7 +942,10 @@ class AppDatabase extends _$AppDatabase {
     return null;
   }
 
-  InternalDownload _mergeDownloads(InternalDownload? oldDownload, InternalDownload newDownload) {
+  InternalDownload _mergeDownloads(
+    InternalDownload? oldDownload,
+    InternalDownload newDownload,
+  ) {
     if (oldDownload == null) {
       return newDownload;
     }
@@ -815,7 +961,8 @@ class AppDatabase extends _$AppDatabase {
       }
     }
 
-    final mergedTracks = mergedByIndex.values.toList()..sort((left, right) => left.index.compareTo(right.index));
+    final mergedTracks = mergedByIndex.values.toList()
+      ..sort((left, right) => left.index.compareTo(right.index));
 
     final mergedAuxiliaryPaths = <String>{
       ...oldDownload.auxiliaryFilePaths.where((path) => path.trim().isNotEmpty),
@@ -828,16 +975,23 @@ class AppDatabase extends _$AppDatabase {
     }.toList(growable: false)..sort();
 
     final expectedCountCandidates = <int>{
-      if (oldDownload.expectedFileCount != null && oldDownload.expectedFileCount! > 0) oldDownload.expectedFileCount!,
-      if (newDownload.expectedFileCount != null && newDownload.expectedFileCount! > 0) newDownload.expectedFileCount!,
+      if (oldDownload.expectedFileCount != null &&
+          oldDownload.expectedFileCount! > 0)
+        oldDownload.expectedFileCount!,
+      if (newDownload.expectedFileCount != null &&
+          newDownload.expectedFileCount! > 0)
+        newDownload.expectedFileCount!,
     };
 
     final mergedExpectedFileCount = expectedCountCandidates.isEmpty
         ? null
-        : expectedCountCandidates.reduce((left, right) => left > right ? left : right);
+        : expectedCountCandidates.reduce(
+            (left, right) => left > right ? left : right,
+          );
 
     final String mergedDownloadType;
-    if (oldDownload.downloadType == 'both' || newDownload.downloadType == 'both') {
+    if (oldDownload.downloadType == 'both' ||
+        newDownload.downloadType == 'both') {
       mergedDownloadType = 'both';
     } else if (oldDownload.downloadType != newDownload.downloadType) {
       mergedDownloadType = 'both';
@@ -852,7 +1006,8 @@ class AppDatabase extends _$AppDatabase {
       expectedFileCount: mergedExpectedFileCount,
       auxiliaryFilePaths: mergedAuxiliaryPaths,
       saf: oldDownload.saf || newDownload.saf,
-      downloadBasePath: newDownload.downloadBasePath ?? oldDownload.downloadBasePath,
+      downloadBasePath:
+          newDownload.downloadBasePath ?? oldDownload.downloadBasePath,
       coverPath: newDownload.coverPath ?? oldDownload.coverPath,
       sidecarPaths: mergedSidecarPaths,
       downloadType: mergedDownloadType,
@@ -871,13 +1026,18 @@ class AppDatabase extends _$AppDatabase {
       try {
         final decoded = jsonDecode(value);
         if (decoded is List) {
-          return decoded.whereType<String>().where((id) => id.trim().isNotEmpty).toSet();
+          return decoded
+              .whereType<String>()
+              .where((id) => id.trim().isNotEmpty)
+              .toSet();
         }
       } catch (_) {}
       return <String>{};
     }
 
-    return jsonEncode(<String>{...decode(existing), ...decode(requested)}.toList()..sort());
+    return jsonEncode(
+      <String>{...decode(existing), ...decode(requested)}.toList()..sort(),
+    );
   }
 
   int? _nextStoredDownloadCompletedAt(int? requested, int? existing) {
@@ -890,7 +1050,9 @@ class AppDatabase extends _$AppDatabase {
     return existing + 1;
   }
 
-  Future<InternalDownload?> _downloadForStorageMerge(StoredDownloadsEntry entry) async {
+  Future<InternalDownload?> _downloadForStorageMerge(
+    StoredDownloadsEntry entry,
+  ) async {
     final decoded = _isNormalizedStoredDownload(entry.download)
         ? await _decodeNormalizedStoredDownloadBase(entry)
         : _decodeDownloadJsonOrNull(
@@ -931,8 +1093,14 @@ class AppDatabase extends _$AppDatabase {
     required String fileKey,
     required InternalDownload download,
   }) async {
-    final whereClause = _storedDownloadFileWhereExpression(itemId: itemId, userId: userId, episodeId: episodeId);
-    await (delete(storedDownloadFiles)..where((tbl) => whereClause & tbl.fileKey.equals(fileKey))).go();
+    final whereClause = _storedDownloadFileWhereExpression(
+      itemId: itemId,
+      userId: userId,
+      episodeId: episodeId,
+    );
+    await (delete(
+      storedDownloadFiles,
+    )..where((tbl) => whereClause & tbl.fileKey.equals(fileKey))).go();
 
     InternalTrack? track;
     for (final candidate in download.tracks) {
@@ -978,7 +1146,9 @@ class AppDatabase extends _$AppDatabase {
     required InternalDownload download,
   }) async {
     var ordinal = 0;
-    for (final track in download.tracks.where((track) => track.url?.trim().isNotEmpty ?? false)) {
+    for (final track in download.tracks.where(
+      (track) => track.url?.trim().isNotEmpty ?? false,
+    )) {
       await _replaceStoredDownloadFile(
         itemId: itemId,
         userId: userId,
@@ -992,7 +1162,9 @@ class AppDatabase extends _$AppDatabase {
       );
     }
 
-    for (final path in download.auxiliaryFilePaths.where((path) => path.trim().isNotEmpty)) {
+    for (final path in download.auxiliaryFilePaths.where(
+      (path) => path.trim().isNotEmpty,
+    )) {
       await _replaceStoredDownloadFile(
         itemId: itemId,
         userId: userId,
@@ -1006,7 +1178,9 @@ class AppDatabase extends _$AppDatabase {
       );
     }
 
-    for (final path in download.sidecarPaths.where((path) => path.trim().isNotEmpty)) {
+    for (final path in download.sidecarPaths.where(
+      (path) => path.trim().isNotEmpty,
+    )) {
       await _replaceStoredDownloadFile(
         itemId: itemId,
         userId: userId,
@@ -1033,29 +1207,51 @@ class AppDatabase extends _$AppDatabase {
     required int? completedAt,
   }) async {
     await transaction(() async {
-      final requestedWhereClause = _storedDownloadWhereExpression(itemId: itemId, userId: userId, episodeId: episodeId);
-      final exactRows = await (select(storedDownloads)..where((tbl) => requestedWhereClause)).get();
+      final requestedWhereClause = _storedDownloadWhereExpression(
+        itemId: itemId,
+        userId: userId,
+        episodeId: episodeId,
+      );
+      final exactRows = await (select(
+        storedDownloads,
+      )..where((tbl) => requestedWhereClause)).get();
       final rowsToMerge = <StoredDownloadsEntry>[...exactRows];
 
       if (rowsToMerge.isEmpty && episodeId == null) {
         final legacyRows =
             await (select(storedDownloads)
-                  ..where((tbl) => tbl.itemId.equals(itemId) & tbl.userId.equals(userId))
+                  ..where(
+                    (tbl) =>
+                        tbl.itemId.equals(itemId) & tbl.userId.equals(userId),
+                  )
                   ..limit(1))
                 .get();
         rowsToMerge.addAll(legacyRows);
       }
 
-      if (exactRows.length == 1 && _isNormalizedStoredDownload(rowsToMerge.first.download)) {
+      if (exactRows.length == 1 &&
+          _isNormalizedStoredDownload(rowsToMerge.first.download)) {
         final existing = rowsToMerge.first;
-        final mergedOrigin = _mergeDownloadOrigin(existing.downloadOrigin, downloadOrigin);
-        final mergedProfileIds = _mergeSmartProfileIds(existing.smartProfileIds, jsonEncode(smartProfileIds));
-        await (update(storedDownloads)..where((tbl) => requestedWhereClause)).write(
+        final mergedOrigin = _mergeDownloadOrigin(
+          existing.downloadOrigin,
+          downloadOrigin,
+        );
+        final mergedProfileIds = _mergeSmartProfileIds(
+          existing.smartProfileIds,
+          jsonEncode(smartProfileIds),
+        );
+        await (update(
+          storedDownloads,
+        )..where((tbl) => requestedWhereClause)).write(
           StoredDownloadsCompanion(
             downloadOrigin: Value(mergedOrigin),
             smartProfileIds: Value(mergedProfileIds),
-            managedBytes: managedBytes == null ? Value(existing.managedBytes) : Value(managedBytes),
-            completedAt: Value(_nextStoredDownloadCompletedAt(completedAt, existing.completedAt)),
+            managedBytes: managedBytes == null
+                ? Value(existing.managedBytes)
+                : Value(managedBytes),
+            completedAt: Value(
+              _nextStoredDownloadCompletedAt(completedAt, existing.completedAt),
+            ),
           ),
         );
         await _replaceStoredDownloadFile(
@@ -1065,7 +1261,9 @@ class AppDatabase extends _$AppDatabase {
           fileKey: fileKey,
           download: download,
         );
-        _storedDownloadCache.remove('$userId\u0000$itemId\u0000${episodeId ?? ''}');
+        _storedDownloadCache.remove(
+          '$userId\u0000$itemId\u0000${episodeId ?? ''}',
+        );
         return;
       }
 
@@ -1080,10 +1278,19 @@ class AppDatabase extends _$AppDatabase {
         if (existingDownload != null) {
           mergedDownload = _mergeDownloads(existingDownload, mergedDownload);
         }
-        mergedOrigin = _mergeDownloadOrigin(mergedOrigin, existing.downloadOrigin);
-        mergedProfileIds = _mergeSmartProfileIds(mergedProfileIds, existing.smartProfileIds);
+        mergedOrigin = _mergeDownloadOrigin(
+          mergedOrigin,
+          existing.downloadOrigin,
+        );
+        mergedProfileIds = _mergeSmartProfileIds(
+          mergedProfileIds,
+          existing.smartProfileIds,
+        );
         mergedManagedBytes ??= existing.managedBytes;
-        mergedCompletedAt = _nextStoredDownloadCompletedAt(mergedCompletedAt, existing.completedAt);
+        mergedCompletedAt = _nextStoredDownloadCompletedAt(
+          mergedCompletedAt,
+          existing.completedAt,
+        );
       }
 
       for (final existing in rowsToMerge) {
@@ -1093,13 +1300,17 @@ class AppDatabase extends _$AppDatabase {
           userId: existing.userId,
           episodeId: existing.episodeId,
         );
-        await (delete(storedDownloads)..where((tbl) => existingWhereClause)).go();
+        await (delete(
+          storedDownloads,
+        )..where((tbl) => existingWhereClause)).go();
         final existingFileWhereClause = _storedDownloadFileWhereExpression(
           itemId: existing.itemId,
           userId: existing.userId,
           episodeId: existing.episodeId,
         );
-        await (delete(storedDownloadFiles)..where((tbl) => existingFileWhereClause)).go();
+        await (delete(
+          storedDownloadFiles,
+        )..where((tbl) => existingFileWhereClause)).go();
       }
 
       await into(storedDownloads).insert(
@@ -1107,7 +1318,12 @@ class AppDatabase extends _$AppDatabase {
           itemId: Value(itemId),
           userId: Value(userId),
           episodeId: Value(episodeId),
-          download: Value(_encodeNormalizedStoredDownload(mergedDownload, includeInlineFiles: true)),
+          download: Value(
+            _encodeNormalizedStoredDownload(
+              mergedDownload,
+              includeInlineFiles: true,
+            ),
+          ),
           downloadOrigin: Value(mergedOrigin),
           smartProfileIds: Value(mergedProfileIds),
           managedBytes: Value(mergedManagedBytes),
@@ -1131,7 +1347,9 @@ class AppDatabase extends _$AppDatabase {
           download: mergedDownload,
         );
       }
-      _storedDownloadCache.remove('$userId\u0000$itemId\u0000${episodeId ?? ''}');
+      _storedDownloadCache.remove(
+        '$userId\u0000$itemId\u0000${episodeId ?? ''}',
+      );
     });
   }
 
@@ -1223,14 +1441,18 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> addOrUpdateStoredDownload(StoredDownloadsCompanion companion) {
     return transaction(() async {
-      final requestedEpisodeId = companion.episodeId.present ? companion.episodeId.value : null;
+      final requestedEpisodeId = companion.episodeId.present
+          ? companion.episodeId.value
+          : null;
       final requestedWhereClause = _storedDownloadWhereExpression(
         itemId: companion.itemId.value,
         userId: companion.userId.value,
         episodeId: requestedEpisodeId,
       );
 
-      final existingRows = await (select(storedDownloads)..where((tbl) => requestedWhereClause)).get();
+      final existingRows = await (select(
+        storedDownloads,
+      )..where((tbl) => requestedWhereClause)).get();
 
       if (existingRows.isEmpty) {
         StoredDownloadsEntry? legacyExisting;
@@ -1238,7 +1460,9 @@ class AppDatabase extends _$AppDatabase {
           final legacyRows =
               await (select(storedDownloads)
                     ..where(
-                      (tbl) => tbl.itemId.equals(companion.itemId.value) & tbl.userId.equals(companion.userId.value),
+                      (tbl) =>
+                          tbl.itemId.equals(companion.itemId.value) &
+                          tbl.userId.equals(companion.userId.value),
                     )
                     ..limit(1))
                   .get();
@@ -1273,23 +1497,33 @@ class AppDatabase extends _$AppDatabase {
           userId: legacyExisting.userId,
           episodeId: legacyExisting.episodeId,
         );
-        await (update(storedDownloads)..where((tbl) => legacyWhereClause)).write(
+        await (update(
+          storedDownloads,
+        )..where((tbl) => legacyWhereClause)).write(
           StoredDownloadsCompanion(
             download: Value(jsonEncode(updatedDownload.toJson())),
             downloadOrigin: Value(
               _mergeDownloadOrigin(
                 legacyExisting.downloadOrigin,
-                companion.downloadOrigin.present ? companion.downloadOrigin.value : 'manual',
+                companion.downloadOrigin.present
+                    ? companion.downloadOrigin.value
+                    : 'manual',
               ),
             ),
             smartProfileIds: Value(
               _mergeSmartProfileIds(
                 legacyExisting.smartProfileIds,
-                companion.smartProfileIds.present ? companion.smartProfileIds.value : '[]',
+                companion.smartProfileIds.present
+                    ? companion.smartProfileIds.value
+                    : '[]',
               ),
             ),
-            managedBytes: companion.managedBytes.present ? companion.managedBytes : Value(legacyExisting.managedBytes),
-            completedAt: companion.completedAt.present ? companion.completedAt : Value(legacyExisting.completedAt),
+            managedBytes: companion.managedBytes.present
+                ? companion.managedBytes
+                : Value(legacyExisting.managedBytes),
+            completedAt: companion.completedAt.present
+                ? companion.completedAt
+                : Value(legacyExisting.completedAt),
           ),
         );
         return;
@@ -1315,16 +1549,26 @@ class AppDatabase extends _$AppDatabase {
       if (existingRows.length > 1) {
         var mergedOrigin = _mergeDownloadOrigin(
           existing.downloadOrigin,
-          companion.downloadOrigin.present ? companion.downloadOrigin.value : 'manual',
+          companion.downloadOrigin.present
+              ? companion.downloadOrigin.value
+              : 'manual',
         );
         var mergedProfileIds = _mergeSmartProfileIds(
           existing.smartProfileIds,
-          companion.smartProfileIds.present ? companion.smartProfileIds.value : '[]',
+          companion.smartProfileIds.present
+              ? companion.smartProfileIds.value
+              : '[]',
         );
         for (var i = 1; i < existingRows.length; i++) {
           final duplicate = existingRows[i];
-          mergedOrigin = _mergeDownloadOrigin(mergedOrigin, duplicate.downloadOrigin);
-          mergedProfileIds = _mergeSmartProfileIds(mergedProfileIds, duplicate.smartProfileIds);
+          mergedOrigin = _mergeDownloadOrigin(
+            mergedOrigin,
+            duplicate.downloadOrigin,
+          );
+          mergedProfileIds = _mergeSmartProfileIds(
+            mergedProfileIds,
+            duplicate.smartProfileIds,
+          );
           final duplicateDownload = _decodeDownloadJsonOrNull(
             duplicate.download,
             itemId: duplicate.itemId,
@@ -1336,7 +1580,9 @@ class AppDatabase extends _$AppDatabase {
           }
         }
 
-        await (delete(storedDownloads)..where((tbl) => requestedWhereClause)).go();
+        await (delete(
+          storedDownloads,
+        )..where((tbl) => requestedWhereClause)).go();
         await into(storedDownloads).insert(
           StoredDownloadsCompanion(
             itemId: Value(companion.itemId.value),
@@ -1350,36 +1596,60 @@ class AppDatabase extends _$AppDatabase {
           ),
         );
       } else {
-        await (update(storedDownloads)..where((tbl) => requestedWhereClause)).write(
+        await (update(
+          storedDownloads,
+        )..where((tbl) => requestedWhereClause)).write(
           StoredDownloadsCompanion(
             download: Value(jsonEncode(mergedDownload.toJson())),
             downloadOrigin: Value(
               _mergeDownloadOrigin(
                 existing.downloadOrigin,
-                companion.downloadOrigin.present ? companion.downloadOrigin.value : 'manual',
+                companion.downloadOrigin.present
+                    ? companion.downloadOrigin.value
+                    : 'manual',
               ),
             ),
             smartProfileIds: Value(
               _mergeSmartProfileIds(
                 existing.smartProfileIds,
-                companion.smartProfileIds.present ? companion.smartProfileIds.value : '[]',
+                companion.smartProfileIds.present
+                    ? companion.smartProfileIds.value
+                    : '[]',
               ),
             ),
-            managedBytes: companion.managedBytes.present ? companion.managedBytes : Value(existing.managedBytes),
-            completedAt: companion.completedAt.present ? companion.completedAt : Value(existing.completedAt),
+            managedBytes: companion.managedBytes.present
+                ? companion.managedBytes
+                : Value(existing.managedBytes),
+            completedAt: companion.completedAt.present
+                ? companion.completedAt
+                : Value(existing.completedAt),
           ),
         );
       }
     });
   }
 
-  Future<void> deleteStoredDownload(String itemId, String userId, {String? episodeId}) async {
-    final whereClause = _storedDownloadWhereExpression(itemId: itemId, userId: userId, episodeId: episodeId);
-    final fileWhereClause = _storedDownloadFileWhereExpression(itemId: itemId, userId: userId, episodeId: episodeId);
+  Future<void> deleteStoredDownload(
+    String itemId,
+    String userId, {
+    String? episodeId,
+  }) async {
+    final whereClause = _storedDownloadWhereExpression(
+      itemId: itemId,
+      userId: userId,
+      episodeId: episodeId,
+    );
+    final fileWhereClause = _storedDownloadFileWhereExpression(
+      itemId: itemId,
+      userId: userId,
+      episodeId: episodeId,
+    );
     await transaction(() async {
       await (delete(storedDownloads)..where((tbl) => whereClause)).go();
       try {
-        await (delete(storedDownloadFiles)..where((tbl) => fileWhereClause)).go();
+        await (delete(
+          storedDownloadFiles,
+        )..where((tbl) => fileWhereClause)).go();
       } catch (e) {
         if (!_isStoredDownloadFilesUnavailable(e)) {
           rethrow;
@@ -1395,22 +1665,40 @@ class AppDatabase extends _$AppDatabase {
     String? episodeId,
     required List<String> smartProfileIds,
   }) async {
-    final whereClause = _storedDownloadWhereExpression(itemId: itemId, userId: userId, episodeId: episodeId);
+    final whereClause = _storedDownloadWhereExpression(
+      itemId: itemId,
+      userId: userId,
+      episodeId: episodeId,
+    );
     await (update(storedDownloads)..where((tbl) => whereClause)).write(
-      StoredDownloadsCompanion(smartProfileIds: Value(jsonEncode(smartProfileIds))),
+      StoredDownloadsCompanion(
+        smartProfileIds: Value(jsonEncode(smartProfileIds)),
+      ),
     );
   }
 
-  Future<List<SmartDownloadProfileEntry>> getSmartDownloadProfiles(String userId) {
-    return (select(smartDownloadProfiles)..where((tbl) => tbl.userId.equals(userId))).get();
+  Future<List<SmartDownloadProfileEntry>> getSmartDownloadProfiles(
+    String userId,
+  ) {
+    return (select(
+      smartDownloadProfiles,
+    )..where((tbl) => tbl.userId.equals(userId))).get();
   }
 
-  Future<List<SmartDownloadSourceEntry>> getSmartDownloadSources(String profileId) {
-    return (select(smartDownloadSources)..where((tbl) => tbl.profileId.equals(profileId))).get();
+  Future<List<SmartDownloadSourceEntry>> getSmartDownloadSources(
+    String profileId,
+  ) {
+    return (select(
+      smartDownloadSources,
+    )..where((tbl) => tbl.profileId.equals(profileId))).get();
   }
 
-  Future<List<SmartDownloadClaimEntry>> getSmartDownloadClaims(String profileId) {
-    return (select(smartDownloadClaims)..where((tbl) => tbl.profileId.equals(profileId))).get();
+  Future<List<SmartDownloadClaimEntry>> getSmartDownloadClaims(
+    String profileId,
+  ) {
+    return (select(
+      smartDownloadClaims,
+    )..where((tbl) => tbl.profileId.equals(profileId))).get();
   }
 
   Future<void> upsertSmartDownloadProfile(SmartDownloadProfile profile) async {
@@ -1427,9 +1715,14 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<void> replaceSmartDownloadSources(String profileId, List<MediaSourceDescriptor> sources) async {
+  Future<void> replaceSmartDownloadSources(
+    String profileId,
+    List<MediaSourceDescriptor> sources,
+  ) async {
     await transaction(() async {
-      await (delete(smartDownloadSources)..where((tbl) => tbl.profileId.equals(profileId))).go();
+      await (delete(
+        smartDownloadSources,
+      )..where((tbl) => tbl.profileId.equals(profileId))).go();
       final now = DateTime.now().millisecondsSinceEpoch;
       for (final source in sources) {
         await into(smartDownloadSources).insert(
@@ -1474,7 +1767,9 @@ class AppDatabase extends _$AppDatabase {
     return into(smartDownloadClaims).insert(
       SmartDownloadClaimsCompanion(
         profileId: Value(claim.profileId),
-        referenceKey: Value('${claim.ref.itemId}::${claim.ref.episodeId ?? ''}'),
+        referenceKey: Value(
+          '${claim.ref.itemId}::${claim.ref.episodeId ?? ''}',
+        ),
         itemId: Value(claim.ref.itemId),
         episodeId: Value(claim.ref.episodeId),
         sourceType: Value(claim.source.type.name),
@@ -1488,11 +1783,21 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<void> deleteSmartDownloadProfile(String profileId, String userId) async {
+  Future<void> deleteSmartDownloadProfile(
+    String profileId,
+    String userId,
+  ) async {
     await transaction(() async {
-      await (delete(smartDownloadClaims)..where((tbl) => tbl.profileId.equals(profileId))).go();
-      await (delete(smartDownloadSources)..where((tbl) => tbl.profileId.equals(profileId))).go();
-      await (delete(smartDownloadProfiles)..where((tbl) => tbl.id.equals(profileId) & tbl.userId.equals(userId))).go();
+      await (delete(
+        smartDownloadClaims,
+      )..where((tbl) => tbl.profileId.equals(profileId))).go();
+      await (delete(
+        smartDownloadSources,
+      )..where((tbl) => tbl.profileId.equals(profileId))).go();
+      await (delete(smartDownloadProfiles)..where(
+            (tbl) => tbl.id.equals(profileId) & tbl.userId.equals(userId),
+          ))
+          .go();
     });
   }
 
@@ -1501,9 +1806,11 @@ class AppDatabase extends _$AppDatabase {
     required String userId,
     required LibraryItem item,
   }) async {
-    final entries = await (select(
-      storedDownloads,
-    )..where((tbl) => tbl.itemId.equals(itemId) & tbl.userId.equals(userId))).get();
+    final entries =
+        await (select(storedDownloads)..where(
+              (tbl) => tbl.itemId.equals(itemId) & tbl.userId.equals(userId),
+            ))
+            .get();
 
     if (entries.isEmpty) {
       return;
@@ -1531,7 +1838,10 @@ class AppDatabase extends _$AppDatabase {
         StoredDownloadsCompanion(
           download: Value(
             _isNormalizedStoredDownload(entry.download)
-                ? _encodeNormalizedStoredDownload(updatedDownload, includeInlineFiles: true)
+                ? _encodeNormalizedStoredDownload(
+                    updatedDownload,
+                    includeInlineFiles: true,
+                  )
                 : jsonEncode(updatedDownload.toJson()),
           ),
         ),
@@ -1541,7 +1851,11 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  String _storedMediaProgressId({required String userId, required String itemId, required String? episodeId}) {
+  String _storedMediaProgressId({
+    required String userId,
+    required String itemId,
+    required String? episodeId,
+  }) {
     final normalizedEpisodeId = episodeId?.trim() ?? '';
     return '$userId::$itemId::$normalizedEpisodeId';
   }
@@ -1551,9 +1865,12 @@ class AppDatabase extends _$AppDatabase {
     required String itemId,
     required String? episodeId,
   }) {
-    var whereClause = storedMediaProgress.userId.equals(userId) & storedMediaProgress.itemId.equals(itemId);
+    var whereClause =
+        storedMediaProgress.userId.equals(userId) &
+        storedMediaProgress.itemId.equals(itemId);
     if (episodeId != null) {
-      whereClause = whereClause & storedMediaProgress.episodeId.equals(episodeId);
+      whereClause =
+          whereClause & storedMediaProgress.episodeId.equals(episodeId);
     } else {
       whereClause = whereClause & storedMediaProgress.episodeId.isNull();
     }
@@ -1568,7 +1885,13 @@ class AppDatabase extends _$AppDatabase {
     required String mediaProgress,
   }) {
     final companion = StoredMediaProgressCompanion(
-      progressId: Value(_storedMediaProgressId(userId: userId, itemId: itemId, episodeId: episodeId)),
+      progressId: Value(
+        _storedMediaProgressId(
+          userId: userId,
+          itemId: itemId,
+          episodeId: episodeId,
+        ),
+      ),
       userId: Value(userId),
       itemId: Value(itemId),
       episodeId: Value(episodeId),
@@ -1592,19 +1915,34 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<void> deleteStoredMediaProgress(String userId, String itemId, {String? episodeId}) {
+  Future<void> deleteStoredMediaProgress(
+    String userId,
+    String itemId, {
+    String? episodeId,
+  }) {
     final query = delete(storedMediaProgress)
-      ..where((tbl) => _storedMediaProgressWhereExpression(userId: userId, itemId: itemId, episodeId: episodeId));
+      ..where(
+        (tbl) => _storedMediaProgressWhereExpression(
+          userId: userId,
+          itemId: itemId,
+          episodeId: episodeId,
+        ),
+      );
     return query.go();
   }
 
   Future<void> deleteStoredMediaProgressByUser(String userId) {
-    final query = delete(storedMediaProgress)..where((tbl) => tbl.userId.equals(userId));
+    final query = delete(storedMediaProgress)
+      ..where((tbl) => tbl.userId.equals(userId));
     return query.go();
   }
 
-  Future<List<StoredMediaProgressEntry>> getStoredMediaProgressByUser(String userId) async {
-    return await (select(storedMediaProgress)..where((tbl) => tbl.userId.equals(userId))).get();
+  Future<List<StoredMediaProgressEntry>> getStoredMediaProgressByUser(
+    String userId,
+  ) async {
+    return await (select(
+      storedMediaProgress,
+    )..where((tbl) => tbl.userId.equals(userId))).get();
   }
 
   Expression<bool> _storedBookmarkSyncWhereExpression({
@@ -1634,22 +1972,38 @@ class AppDatabase extends _$AppDatabase {
       updatedAt: Value(updatedAt),
     );
 
-    return into(storedBookmarkSyncs).insert(companion, mode: InsertMode.insertOrReplace);
+    return into(storedBookmarkSyncs)
+        .insert(companion, mode: InsertMode.insertOrReplace);
   }
 
-  Future<void> deleteStoredBookmarkSync(String userId, String itemId, int time) {
+  Future<void> deleteStoredBookmarkSync(
+    String userId,
+    String itemId,
+    int time,
+  ) {
     final query = delete(storedBookmarkSyncs)
-      ..where((tbl) => _storedBookmarkSyncWhereExpression(userId: userId, itemId: itemId, time: time));
+      ..where(
+        (tbl) => _storedBookmarkSyncWhereExpression(
+          userId: userId,
+          itemId: itemId,
+          time: time,
+        ),
+      );
     return query.go();
   }
 
   Future<void> deleteStoredBookmarkSyncByUser(String userId) {
-    final query = delete(storedBookmarkSyncs)..where((tbl) => tbl.userId.equals(userId));
+    final query = delete(storedBookmarkSyncs)
+      ..where((tbl) => tbl.userId.equals(userId));
     return query.go();
   }
 
-  Future<List<StoredBookmarkSyncEntry>> getStoredBookmarkSyncByUser(String userId) async {
-    return await (select(storedBookmarkSyncs)..where((tbl) => tbl.userId.equals(userId))).get();
+  Future<List<StoredBookmarkSyncEntry>> getStoredBookmarkSyncByUser(
+    String userId,
+  ) async {
+    return await (select(
+      storedBookmarkSyncs,
+    )..where((tbl) => tbl.userId.equals(userId))).get();
   }
 
   Future<List<StoredBookmarkSyncEntry>> getAllStoredBookmarkSyncs() async {
@@ -1663,7 +2017,8 @@ class AppDatabase extends _$AppDatabase {
       mode: InsertMode.insertOrIgnore,
       onConflict: DoUpdate(
         (old) => StoredSyncsCompanion.custom(
-          timeListened: old.timeListened + Variable<double>(companion.timeListened.value),
+          timeListened:
+              old.timeListened + Variable<double>(companion.timeListened.value),
           currentTime: Variable<double>(companion.currentTime.value),
           lastUpdated: Variable<DateTime>(companion.lastUpdated.value),
           sessionLocal: Variable<bool>(companion.sessionLocal.value),
@@ -1675,12 +2030,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> deleteSync(String sessionId) {
-    final query = delete(storedSyncs)..where((tbl) => tbl.sessionId.equals(sessionId));
+    final query = delete(storedSyncs)
+      ..where((tbl) => tbl.sessionId.equals(sessionId));
     return query.go();
   }
 
   Future<StoredSyncEntry?> getSync(String sessionId) async {
-    final query = select(storedSyncs)..where((tbl) => tbl.sessionId.equals(sessionId));
+    final query = select(storedSyncs)
+      ..where((tbl) => tbl.sessionId.equals(sessionId));
     final entry = await query.getSingleOrNull();
     return entry;
   }
@@ -1690,39 +2047,59 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<StoredSyncEntry>> getAllSyncsByUser(String userId) async {
-    return await (select(storedSyncs)..where((tbl) => tbl.userId.equals(userId))).get();
+    return await (select(
+      storedSyncs,
+    )..where((tbl) => tbl.userId.equals(userId))).get();
   }
 
   // Basic setting operations
   Stream<GlobalSettingEntry?> watchGlobalSetting(String key) {
-    return (select(globalSettings)..where((tbl) => tbl.key.equals(key))).watchSingleOrNull().distinct();
+    return (select(
+      globalSettings,
+    )..where((tbl) => tbl.key.equals(key))).watchSingleOrNull().distinct();
   }
 
   Future<void> setGlobalSetting(String key, String value) {
-    final companion = GlobalSettingsCompanion(key: Value(key), value: Value(value));
+    final companion = GlobalSettingsCompanion(
+      key: Value(key),
+      value: Value(value),
+    );
     return into(globalSettings).insert(companion, mode: InsertMode.replace);
   }
 
   Future<GlobalSettingEntry?> getGlobalSetting(String key) {
-    return (select(globalSettings)..where((tbl) => tbl.key.equals(key))).getSingleOrNull();
+    return (select(
+      globalSettings,
+    )..where((tbl) => tbl.key.equals(key))).getSingleOrNull();
   }
 
   Stream<UserSettingEntry?> watchUserSetting(String userId, String key) {
-    return (select(
-      userSettings,
-    )..where((tbl) => tbl.userId.equals(userId) & tbl.key.equals(key))).watchSingleOrNull().distinct();
+    return (select(userSettings)
+          ..where((tbl) => tbl.userId.equals(userId) & tbl.key.equals(key)))
+        .watchSingleOrNull()
+        .distinct();
   }
 
   Future<void> setUserSetting(String userId, String key, String value) {
-    final companion = UserSettingsCompanion(userId: Value(userId), key: Value(key), value: Value(value));
+    final companion = UserSettingsCompanion(
+      userId: Value(userId),
+      key: Value(key),
+      value: Value(value),
+    );
     return into(userSettings).insert(companion, mode: InsertMode.replace);
   }
 
   Future<UserSettingEntry?> getUserSetting(String userId, String key) {
-    return (select(userSettings)..where((tbl) => tbl.userId.equals(userId) & tbl.key.equals(key))).getSingleOrNull();
+    return (select(userSettings)
+          ..where((tbl) => tbl.userId.equals(userId) & tbl.key.equals(key)))
+        .getSingleOrNull();
   }
 
-  Future<void> setBookPlaybackSpeed(String userId, String itemId, double speed) {
+  Future<void> setBookPlaybackSpeed(
+    String userId,
+    String itemId,
+    double speed,
+  ) {
     final companion = BookPlaybackSpeedsCompanion(
       userId: Value(userId),
       itemId: Value(itemId),
@@ -1733,14 +2110,18 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<double?> getBookPlaybackSpeed(String userId, String itemId) async {
-    final entry = await (select(
-      bookPlaybackSpeeds,
-    )..where((tbl) => tbl.userId.equals(userId) & tbl.itemId.equals(itemId))).getSingleOrNull();
+    final entry =
+        await (select(bookPlaybackSpeeds)..where(
+              (tbl) => tbl.userId.equals(userId) & tbl.itemId.equals(itemId),
+            ))
+            .getSingleOrNull();
     return entry?.speed;
   }
 
   Future<void> deleteBookPlaybackSpeedsByUser(String userId) {
-    return (delete(bookPlaybackSpeeds)..where((tbl) => tbl.userId.equals(userId))).go();
+    return (delete(
+      bookPlaybackSpeeds,
+    )..where((tbl) => tbl.userId.equals(userId))).go();
   }
 
   Future<Map<String, String>> getAllGlobalSettings() async {
@@ -1866,7 +2247,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<User?> getStoredUser(String userId) async {
-    final row = await (select(storedUsers)..where((tbl) => tbl.id.equals(userId))).getSingleOrNull();
+    final row = await (select(
+      storedUsers,
+    )..where((tbl) => tbl.id.equals(userId))).getSingleOrNull();
     if (row != null) {
       final decodedUser = User.fromJson(jsonDecode(row.userDataJson));
       return _hydrateUserWithAuthSecrets(decodedUser);
@@ -1912,7 +2295,10 @@ class AppDatabase extends _$AppDatabase {
           final updatedUser = user.copyWith(isActive: shouldBeActive);
           b.replace(
             storedUsers,
-            StoredUsersCompanion(id: Value(updatedUser.id), userDataJson: Value(jsonEncode(updatedUser.toJson()))),
+            StoredUsersCompanion(
+              id: Value(updatedUser.id),
+              userDataJson: Value(jsonEncode(updatedUser.toJson())),
+            ),
           );
         }
       }
@@ -1922,7 +2308,9 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> clearActiveUserId() {
     const activeUserIdKey = 'activeUserId';
-    return (delete(globalSettings)..where((tbl) => tbl.key.equals(activeUserIdKey))).go();
+    return (delete(
+      globalSettings,
+    )..where((tbl) => tbl.key.equals(activeUserIdKey))).go();
   }
 
   Future<AuthSecrets> _mergeAuthSecretsForUser(User user) async {
@@ -1939,7 +2327,10 @@ class AppDatabase extends _$AppDatabase {
     final merged = await _mergeAuthSecretsForUser(user);
 
     final hasPlainTextSecrets =
-        user.token != null || user.accessToken != null || user.refreshToken != null || user.apiKey != null;
+        user.token != null ||
+        user.accessToken != null ||
+        user.refreshToken != null ||
+        user.apiKey != null;
 
     if (hasPlainTextSecrets) {
       await _authSecretStore.writeForUser(
@@ -1953,7 +2344,10 @@ class AppDatabase extends _$AppDatabase {
 
       final sanitized = _sanitizeUserForStorage(user);
       await into(storedUsers).insert(
-        StoredUsersCompanion(id: Value(sanitized.id), userDataJson: Value(jsonEncode(sanitized.toJson()))),
+        StoredUsersCompanion(
+          id: Value(sanitized.id),
+          userDataJson: Value(jsonEncode(sanitized.toJson())),
+        ),
         mode: InsertMode.replace,
       );
     }

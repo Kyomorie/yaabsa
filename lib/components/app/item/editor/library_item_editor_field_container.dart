@@ -1,7 +1,13 @@
 import 'package:material_ui/material_ui.dart';
 
-BorderSide libraryItemEditorSoftBorderSide(BuildContext context, {double alpha = 0.4}) {
-  return BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: alpha));
+BorderSide libraryItemEditorSoftBorderSide(
+  BuildContext context, {
+  double alpha = 0.4,
+}) {
+  return BorderSide(
+    color: Theme.of(context).colorScheme.outlineVariant
+        .withValues(alpha: alpha),
+  );
 }
 
 class LibraryItemEditorFieldContainer extends StatelessWidget {
@@ -27,7 +33,9 @@ class LibraryItemEditorFieldContainer extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.fromBorderSide(libraryItemEditorSoftBorderSide(context, alpha: 0.38)),
+        border: Border.fromBorderSide(
+          libraryItemEditorSoftBorderSide(context, alpha: 0.38),
+        ),
       ),
       child: child,
     );

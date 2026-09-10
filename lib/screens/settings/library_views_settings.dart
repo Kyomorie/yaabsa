@@ -24,15 +24,23 @@ class LibraryViewsSettings extends ConsumerWidget {
             if (user == null) {
               return const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                child: Text('No active user. Sign in to configure library views.'),
+                child: Text(
+                  'No active user. Sign in to configure library views.',
+                ),
               );
             }
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                HomeNavigationPreferencesEditor(userId: user.id, mediaType: HomeLibraryMediaType.book),
-                HomeNavigationPreferencesEditor(userId: user.id, mediaType: HomeLibraryMediaType.podcast),
+                HomeNavigationPreferencesEditor(
+                  userId: user.id,
+                  mediaType: HomeLibraryMediaType.book,
+                ),
+                HomeNavigationPreferencesEditor(
+                  userId: user.id,
+                  mediaType: HomeLibraryMediaType.podcast,
+                ),
               ],
             );
           },
@@ -40,8 +48,10 @@ class LibraryViewsSettings extends ConsumerWidget {
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) =>
-              Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load library view settings: $error')),
+          error: (error, _) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Failed to load library view settings: $error'),
+          ),
         ),
       ],
     );

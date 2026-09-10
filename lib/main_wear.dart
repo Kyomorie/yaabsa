@@ -20,7 +20,9 @@ void main() {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
       await Init.globals();
-      await containerRef.read(settingsManagerProvider.notifier).ensureInitialized();
+      await containerRef
+          .read(settingsManagerProvider.notifier)
+          .ensureInitialized();
       // Tracks reachability and replays offline progress syncs on reconnect.
       unawaited(containerRef.read(serverStatusProvider.future));
       // Receives progress updates pushed when other clients play.
@@ -36,10 +38,19 @@ void main() {
           androidStopForegroundOnPause: false,
         ),
       );
-      runApp(UncontrolledProviderScope(container: containerRef, child: const WearApp()));
+      runApp(
+        UncontrolledProviderScope(
+          container: containerRef,
+          child: const WearApp(),
+        ),
+      );
     },
     (error, stack) {
-      logger('Uncaught Dart error: $error\n$stack', tag: 'WearZoneError', level: InfoLevel.error);
+      logger(
+        'Uncaught Dart error: $error\n$stack',
+        tag: 'WearZoneError',
+        level: InfoLevel.error,
+      );
     },
   );
 }

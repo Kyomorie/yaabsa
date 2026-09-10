@@ -41,7 +41,12 @@ class _FullWidthRoundedSliderTrackShape extends RoundedRectSliderTrackShape {
   }) {
     final trackHeight = sliderTheme.trackHeight ?? 0;
     final trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
-    return Rect.fromLTWH(offset.dx, trackTop, parentBox.size.width, trackHeight);
+    return Rect.fromLTWH(
+      offset.dx,
+      trackTop,
+      parentBox.size.width,
+      trackHeight,
+    );
   }
 }
 
@@ -106,7 +111,8 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
   Duration? _cachedRangeStart;
   Duration? _cachedRangeEnd;
   double? _cachedSliderWidth;
-  List<_SeekTimelineMarkerOffset> _cachedMarkerOffsets = const <_SeekTimelineMarkerOffset>[];
+  List<_SeekTimelineMarkerOffset> _cachedMarkerOffsets =
+      const <_SeekTimelineMarkerOffset>[];
   bool _isSleepTimerPinHovered = false;
 
   void _setSleepTimerPinHovered(bool hovered) {
@@ -123,9 +129,11 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
       return null;
     }
 
-    final ratio = ((position - widget.rangeStart).inMicroseconds / rangeDuration.inMicroseconds)
-        .clamp(0.0, 1.0)
-        .toDouble();
+    final ratio =
+        ((position - widget.rangeStart).inMicroseconds /
+                rangeDuration.inMicroseconds)
+            .clamp(0.0, 1.0)
+            .toDouble();
     return ratio * sliderWidth;
   }
 
@@ -188,7 +196,9 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
   @override
   void didUpdateWidget(SeekBarSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!_isDragging && _dragValue != null && oldWidget.sliderValue != widget.sliderValue) {
+    if (!_isDragging &&
+        _dragValue != null &&
+        oldWidget.sliderValue != widget.sliderValue) {
       _dragValue = null;
     }
   }
@@ -199,7 +209,9 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
     super.dispose();
   }
 
-  List<_SeekTimelineMarkerOffset> _resolveMarkerOffsetsCached(double sliderWidth) {
+  List<_SeekTimelineMarkerOffset> _resolveMarkerOffsetsCached(
+    double sliderWidth,
+  ) {
     final shouldRefresh =
         !identical(_cachedMarkers, widget.markers) ||
         _cachedRangeStart != widget.rangeStart ||
@@ -221,7 +233,10 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
               sliderWidth: trackWidth,
             )
             .map((marker) {
-              return _SeekTimelineMarkerOffset(offset: marker.offset + trackInset, type: marker.type);
+              return _SeekTimelineMarkerOffset(
+                offset: marker.offset + trackInset,
+                type: marker.type,
+              );
             })
             .toList(growable: false);
     _cachedMarkers = widget.markers;
@@ -231,7 +246,11 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
     return _cachedMarkerOffsets;
   }
 
-  void _updatePreview({required double dx, required double sliderWidth, required Duration rangeDuration}) {
+  void _updatePreview({
+    required double dx,
+    required double sliderWidth,
+    required Duration rangeDuration,
+  }) {
     if (!widget.hasSeekRange || sliderWidth <= 0) {
       _clearPreview();
       return;
@@ -239,10 +258,13 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
 
     final clampedDx = dx.clamp(0.0, sliderWidth).toDouble();
     final ratio = clampedDx / sliderWidth;
-    final positionMs = widget.rangeStart.inMilliseconds + (rangeDuration.inMilliseconds * ratio).round();
+    final positionMs =
+        widget.rangeStart.inMilliseconds +
+        (rangeDuration.inMilliseconds * ratio).round();
     final nextPosition = Duration(milliseconds: positionMs);
 
-    final offsetChanged = _previewOffset == null || (_previewOffset! - clampedDx).abs() >= 0.5;
+    final offsetChanged =
+        _previewOffset == null || (_previewOffset! - clampedDx).abs() >= 0.5;
     final positionChanged = _previewPosition != nextPosition;
     if (!offsetChanged && !positionChanged) {
       return;
@@ -316,32 +338,50 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
             final sliderWidth = constraints.maxWidth;
             final rangeDuration = widget.rangeEnd - widget.rangeStart;
             final markerOffsets = _resolveMarkerOffsetsCached(sliderWidth);
-            final markerProfile = _resolveMarkerPaintProfile(markerOffsets.length);
+            final markerProfile = _resolveMarkerPaintProfile(
+              markerOffsets.length,
+            );
             final sleepTimerMarker = widget.sleepTimerMarker;
             final sleepTimerStartOffset = sleepTimerMarker == null
                 ? null
-                : _resolvePositionOffset(sleepTimerMarker.startPosition, sliderWidth);
-            final sleepTimerEndOffset = sleepTimerMarker?.endPosition == null || !widget.showSleepTimerRange
+                : _resolvePositionOffset(
+                    sleepTimerMarker.startPosition,
+                    sliderWidth,
+                  );
+            final sleepTimerEndOffset =
+                sleepTimerMarker?.endPosition == null ||
+                    !widget.showSleepTimerRange
                 ? null
-                : _resolvePositionOffset(sleepTimerMarker!.endPosition!, sliderWidth);
-            final sleepTimerRangeStart = sleepTimerStartOffset == null || sleepTimerEndOffset == null
+                : _resolvePositionOffset(
+                    sleepTimerMarker!.endPosition!,
+                    sliderWidth,
+                  );
+            final sleepTimerRangeStart =
+                sleepTimerStartOffset == null || sleepTimerEndOffset == null
                 ? null
                 : sleepTimerStartOffset < sleepTimerEndOffset
                 ? sleepTimerStartOffset
                 : sleepTimerEndOffset;
-            final sleepTimerRangeEnd = sleepTimerStartOffset == null || sleepTimerEndOffset == null
+            final sleepTimerRangeEnd =
+                sleepTimerStartOffset == null || sleepTimerEndOffset == null
                 ? null
                 : sleepTimerStartOffset > sleepTimerEndOffset
                 ? sleepTimerStartOffset
                 : sleepTimerEndOffset;
 
             final previewPosition = _previewPosition;
-            final previewLabel = previewPosition == null ? null : widget.buildPreviewLabel(previewPosition);
+            final previewLabel = previewPosition == null
+                ? null
+                : widget.buildPreviewLabel(previewPosition);
 
-            final basePreviewStyle = theme.textTheme.labelMedium ?? const TextStyle(fontSize: 12);
+            final basePreviewStyle =
+                theme.textTheme.labelMedium ?? const TextStyle(fontSize: 12);
             final previewTextStyle = basePreviewStyle.copyWith(
               color: colorScheme.onSurface,
-              fontSize: widget.previewLabelFontSize ?? basePreviewStyle.fontSize ?? 12,
+              fontSize:
+                  widget.previewLabelFontSize ??
+                  basePreviewStyle.fontSize ??
+                  12,
               height: 1.1,
             );
 
@@ -357,9 +397,15 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
             final previewLeft = _previewOffset == null || previewLabel == null
                 ? 0.0
                 : (_previewOffset! - (previewWidth / 2))
-                      .clamp(0.0, sliderWidth > previewWidth ? sliderWidth - previewWidth : 0.0)
+                      .clamp(
+                        0.0,
+                        sliderWidth > previewWidth
+                            ? sliderWidth - previewWidth
+                            : 0.0,
+                      )
                       .toDouble();
-            final showSleepTimerPin = sleepTimerStartOffset != null && widget.showSleepTimerPin;
+            final showSleepTimerPin =
+                sleepTimerStartOffset != null && widget.showSleepTimerPin;
             final previewTop = showSleepTimerPin ? -14.0 : -20.0;
 
             return MouseRegion(
@@ -417,7 +463,9 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
                         );
                       }
                     : null,
-                onPointerCancel: widget.hasSeekRange ? (_) => _clearPreview() : null,
+                onPointerCancel: widget.hasSeekRange
+                    ? (_) => _clearPreview()
+                    : null,
                 child: SizedBox(
                   height: showSleepTimerPin ? _sleepTimerPinLayoutHeight : null,
                   child: Stack(
@@ -432,12 +480,21 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
                         min: 0.0,
                         max: widget.hasSeekRange ? widget.maxSliderValue : 1.0,
                         activeColor: colorScheme.primary,
-                        inactiveColor: colorScheme.onSurface.withValues(alpha: 0.3),
-                        onChangeStart: widget.hasSeekRange ? _handleSliderChangeStart : null,
-                        onChanged: widget.hasSeekRange ? _handleSliderChanged : null,
-                        onChangeEnd: widget.hasSeekRange ? _handleSliderChangeEnd : null,
+                        inactiveColor: colorScheme.onSurface.withValues(
+                          alpha: 0.3,
+                        ),
+                        onChangeStart: widget.hasSeekRange
+                            ? _handleSliderChangeStart
+                            : null,
+                        onChanged: widget.hasSeekRange
+                            ? _handleSliderChanged
+                            : null,
+                        onChangeEnd: widget.hasSeekRange
+                            ? _handleSliderChangeEnd
+                            : null,
                       ),
-                      if (sleepTimerRangeStart != null && sleepTimerRangeEnd != null)
+                      if (sleepTimerRangeStart != null &&
+                          sleepTimerRangeEnd != null)
                         Positioned(
                           left: sleepTimerRangeStart,
                           width: sleepTimerRangeEnd - sleepTimerRangeStart,
@@ -449,7 +506,8 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
                               child: Container(
                                 height: widget.trackHeight + 2,
                                 decoration: BoxDecoration(
-                                  color: colorScheme.tertiaryContainer.withValues(alpha: 0.6),
+                                  color: colorScheme.tertiaryContainer
+                                      .withValues(alpha: 0.6),
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(999),
                                     bottomLeft: Radius.circular(999),
@@ -461,7 +519,11 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
                         ),
                       if (sleepTimerEndOffset != null)
                         Positioned(
-                          left: sliderWidth > 2 ? (sleepTimerEndOffset - 1).clamp(0.0, sliderWidth - 2).toDouble() : 0,
+                          left: sliderWidth > 2
+                              ? (sleepTimerEndOffset - 1)
+                                    .clamp(0.0, sliderWidth - 2)
+                                    .toDouble()
+                              : 0,
                           top: 0,
                           bottom: 0,
                           child: IgnorePointer(
@@ -480,7 +542,12 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
                       for (final marker in markerOffsets)
                         Positioned(
                           left: (marker.offset - (markerProfile.width / 2))
-                              .clamp(0.0, sliderWidth > markerProfile.width ? sliderWidth - markerProfile.width : 0.0)
+                              .clamp(
+                                0.0,
+                                sliderWidth > markerProfile.width
+                                    ? sliderWidth - markerProfile.width
+                                    : 0.0,
+                              )
                               .toDouble(),
                           top: 0,
                           bottom: 0,
@@ -491,21 +558,32 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
                                 height: widget.trackHeight,
                                 decoration: BoxDecoration(
                                   color:
-                                      (marker.type == SeekTimelineMarkerType.bookmark &&
-                                                  widget.markerMode == SeekBarMarkerMode.both
+                                      (marker.type ==
+                                                      SeekTimelineMarkerType
+                                                          .bookmark &&
+                                                  widget.markerMode ==
+                                                      SeekBarMarkerMode.both
                                               ? colorScheme.error
                                               : colorScheme.tertiary)
-                                          .withValues(alpha: markerProfile.alpha),
+                                          .withValues(
+                                            alpha: markerProfile.alpha,
+                                          ),
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      if (sleepTimerStartOffset != null && widget.showSleepTimerPin)
+                      if (sleepTimerStartOffset != null &&
+                          widget.showSleepTimerPin)
                         Positioned(
-                          left: sleepTimerStartOffset - (_sleepTimerPinHitboxSize / 2),
-                          top: (_sleepTimerPinLayoutHeight - _sleepTimerPinHitboxSize) / 2,
+                          left:
+                              sleepTimerStartOffset -
+                              (_sleepTimerPinHitboxSize / 2),
+                          top:
+                              (_sleepTimerPinLayoutHeight -
+                                  _sleepTimerPinHitboxSize) /
+                              2,
                           width: _sleepTimerPinHitboxSize,
                           height: _sleepTimerPinHitboxSize,
                           child: Tooltip(
@@ -518,7 +596,9 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
                                 behavior: HitTestBehavior.opaque,
                                 onTap: widget.onSleepTimerMarkerTap == null
                                     ? null
-                                    : () => unawaited(widget.onSleepTimerMarkerTap!()),
+                                    : () => unawaited(
+                                        widget.onSleepTimerMarkerTap!(),
+                                      ),
                                 child: Center(
                                   child: Material(
                                     color: _isSleepTimerPinHovered
@@ -527,7 +607,11 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
                                     shape: const CircleBorder(),
                                     child: SizedBox.square(
                                       dimension: _sleepTimerPinVisualSize,
-                                      child: Icon(Icons.bedtime_rounded, size: 20, color: colorScheme.onSurface),
+                                      child: Icon(
+                                        Icons.bedtime_rounded,
+                                        size: 20,
+                                        color: colorScheme.onSurface,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -542,9 +626,13 @@ class _SeekBarSliderState extends State<SeekBarSlider> {
                           child: IgnorePointer(
                             child: Container(
                               width: previewWidth,
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 1,
+                              ),
                               decoration: BoxDecoration(
-                                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.82),
+                                color: colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.82),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -600,9 +688,15 @@ List<_SeekTimelineMarkerOffset> _resolveMarkerOffsets({
       continue;
     }
 
-    final markerSeconds = (marker.position - rangeStart).inMilliseconds / 1000.0;
+    final markerSeconds =
+        (marker.position - rangeStart).inMilliseconds / 1000.0;
     final offset = (markerSeconds / rangeSeconds) * sliderWidth;
-    rawOffsets.add(_SeekTimelineMarkerOffset(offset: offset.clamp(0.0, sliderWidth).toDouble(), type: marker.type));
+    rawOffsets.add(
+      _SeekTimelineMarkerOffset(
+        offset: offset.clamp(0.0, sliderWidth).toDouble(),
+        type: marker.type,
+      ),
+    );
   }
 
   if (rawOffsets.length <= 1) {
@@ -627,7 +721,8 @@ List<_SeekTimelineMarkerOffset> _resolveMarkerOffsets({
   final filtered = <_SeekTimelineMarkerOffset>[rawOffsets.first];
   for (var i = 1; i < rawOffsets.length; i++) {
     final candidate = rawOffsets[i];
-    final hasVisualGap = candidate.offset - filtered.last.offset >= minVisualGap;
+    final hasVisualGap =
+        candidate.offset - filtered.last.offset >= minVisualGap;
     final hasDifferentMarkerType = candidate.type != filtered.last.type;
     if (hasVisualGap || hasDifferentMarkerType) {
       filtered.add(rawOffsets[i]);

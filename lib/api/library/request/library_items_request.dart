@@ -15,5 +15,6 @@ abstract class LibraryItemsRequest with _$LibraryItemsRequest {
     @JsonKey(name: "include") String? include,
   }) = _LibraryItemsRequest;
 
-  factory LibraryItemsRequest.fromJson(Map<String, dynamic> json) => _$LibraryItemsRequestFromJson(json);
+  factory LibraryItemsRequest.fromJson(Map<String, dynamic> json) =>
+      _$LibraryItemsRequestFromJson(json);
 }

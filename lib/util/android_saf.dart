@@ -18,12 +18,15 @@ class AndroidSafHelper {
       return null;
     }
 
-    final uriString = await _channel.invokeMethod<String>('prepareDownloadFile', {
-      'rootTreeUri': rootTreeUri.toString(),
-      'relativeDirectory': relativeDirectory,
-      'filename': filename,
-      'mimeType': mimeType,
-    });
+    final uriString = await _channel.invokeMethod<String>(
+      'prepareDownloadFile',
+      {
+        'rootTreeUri': rootTreeUri.toString(),
+        'relativeDirectory': relativeDirectory,
+        'filename': filename,
+        'mimeType': mimeType,
+      },
+    );
 
     if (uriString == null || uriString.isEmpty) {
       return null;

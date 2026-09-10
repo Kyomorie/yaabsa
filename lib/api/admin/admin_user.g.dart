@@ -18,23 +18,33 @@ _AdminUser _$AdminUserFromJson(Map<String, dynamic> json) => _AdminUser(
   hasOpenIdLink: json['hasOpenIDLink'] as bool?,
   permissions: json['permissions'] == null
       ? const AdminUserPermissions()
-      : AdminUserPermissions.fromJson(json['permissions'] as Map<String, dynamic>),
+      : AdminUserPermissions.fromJson(
+          json['permissions'] as Map<String, dynamic>,
+        ),
   librariesAccessible:
-      (json['librariesAccessible'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
-  itemTagsSelected: (json['itemTagsSelected'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
+      (json['librariesAccessible'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
+  itemTagsSelected:
+      (json['itemTagsSelected'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
 );
 
-Map<String, dynamic> _$AdminUserToJson(_AdminUser instance) => <String, dynamic>{
-  'id': instance.id,
-  'username': instance.username,
-  'email': instance.email,
-  'type': instance.type,
-  'isActive': instance.isActive,
-  'isLocked': instance.isLocked,
-  'lastSeen': instance.lastSeen,
-  'createdAt': instance.createdAt,
-  'hasOpenIDLink': instance.hasOpenIdLink,
-  'permissions': instance.permissions,
-  'librariesAccessible': instance.librariesAccessible,
-  'itemTagsSelected': instance.itemTagsSelected,
-};
+Map<String, dynamic> _$AdminUserToJson(_AdminUser instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'username': instance.username,
+      'email': instance.email,
+      'type': instance.type,
+      'isActive': instance.isActive,
+      'isLocked': instance.isLocked,
+      'lastSeen': instance.lastSeen,
+      'createdAt': instance.createdAt,
+      'hasOpenIDLink': instance.hasOpenIdLink,
+      'permissions': instance.permissions,
+      'librariesAccessible': instance.librariesAccessible,
+      'itemTagsSelected': instance.itemTagsSelected,
+    };

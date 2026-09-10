@@ -48,7 +48,8 @@ class ToolsSettings extends ConsumerWidget {
                     SettingsNavigationItem(
                       icon: Icons.route_outlined,
                       title: 'Path Tag and Genre Update',
-                      onTap: () => context.push(PathTagGenreUpdateSettings.routeName),
+                      onTap: () =>
+                          context.push(PathTagGenreUpdateSettings.routeName),
                     ),
                   ],
                 ),

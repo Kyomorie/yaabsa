@@ -18,7 +18,8 @@ class AdminServerEmailView extends ConsumerStatefulWidget {
   const AdminServerEmailView({super.key});
 
   @override
-  ConsumerState<AdminServerEmailView> createState() => _AdminServerEmailViewState();
+  ConsumerState<AdminServerEmailView> createState() =>
+      _AdminServerEmailViewState();
 }
 
 class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
@@ -65,7 +66,9 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
     super.dispose();
   }
 
-  List<AdminEmailEreaderDevice> _sortedDevices(List<AdminEmailEreaderDevice> devices) {
+  List<AdminEmailEreaderDevice> _sortedDevices(
+    List<AdminEmailEreaderDevice> devices,
+  ) {
     final values = List<AdminEmailEreaderDevice>.from(devices);
     values.sort((a, b) {
       final nameCompare = a.name.toLowerCase().compareTo(b.name.toLowerCase());
@@ -80,7 +83,9 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
   List<SessionUserSummary> _sortedUsers(List<SessionUserSummary> users) {
     final values = List<SessionUserSummary>.from(users);
     values.sort((a, b) {
-      final usernameCompare = a.username.toLowerCase().compareTo(b.username.toLowerCase());
+      final usernameCompare = a.username.toLowerCase().compareTo(
+        b.username.toLowerCase(),
+      );
       if (usernameCompare != 0) {
         return usernameCompare;
       }
@@ -116,7 +121,8 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
   }
 
   bool get _hasSettingsChanges {
-    if (_normalizedField(_hostController) != _normalizedSettingsValue(_settings.host)) {
+    if (_normalizedField(_hostController) !=
+        _normalizedSettingsValue(_settings.host)) {
       return true;
     }
 
@@ -133,37 +139,50 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
       return true;
     }
 
-    if (_normalizedField(_userController) != _normalizedSettingsValue(_settings.user)) {
+    if (_normalizedField(_userController) !=
+        _normalizedSettingsValue(_settings.user)) {
       return true;
     }
 
-    if (_normalizedField(_passwordController) != _normalizedSettingsValue(_settings.pass)) {
+    if (_normalizedField(_passwordController) !=
+        _normalizedSettingsValue(_settings.pass)) {
       return true;
     }
 
-    if (_normalizedField(_fromAddressController) != _normalizedSettingsValue(_settings.fromAddress)) {
+    if (_normalizedField(_fromAddressController) !=
+        _normalizedSettingsValue(_settings.fromAddress)) {
       return true;
     }
 
-    if (_normalizedField(_testAddressController) != _normalizedSettingsValue(_settings.testAddress)) {
+    if (_normalizedField(_testAddressController) !=
+        _normalizedSettingsValue(_settings.testAddress)) {
       return true;
     }
 
     return false;
   }
 
-  bool get _canSaveSettings => !_isLoading && !_isSavingSettings && !_isSendingTest && _hasSettingsChanges;
+  bool get _canSaveSettings =>
+      !_isLoading &&
+      !_isSavingSettings &&
+      !_isSendingTest &&
+      _hasSettingsChanges;
 
   bool get _canSendTestEmail {
     return !_isLoading &&
         !_isSavingSettings &&
         !_isSendingTest &&
-        AdminEmailSettingsValidation.normalizeNullable(_hostController.text) != null;
+        AdminEmailSettingsValidation.normalizeNullable(_hostController.text) !=
+            null;
   }
 
   bool _validateSettings({required bool showErrors}) {
-    final hostError = AdminEmailSettingsValidation.validateHost(_hostController.text);
-    final portError = AdminEmailSettingsValidation.validatePort(_portController.text);
+    final hostError = AdminEmailSettingsValidation.validateHost(
+      _hostController.text,
+    );
+    final portError = AdminEmailSettingsValidation.validatePort(
+      _portController.text,
+    );
     final fromAddressError = AdminEmailSettingsValidation.validateOptionalEmail(
       _fromAddressController.text,
       fieldLabel: 'From address',
@@ -182,7 +201,10 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
       });
     }
 
-    return hostError == null && portError == null && fromAddressError == null && testAddressError == null;
+    return hostError == null &&
+        portError == null &&
+        fromAddressError == null &&
+        testAddressError == null;
   }
 
   void _setBusyDevice(String rowId, bool busy) {
@@ -198,10 +220,14 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
   void _handleSettingsFieldChanged() {
     setState(() {
       if (_hostError != null) {
-        _hostError = AdminEmailSettingsValidation.validateHost(_hostController.text);
+        _hostError = AdminEmailSettingsValidation.validateHost(
+          _hostController.text,
+        );
       }
       if (_portError != null) {
-        _portError = AdminEmailSettingsValidation.validatePort(_portController.text);
+        _portError = AdminEmailSettingsValidation.validatePort(
+          _portController.text,
+        );
       }
       if (_fromAddressError != null) {
         _fromAddressError = AdminEmailSettingsValidation.validateOptionalEmail(
@@ -248,9 +274,12 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
         return;
       }
 
-      final nextSettings = settingsResponse.data?.settings ?? const AdminEmailSettings();
+      final nextSettings =
+          settingsResponse.data?.settings ?? const AdminEmailSettings();
       final nextDevices = _sortedDevices(nextSettings.ereaderDevices);
-      final nextUsers = _sortedUsers(usersResponse.data?.users ?? const <SessionUserSummary>[]);
+      final nextUsers = _sortedUsers(
+        usersResponse.data?.users ?? const <SessionUserSummary>[],
+      );
 
       setState(() {
         _settings = nextSettings.copyWith(ereaderDevices: nextDevices);
@@ -281,7 +310,10 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
       }
 
       setState(() {
-        _errorMessage = listManagementErrorMessage(error, fallback: 'Failed to load e-mail settings.');
+        _errorMessage = listManagementErrorMessage(
+          error,
+          fallback: 'Failed to load e-mail settings.',
+        );
         _isLoading = false;
       });
     }
@@ -325,7 +357,9 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
     });
 
     try {
-      final response = await api.getAdminApi().updateEmailSettings(payload: _buildSettingsUpdateRequest());
+      final response = await api.getAdminApi().updateEmailSettings(
+        payload: _buildSettingsUpdateRequest(),
+      );
       final updatedSettings = response.data?.settings;
 
       if (!mounted) {
@@ -369,7 +403,10 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
       }
 
       setState(() {
-        _errorMessage = listManagementErrorMessage(error, fallback: 'Failed to save e-mail settings.');
+        _errorMessage = listManagementErrorMessage(
+          error,
+          fallback: 'Failed to save e-mail settings.',
+        );
       });
       return false;
     } finally {
@@ -432,7 +469,10 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
       }
 
       setState(() {
-        _errorMessage = listManagementErrorMessage(error, fallback: 'Failed to send test e-mail.');
+        _errorMessage = listManagementErrorMessage(
+          error,
+          fallback: 'Failed to send test e-mail.',
+        );
       });
     } finally {
       if (mounted) {
@@ -476,7 +516,9 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
         return false;
       }
 
-      final updatedDevices = _sortedDevices(response.data?.ereaderDevices ?? devices);
+      final updatedDevices = _sortedDevices(
+        response.data?.ereaderDevices ?? devices,
+      );
       setState(() {
         _devices = updatedDevices;
         _settings = _settings.copyWith(ereaderDevices: updatedDevices);
@@ -490,7 +532,10 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
       }
 
       setState(() {
-        _errorMessage = listManagementErrorMessage(error, fallback: fallbackError);
+        _errorMessage = listManagementErrorMessage(
+          error,
+          fallback: fallbackError,
+        );
       });
       return false;
     } finally {
@@ -507,7 +552,11 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
       return;
     }
 
-    final created = await showAdminEmailDeviceFormDialog(context: context, existingDevices: _devices, users: _users);
+    final created = await showAdminEmailDeviceFormDialog(
+      context: context,
+      existingDevices: _devices,
+      users: _users,
+    );
 
     if (created == null || !mounted) {
       return;
@@ -537,7 +586,9 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
         return;
       }
 
-      final index = _devices.indexWhere((entry) => _deviceRowId(entry) == rowId);
+      final index = _devices.indexWhere(
+        (entry) => _deviceRowId(entry) == rowId,
+      );
       if (index < 0) {
         return;
       }
@@ -565,14 +616,17 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
       final confirmed = await showListManagementDeleteDialog(
         context: context,
         title: 'Delete E-Mail Device',
-        message: 'Delete ${device.name}? This removes it from send-to-device destinations.',
+        message:
+            'Delete ${device.name}? This removes it from send-to-device destinations.',
       );
 
       if (!confirmed || !mounted) {
         return;
       }
 
-      final nextDevices = _devices.where((entry) => _deviceRowId(entry) != rowId).toList(growable: false);
+      final nextDevices = _devices
+          .where((entry) => _deviceRowId(entry) != rowId)
+          .toList(growable: false);
 
       await _saveEreaderDevices(
         nextDevices,
@@ -593,17 +647,24 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
     }
 
     return Card(
-      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
+      color: Theme.of(context).colorScheme.errorContainer
+          .withValues(alpha: 0.45),
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Row(
           children: [
-            Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error_outline_rounded,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(width: 10),
             Expanded(child: Text(message)),
             const SizedBox(width: 10),
-            TextButton(onPressed: () => unawaited(_loadEmailData(showLoading: true)), child: const Text('Retry')),
+            TextButton(
+              onPressed: () => unawaited(_loadEmailData(showLoading: true)),
+              child: const Text('Retry'),
+            ),
           ],
         ),
       ),
@@ -612,22 +673,38 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
 
   Widget _buildDevicesToolbar({required bool compact}) {
     final addButton = FilledButton.icon(
-      onPressed: _isLoading || _isSavingDevices ? null : () => unawaited(_addDevice()),
+      onPressed: _isLoading || _isSavingDevices
+          ? null
+          : () => unawaited(_addDevice()),
       icon: const Icon(Icons.add_rounded),
       label: const Text('Add Device'),
     );
 
     final refreshButton = OutlinedButton.icon(
-      onPressed: _isLoading ? null : () => unawaited(_loadEmailData(showLoading: true)),
+      onPressed: _isLoading
+          ? null
+          : () => unawaited(_loadEmailData(showLoading: true)),
       icon: const Icon(Icons.refresh_rounded),
       label: const Text('Refresh'),
     );
 
     if (compact) {
-      return Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: [refreshButton, addButton]);
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.end,
+        children: [refreshButton, addButton],
+      );
     }
 
-    return Row(children: [const Spacer(), refreshButton, const SizedBox(width: 8), addButton]);
+    return Row(
+      children: [
+        const Spacer(),
+        refreshButton,
+        const SizedBox(width: 8),
+        addButton,
+      ],
+    );
   }
 
   @override
@@ -703,8 +780,10 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
                         onPortChanged: (_) => _handleSettingsFieldChanged(),
                         onUserChanged: (_) => _handleSettingsFieldChanged(),
                         onPasswordChanged: (_) => _handleSettingsFieldChanged(),
-                        onFromAddressChanged: (_) => _handleSettingsFieldChanged(),
-                        onTestAddressChanged: (_) => _handleSettingsFieldChanged(),
+                        onFromAddressChanged: (_) =>
+                            _handleSettingsFieldChanged(),
+                        onTestAddressChanged: (_) =>
+                            _handleSettingsFieldChanged(),
                         onSecureChanged: (value) {
                           setState(() {
                             _secure = value;
@@ -748,7 +827,10 @@ class _AdminServerEmailViewState extends ConsumerState<AdminServerEmailView> {
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          'Failed to load user data: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       ),
     );
   }

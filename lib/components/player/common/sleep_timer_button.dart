@@ -38,7 +38,9 @@ class SleepTimerButton extends ConsumerWidget {
         icon: isActive
             ? Text(
                 sleepTimer.remainingTime.toLargestUnitCompactString(),
-                style: TextStyle(color: Colors.lightGreenAccent.withValues(alpha: 0.8)),
+                style: TextStyle(
+                  color: Colors.lightGreenAccent.withValues(alpha: 0.8),
+                ),
               )
             : const Icon(Icons.bedtime_rounded),
       ),
@@ -46,7 +48,9 @@ class SleepTimerButton extends ConsumerWidget {
   }
 
   void _toggleSleepTimerMarker(WidgetRef ref) {
-    final didToggle = ref.read(sleepTimerHandlerProvider.notifier).toggleSleepTimerMarker();
+    final didToggle = ref
+        .read(sleepTimerHandlerProvider.notifier)
+        .toggleSleepTimerMarker();
     if (didToggle) {
       unawaited(HapticFeedback.mediumImpact());
     }
@@ -109,7 +113,9 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
                 (option) => ActionChip(
                   label: Text(option.label),
                   onPressed: () {
-                    ref.read(sleepTimerHandlerProvider.notifier).start(option.duration);
+                    ref
+                        .read(sleepTimerHandlerProvider.notifier)
+                        .start(option.duration);
                     Navigator.of(context).pop();
                     HapticFeedback.lightImpact();
                   },
@@ -120,13 +126,17 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
                 initialData: audioHandler.position,
                 builder: (context, positionSnapshot) {
                   final chapterTarget = handler.availableChapterSleepTarget;
-                  final chapterRemaining = chapterTarget?.remainingAt(positionSnapshot.data ?? audioHandler.position);
+                  final chapterRemaining = chapterTarget?.remainingAt(
+                    positionSnapshot.data ?? audioHandler.position,
+                  );
                   if (chapterTarget == null || chapterRemaining == null) {
                     return const SizedBox.shrink();
                   }
                   return ActionChip(
                     avatar: const Icon(Icons.skip_next_rounded),
-                    label: Text('End of chapter · ${chapterRemaining.toLargestUnitCompactString()}'),
+                    label: Text(
+                      'End of chapter · ${chapterRemaining.toLargestUnitCompactString()}',
+                    ),
                     onPressed: _startChapterTimer,
                   );
                 },
@@ -148,12 +158,16 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
                         ref.read(sleepTimerHandlerProvider.notifier).resume();
                       }
                     },
-                    icon: Icon(sleepTimer.isRunning ? Icons.pause : Icons.play_arrow),
+                    icon: Icon(
+                      sleepTimer.isRunning ? Icons.pause : Icons.play_arrow,
+                    ),
                     label: Text(sleepTimer.isRunning ? 'Pause' : 'Resume'),
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
-                      ref.read(sleepTimerHandlerProvider.notifier).extend(const Duration(minutes: 5));
+                      ref
+                          .read(sleepTimerHandlerProvider.notifier)
+                          .extend(const Duration(minutes: 5));
                     },
                     icon: const Icon(Icons.add),
                     label: const Text('+5m'),
@@ -191,7 +205,10 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
                 ),
               ),
               const SizedBox(width: 8),
-              FilledButton(onPressed: _handleCustomInput, child: const Text('Start')),
+              FilledButton(
+                onPressed: _handleCustomInput,
+                child: const Text('Start'),
+              ),
             ],
           ),
         ],
@@ -200,7 +217,9 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
   }
 
   void _startChapterTimer() {
-    final started = ref.read(sleepTimerHandlerProvider.notifier).startUntilChapterEnd();
+    final started = ref
+        .read(sleepTimerHandlerProvider.notifier)
+        .startUntilChapterEnd();
     if (!started) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -228,9 +247,12 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
 
     final minutes = int.tryParse(input);
     if (minutes == null || minutes <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: const Text('Not valid'), backgroundColor: Theme.of(context).colorScheme.error));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Not valid'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
       return;
     }
 

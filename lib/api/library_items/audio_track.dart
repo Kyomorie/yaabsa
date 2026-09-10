@@ -27,18 +27,27 @@ abstract class AudioTrack with _$AudioTrack {
     return contentUrl;
   }
 
-  InternalTrack toInternalTrack(String baseUrl, String sessionId, {int? localIndex}) {
+  InternalTrack toInternalTrack(
+    String baseUrl,
+    String sessionId, {
+    int? localIndex,
+  }) {
     final tmpIndex = (index ?? localIndex)!;
     final isHls = mimeType.toLowerCase().contains('mpegurl');
     final baseUri = Uri.parse('${baseUrl.replaceFirst(RegExp(r'/+$'), '')}/');
-    final streamUri = baseUri.resolve(processedContentUrl.replaceFirst(RegExp(r'^/+'), ''));
+    final streamUri = baseUri.resolve(
+      processedContentUrl.replaceFirst(RegExp(r'^/+'), ''),
+    );
     return InternalTrack(
       index: tmpIndex,
       duration: duration,
-      url: isHls ? streamUri.toString() : '${baseUri}public/session/$sessionId/track/$tmpIndex',
+      url: isHls
+          ? streamUri.toString()
+          : '${baseUri}public/session/$sessionId/track/$tmpIndex',
       mimeType: mimeType,
     );
   }
 
-  factory AudioTrack.fromJson(Map<String, dynamic> json) => _$AudioTrackFromJson(json);
+  factory AudioTrack.fromJson(Map<String, dynamic> json) =>
+      _$AudioTrackFromJson(json);
 }

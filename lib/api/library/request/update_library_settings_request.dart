@@ -5,7 +5,8 @@ part 'update_library_settings_request.freezed.dart';
 part 'update_library_settings_request.g.dart';
 
 @freezed
-abstract class UpdateLibrarySettingsRequest with _$UpdateLibrarySettingsRequest {
+abstract class UpdateLibrarySettingsRequest
+    with _$UpdateLibrarySettingsRequest {
   @JsonSerializable(includeIfNull: false)
   const factory UpdateLibrarySettingsRequest({
     @JsonKey(name: 'coverAspectRatio') double? coverAspectRatio,
@@ -18,8 +19,12 @@ abstract class UpdateLibrarySettingsRequest with _$UpdateLibrarySettingsRequest 
     @JsonKey(name: 'hideSingleBookSeries') bool? hideSingleBookSeries,
     @JsonKey(name: 'onlyShowLaterBooksInContinueSeries') bool? showLaterBooks,
     @JsonKey(name: 'podcastSearchRegion') String? podcastSearchRegion,
-    @JsonKey(name: 'markAsFinishedTimeRemaining', fromJson: jsonIntFromDynamic) int? markAsFinishedTimeRemaining,
-    @JsonKey(name: 'markAsFinishedPercentComplete', fromJson: jsonDoubleFromDynamic)
+    @JsonKey(name: 'markAsFinishedTimeRemaining', fromJson: jsonIntFromDynamic)
+    int? markAsFinishedTimeRemaining,
+    @JsonKey(
+      name: 'markAsFinishedPercentComplete',
+      fromJson: jsonDoubleFromDynamic,
+    )
     double? markAsFinishedPercentComplete,
     @JsonKey(name: 'metadataPrecedence') List<String>? metadataPrecedence,
   }) = _UpdateLibrarySettingsRequest;

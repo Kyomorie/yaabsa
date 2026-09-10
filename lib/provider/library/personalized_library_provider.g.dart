@@ -13,7 +13,11 @@ part of 'personalized_library_provider.dart';
 final personalizedLibraryProvider = PersonalizedLibraryNotifierFamily._();
 
 final class PersonalizedLibraryNotifierProvider
-    extends $AsyncNotifierProvider<PersonalizedLibraryNotifier, PersonalizedLibrary?> {
+    extends
+        $AsyncNotifierProvider<
+          PersonalizedLibraryNotifier,
+          PersonalizedLibrary?
+        > {
   PersonalizedLibraryNotifierProvider._({
     required PersonalizedLibraryNotifierFamily super.from,
     required String super.argument,
@@ -41,7 +45,8 @@ final class PersonalizedLibraryNotifierProvider
 
   @override
   bool operator ==(Object other) {
-    return other is PersonalizedLibraryNotifierProvider && other.argument == argument;
+    return other is PersonalizedLibraryNotifierProvider &&
+        other.argument == argument;
   }
 
   @override
@@ -50,7 +55,8 @@ final class PersonalizedLibraryNotifierProvider
   }
 }
 
-String _$personalizedLibraryNotifierHash() => r'8f275f1b31880694824c2ed146e152d8a5ee2162';
+String _$personalizedLibraryNotifierHash() =>
+    r'8f275f1b31880694824c2ed146e152d8a5ee2162';
 
 final class PersonalizedLibraryNotifierFamily extends $Family
     with
@@ -77,7 +83,8 @@ final class PersonalizedLibraryNotifierFamily extends $Family
   String toString() => r'personalizedLibraryProvider';
 }
 
-abstract class _$PersonalizedLibraryNotifier extends $AsyncNotifier<PersonalizedLibrary?> {
+abstract class _$PersonalizedLibraryNotifier
+    extends $AsyncNotifier<PersonalizedLibrary?> {
   late final _$args = ref.$arg as String;
   String get libraryId => _$args;
 
@@ -85,11 +92,16 @@ abstract class _$PersonalizedLibraryNotifier extends $AsyncNotifier<Personalized
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<PersonalizedLibrary?>, PersonalizedLibrary?>;
+    final ref =
+        this.ref
+            as $Ref<AsyncValue<PersonalizedLibrary?>, PersonalizedLibrary?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<PersonalizedLibrary?>, PersonalizedLibrary?>,
+              AnyNotifier<
+                AsyncValue<PersonalizedLibrary?>,
+                PersonalizedLibrary?
+              >,
               AsyncValue<PersonalizedLibrary?>,
               Object?,
               Object?
@@ -103,16 +115,24 @@ final libraryDownloadsProvider = LibraryDownloadsFamily._();
 
 final class LibraryDownloadsProvider
     extends
-        $FunctionalProvider<AsyncValue<List<InternalDownload>>, List<InternalDownload>, Stream<List<InternalDownload>>>
-    with $FutureModifier<List<InternalDownload>>, $StreamProvider<List<InternalDownload>> {
-  LibraryDownloadsProvider._({required LibraryDownloadsFamily super.from, required String super.argument})
-    : super(
-        retry: null,
-        name: r'libraryDownloadsProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
+        $FunctionalProvider<
+          AsyncValue<List<InternalDownload>>,
+          List<InternalDownload>,
+          Stream<List<InternalDownload>>
+        >
+    with
+        $FutureModifier<List<InternalDownload>>,
+        $StreamProvider<List<InternalDownload>> {
+  LibraryDownloadsProvider._({
+    required LibraryDownloadsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'libraryDownloadsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
 
   @override
   String debugGetCreateSourceHash() => _$libraryDownloadsHash();
@@ -126,8 +146,9 @@ final class LibraryDownloadsProvider
 
   @$internal
   @override
-  $StreamProviderElement<List<InternalDownload>> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
+  $StreamProviderElement<List<InternalDownload>> $createElement(
+    $ProviderPointer pointer,
+  ) => $StreamProviderElement(pointer);
 
   @override
   Stream<List<InternalDownload>> create(Ref ref) {
@@ -159,7 +180,8 @@ final class LibraryDownloadsFamily extends $Family
         isAutoDispose: true,
       );
 
-  LibraryDownloadsProvider call(String libraryId) => LibraryDownloadsProvider._(argument: libraryId, from: this);
+  LibraryDownloadsProvider call(String libraryId) =>
+      LibraryDownloadsProvider._(argument: libraryId, from: this);
 
   @override
   String toString() => r'libraryDownloadsProvider';

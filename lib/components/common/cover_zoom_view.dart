@@ -5,7 +5,9 @@ import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/components/common/cover_placeholder.dart';
 
-Map<String, String> normalizeImageRequestHeaders(Map<String, dynamic>? headers) {
+Map<String, String> normalizeImageRequestHeaders(
+  Map<String, dynamic>? headers,
+) {
   if (headers == null || headers.isEmpty) {
     return const <String, String>{};
   }
@@ -43,7 +45,10 @@ Future<void> openCoverZoomView(
   Map<String, String> requestHeaders = const <String, String>{},
   String? semanticsLabel,
 }) async {
-  final imageProvider = coverImageProviderFromUri(coverUri, requestHeaders: requestHeaders);
+  final imageProvider = coverImageProviderFromUri(
+    coverUri,
+    requestHeaders: requestHeaders,
+  );
   if (imageProvider == null) {
     return;
   }
@@ -56,13 +61,22 @@ Future<void> openCoverZoomView(
     barrierColor: Colors.black.withValues(alpha: 0.42),
     transitionDuration: const Duration(milliseconds: 220),
     pageBuilder: (context, animation, secondaryAnimation) {
-      return _CoverZoomView(imageProvider: imageProvider, semanticsLabel: semanticsLabel);
+      return _CoverZoomView(
+        imageProvider: imageProvider,
+        semanticsLabel: semanticsLabel,
+      );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
-      final fade = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      final fade = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
       return FadeTransition(
         opacity: fade,
-        child: ScaleTransition(scale: Tween<double>(begin: 0.96, end: 1).animate(fade), child: child),
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.96, end: 1).animate(fade),
+          child: child,
+        ),
       );
     },
   );
@@ -79,7 +93,10 @@ class _CoverZoomView extends StatelessWidget {
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final coverEdge = math.min(constraints.maxWidth * 0.88, constraints.maxHeight * 0.84);
+          final coverEdge = math.min(
+            constraints.maxWidth * 0.88,
+            constraints.maxHeight * 0.84,
+          );
 
           return Stack(
             children: [
@@ -113,24 +130,28 @@ class _CoverZoomView extends StatelessWidget {
                                 image: imageProvider,
                                 fit: BoxFit.contain,
                                 filterQuality: FilterQuality.medium,
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) {
-                                    return child;
-                                  }
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                      if (loadingProgress == null) {
+                                        return child;
+                                      }
 
-                                  final expectedBytes = loadingProgress.expectedTotalBytes;
-                                  final progress = expectedBytes == null
-                                      ? null
-                                      : loadingProgress.cumulativeBytesLoaded / expectedBytes;
+                                      final expectedBytes =
+                                          loadingProgress.expectedTotalBytes;
+                                      final progress = expectedBytes == null
+                                          ? null
+                                          : loadingProgress
+                                                    .cumulativeBytesLoaded /
+                                                expectedBytes;
 
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      value: progress,
-                                      strokeWidth: 2.8,
-                                      color: Colors.white,
-                                    ),
-                                  );
-                                },
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          value: progress,
+                                          strokeWidth: 2.8,
+                                          color: Colors.white,
+                                        ),
+                                      );
+                                    },
                                 errorBuilder: (context, error, stackTrace) {
                                   return const SizedBox(
                                     width: 240,

@@ -42,7 +42,11 @@ class _VersionFetchResult {
   final bool isRateLimited;
   final int? rateLimitResetMs;
 
-  const _VersionFetchResult({this.version, this.isRateLimited = false, this.rateLimitResetMs});
+  const _VersionFetchResult({
+    this.version,
+    this.isRateLimited = false,
+    this.rateLimitResetMs,
+  });
 }
 
 @Riverpod(keepAlive: true)
@@ -89,14 +93,26 @@ class ServerUpdateState extends _$ServerUpdateState {
       final result = await _fetchLatestABSVersion();
       if (result.version != null) {
         latestVersion = result.version;
-        await settingsManager.setGlobalSetting<String>(SettingKeys.latestServerVersion, latestVersion!);
-        await settingsManager.setGlobalSetting<int>(SettingKeys.nextServerVersionCheckAllowed, now + 60 * 60 * 1000);
+        await settingsManager.setGlobalSetting<String>(
+          SettingKeys.latestServerVersion,
+          latestVersion!,
+        );
+        await settingsManager.setGlobalSetting<int>(
+          SettingKeys.nextServerVersionCheckAllowed,
+          now + 60 * 60 * 1000,
+        );
       } else {
         if (result.isRateLimited) {
           final resetTime = result.rateLimitResetMs ?? (now + 60 * 60 * 1000);
-          await settingsManager.setGlobalSetting<int>(SettingKeys.nextServerVersionCheckAllowed, resetTime);
+          await settingsManager.setGlobalSetting<int>(
+            SettingKeys.nextServerVersionCheckAllowed,
+            resetTime,
+          );
         } else {
-          await settingsManager.setGlobalSetting<int>(SettingKeys.nextServerVersionCheckAllowed, now + 5 * 60 * 1000);
+          await settingsManager.setGlobalSetting<int>(
+            SettingKeys.nextServerVersionCheckAllowed,
+            now + 5 * 60 * 1000,
+          );
         }
 
         if (savedLatestVersion.isNotEmpty) {
@@ -133,7 +149,11 @@ class ServerUpdateState extends _$ServerUpdateState {
 
     await ref
         .read(settingsManagerProvider.notifier)
-        .setUserSetting<String>(currentUser.id, SettingKeys.dismissedUpdateServerVersion, stateValue.latestVersion);
+        .setUserSetting<String>(
+          currentUser.id,
+          SettingKeys.dismissedUpdateServerVersion,
+          stateValue.latestVersion,
+        );
   }
 
   Future<_VersionFetchResult> _fetchLatestABSVersion() async {
@@ -147,7 +167,10 @@ class ServerUpdateState extends _$ServerUpdateState {
       final response = await dio.get<Map<String, dynamic>>(
         'https://api.github.com/repos/advplyr/audiobookshelf/releases/latest',
         options: Options(
-          headers: {'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'Yaabsa-App'},
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'Yaabsa-App',
+          },
           responseType: ResponseType.json,
         ),
       );
@@ -172,7 +195,10 @@ class ServerUpdateState extends _$ServerUpdateState {
         tag: 'ServerUpdateProvider',
         level: InfoLevel.warning,
       );
-      return _VersionFetchResult(isRateLimited: isRateLimited, rateLimitResetMs: rateLimitResetMs);
+      return _VersionFetchResult(
+        isRateLimited: isRateLimited,
+        rateLimitResetMs: rateLimitResetMs,
+      );
     } catch (e, s) {
       logger(
         'Failed to fetch latest ABS version from GitHub: $e\n$s',
@@ -199,8 +225,12 @@ class ServerUpdateState extends _$ServerUpdateState {
     final latestParts = cleanLatest.split('-').first.split('.');
 
     for (int i = 0; i < max(currentParts.length, latestParts.length); i++) {
-      final currentPart = i < currentParts.length ? int.tryParse(currentParts[i]) ?? 0 : 0;
-      final latestPart = i < latestParts.length ? int.tryParse(latestParts[i]) ?? 0 : 0;
+      final currentPart = i < currentParts.length
+          ? int.tryParse(currentParts[i]) ?? 0
+          : 0;
+      final latestPart = i < latestParts.length
+          ? int.tryParse(latestParts[i]) ?? 0
+          : 0;
 
       if (latestPart > currentPart) {
         return true;

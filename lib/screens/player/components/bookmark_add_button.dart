@@ -24,12 +24,18 @@ class _BookmarkAddButtonState extends ConsumerState<BookmarkAddButton> {
 
     final bookmarkTime = audioHandler.position.inSeconds;
     if (bookmarkTime <= 0) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Play a little further before creating a bookmark.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Play a little further before creating a bookmark.'),
+        ),
+      );
       return;
     }
 
-    final title = await BookmarkTitleDialog.show(context, bookmarkTime: Duration(seconds: bookmarkTime));
+    final title = await BookmarkTitleDialog.show(
+      context,
+      bookmarkTime: Duration(seconds: bookmarkTime),
+    );
     if (!mounted || title == null) {
       return;
     }
@@ -42,7 +48,11 @@ class _BookmarkAddButtonState extends ConsumerState<BookmarkAddButton> {
     try {
       final bookmark = await ref
           .read(userBookmarksProvider.notifier)
-          .createBookmark(itemId: widget.itemId, time: bookmarkTime, title: title);
+          .createBookmark(
+            itemId: widget.itemId,
+            time: bookmarkTime,
+            title: title,
+          );
       if (!mounted) {
         return;
       }
@@ -58,7 +68,9 @@ class _BookmarkAddButtonState extends ConsumerState<BookmarkAddButton> {
       );
     } catch (_) {
       if (mounted) {
-        messenger.showSnackBar(const SnackBar(content: Text('Could not create bookmark right now.')));
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Could not create bookmark right now.')),
+        );
       }
     } finally {
       if (mounted) {
@@ -75,7 +87,8 @@ class _BookmarkAddButtonState extends ConsumerState<BookmarkAddButton> {
       stream: audioHandler.positionStream,
       initialData: audioHandler.position,
       builder: (context, snapshot) {
-        final canCreate = !_isCreating && (snapshot.data ?? Duration.zero).inSeconds > 0;
+        final canCreate =
+            !_isCreating && (snapshot.data ?? Duration.zero).inSeconds > 0;
         return FilledButton.icon(
           onPressed: canCreate ? _addBookmark : null,
           style: FilledButton.styleFrom(
@@ -83,7 +96,10 @@ class _BookmarkAddButtonState extends ConsumerState<BookmarkAddButton> {
             visualDensity: VisualDensity.compact,
           ),
           icon: _isCreating
-              ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : const Icon(Icons.add_rounded),
           label: Text(_isCreating ? 'Adding' : 'Add bookmark'),
         );

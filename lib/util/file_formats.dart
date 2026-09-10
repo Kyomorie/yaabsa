@@ -24,7 +24,17 @@ class FileFormats {
     'webm',
   };
 
-  static const Set<String> ebookExtensions = {'epub', 'pdf', 'mobi', 'azw', 'azw3', 'cbz', 'cbr', 'fb2', 'kf8'};
+  static const Set<String> ebookExtensions = {
+    'epub',
+    'pdf',
+    'mobi',
+    'azw',
+    'azw3',
+    'cbz',
+    'cbr',
+    'fb2',
+    'kf8',
+  };
 
   static bool isEbook(String pathOrExt) {
     final clean = _normalize(pathOrExt);

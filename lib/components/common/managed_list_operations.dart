@@ -10,7 +10,10 @@ typedef ManagedCreateListCallback = Future<void> Function({
   required List<String> bookIds,
 });
 
-typedef ManagedEditDetailsCallback = Future<void> Function({required String name, String? description});
+typedef ManagedEditDetailsCallback = Future<void> Function({
+  required String name,
+  String? description,
+});
 
 typedef ManagedEditBooksCallback = Future<void> Function(List<String> bookIds);
 typedef ManagedDeleteCallback = Future<void> Function();
@@ -65,7 +68,11 @@ Future<void> createManagedListEntity({
   required String successMessage,
   required String errorFallback,
 }) async {
-  final metadata = await showListManagementFormDialog(context: context, title: formTitle, confirmLabel: 'Next');
+  final metadata = await showListManagementFormDialog(
+    context: context,
+    title: formTitle,
+    confirmLabel: 'Next',
+  );
 
   if (!context.mounted || metadata == null) {
     return;
@@ -86,7 +93,11 @@ Future<void> createManagedListEntity({
 
   await runManagedListMutation(
     context: context,
-    action: () => onCreate(name: metadata.name, description: metadata.description, bookIds: selectedBooks),
+    action: () => onCreate(
+      name: metadata.name,
+      description: metadata.description,
+      bookIds: selectedBooks,
+    ),
     successMessage: successMessage,
     errorFallback: errorFallback,
   );
@@ -160,7 +171,11 @@ Future<void> deleteManagedListEntity({
   required String errorFallback,
   bool popOnSuccess = false,
 }) async {
-  final confirmed = await showListManagementDeleteDialog(context: context, title: title, message: message);
+  final confirmed = await showListManagementDeleteDialog(
+    context: context,
+    title: title,
+    message: message,
+  );
 
   if (!context.mounted || !confirmed) {
     return;

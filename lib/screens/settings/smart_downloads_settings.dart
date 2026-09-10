@@ -27,14 +27,18 @@ class SmartDownloadsSettings extends ConsumerStatefulWidget {
   static const String routeName = '/settings/library/smart-downloads';
 
   @override
-  ConsumerState<SmartDownloadsSettings> createState() => _SmartDownloadsSettingsState();
+  ConsumerState<SmartDownloadsSettings> createState() =>
+      _SmartDownloadsSettingsState();
 }
 
-class _SmartDownloadsSettingsState extends ConsumerState<SmartDownloadsSettings> {
+class _SmartDownloadsSettingsState
+    extends ConsumerState<SmartDownloadsSettings> {
   @override
   void initState() {
     super.initState();
-    Future<void>.microtask(() => ref.read(smartDownloadManagerProvider.notifier).loadProfiles());
+    Future<void>.microtask(
+      () => ref.read(smartDownloadManagerProvider.notifier).loadProfiles(),
+    );
   }
 
   @override
@@ -49,19 +53,32 @@ class _SmartDownloadsSettingsState extends ConsumerState<SmartDownloadsSettings>
       showEmbeddedBackButton: true,
       children: [
         if (user == null)
-          const Padding(padding: EdgeInsets.all(20), child: Text('Sign in to configure smart downloads.'))
+          const Padding(
+            padding: EdgeInsets.all(20),
+            child: Text('Sign in to configure smart downloads.'),
+          )
         else ...[
           if (manager.error != null)
-            Padding(padding: const EdgeInsets.all(16), child: Text('Last reconciliation failed: ${manager.error}')),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Last reconciliation failed: ${manager.error}'),
+            ),
           _ProfileSection(
             profiles: manager.profiles,
             isBusy: manager.isReconciling,
             onAdd: () async {
-              final profile = await _showProfileEditor(context, userId: user.id);
+              final profile = await _showProfileEditor(
+                context,
+                userId: user.id,
+              );
               if (profile != null) await notifier.saveProfile(profile);
             },
             onEdit: (profile) async {
-              final edited = await _showProfileEditor(context, userId: user.id, initial: profile);
+              final edited = await _showProfileEditor(
+                context,
+                userId: user.id,
+                initial: profile,
+              );
               if (edited != null) await notifier.saveProfile(edited);
             },
             onDelete: (profile) async {
@@ -73,20 +90,32 @@ class _SmartDownloadsSettingsState extends ConsumerState<SmartDownloadsSettings>
                     'Remove “${profile.name}” and delete its managed downloads? Downloads shared with another rule will be kept.',
                   ),
                   actions: [
-                    TextButton(onPressed: () => context.pop(false), child: const Text('Cancel')),
-                    FilledButton(onPressed: () => context.pop(true), child: const Text('Remove')),
+                    TextButton(
+                      onPressed: () => context.pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => context.pop(true),
+                      child: const Text('Remove'),
+                    ),
                   ],
                 ),
               );
-              if (shouldDelete == true) await notifier.deleteProfile(profile.id, user.id);
+              if (shouldDelete == true)
+                await notifier.deleteProfile(profile.id, user.id);
             },
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: OutlinedButton.icon(
-              onPressed: manager.isReconciling ? null : () => notifier.reconcile(reason: 'manual refresh'),
+              onPressed: manager.isReconciling
+                  ? null
+                  : () => notifier.reconcile(reason: 'manual refresh'),
               icon: manager.isReconciling
-                  ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.sync_rounded),
               label: const Text('Reconcile now'),
             ),
@@ -103,7 +132,8 @@ class _SmartDownloadsSettingsState extends ConsumerState<SmartDownloadsSettings>
   }) {
     return showDialog<SmartDownloadProfile>(
       context: context,
-      builder: (context) => _SmartDownloadProfileEditor(userId: userId, initial: initial),
+      builder: (context) =>
+          _SmartDownloadProfileEditor(userId: userId, initial: initial),
     );
   }
 }
@@ -147,9 +177,15 @@ class _ProfileSection extends StatelessWidget {
             if (profiles.isNotEmpty) const Divider(height: 1),
             for (final profile in profiles)
               ListTile(
-                leading: Icon(profile.enabled ? Icons.download_done_rounded : Icons.pause_circle_outline_rounded),
+                leading: Icon(
+                  profile.enabled
+                      ? Icons.download_done_rounded
+                      : Icons.pause_circle_outline_rounded,
+                ),
                 title: Text(profile.name),
-                subtitle: Text('${profile.sources.length} sources · ${profile.policy.targetCount} items per source'),
+                subtitle: Text(
+                  '${profile.sources.length} sources · ${profile.policy.targetCount} items per source',
+                ),
                 trailing: PopupMenuButton<String>(
                   onSelected: (value) {
                     if (value == 'edit') onEdit(profile);
@@ -175,10 +211,12 @@ class _SmartDownloadProfileEditor extends StatefulWidget {
   final SmartDownloadProfile? initial;
 
   @override
-  State<_SmartDownloadProfileEditor> createState() => _SmartDownloadProfileEditorState();
+  State<_SmartDownloadProfileEditor> createState() =>
+      _SmartDownloadProfileEditorState();
 }
 
-class _SmartDownloadProfileEditorState extends State<_SmartDownloadProfileEditor> {
+class _SmartDownloadProfileEditorState
+    extends State<_SmartDownloadProfileEditor> {
   late final TextEditingController _nameController;
   late final TextEditingController _targetController;
   late final TextEditingController _ageController;
@@ -192,13 +230,23 @@ class _SmartDownloadProfileEditorState extends State<_SmartDownloadProfileEditor
   void initState() {
     super.initState();
     final profile = widget.initial;
-    _nameController = TextEditingController(text: profile?.name ?? 'Offline queue');
-    _targetController = TextEditingController(text: '${profile?.policy.targetCount ?? 3}');
-    _ageController = TextEditingController(text: profile?.policy.maxAgeDays?.toString() ?? '');
-    _storageController = TextEditingController(
-      text: profile?.policy.maxStorageBytes == null ? '' : '${profile!.policy.maxStorageBytes! ~/ (1024 * 1024)}',
+    _nameController = TextEditingController(
+      text: profile?.name ?? 'Offline queue',
     );
-    _deleteAfterController = TextEditingController(text: '${profile?.policy.deleteAfterHours ?? 24}');
+    _targetController = TextEditingController(
+      text: '${profile?.policy.targetCount ?? 3}',
+    );
+    _ageController = TextEditingController(
+      text: profile?.policy.maxAgeDays?.toString() ?? '',
+    );
+    _storageController = TextEditingController(
+      text: profile?.policy.maxStorageBytes == null
+          ? ''
+          : '${profile!.policy.maxStorageBytes! ~/ (1024 * 1024)}',
+    );
+    _deleteAfterController = TextEditingController(
+      text: '${profile?.policy.deleteAfterHours ?? 24}',
+    );
     _enabled = profile?.enabled ?? true;
     _downloadType = profile?.policy.downloadType ?? 'audiobook';
     _sources = [...?profile?.sources];
@@ -217,7 +265,11 @@ class _SmartDownloadProfileEditorState extends State<_SmartDownloadProfileEditor
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.initial == null ? 'New smart-download profile' : 'Edit smart-download profile'),
+      title: Text(
+        widget.initial == null
+            ? 'New smart-download profile'
+            : 'Edit smart-download profile',
+      ),
       content: SizedBox(
         width: 500,
         child: SingleChildScrollView(
@@ -254,11 +306,15 @@ class _SmartDownloadProfileEditorState extends State<_SmartDownloadProfileEditor
                 label: 'Download types',
                 value: _downloadType,
                 items: const [
-                  DropdownMenuItem(value: 'audiobook', child: Text('Audiobook')),
+                  DropdownMenuItem(
+                    value: 'audiobook',
+                    child: Text('Audiobook'),
+                  ),
                   DropdownMenuItem(value: 'ebook', child: Text('Ebook')),
                   DropdownMenuItem(value: 'both', child: Text('Both')),
                 ],
-                onChanged: (value) => setState(() => _downloadType = value ?? 'audiobook'),
+                onChanged: (value) =>
+                    setState(() => _downloadType = value ?? 'audiobook'),
               ),
               const SizedBox(height: 8),
               SwitchListTile(
@@ -267,19 +323,27 @@ class _SmartDownloadProfileEditorState extends State<_SmartDownloadProfileEditor
                 value: _enabled,
                 onChanged: (value) => setState(() => _enabled = value),
               ),
-              const Align(alignment: Alignment.centerLeft, child: Text('Selected sources')),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Selected sources'),
+              ),
               for (final source in _sources)
                 Container(
                   margin: const EdgeInsets.only(top: 8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.45)),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant
+                          .withValues(alpha: 0.45),
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.only(left: 12, right: 4),
-                    title: Text(source.displayName ?? '${source.type.name} source'),
+                    title: Text(
+                      source.displayName ?? '${source.type.name} source',
+                    ),
                     subtitle: Text(source.type.name),
                     trailing: IconButton(
                       tooltip: 'Remove source',
@@ -288,7 +352,11 @@ class _SmartDownloadProfileEditorState extends State<_SmartDownloadProfileEditor
                     ),
                   ),
                 ),
-              TextButton.icon(onPressed: _addSource, icon: const Icon(Icons.add), label: const Text('Add source')),
+              TextButton.icon(
+                onPressed: _addSource,
+                icon: const Icon(Icons.add),
+                label: const Text('Add source'),
+              ),
             ],
           ),
         ),
@@ -305,7 +373,8 @@ class _SmartDownloadProfileEditorState extends State<_SmartDownloadProfileEditor
       context: context,
       builder: (context) => const _SourceEditor(),
     );
-    if (source != null && !_sources.contains(source)) setState(() => _sources.add(source));
+    if (source != null && !_sources.contains(source))
+      setState(() => _sources.add(source));
   }
 
   void _save() {
@@ -314,8 +383,12 @@ class _SmartDownloadProfileEditorState extends State<_SmartDownloadProfileEditor
     if (name.isEmpty || target == null || target < 1 || target > 100) return;
     final age = int.tryParse(_ageController.text.trim());
     final storageMb = int.tryParse(_storageController.text.trim());
-    final deleteAfterHours = int.tryParse(_deleteAfterController.text.trim()) ?? 24;
-    if (deleteAfterHours < 0 || (age != null && age < 0) || (storageMb != null && storageMb < 0)) return;
+    final deleteAfterHours =
+        int.tryParse(_deleteAfterController.text.trim()) ?? 24;
+    if (deleteAfterHours < 0 ||
+        (age != null && age < 0) ||
+        (storageMb != null && storageMb < 0))
+      return;
     final profile = widget.initial;
     Navigator.of(context).pop(
       SmartDownloadProfile(
@@ -365,14 +438,19 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
   @override
   Widget build(BuildContext context) {
     final libraries = ref.watch(userLibrariesProvider).value ?? const [];
-    final selectedLibraryId = libraries.any((library) => library.id == _libraryId)
+    final selectedLibraryId =
+        libraries.any((library) => library.id == _libraryId)
         ? _libraryId
         : libraries.firstOrNull?.id;
     if (_libraryId != selectedLibraryId) {
       _libraryId = selectedLibraryId;
     }
-    final selectedLibrary = libraries.where((library) => library.id == selectedLibraryId).firstOrNull;
-    final availableSourceTypes = _sourceTypesForLibrary(selectedLibrary?.mediaType);
+    final selectedLibrary = libraries
+        .where((library) => library.id == selectedLibraryId)
+        .firstOrNull;
+    final availableSourceTypes = _sourceTypesForLibrary(
+      selectedLibrary?.mediaType,
+    );
     if (!availableSourceTypes.contains(_type)) {
       _type = availableSourceTypes.first;
       _searchController.clear();
@@ -382,23 +460,38 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
     }
     final availableSourceNames = <String, String>{};
     if (selectedLibraryId != null && _type == MediaSourceType.playlist) {
-      for (final playlist in ref.watch(playlistsProvider(selectedLibraryId)).value?.items ?? const []) {
+      for (final playlist
+          in ref.watch(playlistsProvider(selectedLibraryId)).value?.items ??
+              const []) {
         availableSourceNames[playlist.id] = playlist.name;
       }
-    } else if (selectedLibraryId != null && _type == MediaSourceType.collection) {
-      for (final collection in ref.watch(collectionsProvider(selectedLibraryId)).value?.items ?? const []) {
+    } else if (selectedLibraryId != null &&
+        _type == MediaSourceType.collection) {
+      for (final collection
+          in ref.watch(collectionsProvider(selectedLibraryId)).value?.items ??
+              const []) {
         availableSourceNames[collection.id] = collection.name;
       }
     }
 
     final normalizedQuery = _searchQuery.trim();
     final searchAsync =
-        normalizedQuery.isNotEmpty && (_type == MediaSourceType.podcast || _type == MediaSourceType.series)
-        ? ref.watch(librarySearchProvider((query: normalizedQuery, limit: 3, libraryId: selectedLibraryId)))
+        normalizedQuery.isNotEmpty &&
+            (_type == MediaSourceType.podcast ||
+                _type == MediaSourceType.series)
+        ? ref.watch(
+            librarySearchProvider((
+              query: normalizedQuery,
+              limit: 3,
+              libraryId: selectedLibraryId,
+            )),
+          )
         : null;
     final localSuggestions = availableSourceNames.entries
         .where(
-          (entry) => normalizedQuery.isNotEmpty && entry.value.toLowerCase().contains(normalizedQuery.toLowerCase()),
+          (entry) =>
+              normalizedQuery.isNotEmpty &&
+              entry.value.toLowerCase().contains(normalizedQuery.toLowerCase()),
         )
         .take(3)
         .toList(growable: false);
@@ -408,7 +501,9 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
       ...remoteSuggestions,
     ];
     _scheduleAutocompleteRefresh();
-    final canAddSource = _selectedSourceId?.trim().isNotEmpty == true && _libraryId?.trim().isNotEmpty == true;
+    final canAddSource =
+        _selectedSourceId?.trim().isNotEmpty == true &&
+        _libraryId?.trim().isNotEmpty == true;
 
     return AlertDialog(
       title: const Text('Add source'),
@@ -422,7 +517,11 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
                 label: 'Library',
                 value: selectedLibraryId,
                 items: [
-                  for (final library in libraries) DropdownMenuItem(value: library.id, child: Text(library.name)),
+                  for (final library in libraries)
+                    DropdownMenuItem(
+                      value: library.id,
+                      child: Text(library.name),
+                    ),
                 ],
                 onChanged: (value) => setState(() {
                   _libraryId = value;
@@ -438,7 +537,12 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
                 value: _type,
                 items: [
                   for (final type in availableSourceTypes)
-                    DropdownMenuItem(value: type, child: Text(type.name[0].toUpperCase() + type.name.substring(1))),
+                    DropdownMenuItem(
+                      value: type,
+                      child: Text(
+                        type.name[0].toUpperCase() + type.name.substring(1),
+                      ),
+                    ),
                 ],
                 onChanged: (value) => setState(() {
                   _type = value ?? MediaSourceType.podcast;
@@ -456,35 +560,39 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
                 displayStringForOption: (suggestion) => suggestion.name,
                 optionsBuilder: (textEditingValue) {
                   final query = textEditingValue.text.trim().toLowerCase();
-                  if (query.isEmpty) return const <({String id, String name})>[];
+                  if (query.isEmpty)
+                    return const <({String id, String name})>[];
                   return sourceSuggestions;
                 },
                 onSelected: (suggestion) => setState(() {
                   _selectedSourceId = suggestion.id;
                   _selectedSourceName = suggestion.name;
                 }),
-                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                  return StyledTextField(
-                    label: 'Search sources',
-                    controller: controller,
-                    focusNode: focusNode,
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    textInputAction: TextInputAction.search,
-                    onChanged: (value) {
-                      if (_refreshingAutocomplete) return;
-                      final isSelectedValue = _selectedSourceId != null && value.trim() == _selectedSourceName;
-                      setState(() {
-                        _searchQuery = value;
-                        if (!isSelectedValue) {
-                          _selectedSourceId = null;
-                          _selectedSourceName = null;
-                        }
-                      });
-                      _scheduleAutocompleteRefresh();
+                fieldViewBuilder:
+                    (context, controller, focusNode, onFieldSubmitted) {
+                      return StyledTextField(
+                        label: 'Search sources',
+                        controller: controller,
+                        focusNode: focusNode,
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        textInputAction: TextInputAction.search,
+                        onChanged: (value) {
+                          if (_refreshingAutocomplete) return;
+                          final isSelectedValue =
+                              _selectedSourceId != null &&
+                              value.trim() == _selectedSourceName;
+                          setState(() {
+                            _searchQuery = value;
+                            if (!isSelectedValue) {
+                              _selectedSourceId = null;
+                              _selectedSourceName = null;
+                            }
+                          });
+                          _scheduleAutocompleteRefresh();
+                        },
+                        onSubmitted: (_) => onFieldSubmitted(),
+                      );
                     },
-                    onSubmitted: (_) => onFieldSubmitted(),
-                  );
-                },
                 optionsViewBuilder: (context, onSelected, options) {
                   return Align(
                     alignment: Alignment.topLeft,
@@ -493,7 +601,10 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
                       borderRadius: BorderRadius.circular(10),
                       clipBehavior: Clip.antiAlias,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 220, minWidth: 280),
+                        constraints: const BoxConstraints(
+                          maxHeight: 220,
+                          minWidth: 280,
+                        ),
                         child: ListView.builder(
                           padding: EdgeInsets.zero,
                           shrinkWrap: true,
@@ -512,13 +623,16 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
                   );
                 },
               ),
-              if (searchAsync?.isLoading ?? false) const LinearProgressIndicator(),
+              if (searchAsync?.isLoading ?? false)
+                const LinearProgressIndicator(),
               if (searchAsync?.hasError ?? false)
                 const Align(
                   alignment: Alignment.centerLeft,
                   child: Padding(
                     padding: EdgeInsets.only(top: 6),
-                    child: Text('Source search failed. Try a different search term.'),
+                    child: Text(
+                      'Source search failed. Try a different search term.',
+                    ),
                   ),
                 ),
               const SizedBox(height: 16),
@@ -556,7 +670,9 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
     );
   }
 
-  List<({String id, String name})> _remoteSuggestions(AsyncValue<SearchLibrary?>? searchAsync) {
+  List<({String id, String name})> _remoteSuggestions(
+    AsyncValue<SearchLibrary?>? searchAsync,
+  ) {
     final result = searchAsync?.asData?.value;
     if (result == null) {
       return const <({String id, String name})>[];
@@ -572,7 +688,10 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
     return (result.podcast ?? const [])
         .where((entry) => entry.libraryItem != null)
         .take(3)
-        .map((entry) => (id: entry.libraryItem!.id, name: entry.libraryItem!.title))
+        .map(
+          (entry) =>
+              (id: entry.libraryItem!.id, name: entry.libraryItem!.title),
+        )
         .toList(growable: false);
   }
 
@@ -590,8 +709,16 @@ class _SourceEditorState extends ConsumerState<_SourceEditor> {
 
   List<MediaSourceType> _sourceTypesForLibrary(String? mediaType) {
     return switch (mediaType?.trim().toLowerCase()) {
-      'podcast' => const [MediaSourceType.podcast, MediaSourceType.playlist, MediaSourceType.collection],
-      'book' => const [MediaSourceType.series, MediaSourceType.playlist, MediaSourceType.collection],
+      'podcast' => const [
+        MediaSourceType.podcast,
+        MediaSourceType.playlist,
+        MediaSourceType.collection,
+      ],
+      'book' => const [
+        MediaSourceType.series,
+        MediaSourceType.playlist,
+        MediaSourceType.collection,
+      ],
       _ => MediaSourceType.values,
     };
   }

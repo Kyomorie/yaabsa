@@ -26,7 +26,8 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
   final TextEditingController _searchController = TextEditingController();
 
   List<PodcastSearchResult> _searchResults = const <PodcastSearchResult>[];
-  List<LibraryPodcastTitle> _libraryPodcastTitles = const <LibraryPodcastTitle>[];
+  List<LibraryPodcastTitle> _libraryPodcastTitles =
+      const <LibraryPodcastTitle>[];
 
   bool _isSearching = false;
   bool _isResolvingFeed = false;
@@ -48,7 +49,8 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
 
   bool _looksLikeRssUrl(String value) {
     final parsed = Uri.tryParse(value);
-    if (parsed == null || (parsed.scheme != 'http' && parsed.scheme != 'https')) {
+    if (parsed == null ||
+        (parsed.scheme != 'http' && parsed.scheme != 'https')) {
       return false;
     }
     return parsed.host.trim().isNotEmpty;
@@ -62,7 +64,10 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
     return region;
   }
 
-  void _ensureLibraryTitlesLoaded({required ABSApi api, required Library library}) {
+  void _ensureLibraryTitlesLoaded({
+    required ABSApi api,
+    required Library library,
+  }) {
     if (_titlesLibraryId == library.id || _isLoadingLibraryTitles) {
       return;
     }
@@ -75,14 +80,19 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
     });
   }
 
-  Future<void> _loadLibraryPodcastTitles({required ABSApi api, required String libraryId}) async {
+  Future<void> _loadLibraryPodcastTitles({
+    required ABSApi api,
+    required String libraryId,
+  }) async {
     setState(() {
       _isLoadingLibraryTitles = true;
       _titlesLibraryId = libraryId;
     });
 
     try {
-      final titles = await api.getPodcastApi().getLibraryPodcastTitles(libraryId: libraryId);
+      final titles = await api.getPodcastApi().getLibraryPodcastTitles(
+        libraryId: libraryId,
+      );
       if (!mounted) {
         return;
       }
@@ -112,7 +122,9 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
     if (normalizedId != null && normalizedId.isNotEmpty) {
       for (final title in _libraryPodcastTitles) {
         final existingId = title.itunesId?.trim().toLowerCase();
-        if (existingId != null && existingId.isNotEmpty && existingId == normalizedId) {
+        if (existingId != null &&
+            existingId.isNotEmpty &&
+            existingId == normalizedId) {
           return title;
         }
       }
@@ -150,7 +162,10 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
     return 'podcast_result::$index';
   }
 
-  Future<void> _handleSearch({required ABSApi api, required Library library}) async {
+  Future<void> _handleSearch({
+    required ABSApi api,
+    required Library library,
+  }) async {
     final query = _searchController.text.trim();
     if (query.isEmpty) {
       return;
@@ -167,7 +182,10 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
     });
 
     try {
-      final results = await api.getPodcastApi().searchPodcasts(term: query, country: _searchRegionForLibrary(library));
+      final results = await api.getPodcastApi().searchPodcasts(
+        term: query,
+        country: _searchRegionForLibrary(library),
+      );
       if (!mounted) {
         return;
       }
@@ -200,20 +218,32 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
     required LibraryPodcastTitle? existing,
   }) async {
     if (existing != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('This podcast is already in your library.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This podcast is already in your library.'),
+        ),
+      );
       return;
     }
 
     final feedUrl = result.feedUrl?.trim();
     if (feedUrl == null || feedUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This result has no RSS feed URL. Try pasting the feed URL directly.')),
+        const SnackBar(
+          content: Text(
+            'This result has no RSS feed URL. Try pasting the feed URL directly.',
+          ),
+        ),
       );
       return;
     }
 
-    await _startCreatePodcastFlow(api: api, library: library, rssFeed: feedUrl, searchResult: result);
+    await _startCreatePodcastFlow(
+      api: api,
+      library: library,
+      rssFeed: feedUrl,
+      searchResult: result,
+    );
   }
 
   Future<void> _startCreatePodcastFlow({
@@ -227,14 +257,21 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
     });
 
     try {
-      final feedResponse = await api.getPodcastApi().getPodcastFeed(rssFeed: rssFeed);
+      final feedResponse = await api.getPodcastApi().getPodcastFeed(
+        rssFeed: rssFeed,
+      );
       final feed = feedResponse.data?.podcast;
       if (feed == null) {
         if (!mounted) {
           return;
         }
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Could not read this RSS feed. Check the URL and try again.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not read this RSS feed. Check the URL and try again.',
+            ),
+          ),
+        );
         return;
       }
 
@@ -264,7 +301,9 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added podcast to ${library.name}.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Added podcast to ${library.name}.')),
+      );
 
       await _loadLibraryPodcastTitles(api: api, libraryId: library.id);
       setState(() {
@@ -276,18 +315,25 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
       }
 
       if (e.response?.statusCode == 400) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('This podcast already exists in your library.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This podcast already exists in your library.'),
+          ),
+        );
         return;
       }
 
       final message = _dioErrorMessage(e);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create podcast: $message')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to create podcast: $message')),
+      );
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create podcast: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to create podcast: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -325,15 +371,21 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
     }
 
     if (selectedLibrary == null) {
-      return const Center(child: Text('No library selected. Select a library to add podcasts.'));
+      return const Center(
+        child: Text('No library selected. Select a library to add podcasts.'),
+      );
     }
 
     if (selectedLibrary.mediaType != 'podcast') {
-      return const Center(child: Text('Switch to a podcast library to use this tab.'));
+      return const Center(
+        child: Text('Switch to a podcast library to use this tab.'),
+      );
     }
 
     if (!_isAdminType(currentUser.type)) {
-      return const Center(child: Text('Adding podcasts requires an admin account.'));
+      return const Center(
+        child: Text('Adding podcasts requires an admin account.'),
+      );
     }
 
     _ensureLibraryTitlesLoaded(api: api, library: selectedLibrary);
@@ -350,7 +402,11 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
           final result = entry.value;
           final existing = _matchingPodcastForResult(result);
 
-          return PodcastAddResultEntry(id: _resultRowId(result, entry.key), result: result, existing: existing);
+          return PodcastAddResultEntry(
+            id: _resultRowId(result, entry.key),
+            result: result,
+            existing: existing,
+          );
         })
         .toList(growable: false);
 
@@ -368,8 +424,14 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (showCompactTitle) Text('Add Podcasts', style: Theme.of(context).textTheme.headlineSmall),
-              SizedBox(height: showCompactTitle ? (context.isMobile ? 8 : 12) : 4),
+              if (showCompactTitle)
+                Text(
+                  'Add Podcasts',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              SizedBox(
+                height: showCompactTitle ? (context.isMobile ? 8 : 12) : 4,
+              ),
               if (useCompactSearchLayout)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -381,7 +443,9 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
                         if (!hasFolders || isBusy) {
                           return;
                         }
-                        unawaited(_handleSearch(api: api, library: selectedLibrary));
+                        unawaited(
+                          _handleSearch(api: api, library: selectedLibrary),
+                        );
                       },
                       decoration: InputDecoration(
                         border: const OutlineInputBorder(),
@@ -394,7 +458,8 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
                                 onPressed: () {
                                   setState(() {
                                     _searchController.clear();
-                                    _searchResults = const <PodcastSearchResult>[];
+                                    _searchResults =
+                                        const <PodcastSearchResult>[];
                                     _searchError = null;
                                   });
                                 },
@@ -414,7 +479,12 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
                           onPressed: (!hasFolders || isBusy)
                               ? null
                               : () {
-                                  unawaited(_handleSearch(api: api, library: selectedLibrary));
+                                  unawaited(
+                                    _handleSearch(
+                                      api: api,
+                                      library: selectedLibrary,
+                                    ),
+                                  );
                                 },
                         ),
                       ),
@@ -432,7 +502,9 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
                           if (!hasFolders || isBusy) {
                             return;
                           }
-                          unawaited(_handleSearch(api: api, library: selectedLibrary));
+                          unawaited(
+                            _handleSearch(api: api, library: selectedLibrary),
+                          );
                         },
                         decoration: InputDecoration(
                           border: const OutlineInputBorder(),
@@ -445,7 +517,8 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
                                   onPressed: () {
                                     setState(() {
                                       _searchController.clear();
-                                      _searchResults = const <PodcastSearchResult>[];
+                                      _searchResults =
+                                          const <PodcastSearchResult>[];
                                       _searchError = null;
                                     });
                                   },
@@ -463,7 +536,12 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
                       onPressed: (!hasFolders || isBusy)
                           ? null
                           : () {
-                              unawaited(_handleSearch(api: api, library: selectedLibrary));
+                              unawaited(
+                                _handleSearch(
+                                  api: api,
+                                  library: selectedLibrary,
+                                ),
+                              );
                             },
                     ),
                   ],
@@ -487,7 +565,9 @@ class _PodcastAddViewState extends ConsumerState<PodcastAddView> {
                     padding: const EdgeInsets.all(12),
                     child: Text(
                       'Search failed: $_searchError',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                      ),
                     ),
                   ),
                 ),
@@ -534,9 +614,16 @@ class _EmptyPodcastAddState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.podcasts_rounded, size: 32, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.podcasts_rounded,
+              size: 32,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 10),
-            const Text('No search results yet', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text(
+              'No search results yet',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 6),
             const Text(
               'Search by podcast name, or paste an RSS feed URL to add a podcast directly.',

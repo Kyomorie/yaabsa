@@ -6,8 +6,12 @@ part 'admin_api_keys_response.g.dart';
 
 @freezed
 abstract class AdminApiKeysResponse with _$AdminApiKeysResponse {
-  const factory AdminApiKeysResponse({@JsonKey(name: 'apiKeys') @Default(<AdminApiKey>[]) List<AdminApiKey> apiKeys}) =
-      _AdminApiKeysResponse;
+  const factory AdminApiKeysResponse({
+    @JsonKey(name: 'apiKeys')
+    @Default(<AdminApiKey>[])
+    List<AdminApiKey> apiKeys,
+  }) = _AdminApiKeysResponse;
 
-  factory AdminApiKeysResponse.fromJson(Map<String, dynamic> json) => _$AdminApiKeysResponseFromJson(json);
+  factory AdminApiKeysResponse.fromJson(Map<String, dynamic> json) =>
+      _$AdminApiKeysResponseFromJson(json);
 }

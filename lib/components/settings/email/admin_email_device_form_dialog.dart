@@ -14,23 +14,32 @@ Future<AdminEmailEreaderDevice?> showAdminEmailDeviceFormDialog({
 }) {
   return showDialog<AdminEmailEreaderDevice>(
     context: context,
-    builder: (dialogContext) =>
-        _AdminEmailDeviceFormDialog(existingDevices: existingDevices, users: users, initialDevice: initialDevice),
+    builder: (dialogContext) => _AdminEmailDeviceFormDialog(
+      existingDevices: existingDevices,
+      users: users,
+      initialDevice: initialDevice,
+    ),
   );
 }
 
 class _AdminEmailDeviceFormDialog extends StatefulWidget {
-  const _AdminEmailDeviceFormDialog({required this.existingDevices, required this.users, this.initialDevice});
+  const _AdminEmailDeviceFormDialog({
+    required this.existingDevices,
+    required this.users,
+    this.initialDevice,
+  });
 
   final List<AdminEmailEreaderDevice> existingDevices;
   final List<SessionUserSummary> users;
   final AdminEmailEreaderDevice? initialDevice;
 
   @override
-  State<_AdminEmailDeviceFormDialog> createState() => _AdminEmailDeviceFormDialogState();
+  State<_AdminEmailDeviceFormDialog> createState() =>
+      _AdminEmailDeviceFormDialogState();
 }
 
-class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog> {
+class _AdminEmailDeviceFormDialogState
+    extends State<_AdminEmailDeviceFormDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
 
@@ -46,7 +55,9 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
   List<SessionUserSummary> get _sortedUsers {
     final users = List<SessionUserSummary>.from(widget.users);
     users.sort((a, b) {
-      final usernameCompare = a.username.toLowerCase().compareTo(b.username.toLowerCase());
+      final usernameCompare = a.username.toLowerCase().compareTo(
+        b.username.toLowerCase(),
+      );
       if (usernameCompare != 0) {
         return usernameCompare;
       }
@@ -61,7 +72,9 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
     final initialDevice = widget.initialDevice;
     _nameController = TextEditingController(text: initialDevice?.name ?? '');
     _emailController = TextEditingController(text: initialDevice?.email ?? '');
-    _availabilityOption = normalizeAdminEmailAvailabilityOption(initialDevice?.availabilityOption);
+    _availabilityOption = normalizeAdminEmailAvailabilityOption(
+      initialDevice?.availabilityOption,
+    );
     _selectedUserIds = <String>{...initialDevice?.users ?? const <String>[]};
   }
 
@@ -73,7 +86,9 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
   }
 
   String? _validateName(String value) {
-    final validationError = AdminEmailSettingsValidation.validateDeviceName(value);
+    final validationError = AdminEmailSettingsValidation.validateDeviceName(
+      value,
+    );
     if (validationError != null) {
       return validationError;
     }
@@ -96,7 +111,8 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
   }
 
   String? _validateSpecificUsers() {
-    if (normalizeAdminEmailAvailabilityOption(_availabilityOption) != adminEmailAvailabilitySpecificUsers) {
+    if (normalizeAdminEmailAvailabilityOption(_availabilityOption) !=
+        adminEmailAvailabilitySpecificUsers) {
       return null;
     }
     if (_selectedUserIds.isEmpty) {
@@ -111,7 +127,9 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
         _nameError = _validateName(_nameController.text);
       }
       if (_emailError != null) {
-        _emailError = AdminEmailSettingsValidation.validateDeviceEmail(_emailController.text);
+        _emailError = AdminEmailSettingsValidation.validateDeviceEmail(
+          _emailController.text,
+        );
       }
       if (_usersError != null) {
         _usersError = _validateSpecificUsers();
@@ -134,7 +152,9 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
 
   void _submit() {
     final nameError = _validateName(_nameController.text);
-    final emailError = AdminEmailSettingsValidation.validateDeviceEmail(_emailController.text);
+    final emailError = AdminEmailSettingsValidation.validateDeviceEmail(
+      _emailController.text,
+    );
     final usersError = _validateSpecificUsers();
 
     setState(() {
@@ -147,8 +167,11 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
       return;
     }
 
-    final normalizedAvailability = normalizeAdminEmailAvailabilityOption(_availabilityOption);
-    final selectedUsers = normalizedAvailability == adminEmailAvailabilitySpecificUsers
+    final normalizedAvailability = normalizeAdminEmailAvailabilityOption(
+      _availabilityOption,
+    );
+    final selectedUsers =
+        normalizedAvailability == adminEmailAvailabilitySpecificUsers
         ? (_selectedUserIds.toList()..sort())
         : const <String>[];
 
@@ -166,7 +189,8 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
   Widget build(BuildContext context) {
     final sortedUsers = _sortedUsers;
     final showSpecificUsers =
-        normalizeAdminEmailAvailabilityOption(_availabilityOption) == adminEmailAvailabilitySpecificUsers;
+        normalizeAdminEmailAvailabilityOption(_availabilityOption) ==
+        adminEmailAvailabilitySpecificUsers;
 
     return AlertDialog(
       title: Text(_isEditing ? 'Edit E-Mail Device' : 'Add E-Mail Device'),
@@ -195,11 +219,19 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
               ),
               const SizedBox(height: 10),
               YaabsaExpressiveDropdownField<String>(
-                value: normalizeAdminEmailAvailabilityOption(_availabilityOption),
-                decoration: yaabsaFieldDecoration(context, label: 'Accessible By'),
+                value: normalizeAdminEmailAvailabilityOption(
+                  _availabilityOption,
+                ),
+                decoration: yaabsaFieldDecoration(
+                  context,
+                  label: 'Accessible By',
+                ),
                 options: [
                   for (final option in adminEmailAvailabilityOptions)
-                    YaabsaDropdownOption<String>(value: option, label: adminEmailAvailabilityLabel(option)),
+                    YaabsaDropdownOption<String>(
+                      value: option,
+                      label: adminEmailAvailabilityLabel(option),
+                    ),
                 ],
                 onChanged: (value) {
                   if (value == null) {
@@ -207,7 +239,9 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
                   }
 
                   setState(() {
-                    _availabilityOption = normalizeAdminEmailAvailabilityOption(value);
+                    _availabilityOption = normalizeAdminEmailAvailabilityOption(
+                      value,
+                    );
                     if (_usersError != null) {
                       _usersError = _validateSpecificUsers();
                     }
@@ -216,19 +250,25 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
               ),
               if (showSpecificUsers) ...[
                 const SizedBox(height: 10),
-                Text('Allowed Users', style: Theme.of(context).textTheme.labelLarge),
+                Text(
+                  'Allowed Users',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
                 const SizedBox(height: 6),
                 if (sortedUsers.isEmpty)
                   Text(
                     'No users available.',
-                    style: Theme.of(context).textTheme.bodySmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   )
                 else
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ConstrainedBox(
@@ -242,7 +282,8 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
                               FilterChip(
                                 label: Text(user.username),
                                 selected: _selectedUserIds.contains(user.id),
-                                onSelected: (selected) => _toggleUser(user.id, selected),
+                                onSelected: (selected) =>
+                                    _toggleUser(user.id, selected),
                               ),
                           ],
                         ),
@@ -253,7 +294,8 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
                   const SizedBox(height: 6),
                   Text(
                     _usersError!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: Theme.of(context).colorScheme.error),
                   ),
                 ],
               ],
@@ -262,7 +304,10 @@ class _AdminEmailDeviceFormDialogState extends State<_AdminEmailDeviceFormDialog
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton.icon(
           onPressed: _submit,
           icon: Icon(_isEditing ? Icons.save_outlined : Icons.add_rounded),

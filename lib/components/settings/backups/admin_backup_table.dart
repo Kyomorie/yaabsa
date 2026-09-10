@@ -58,8 +58,12 @@ class AdminBackupTable extends StatelessWidget {
           id: 'file',
           label: 'File',
           width: 280,
-          cellBuilder: (context, backup) =>
-              Text(_fileLabel(backup), softWrap: true, maxLines: 3, overflow: TextOverflow.ellipsis),
+          cellBuilder: (context, backup) => Text(
+            _fileLabel(backup),
+            softWrap: true,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
           tooltipBuilder: _fileLabel,
         ),
         ExpressiveTableColumn<AdminBackup>(
@@ -73,7 +77,8 @@ class AdminBackupTable extends StatelessWidget {
           label: 'Size',
           width: 110,
           alignment: ExpressiveTableCellAlignment.end,
-          cellBuilder: (context, backup) => Text(_sizeLabel(backup), textAlign: TextAlign.end),
+          cellBuilder: (context, backup) =>
+              Text(_sizeLabel(backup), textAlign: TextAlign.end),
         ),
       ],
       topActions: topActions,

@@ -38,23 +38,34 @@ class AuthorsView extends HookConsumerWidget {
     ref.watch(userSettingsWatcherProvider);
 
     if (selectedLibrary == null) {
-      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
+      return const Center(
+        child: Text(
+          'No library selected. Please select a library via the switcher.',
+        ),
+      );
     }
 
     if (selectedLibrary.mediaType != 'book') {
-      return const Center(child: Text('Authors are available only for book libraries.'));
+      return const Center(
+        child: Text('Authors are available only for book libraries.'),
+      );
     }
 
     final libraryId = selectedLibrary.id;
     final subtitlePreferences = currentUser == null
-        ? LibraryViewSubtitlePreferencesCodec.defaultsFor(LibraryViewSubtitleView.authors)
+        ? LibraryViewSubtitlePreferencesCodec.defaultsFor(
+            LibraryViewSubtitleView.authors,
+          )
         : LibraryViewSubtitlePreferencesCodec.decode(
             ref
                 .read(settingsManagerProvider.notifier)
                 .getUserSetting<String>(
                   currentUser.id,
                   LibraryViewSubtitleView.authors.settingKey,
-                  defaultValue: LibraryViewSubtitlePreferencesCodec.defaultEncodedFor(LibraryViewSubtitleView.authors),
+                  defaultValue:
+                      LibraryViewSubtitlePreferencesCodec.defaultEncodedFor(
+                        LibraryViewSubtitleView.authors,
+                      ),
                 ),
             LibraryViewSubtitleView.authors,
           );
@@ -77,14 +88,19 @@ class AuthorsView extends HookConsumerWidget {
             context: context,
             isScrollControlled: true,
             showDragHandle: true,
-            builder: (context) => LibraryAuthorSortSheet(activeSort: state.sort, activeSortDesc: state.desc),
+            builder: (context) => LibraryAuthorSortSheet(
+              activeSort: state.sort,
+              activeSortDesc: state.desc,
+            ),
           );
 
           if (result == null) {
             return;
           }
 
-          await ref.read(authorsProvider.notifier).setSort(result.sort, newDesc: result.desc);
+          await ref
+              .read(authorsProvider.notifier)
+              .setSort(result.sort, newDesc: result.desc);
         }
 
         final estimatedItemCount = _estimatedItemCount(
@@ -99,31 +115,53 @@ class AuthorsView extends HookConsumerWidget {
               child: Column(
                 children: [
                   _AuthorsToolbar(
-                    sortLabel: buildLibraryAuthorSortLabel(activeSort: state.sort, activeDesc: state.desc),
+                    sortLabel: buildLibraryAuthorSortLabel(
+                      activeSort: state.sort,
+                      activeDesc: state.desc,
+                    ),
                     onSortPressed: openSortSheet,
-                    trailingAction: RemoveAuthorsWithoutBooksTool(libraryId: libraryId),
+                    trailingAction: RemoveAuthorsWithoutBooksTool(
+                      libraryId: libraryId,
+                    ),
                   ),
                   Expanded(
-                    child: authors.isEmpty && !state.hasNextPage && !state.isLoadingNextPage
+                    child:
+                        authors.isEmpty &&
+                            !state.hasNextPage &&
+                            !state.isLoadingNextPage
                         ? RefreshIndicator(
-                            onRefresh: () => ref.read(authorsProvider.notifier).refresh(withLoading: false),
+                            onRefresh: () => ref
+                                .read(authorsProvider.notifier)
+                                .refresh(withLoading: false),
                             child: ListView(
                               controller: scrollController,
                               physics: const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                12,
+                                16,
+                                16,
+                              ),
                               children: const [
                                 SizedBox(height: 80),
-                                Center(child: Text('No authors found in this library.')),
+                                Center(
+                                  child: Text(
+                                    'No authors found in this library.',
+                                  ),
+                                ),
                               ],
                             ),
                           )
                         : RefreshIndicator(
-                            onRefresh: () => ref.read(authorsProvider.notifier).refresh(withLoading: false),
+                            onRefresh: () => ref
+                                .read(authorsProvider.notifier)
+                                .refresh(withLoading: false),
                             child: LibraryGridLayoutBuilder(
                               builder: (context, gridLayout, _, _) {
                                 return AlignedGridView.count(
                                   controller: scrollController,
-                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
                                   padding: EdgeInsets.fromLTRB(
                                     gridLayout.horizontalPadding,
                                     8,
@@ -135,10 +173,15 @@ class AuthorsView extends HookConsumerWidget {
                                   mainAxisSpacing: appGridSpacing,
                                   crossAxisSpacing: appGridSpacing,
                                   itemBuilder: (context, index) {
-                                    if (index >= authors.length - _authorsPrefetchThreshold) {
-                                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                                        ref.read(authorsProvider.notifier).ensureLoadedForIndex(index);
-                                      });
+                                    if (index >=
+                                        authors.length -
+                                            _authorsPrefetchThreshold) {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                            ref
+                                                .read(authorsProvider.notifier)
+                                                .ensureLoadedForIndex(index);
+                                          });
                                     }
 
                                     if (index >= authors.length) {
@@ -150,7 +193,9 @@ class AuthorsView extends HookConsumerWidget {
                                       authorId: author.id,
                                       name: author.name,
                                       imagePath: author.imagePath,
-                                      subtitle: subtitleResolver.forAuthor(author),
+                                      subtitle: subtitleResolver.forAuthor(
+                                        author,
+                                      ),
                                       onTap: () {
                                         context.push('/author/${author.id}');
                                       },
@@ -192,7 +237,11 @@ class AuthorsView extends HookConsumerWidget {
   }
 }
 
-int _estimatedItemCount({required int loadedCount, required int totalItems, required bool hasNextPage}) {
+int _estimatedItemCount({
+  required int loadedCount,
+  required int totalItems,
+  required bool hasNextPage,
+}) {
   if (totalItems > loadedCount) {
     return totalItems;
   }
@@ -205,7 +254,11 @@ int _estimatedItemCount({required int loadedCount, required int totalItems, requ
 }
 
 class _AuthorsToolbar extends StatelessWidget {
-  const _AuthorsToolbar({required this.sortLabel, required this.onSortPressed, this.trailingAction});
+  const _AuthorsToolbar({
+    required this.sortLabel,
+    required this.onSortPressed,
+    this.trailingAction,
+  });
 
   final String sortLabel;
   final VoidCallback onSortPressed;
@@ -258,7 +311,10 @@ class _AuthorGridPlaceholderTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AspectRatio(aspectRatio: 1, child: CoverLoadingPlaceholder(borderRadius: 16)),
+          const AspectRatio(
+            aspectRatio: 1,
+            child: CoverLoadingPlaceholder(borderRadius: 16),
+          ),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,

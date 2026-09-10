@@ -6,7 +6,8 @@ part 'update_library_item_media_request.freezed.dart';
 part 'update_library_item_media_request.g.dart';
 
 @freezed
-abstract class UpdateLibraryItemMediaRequest with _$UpdateLibraryItemMediaRequest {
+abstract class UpdateLibraryItemMediaRequest
+    with _$UpdateLibraryItemMediaRequest {
   @JsonSerializable(includeIfNull: false)
   const factory UpdateLibraryItemMediaRequest({
     @JsonKey(name: 'metadata') UpdateLibraryItemMediaMetadataPatch? metadata,
@@ -19,7 +20,8 @@ abstract class UpdateLibraryItemMediaRequest with _$UpdateLibraryItemMediaReques
 }
 
 @freezed
-abstract class UpdateLibraryItemMediaMetadataPatch with _$UpdateLibraryItemMediaMetadataPatch {
+abstract class UpdateLibraryItemMediaMetadataPatch
+    with _$UpdateLibraryItemMediaMetadataPatch {
   @JsonSerializable(includeIfNull: false)
   const factory UpdateLibraryItemMediaMetadataPatch({
     @JsonKey(name: 'title') String? title,
@@ -45,6 +47,7 @@ abstract class UpdateLibraryItemMediaMetadataPatch with _$UpdateLibraryItemMedia
     @JsonKey(name: 'type') String? type,
   }) = _UpdateLibraryItemMediaMetadataPatch;
 
-  factory UpdateLibraryItemMediaMetadataPatch.fromJson(Map<String, dynamic> json) =>
-      _$UpdateLibraryItemMediaMetadataPatchFromJson(json);
+  factory UpdateLibraryItemMediaMetadataPatch.fromJson(
+    Map<String, dynamic> json,
+  ) => _$UpdateLibraryItemMediaMetadataPatchFromJson(json);
 }

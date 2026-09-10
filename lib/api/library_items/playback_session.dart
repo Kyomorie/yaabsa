@@ -42,14 +42,21 @@ abstract class PlaybackSession with _$PlaybackSession {
     @JsonKey(name: "libraryItem") LibraryItem? libraryItem,
   }) = _PlaybackSession;
 
-  MediaProgress toMediaProgress(MediaProgress? item, String userId, double progress, double currentTime) {
+  MediaProgress toMediaProgress(
+    MediaProgress? item,
+    String userId,
+    double progress,
+    double currentTime,
+  ) {
     if (item != null) return item;
     return MediaProgress(
       id: id,
       userId: userId,
       libraryItemId: libraryItemId,
       episodeId: episodeId,
-      mediaItemType: mediaType == 'podcast' ? MediaItemType.PODCAST_EPISODE : MediaItemType.BOOK,
+      mediaItemType: mediaType == 'podcast'
+          ? MediaItemType.PODCAST_EPISODE
+          : MediaItemType.BOOK,
       mediaItemId: id,
       duration: duration ?? 0,
       progress: progress,
@@ -64,5 +71,6 @@ abstract class PlaybackSession with _$PlaybackSession {
     );
   }
 
-  factory PlaybackSession.fromJson(Map<String, dynamic> json) => _$PlaybackSessionFromJson(json);
+  factory PlaybackSession.fromJson(Map<String, dynamic> json) =>
+      _$PlaybackSessionFromJson(json);
 }

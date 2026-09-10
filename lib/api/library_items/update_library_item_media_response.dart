@@ -6,9 +6,12 @@ part 'update_library_item_media_response.freezed.dart';
 part 'update_library_item_media_response.g.dart';
 
 @freezed
-abstract class UpdateLibraryItemMediaResponse with _$UpdateLibraryItemMediaResponse {
+abstract class UpdateLibraryItemMediaResponse
+    with _$UpdateLibraryItemMediaResponse {
   const factory UpdateLibraryItemMediaResponse({
-    @JsonKey(name: 'updated', fromJson: jsonBoolRequiredFromDynamic) @Default(false) bool updated,
+    @JsonKey(name: 'updated', fromJson: jsonBoolRequiredFromDynamic)
+    @Default(false)
+    bool updated,
     @JsonKey(name: 'libraryItem') LibraryItem? libraryItem,
   }) = _UpdateLibraryItemMediaResponse;
 

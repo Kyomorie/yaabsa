@@ -6,11 +6,15 @@ part of 'download_task_metadata.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_DownloadTaskMetadata _$DownloadTaskMetadataFromJson(Map<String, dynamic> json) => _DownloadTaskMetadata(
+_DownloadTaskMetadata _$DownloadTaskMetadataFromJson(
+  Map<String, dynamic> json,
+) => _DownloadTaskMetadata(
   itemId: json['itemId'] as String,
   userId: json['userId'] as String,
   episodeId: json['episodeId'] as String?,
-  track: json['track'] == null ? null : InternalTrack.fromJson(json['track'] as Map<String, dynamic>),
+  track: json['track'] == null
+      ? null
+      : InternalTrack.fromJson(json['track'] as Map<String, dynamic>),
   expectedFileCount: (json['expectedFileCount'] as num?)?.toInt() ?? 1,
   fileInode: json['fileInode'] as String? ?? '',
   fileIndex: (json['fileIndex'] as num?)?.toInt() ?? 0,
@@ -27,11 +31,17 @@ _DownloadTaskMetadata _$DownloadTaskMetadataFromJson(Map<String, dynamic> json) 
   title: json['title'] as String?,
   downloadType: json['downloadType'] as String? ?? 'both',
   acquisitionOrigin: json['acquisitionOrigin'] as String? ?? 'manual',
-  smartProfileIds: (json['smartProfileIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
+  smartProfileIds:
+      (json['smartProfileIds'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
   estimatedBytes: (json['estimatedBytes'] as num?)?.toInt(),
 );
 
-Map<String, dynamic> _$DownloadTaskMetadataToJson(_DownloadTaskMetadata instance) => <String, dynamic>{
+Map<String, dynamic> _$DownloadTaskMetadataToJson(
+  _DownloadTaskMetadata instance,
+) => <String, dynamic>{
   'itemId': instance.itemId,
   'userId': instance.userId,
   'episodeId': instance.episodeId,

@@ -5,11 +5,15 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
     return mapAndroidAutoContinueItems<MediaItem>(
       items,
       mapAudiobook: (item) {
-        if (_androidAutoIsPodcastLibraryItem(item) || !_androidAutoIsPlayableAudioItem(item)) {
+        if (_androidAutoIsPodcastLibraryItem(item) ||
+            !_androidAutoIsPlayableAudioItem(item)) {
           return null;
         }
 
-        return _androidAutoPlayableFromLibraryItem(item, mediaId: _androidAutoItemPlaybackId(item.id));
+        return _androidAutoPlayableFromLibraryItem(
+          item,
+          mediaId: _androidAutoItemPlaybackId(item.id),
+        );
       },
       mapPodcastEpisode: (item, episode) {
         if (episode.audioFile == null && episode.audioTrack == null) {
@@ -18,16 +22,23 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
 
         return _androidAutoPlayableFromEpisode(item: item, episode: episode);
       },
-      idOf: (source, episode, item) => episode == null ? item.id : '${source.id}:${episode.id}',
+      idOf: (source, episode, item) =>
+          episode == null ? item.id : '${source.id}:${episode.id}',
     );
   }
 
-  List<MediaItem> _androidAutoMediaItemsFromLibraryItems(List<LibraryItem> items, {required String subtitlePrefix}) {
+  List<MediaItem> _androidAutoMediaItemsFromLibraryItems(
+    List<LibraryItem> items, {
+    required String subtitlePrefix,
+  }) {
     final mediaItems = <MediaItem>[];
     final seen = <String>{};
 
     for (final item in items) {
-      final mediaItem = _androidAutoMediaEntryFromLibraryItem(item, subtitlePrefix: subtitlePrefix);
+      final mediaItem = _androidAutoMediaEntryFromLibraryItem(
+        item,
+        subtitlePrefix: subtitlePrefix,
+      );
       if (mediaItem == null) {
         continue;
       }
@@ -42,7 +53,11 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
     return mediaItems;
   }
 
-  MediaItem? _androidAutoMediaEntryFromLibraryItem(LibraryItem item, {String? subtitlePrefix, Uri? artUriOverride}) {
+  MediaItem? _androidAutoMediaEntryFromLibraryItem(
+    LibraryItem item, {
+    String? subtitlePrefix,
+    Uri? artUriOverride,
+  }) {
     if (!_androidAutoIsSupportedAudioItem(item)) {
       return null;
     }
@@ -99,11 +114,16 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
 
   List<Episode> _androidAutoPlayablePodcastEpisodes(LibraryItem item) {
     final episodes = item.media?.podcastMedia?.episodes ?? const <Episode>[];
-    return episodes.where((episode) => episode.audioFile != null).toList(growable: false);
+    return episodes
+        .where((episode) => episode.audioFile != null)
+        .toList(growable: false);
   }
 
-  Future<List<Episode>> _androidAutoOrderedPlayablePodcastEpisodes(LibraryItem item) async {
-    final episodes = _androidAutoPlayablePodcastEpisodes(item).toList(growable: true);
+  Future<List<Episode>> _androidAutoOrderedPlayablePodcastEpisodes(
+    LibraryItem item,
+  ) async {
+    final episodes = _androidAutoPlayablePodcastEpisodes(item)
+        .toList(growable: true);
     if (episodes.isEmpty) {
       return const <Episode>[];
     }
@@ -118,7 +138,10 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
     return episodes;
   }
 
-  int _androidAutoPodcastEpisodeNewestFirstComparator(Episode left, Episode right) {
+  int _androidAutoPodcastEpisodeNewestFirstComparator(
+    Episode left,
+    Episode right,
+  ) {
     final byTimestamp = _androidAutoPodcastEpisodeSortTimestamp(right)
         .compareTo(_androidAutoPodcastEpisodeSortTimestamp(left));
     if (byTimestamp != 0) {
@@ -185,7 +208,11 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
       );
     }
 
-    return _androidAutoMediaEntryFromLibraryItem(item, subtitlePrefix: 'Downloaded', artUriOverride: artUri);
+    return _androidAutoMediaEntryFromLibraryItem(
+      item,
+      subtitlePrefix: 'Downloaded',
+      artUriOverride: artUri,
+    );
   }
 
   MediaItem _androidAutoBrowsableItem({
@@ -230,7 +257,11 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
       artUri: artUri,
       duration: duration,
       playable: true,
-      extras: <String, dynamic>{AndroidContentStyle.playableHintKey: AndroidContentStyle.listItemHintValue, ...?extras},
+      extras: <String, dynamic>{
+        AndroidContentStyle.playableHintKey:
+            AndroidContentStyle.listItemHintValue,
+        ...?extras,
+      },
     );
   }
 
@@ -241,11 +272,15 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
     Uri? artUriOverride,
   }) {
     final subtitleParts = <String>[
-      if (subtitlePrefix != null && subtitlePrefix.trim().isNotEmpty) subtitlePrefix.trim(),
-      if (item.authorString != null && item.authorString!.trim().isNotEmpty) item.authorString!.trim(),
+      if (subtitlePrefix != null && subtitlePrefix.trim().isNotEmpty)
+        subtitlePrefix.trim(),
+      if (item.authorString != null && item.authorString!.trim().isNotEmpty)
+        item.authorString!.trim(),
     ];
 
-    final subtitle = subtitleParts.isEmpty ? item.subtitle : subtitleParts.join(' - ');
+    final subtitle = subtitleParts.isEmpty
+        ? item.subtitle
+        : subtitleParts.join(' - ');
     final completionExtras = _androidAutoIsPodcastLibraryItem(item)
         ? const <String, dynamic>{}
         : _androidAutoCompletionExtras(itemId: item.id);
@@ -271,18 +306,25 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
     Uri? artUriOverride,
   }) {
     final subtitleParts = <String>[
-      if (subtitlePrefix != null && subtitlePrefix.trim().isNotEmpty) subtitlePrefix.trim(),
-      if (item.authorString != null && item.authorString!.trim().isNotEmpty) item.authorString!.trim(),
+      if (subtitlePrefix != null && subtitlePrefix.trim().isNotEmpty)
+        subtitlePrefix.trim(),
+      if (item.authorString != null && item.authorString!.trim().isNotEmpty)
+        item.authorString!.trim(),
     ];
 
-    final subtitle = subtitleParts.isEmpty ? item.subtitle : subtitleParts.join(' - ');
+    final subtitle = subtitleParts.isEmpty
+        ? item.subtitle
+        : subtitleParts.join(' - ');
 
     return _androidAutoBrowsableItem(
       id: _androidAutoPodcastNodeId(item.id),
       title: item.title,
       subtitle: subtitle,
       artUri: artUriOverride ?? _androidAutoCoverUri(item),
-      extras: <String, dynamic>{'itemId': item.id, if (item.libraryId != null) 'libraryId': item.libraryId},
+      extras: <String, dynamic>{
+        'itemId': item.id,
+        if (item.libraryId != null) 'libraryId': item.libraryId,
+      },
     );
   }
 
@@ -293,19 +335,25 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
     String? subtitlePrefix,
     Uri? artUriOverride,
   }) {
-    final episodeTitle = (episode.title != null && episode.title!.trim().isNotEmpty)
+    final episodeTitle =
+        (episode.title != null && episode.title!.trim().isNotEmpty)
         ? episode.title!.trim()
         : item.title;
 
-    final hasPrefix = subtitlePrefix != null && subtitlePrefix.trim().isNotEmpty;
-    final subtitle = (episode.subtitle != null && episode.subtitle!.trim().isNotEmpty)
+    final hasPrefix =
+        subtitlePrefix != null && subtitlePrefix.trim().isNotEmpty;
+    final subtitle =
+        (episode.subtitle != null && episode.subtitle!.trim().isNotEmpty)
         ? episode.subtitle!.trim()
         : hasPrefix
         ? '${subtitlePrefix.trim()} - ${item.title}'
         : _androidAutoIsPodcastLibraryItem(item)
         ? null
         : item.title;
-    final completionExtras = _androidAutoCompletionExtras(itemId: item.id, episodeId: episode.id);
+    final completionExtras = _androidAutoCompletionExtras(
+      itemId: item.id,
+      episodeId: episode.id,
+    );
 
     return _androidAutoPlayableItem(
       id: mediaIdOverride ?? _androidAutoEpisodePlaybackId(item.id, episode.id),
@@ -314,7 +362,9 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
       artist: item.authorString,
       artUri: artUriOverride ?? _androidAutoCoverUri(item),
       duration: _androidAutoDurationFromSeconds(
-        episode.audioFile?.duration ?? episode.audioTrack?.duration ?? episode.duration,
+        episode.audioFile?.duration ??
+            episode.audioTrack?.duration ??
+            episode.duration,
       ),
       extras: <String, dynamic>{
         ...completionExtras,
@@ -350,27 +400,44 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
 
     return _androidAutoPlayableItem(
       id: _androidAutoEpisodePlaybackId(episode.libraryItemId, episode.id),
-      title: episodeTitle == null || episodeTitle.isEmpty ? 'Untitled episode' : episodeTitle,
-      subtitle: podcastTitle == null || podcastTitle.isEmpty ? episode.subtitle?.trim() : podcastTitle,
-      artist: podcastAuthor == null || podcastAuthor.isEmpty ? null : podcastAuthor,
+      title: episodeTitle == null || episodeTitle.isEmpty
+          ? 'Untitled episode'
+          : episodeTitle,
+      subtitle: podcastTitle == null || podcastTitle.isEmpty
+          ? episode.subtitle?.trim()
+          : podcastTitle,
+      artist: podcastAuthor == null || podcastAuthor.isEmpty
+          ? null
+          : podcastAuthor,
       artUri: artUri,
       duration: _androidAutoDurationFromSeconds(
-        episode.audioFile?.duration ?? episode.audioTrack?.duration ?? episode.duration,
+        episode.audioFile?.duration ??
+            episode.audioTrack?.duration ??
+            episode.duration,
       ),
       extras: <String, dynamic>{
-        ..._androidAutoCompletionExtras(itemId: episode.libraryItemId, episodeId: episode.id),
+        ..._androidAutoCompletionExtras(
+          itemId: episode.libraryItemId,
+          episodeId: episode.id,
+        ),
         'itemId': episode.libraryItemId,
         'episodeId': episode.id,
       },
     );
   }
 
-  Map<String, dynamic> _androidAutoCompletionExtras({required String itemId, String? episodeId}) {
-    final progressMap = _ref.read(mediaProgressProvider).value ?? const <String, MediaProgress>{};
+  Map<String, dynamic> _androidAutoCompletionExtras({
+    required String itemId,
+    String? episodeId,
+  }) {
+    final progressMap =
+        _ref.read(mediaProgressProvider).value ??
+        const <String, MediaProgress>{};
     final progress = progressMap[mediaProgressKey(itemId, episodeId)];
     if (progress == null) {
       return <String, dynamic>{
-        _androidAutoCompletionStatusExtrasKey: _androidAutoCompletionStatusNotPlayed,
+        _androidAutoCompletionStatusExtrasKey:
+            _androidAutoCompletionStatusNotPlayed,
         _androidAutoCompletionPercentageExtrasKey: 0.0,
       };
     }
@@ -378,20 +445,23 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
     final normalizedProgress = progress.progress.clamp(0.0, 1.0).toDouble();
     if (progress.isFinished || normalizedProgress >= 0.999) {
       return <String, dynamic>{
-        _androidAutoCompletionStatusExtrasKey: _androidAutoCompletionStatusFullyPlayed,
+        _androidAutoCompletionStatusExtrasKey:
+            _androidAutoCompletionStatusFullyPlayed,
         _androidAutoCompletionPercentageExtrasKey: 1.0,
       };
     }
 
     if (normalizedProgress <= 0) {
       return <String, dynamic>{
-        _androidAutoCompletionStatusExtrasKey: _androidAutoCompletionStatusNotPlayed,
+        _androidAutoCompletionStatusExtrasKey:
+            _androidAutoCompletionStatusNotPlayed,
         _androidAutoCompletionPercentageExtrasKey: 0.0,
       };
     }
 
     return <String, dynamic>{
-      _androidAutoCompletionStatusExtrasKey: _androidAutoCompletionStatusPartiallyPlayed,
+      _androidAutoCompletionStatusExtrasKey:
+          _androidAutoCompletionStatusPartiallyPlayed,
       _androidAutoCompletionPercentageExtrasKey: normalizedProgress,
     };
   }
@@ -420,7 +490,11 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
       return _wrapContentUri(coverUri);
     }
 
-    final token = _ref.read(currentUserProvider).value?.preferredAuthToken?.trim();
+    final token = _ref
+        .read(currentUserProvider)
+        .value
+        ?.preferredAuthToken
+        ?.trim();
     if (token == null || token.isEmpty) {
       return _wrapContentUri(coverUri);
     }
@@ -458,7 +532,9 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
     }
 
     final packageName = packageInfo.packageName.trim();
-    final authority = packageName.isNotEmpty ? '$packageName.covers' : 'de.vito0912.yaabsa.covers';
+    final authority = packageName.isNotEmpty
+        ? '$packageName.covers'
+        : 'de.vito0912.yaabsa.covers';
 
     final uriStr = originalUri.toString();
     final bytes = utf8.encode(uriStr);
@@ -467,10 +543,15 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
   }
 
   Duration? _androidAutoDurationFromSeconds(double? seconds) {
-    if (seconds == null || seconds.isNaN || seconds.isInfinite || seconds <= 0) {
+    if (seconds == null ||
+        seconds.isNaN ||
+        seconds.isInfinite ||
+        seconds <= 0) {
       return null;
     }
 
-    return Duration(microseconds: (seconds * Duration.microsecondsPerSecond).round());
+    return Duration(
+      microseconds: (seconds * Duration.microsecondsPerSecond).round(),
+    );
   }
 }

@@ -112,7 +112,8 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
 
   bool get _isMediaOverlayActive => _mediaOverlayState != 'stopped';
   bool get _isAudioPlaybackActive => _isTtsPlaying || _isMediaOverlayActive;
-  bool get _isAudioPlaying => (_isTtsPlaying && !_isTtsPaused) || _mediaOverlayState == 'playing';
+  bool get _isAudioPlaying =>
+      (_isTtsPlaying && !_isTtsPaused) || _mediaOverlayState == 'playing';
 
   late final SessionRepository _sessionRepository;
   double _currentAudioTime = 0.0;
@@ -128,23 +129,31 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
   Future<void>? _progressSyncChain;
   String? _lastSyncedEpubCfi;
 
-  double get _readerTtsRate =>
-      ref.read(settingsManagerProvider.notifier).getGlobalSetting<double>(SettingKeys.readerTtsRate);
-  String get _readerTtsVoice =>
-      ref.read(settingsManagerProvider.notifier).getGlobalSetting<String>(SettingKeys.readerTtsVoice);
-  String get _readerTtsLanguage =>
-      ref.read(settingsManagerProvider.notifier).getGlobalSetting<String>(SettingKeys.readerTtsLanguage);
+  double get _readerTtsRate => ref
+      .read(settingsManagerProvider.notifier)
+      .getGlobalSetting<double>(SettingKeys.readerTtsRate);
+  String get _readerTtsVoice => ref
+      .read(settingsManagerProvider.notifier)
+      .getGlobalSetting<String>(SettingKeys.readerTtsVoice);
+  String get _readerTtsLanguage => ref
+      .read(settingsManagerProvider.notifier)
+      .getGlobalSetting<String>(SettingKeys.readerTtsLanguage);
 
-  String get _readerTheme =>
-      ref.read(settingsManagerProvider.notifier).getGlobalSetting<String>(SettingKeys.readerTheme);
-  double get _fontSizeMultiplier =>
-      ref.read(settingsManagerProvider.notifier).getGlobalSetting<double>(SettingKeys.readerFontSizeMultiplier);
-  double get _lineHeight =>
-      ref.read(settingsManagerProvider.notifier).getGlobalSetting<double>(SettingKeys.readerLineHeight);
-  String get _readerLayout =>
-      ref.read(settingsManagerProvider.notifier).getGlobalSetting<String>(SettingKeys.readerLayout);
+  String get _readerTheme => ref
+      .read(settingsManagerProvider.notifier)
+      .getGlobalSetting<String>(SettingKeys.readerTheme);
+  double get _fontSizeMultiplier => ref
+      .read(settingsManagerProvider.notifier)
+      .getGlobalSetting<double>(SettingKeys.readerFontSizeMultiplier);
+  double get _lineHeight => ref
+      .read(settingsManagerProvider.notifier)
+      .getGlobalSetting<double>(SettingKeys.readerLineHeight);
+  String get _readerLayout => ref
+      .read(settingsManagerProvider.notifier)
+      .getGlobalSetting<String>(SettingKeys.readerLayout);
 
-  String get _epubFlow => _readerLayout == 'scrolled' ? 'scrolled' : 'paginated';
+  String get _epubFlow =>
+      _readerLayout == 'scrolled' ? 'scrolled' : 'paginated';
   int get _epubMaxColumnCount => _readerLayout == 'paginated_2' ? 2 : 1;
 
   String get _currentEpubStyles {
@@ -216,7 +225,8 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
     }
     if (event is KeyDownEvent) {
       final isEpub = _pdfDocument == null;
-      if (event.logicalKey == LogicalKeyboardKey.audioVolumeUp || event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      if (event.logicalKey == LogicalKeyboardKey.audioVolumeUp ||
+          event.logicalKey == LogicalKeyboardKey.arrowRight) {
         if (isEpub) {
           epubController.next();
         } else {
@@ -246,38 +256,61 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
   Future<void> _startReadingSession() async {
     if (_sessionIsOpened) return;
     final settings = ref.read(settingsManagerProvider.notifier);
-    final enabled = settings.getGlobalSetting<bool>(SettingKeys.readerStartSession);
+    final enabled = settings.getGlobalSetting<bool>(
+      SettingKeys.readerStartSession,
+    );
     if (!enabled) return;
 
     try {
-      final media = await _sessionRepository.openSession(widget.itemId, forceDirectPlay: true);
+      final media = await _sessionRepository.openSession(
+        widget.itemId,
+        forceDirectPlay: true,
+      );
       if (media != null) {
         _sessionIsOpened = true;
         _lastReadingSessionSyncTime = DateTime.now();
-        _readingSessionTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+        _readingSessionTimer = Timer.periodic(const Duration(seconds: 15), (
+          timer,
+        ) {
           _syncReadingSession();
         });
       }
     } catch (e, s) {
-      logger('Failed to open reading session: $e\n$s', tag: 'ReadingSession', level: InfoLevel.error);
+      logger(
+        'Failed to open reading session: $e\n$s',
+        tag: 'ReadingSession',
+        level: InfoLevel.error,
+      );
     }
   }
 
   Future<void> _syncReadingSession({bool force = false}) async {
-    if (!force && (!_sessionIsOpened || _lastReadingSessionSyncTime == null)) return;
+    if (!force && (!_sessionIsOpened || _lastReadingSessionSyncTime == null))
+      return;
     if (force && _lastReadingSessionSyncTime == null) return;
 
     final now = DateTime.now();
-    final elapsed = now.difference(_lastReadingSessionSyncTime!).inSeconds.toDouble();
+    final elapsed = now
+        .difference(_lastReadingSessionSyncTime!)
+        .inSeconds
+        .toDouble();
     _lastReadingSessionSyncTime = now;
 
     final currentAudioTime = _currentAudioTime;
     final canReach = _canReachServer;
 
     try {
-      await _sessionRepository.syncOpenSession(currentAudioTime, elapsed, canReachServer: canReach);
+      await _sessionRepository.syncOpenSession(
+        currentAudioTime,
+        elapsed,
+        canReachServer: canReach,
+      );
     } catch (e, s) {
-      logger('Failed to sync reading session: $e\n$s', tag: 'ReadingSession', level: InfoLevel.error);
+      logger(
+        'Failed to sync reading session: $e\n$s',
+        tag: 'ReadingSession',
+        level: InfoLevel.error,
+      );
     }
   }
 
@@ -298,7 +331,11 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
       try {
         await _sessionRepository.closeSession();
       } catch (e, s) {
-        logger('Failed to close reading session: $e\n$s', tag: 'ReadingSession', level: InfoLevel.error);
+        logger(
+          'Failed to close reading session: $e\n$s',
+          tag: 'ReadingSession',
+          level: InfoLevel.error,
+        );
       }
     }
   }
@@ -315,7 +352,10 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
     await _syncReadingSession(force: true);
   }
 
-  Future<void> _sendProgressToServer({required String location, required double progress}) {
+  Future<void> _sendProgressToServer({
+    required String location,
+    required double progress,
+  }) {
     final api = _api;
     if (api == null || location.trim().isEmpty) {
       return Future<void>.value();
@@ -325,9 +365,17 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
     final newChain = (_progressSyncChain ?? Future<void>.value())
         .then((_) async {
           try {
-            await api.getMeApi().updateBookProgress(itemId, epubCfi: location, progress: progress);
+            await api.getMeApi().updateBookProgress(
+              itemId,
+              epubCfi: location,
+              progress: progress,
+            );
           } catch (e, s) {
-            logger('Failed to sync progress for $itemId: $e\n$s', tag: 'ReaderProgressSync', level: InfoLevel.error);
+            logger(
+              'Failed to sync progress for $itemId: $e\n$s',
+              tag: 'ReaderProgressSync',
+              level: InfoLevel.error,
+            );
           }
         })
         .whenComplete(() {
@@ -337,17 +385,22 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
     return completer.future;
   }
 
-  void _throttleProgressSync({required String location, required double progress}) {
+  void _throttleProgressSync({
+    required String location,
+    required double progress,
+  }) {
     _pendingSyncLocation = location;
     _pendingSyncProgress = progress;
 
     final now = DateTime.now();
     final lastSync = _lastProgressSyncTime;
-    if (lastSync == null || now.difference(lastSync) >= const Duration(seconds: 10)) {
+    if (lastSync == null ||
+        now.difference(lastSync) >= const Duration(seconds: 10)) {
       _flushPendingProgressSync();
     } else {
       if (_progressSyncTimer == null) {
-        final remaining = const Duration(seconds: 10) - now.difference(lastSync);
+        final remaining =
+            const Duration(seconds: 10) - now.difference(lastSync);
         _progressSyncTimer = Timer(remaining, () {
           _flushPendingProgressSync();
         });
@@ -429,12 +482,16 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
     _flutterTts = FlutterTts();
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await _flutterTts!.setSharedInstance(true);
-      await _flutterTts!.setIosAudioCategory(IosTextToSpeechAudioCategory.playback, [
-        IosTextToSpeechAudioCategoryOptions.allowBluetooth,
-        IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
-        IosTextToSpeechAudioCategoryOptions.mixWithOthers,
-        IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
-      ], IosTextToSpeechAudioMode.defaultMode);
+      await _flutterTts!.setIosAudioCategory(
+        IosTextToSpeechAudioCategory.playback,
+        [
+          IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+          IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+          IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+          IosTextToSpeechAudioCategoryOptions.defaultToSpeaker,
+        ],
+        IosTextToSpeechAudioMode.defaultMode,
+      );
     }
     await _applyTtsSettings();
     await _flutterTts!.setVolume(1.0);
@@ -473,7 +530,9 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
   }
 
   Future<void> _resumeTts() async {
-    if (_flutterTts != null && _ttsSentences.isNotEmpty && _currentTtsSentenceIndex < _ttsSentences.length) {
+    if (_flutterTts != null &&
+        _ttsSentences.isNotEmpty &&
+        _currentTtsSentenceIndex < _ttsSentences.length) {
       await _applyTtsSettings();
       final sentence = _ttsSentences[_currentTtsSentenceIndex];
       final text = sentence['text'] ?? '';
@@ -525,7 +584,11 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
   }
 
   void _onTtsSentenceComplete() async {
-    if (!mounted || !_isTtsPlaying || _isTtsPaused || _isJumpingTts || _isApplyingSettings) {
+    if (!mounted ||
+        !_isTtsPlaying ||
+        _isTtsPaused ||
+        _isJumpingTts ||
+        _isApplyingSettings) {
       return;
     }
 
@@ -684,7 +747,8 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
 
     final userAsync = ref.watch(currentUserProvider);
     final itemAsync = ref.watch(libraryItemProvider(widget.itemId));
-    final effectiveInitialLocation = _resolvedEbookLocation ?? currentProgress?.ebookLocation;
+    final effectiveInitialLocation =
+        _resolvedEbookLocation ?? currentProgress?.ebookLocation;
 
     final bool isEpubMode = itemAsync.maybeWhen(
       data: (item) => _resolveReaderMode(item) == _ReaderRenderMode.epub,
@@ -716,7 +780,9 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
                         return userAsync.when(
                           data: (user) {
                             if (user == null) {
-                              return const Center(child: Text('No authenticated user available.'));
+                              return const Center(
+                                child: Text('No authenticated user available.'),
+                              );
                             }
 
                             if (_loadingLocalFile) {
@@ -734,7 +800,11 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
 
                             final authToken = user.preferredAuthToken;
                             if (authToken == null || authToken.isEmpty) {
-                              return const Center(child: Text('Missing authentication token for ebook loading.'));
+                              return const Center(
+                                child: Text(
+                                  'Missing authentication token for ebook loading.',
+                                ),
+                              );
                             }
 
                             final mode = _resolveReaderMode(item);
@@ -750,9 +820,16 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
                             final format = _normalizeEbookFormat(
                               item.media?.bookMedia?.ebookFile?.ebookFormat ??
                                   item.media?.bookMedia?.ebookFormat ??
-                                  item.media?.bookMedia?.ebookFile?.metadata.ext,
+                                  item
+                                      .media
+                                      ?.bookMedia
+                                      ?.ebookFile
+                                      ?.metadata
+                                      .ext,
                             );
-                            final bookExtension = format.isNotEmpty ? format : 'epub';
+                            final bookExtension = format.isNotEmpty
+                                ? format
+                                : 'epub';
 
                             return _buildEpubReaderBody(
                               user: user,
@@ -763,15 +840,23 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
                             );
                           },
                           error: (error, stackTrace) {
-                            return Center(child: Text('Failed to load user profile: $error'));
+                            return Center(
+                              child: Text(
+                                'Failed to load user profile: $error',
+                              ),
+                            );
                           },
                           loading: () {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           },
                         );
                       },
                       error: (error, stackTrace) {
-                        return Center(child: Text('Failed to load ebook metadata: $error'));
+                        return Center(
+                          child: Text('Failed to load ebook metadata: $error'),
+                        );
                       },
                       loading: () {
                         return const Center(child: CircularProgressIndicator());
@@ -783,14 +868,32 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    child: IgnorePointer(child: _buildBottomProgressIndicator(isEpubMode: isEpubMode)),
+                    child: IgnorePointer(
+                      child: _buildBottomProgressIndicator(
+                        isEpubMode: isEpubMode,
+                      ),
+                    ),
                   ),
-                  Positioned(left: 0, right: 0, bottom: 80, child: Center(child: _buildTtsControlPanel())),
-                  Positioned(left: 0, right: 0, bottom: 80, child: Center(child: _buildMediaOverlayControlPanel())),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 80,
+                    child: Center(child: _buildTtsControlPanel()),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 80,
+                    child: Center(child: _buildMediaOverlayControlPanel()),
+                  ),
                 ],
               ),
             ),
-            if (!hideMiniPlayerSetting) const PlayBar(includeBottomSafeArea: true, attachedToBottom: true),
+            if (!hideMiniPlayerSetting)
+              const PlayBar(
+                includeBottomSafeArea: true,
+                attachedToBottom: true,
+              ),
           ],
         ),
       ),
@@ -814,7 +917,9 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
         final pct = (_currentEpubLocation!.fraction * 100).toStringAsFixed(1);
         final pageList = _epubPageList;
         if (pageList != null && pageList.isNotEmpty) {
-          final pageIndex = pageList.indexWhere((item) => item.href == _currentEpubLocation!.pageItem?.href);
+          final pageIndex = pageList.indexWhere(
+            (item) => item.href == _currentEpubLocation!.pageItem?.href,
+          );
           final pageLabel = _currentEpubLocation!.pageItem?.label;
           final total = pageList.length;
           if (pageIndex != -1) {
@@ -873,7 +978,11 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(icon: const Icon(Icons.stop), onPressed: _stopTts, tooltip: 'Stop TTS'),
+            IconButton(
+              icon: const Icon(Icons.stop),
+              onPressed: _stopTts,
+              tooltip: 'Stop TTS',
+            ),
             IconButton(
               icon: Icon(_isTtsPaused ? Icons.play_arrow : Icons.pause),
               onPressed: _isTtsPaused ? _resumeTts : _pauseTts,
@@ -927,23 +1036,35 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
     if (isSaf) {
       try {
         final tempDir = await getTemporaryDirectory();
-        final ext = p.extension(localPathOrUri).isEmpty ? '.epub' : p.extension(localPathOrUri);
-        final tempFile = File('${tempDir.path}/${widget.itemId}_temp_ebook$ext');
+        final ext = p.extension(localPathOrUri).isEmpty
+            ? '.epub'
+            : p.extension(localPathOrUri);
+        final tempFile = File(
+          '${tempDir.path}/${widget.itemId}_temp_ebook$ext',
+        );
         if (await tempFile.exists()) {
           await tempFile.delete();
         }
         await downloadHandler.cancelTask(widget.itemId);
-        await FileDownloader().uri.copyFile(Uri.parse(localPathOrUri), Uri.file(tempFile.path));
+        await FileDownloader().uri.copyFile(
+          Uri.parse(localPathOrUri),
+          Uri.file(tempFile.path),
+        );
         _tempEbookFile = tempFile;
         return tempFile;
       } catch (e, s) {
-        logger('Failed to copy SAF ebook to temp file: $e\n$s', tag: 'Reader', level: InfoLevel.error);
+        logger(
+          'Failed to copy SAF ebook to temp file: $e\n$s',
+          tag: 'Reader',
+          level: InfoLevel.error,
+        );
         return null;
       }
     } else {
       String cleanPath = localPathOrUri;
       if (cleanPath.startsWith('file://')) {
-        cleanPath = Uri.parse(cleanPath).toFilePath(windows: Platform.isWindows);
+        cleanPath = Uri.parse(cleanPath)
+            .toFilePath(windows: Platform.isWindows);
       }
       final file = File(cleanPath);
       if (await file.exists()) {

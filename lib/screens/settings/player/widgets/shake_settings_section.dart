@@ -23,13 +23,15 @@ class _ShakeSettingsSectionState extends State<ShakeSettingsSection> {
 
   @override
   Widget build(BuildContext context) {
-    const shakeUnsupportedReason = 'Shake actions require a device with motion sensors';
+    const shakeUnsupportedReason =
+        'Shake actions require a device with motion sensors';
     final supportsShakeActions = DeviceCapabilities.supportsShakeActions;
 
     return FutureBuilder<bool>(
       future: _vibrationSupportFuture,
       builder: (context, snapshot) {
-        final vibrationCheckFinished = snapshot.connectionState == ConnectionState.done;
+        final vibrationCheckFinished =
+            snapshot.connectionState == ConnectionState.done;
         final supportsVibration = snapshot.data == true;
         final vibrationEnabled = supportsShakeActions && supportsVibration;
 
@@ -39,7 +41,8 @@ class _ShakeSettingsSectionState extends State<ShakeSettingsSection> {
         } else if (!vibrationCheckFinished) {
           vibrationDisabledReason = 'Checking vibration support';
         } else if (!supportsVibration) {
-          vibrationDisabledReason = 'This device does not support vibration feedback';
+          vibrationDisabledReason =
+              'This device does not support vibration feedback';
         }
 
         return SettingsNavigationSection(
@@ -64,7 +67,10 @@ class _ShakeSettingsSectionState extends State<ShakeSettingsSection> {
               label: 'Shake sensitivity',
               description: 'Lower values trigger more easily, higher values require a stronger shake',
               values: List.generate(25, (index) => (index + 11) / 10),
-              valueLabels: List.generate(25, (index) => '${((index + 11) / 10).toStringAsFixed(1)} g'),
+              valueLabels: List.generate(
+                25,
+                (index) => '${((index + 11) / 10).toStringAsFixed(1)} g',
+              ),
               settingKey: SettingKeys.shakeSensitivity,
               enabled: supportsShakeActions,
               disabledReason: shakeUnsupportedReason,

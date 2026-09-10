@@ -12,9 +12,14 @@ abstract class CustomMetadataProvider with _$CustomMetadataProvider {
     @JsonKey(name: 'mediaType') required String mediaType,
     @JsonKey(name: 'url') required String url,
     @JsonKey(name: 'authHeaderValue') String? authHeaderValue,
-    @JsonKey(name: 'createdAt', fromJson: jsonIntRequiredFromDynamic) @Default(0) int createdAt,
-    @JsonKey(name: 'updatedAt', fromJson: jsonIntRequiredFromDynamic) @Default(0) int updatedAt,
+    @JsonKey(name: 'createdAt', fromJson: jsonIntRequiredFromDynamic)
+    @Default(0)
+    int createdAt,
+    @JsonKey(name: 'updatedAt', fromJson: jsonIntRequiredFromDynamic)
+    @Default(0)
+    int updatedAt,
   }) = _CustomMetadataProvider;
 
-  factory CustomMetadataProvider.fromJson(Map<String, dynamic> json) => _$CustomMetadataProviderFromJson(json);
+  factory CustomMetadataProvider.fromJson(Map<String, dynamic> json) =>
+      _$CustomMetadataProviderFromJson(json);
 }

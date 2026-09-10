@@ -3,10 +3,13 @@ import 'package:yaabsa/api/admin/create_custom_metadata_provider_request.dart';
 import 'package:yaabsa/api/admin/custom_metadata_provider.dart';
 import 'package:yaabsa/components/common/list_management_dialogs.dart';
 
-typedef CreateCustomMetadataProviderCallback = Future<CustomMetadataProvider?> Function(
-  CreateCustomMetadataProviderRequest payload,
+typedef CreateCustomMetadataProviderCallback =
+    Future<CustomMetadataProvider?> Function(
+      CreateCustomMetadataProviderRequest payload,
+    );
+typedef DeleteCustomMetadataProviderCallback = Future<void> Function(
+  CustomMetadataProvider provider,
 );
-typedef DeleteCustomMetadataProviderCallback = Future<void> Function(CustomMetadataProvider provider);
 
 class AdminCustomMetadataProviderManager extends StatefulWidget {
   const AdminCustomMetadataProviderManager({
@@ -23,15 +26,18 @@ class AdminCustomMetadataProviderManager extends StatefulWidget {
   final DeleteCustomMetadataProviderCallback onDeleteProvider;
 
   @override
-  State<AdminCustomMetadataProviderManager> createState() => _AdminCustomMetadataProviderManagerState();
+  State<AdminCustomMetadataProviderManager> createState() =>
+      _AdminCustomMetadataProviderManagerState();
 }
 
-class _AdminCustomMetadataProviderManagerState extends State<AdminCustomMetadataProviderManager> {
+class _AdminCustomMetadataProviderManagerState
+    extends State<AdminCustomMetadataProviderManager> {
   String? _processingProviderId;
   bool _isRefreshing = false;
   bool _isCreating = false;
 
-  bool get _isBusy => _processingProviderId != null || _isRefreshing || _isCreating;
+  bool get _isBusy =>
+      _processingProviderId != null || _isRefreshing || _isCreating;
 
   Future<void> _handleRefresh() async {
     if (_isBusy) {
@@ -58,7 +64,10 @@ class _AdminCustomMetadataProviderManagerState extends State<AdminCustomMetadata
       return;
     }
 
-    final payload = await _showProviderDialog(title: 'Add Custom Metadata Provider', confirmLabel: 'Add');
+    final payload = await _showProviderDialog(
+      title: 'Add Custom Metadata Provider',
+      confirmLabel: 'Add',
+    );
 
     if (!mounted || payload == null) {
       return;
@@ -75,14 +84,19 @@ class _AdminCustomMetadataProviderManagerState extends State<AdminCustomMetadata
       }
 
       final name = provider?.name ?? payload.name;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added provider "$name".')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Added provider "$name".')));
     } catch (error) {
       if (!mounted) {
         return;
       }
 
-      final message = listManagementErrorMessage(error, fallback: 'Failed to create provider.');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      final message = listManagementErrorMessage(
+        error,
+        fallback: 'Failed to create provider.',
+      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -140,14 +154,19 @@ class _AdminCustomMetadataProviderManagerState extends State<AdminCustomMetadata
       }
 
       final name = recreatedProvider?.name ?? payload.name;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Updated provider "$name".')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Updated provider "$name".')));
     } catch (error) {
       if (!mounted) {
         return;
       }
 
-      final message = listManagementErrorMessage(error, fallback: 'Failed to update provider.');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      final message = listManagementErrorMessage(
+        error,
+        fallback: 'Failed to update provider.',
+      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -182,14 +201,20 @@ class _AdminCustomMetadataProviderManagerState extends State<AdminCustomMetadata
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted provider "${provider.name}".')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Deleted provider "${provider.name}".')),
+      );
     } catch (error) {
       if (!mounted) {
         return;
       }
 
-      final message = listManagementErrorMessage(error, fallback: 'Failed to delete provider.');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      final message = listManagementErrorMessage(
+        error,
+        fallback: 'Failed to delete provider.',
+      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -229,8 +254,13 @@ class _AdminCustomMetadataProviderManagerState extends State<AdminCustomMetadata
             child: widget.providers.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-                    children: const [Text('No custom metadata providers found.')],
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 12,
+                    ),
+                    children: const [
+                      Text('No custom metadata providers found.'),
+                    ],
                   )
                 : ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -238,7 +268,8 @@ class _AdminCustomMetadataProviderManagerState extends State<AdminCustomMetadata
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final provider = widget.providers[index];
-                      final processingThisProvider = _processingProviderId == provider.id;
+                      final processingThisProvider =
+                          _processingProviderId == provider.id;
 
                       return Card(
                         margin: EdgeInsets.zero,
@@ -249,12 +280,19 @@ class _AdminCustomMetadataProviderManagerState extends State<AdminCustomMetadata
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(provider.url),
-                              if (provider.authHeaderValue != null && provider.authHeaderValue!.trim().isNotEmpty)
+                              if (provider.authHeaderValue != null &&
+                                  provider.authHeaderValue!.trim().isNotEmpty)
                                 const Text('Auth header configured'),
                             ],
                           ),
                           trailing: processingThisProvider
-                              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : SizedBox(
                                   width: 92,
                                   child: Row(
@@ -262,13 +300,22 @@ class _AdminCustomMetadataProviderManagerState extends State<AdminCustomMetadata
                                     children: [
                                       IconButton(
                                         tooltip: 'Edit provider',
-                                        onPressed: _isBusy ? null : () => _editProvider(provider),
+                                        onPressed: _isBusy
+                                            ? null
+                                            : () => _editProvider(provider),
                                         icon: const Icon(Icons.edit_outlined),
                                       ),
                                       IconButton(
                                         tooltip: 'Delete provider',
-                                        onPressed: _isBusy ? null : () => _deleteProvider(provider),
-                                        icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                                        onPressed: _isBusy
+                                            ? null
+                                            : () => _deleteProvider(provider),
+                                        icon: Icon(
+                                          Icons.delete_outline,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .error,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -300,10 +347,12 @@ class _CreateCustomMetadataProviderDialog extends StatefulWidget {
   final String? initialAuthHeaderValue;
 
   @override
-  State<_CreateCustomMetadataProviderDialog> createState() => _CreateCustomMetadataProviderDialogState();
+  State<_CreateCustomMetadataProviderDialog> createState() =>
+      _CreateCustomMetadataProviderDialogState();
 }
 
-class _CreateCustomMetadataProviderDialogState extends State<_CreateCustomMetadataProviderDialog> {
+class _CreateCustomMetadataProviderDialogState
+    extends State<_CreateCustomMetadataProviderDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _urlController;
   late final TextEditingController _authController;
@@ -334,7 +383,9 @@ class _CreateCustomMetadataProviderDialogState extends State<_CreateCustomMetada
     super.initState();
     _nameController = TextEditingController(text: widget.initialName ?? '');
     _urlController = TextEditingController(text: widget.initialUrl ?? '');
-    _authController = TextEditingController(text: widget.initialAuthHeaderValue ?? '');
+    _authController = TextEditingController(
+      text: widget.initialAuthHeaderValue ?? '',
+    );
     _nameController.addListener(_handleFieldChange);
     _urlController.addListener(_handleFieldChange);
     _authController.addListener(_handleFieldChange);
@@ -392,7 +443,9 @@ class _CreateCustomMetadataProviderDialogState extends State<_CreateCustomMetada
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Name',
-                  errorText: _showValidation && !_isNameValid ? 'Name is required.' : null,
+                  errorText: _showValidation && !_isNameValid
+                      ? 'Name is required.'
+                      : null,
                 ),
               ),
               const SizedBox(height: 12),
@@ -401,21 +454,32 @@ class _CreateCustomMetadataProviderDialogState extends State<_CreateCustomMetada
                 decoration: InputDecoration(
                   labelText: 'URL',
                   hintText: 'https://example.com/path',
-                  errorText: _showValidation && !_isUrlValid ? 'Enter a valid http or https URL.' : null,
+                  errorText: _showValidation && !_isUrlValid
+                      ? 'Enter a valid http or https URL.'
+                      : null,
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _authController,
-                decoration: const InputDecoration(labelText: 'Auth Header Value', hintText: 'Optional'),
+                decoration: const InputDecoration(
+                  labelText: 'Auth Header Value',
+                  hintText: 'Optional',
+                ),
               ),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-        FilledButton(onPressed: _isFormValid ? _submit : null, child: Text(widget.confirmLabel)),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _isFormValid ? _submit : null,
+          child: Text(widget.confirmLabel),
+        ),
       ],
     );
   }

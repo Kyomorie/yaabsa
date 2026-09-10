@@ -14,7 +14,8 @@ class AdminServerLogsView extends ConsumerStatefulWidget {
   const AdminServerLogsView({super.key});
 
   @override
-  ConsumerState<AdminServerLogsView> createState() => _AdminServerLogsViewState();
+  ConsumerState<AdminServerLogsView> createState() =>
+      _AdminServerLogsViewState();
 }
 
 class _AdminServerLogsViewState extends ConsumerState<AdminServerLogsView> {
@@ -96,7 +97,8 @@ class _AdminServerLogsViewState extends ConsumerState<AdminServerLogsView> {
         throw StateError('Server did not return the current log level.');
       }
 
-      final loadedLogs = loggerResponse.data?.currentDailyLogs ?? const <ServerLogEntry>[];
+      final loadedLogs =
+          loggerResponse.data?.currentDailyLogs ?? const <ServerLogEntry>[];
       final trimmedLogs = loadedLogs.length > _maxLogLines
           ? loadedLogs.sublist(loadedLogs.length - _maxLogLines)
           : loadedLogs;
@@ -206,7 +208,10 @@ class _AdminServerLogsViewState extends ConsumerState<AdminServerLogsView> {
       }
 
       await api.getAdminApi().updateServerSettings(
-        settingsUpdate: ServerSettings(id: "server-settings", logLevel: nextLogLevel),
+        settingsUpdate: ServerSettings(
+          id: "server-settings",
+          logLevel: nextLogLevel,
+        ),
       );
 
       if (!mounted) {
@@ -256,7 +261,11 @@ class _AdminServerLogsViewState extends ConsumerState<AdminServerLogsView> {
 
       final maxScroll = _scrollController.position.maxScrollExtent;
       if (animated) {
-        _scrollController.animateTo(maxScroll, duration: const Duration(milliseconds: 120), curve: Curves.easeOut);
+        _scrollController.animateTo(
+          maxScroll,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+        );
       } else {
         _scrollController.jumpTo(maxScroll);
       }
@@ -270,12 +279,16 @@ class _AdminServerLogsViewState extends ConsumerState<AdminServerLogsView> {
   }
 
   void _rebuildVisibleLogText() {
-    final levelFilteredLogs = _loadedLogs.where((log) => log.level >= _listenerLogLevel.value);
+    final levelFilteredLogs = _loadedLogs.where(
+      (log) => log.level >= _listenerLogLevel.value,
+    );
 
     final searchableLogs = _searchText.isEmpty
         ? levelFilteredLogs
         : levelFilteredLogs.where((log) {
-            final searchable = '${log.timestamp} ${log.levelName} ${log.source ?? ''} ${log.message}'.toLowerCase();
+            final searchable =
+                '${log.timestamp} ${log.levelName} ${log.source ?? ''} ${log.message}'
+                    .toLowerCase();
             return searchable.contains(_searchText);
           });
 
@@ -359,7 +372,10 @@ class _AdminServerLogsViewState extends ConsumerState<AdminServerLogsView> {
                       ),
                       options: LogLevel.values
                           .map(
-                            (level) => YaabsaDropdownOption<int>(value: level.value, label: level.name.toUpperCase()),
+                            (level) => YaabsaDropdownOption<int>(
+                              value: level.value,
+                              label: level.name.toUpperCase(),
+                            ),
                           )
                           .toList(growable: false),
                       onChanged: _isUpdatingLogLevel
@@ -367,7 +383,11 @@ class _AdminServerLogsViewState extends ConsumerState<AdminServerLogsView> {
                           : (value) {
                               if (value != null) {
                                 unawaited(
-                                  _updateServerLogLevel(LogLevel.values.firstWhere((level) => level.value == value)),
+                                  _updateServerLogLevel(
+                                    LogLevel.values.firstWhere(
+                                      (level) => level.value == value,
+                                    ),
+                                  ),
                                 );
                               }
                             },
@@ -392,30 +412,47 @@ class _AdminServerLogsViewState extends ConsumerState<AdminServerLogsView> {
                   const Text('Auto-scroll'),
                   const Spacer(),
                   if (_isUpdatingLogLevel)
-                    const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                 ],
               ),
               if (_errorMessage != null && _errorMessage!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ),
               SizedBox(
                 height: logsContainerHeight,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.6)),
+                    border: Border.all(
+                      color: Theme.of(context).dividerColor
+                          .withValues(alpha: 0.6),
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _visibleLogText.isEmpty
-                      ? const Center(child: Text('No logs found for the current search.'))
+                      ? const Center(
+                          child: Text('No logs found for the current search.'),
+                        )
                       : Scrollbar(
                           controller: _scrollController,
                           child: SingleChildScrollView(
                             controller: _scrollController,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
                             child: SelectableText(
                               _visibleLogText,
                               style: TextStyle(
@@ -439,7 +476,10 @@ class _AdminServerLogsViewState extends ConsumerState<AdminServerLogsView> {
       ),
       error: (error, stackTrace) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          'Failed to load user data: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       ),
     );
   }

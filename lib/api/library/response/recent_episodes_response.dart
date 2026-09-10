@@ -9,9 +9,14 @@ part 'recent_episodes_response.g.dart';
 abstract class RecentEpisodesResponse with _$RecentEpisodesResponse {
   const factory RecentEpisodesResponse({
     @JsonKey(name: 'episodes') @Default(<Episode>[]) List<Episode> episodes,
-    @JsonKey(name: 'limit', fromJson: jsonIntRequiredFromDynamic) @Default(0) int limit,
-    @JsonKey(name: 'page', fromJson: jsonIntRequiredFromDynamic) @Default(0) int page,
+    @JsonKey(name: 'limit', fromJson: jsonIntRequiredFromDynamic)
+    @Default(0)
+    int limit,
+    @JsonKey(name: 'page', fromJson: jsonIntRequiredFromDynamic)
+    @Default(0)
+    int page,
   }) = _RecentEpisodesResponse;
 
-  factory RecentEpisodesResponse.fromJson(Map<String, dynamic> json) => _$RecentEpisodesResponseFromJson(json);
+  factory RecentEpisodesResponse.fromJson(Map<String, dynamic> json) =>
+      _$RecentEpisodesResponseFromJson(json);
 }

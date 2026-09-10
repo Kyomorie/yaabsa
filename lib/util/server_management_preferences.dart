@@ -20,7 +20,10 @@ class ServerManagementPreferences {
   });
 }
 
-ServerManagementPreferences readServerManagementPreferences(WidgetRef ref, String? userId) {
+ServerManagementPreferences readServerManagementPreferences(
+  WidgetRef ref,
+  String? userId,
+) {
   ref.watch(userSettingsWatcherProvider);
   final settingsManager = ref.read(settingsManagerProvider.notifier);
 
@@ -30,15 +33,31 @@ ServerManagementPreferences readServerManagementPreferences(WidgetRef ref, Strin
       return defaultValue;
     }
 
-    return settingsManager.getUserSetting<bool>(userId, key, defaultValue: defaultValue);
+    return settingsManager.getUserSetting<bool>(
+      userId,
+      key,
+      defaultValue: defaultValue,
+    );
   }
 
   return ServerManagementPreferences(
     collectionsEnabled: readBool(SettingKeys.serverManagementCollections, true),
-    deleteItemsEnabled: readBool(SettingKeys.serverManagementDeleteItems, false),
+    deleteItemsEnabled: readBool(
+      SettingKeys.serverManagementDeleteItems,
+      false,
+    ),
     editItemsEnabled: readBool(SettingKeys.serverManagementEditItems, false),
-    editChaptersEnabled: readBool(SettingKeys.serverManagementEditChapters, true),
-    uploadItemsEnabled: readBool(SettingKeys.serverManagementUploadItems, false),
-    allowMatchesQuickMatchesEnabled: readBool(SettingKeys.serverManagementAllowMatchesQuickMatches, false),
+    editChaptersEnabled: readBool(
+      SettingKeys.serverManagementEditChapters,
+      true,
+    ),
+    uploadItemsEnabled: readBool(
+      SettingKeys.serverManagementUploadItems,
+      false,
+    ),
+    allowMatchesQuickMatchesEnabled: readBool(
+      SettingKeys.serverManagementAllowMatchesQuickMatches,
+      false,
+    ),
   );
 }

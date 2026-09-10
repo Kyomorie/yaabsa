@@ -7,10 +7,17 @@ part 'search_providers.g.dart';
 @freezed
 abstract class SearchProviders with _$SearchProviders {
   const factory SearchProviders({
-    @JsonKey(name: 'books') @Default(<SearchProviderOption>[]) List<SearchProviderOption> books,
-    @JsonKey(name: 'booksCovers') @Default(<SearchProviderOption>[]) List<SearchProviderOption> booksCovers,
-    @JsonKey(name: 'podcasts') @Default(<SearchProviderOption>[]) List<SearchProviderOption> podcasts,
+    @JsonKey(name: 'books')
+    @Default(<SearchProviderOption>[])
+    List<SearchProviderOption> books,
+    @JsonKey(name: 'booksCovers')
+    @Default(<SearchProviderOption>[])
+    List<SearchProviderOption> booksCovers,
+    @JsonKey(name: 'podcasts')
+    @Default(<SearchProviderOption>[])
+    List<SearchProviderOption> podcasts,
   }) = _SearchProviders;
 
-  factory SearchProviders.fromJson(Map<String, dynamic> json) => _$SearchProvidersFromJson(json);
+  factory SearchProviders.fromJson(Map<String, dynamic> json) =>
+      _$SearchProvidersFromJson(json);
 }

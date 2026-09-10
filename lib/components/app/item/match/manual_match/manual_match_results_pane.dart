@@ -24,14 +24,20 @@ class ManualMatchResultsPane extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.manage_search_rounded),
             title: const Text('Match candidates'),
-            subtitle: Text(results.isEmpty ? 'No results yet' : '${results.length} result(s)'),
+            subtitle: Text(
+              results.isEmpty
+                  ? 'No results yet'
+                  : '${results.length} result(s)',
+            ),
           ),
           const Divider(height: 1),
           Expanded(
             child: searching
                 ? const Center(child: CircularProgressIndicator())
                 : results.isEmpty
-                ? const Center(child: Text('Run a search to load metadata match results.'))
+                ? const Center(
+                    child: Text('Run a search to load metadata match results.'),
+                  )
                 : ListView.separated(
                     itemCount: results.length,
                     separatorBuilder: (_, _) => const Divider(height: 1),
@@ -53,7 +59,11 @@ class ManualMatchResultsPane extends StatelessWidget {
 }
 
 class _ManualMatchResultTile extends StatelessWidget {
-  const _ManualMatchResultTile({required this.result, required this.selected, required this.onTap});
+  const _ManualMatchResultTile({
+    required this.result,
+    required this.selected,
+    required this.onTap,
+  });
 
   final ManualMatchResult result;
   final bool selected;
@@ -73,7 +83,8 @@ class _ManualMatchResultTile extends StatelessWidget {
 
     return ListTile(
       selected: selected,
-      selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+      selectedTileColor: Theme.of(context).colorScheme.primary
+          .withValues(alpha: 0.08),
       onTap: onTap,
       leading: ClipRRect(
         borderRadius: BorderRadius.circular(6),
@@ -89,7 +100,9 @@ class _ManualMatchResultTile extends StatelessWidget {
                   result.coverUrl!,
                   fit: BoxFit.cover,
                   errorBuilder: (_, _, _) => Container(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest,
                     child: const Icon(Icons.menu_book_rounded, size: 20),
                   ),
                 ),
@@ -99,7 +112,12 @@ class _ManualMatchResultTile extends StatelessWidget {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (result.authorDisplay != null) Text(result.authorDisplay!, maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (result.authorDisplay != null)
+            Text(
+              result.authorDisplay!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           const SizedBox(height: 4),
           Wrap(
             spacing: 8,
@@ -107,32 +125,43 @@ class _ManualMatchResultTile extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(999), color: providerBadgeColor),
-                child: Text(result.providerLabel, style: Theme.of(context).textTheme.labelSmall),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: providerBadgeColor,
+                ),
+                child: Text(
+                  result.providerLabel,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
               ),
               if (result.publishedYear != null)
                 Text(
                   result.publishedYear!,
-                  style: Theme.of(context).textTheme.labelSmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               if (result.runtimeLabel != null)
                 Text(
                   result.runtimeLabel!,
-                  style: Theme.of(context).textTheme.labelSmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               if (identifierLabel != null)
                 Text(
                   identifierLabel,
-                  style: Theme.of(context).textTheme.labelSmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ),
         ],
       ),
-      trailing: selected ? const Icon(Icons.check_circle_rounded) : const Icon(Icons.chevron_right_rounded),
+      trailing: selected
+          ? const Icon(Icons.check_circle_rounded)
+          : const Icon(Icons.chevron_right_rounded),
       isThreeLine: result.authorDisplay != null,
     );
   }

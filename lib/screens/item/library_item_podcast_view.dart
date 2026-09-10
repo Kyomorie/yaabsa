@@ -38,17 +38,24 @@ import 'package:yaabsa/util/setting_key.dart';
 import 'package:yaabsa/util/logger.dart';
 
 class LibraryItemPodcastView extends ConsumerStatefulWidget {
-  const LibraryItemPodcastView({super.key, required this.item, required this.canDownload});
+  const LibraryItemPodcastView({
+    super.key,
+    required this.item,
+    required this.canDownload,
+  });
 
   final LibraryItem item;
   final bool canDownload;
 
   @override
-  ConsumerState<LibraryItemPodcastView> createState() => _LibraryItemPodcastViewState();
+  ConsumerState<LibraryItemPodcastView> createState() =>
+      _LibraryItemPodcastViewState();
 }
 
-class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView> {
-  PodcastEpisodeProgressFilter _progressFilter = PodcastEpisodeProgressFilter.all;
+class _LibraryItemPodcastViewState
+    extends ConsumerState<LibraryItemPodcastView> {
+  PodcastEpisodeProgressFilter _progressFilter =
+      PodcastEpisodeProgressFilter.all;
   PodcastEpisodeSortMode _sortMode = PodcastEpisodeSortMode.newestFirst;
   bool _showFullDescription = false;
   bool _isFetchingPodcastFeed = false;
@@ -116,13 +123,18 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
     final allEpisodes = podcastMedia.episodes ?? const <Episode>[];
     final progressSnapshot = ref.watch(
       mediaProgressProvider.select(
-        (progress) =>
-            _PodcastProgressSnapshot.from(progress.asData?.value, libraryItemId: widget.item.id, episodes: allEpisodes),
+        (progress) => _PodcastProgressSnapshot.from(
+          progress.asData?.value,
+          libraryItemId: widget.item.id,
+          episodes: allEpisodes,
+        ),
       ),
     );
     final progressMap = progressSnapshot.progressMap;
     final visibleEpisodes = _buildVisibleEpisodes(allEpisodes, progressMap);
-    final firstPlayableEpisode = visibleEpisodes.where((episode) => episode.audioFile != null).firstOrNull;
+    final firstPlayableEpisode = visibleEpisodes
+        .where((episode) => episode.audioFile != null)
+        .firstOrNull;
 
     final horizontalPadding = context.isMobile
         ? 8.0
@@ -136,22 +148,36 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
         : double.infinity;
 
     final totalDurationSeconds = widget.item.media?.duration() ?? 0;
-    final totalDuration = totalDurationSeconds <= 0 ? null : Duration(seconds: totalDurationSeconds.round());
+    final totalDuration = totalDurationSeconds <= 0
+        ? null
+        : Duration(seconds: totalDurationSeconds.round());
 
     final currentUser = ref.watch(currentUserProvider).value;
     ref.watch(userSettingsWatcherProvider);
-    final managementPreferences = readServerManagementPreferences(ref, currentUser?.id);
-    final canEditItems = (currentUser?.permissions.update ?? false) && managementPreferences.editItemsEnabled;
+    final managementPreferences = readServerManagementPreferences(
+      ref,
+      currentUser?.id,
+    );
+    final canEditItems =
+        (currentUser?.permissions.update ?? false) &&
+        managementPreferences.editItemsEnabled;
     final showShuffleButton =
         currentUser != null &&
         ref
             .read(settingsManagerProvider.notifier)
-            .getUserSetting<bool>(currentUser.id, SettingKeys.showShuffleButton, defaultValue: false);
+            .getUserSetting<bool>(
+              currentUser.id,
+              SettingKeys.showShuffleButton,
+              defaultValue: false,
+            );
     final LibraryFilterData? filterData = widget.item.libraryId == null
         ? null
         : ref.watch(libraryFilterDataProvider(widget.item.libraryId!)).value;
     final appDatabase = ref.watch(appDatabaseProvider);
-    final storedDownloadsStream = _storedDownloadsFor(currentUser?.id, appDatabase);
+    final storedDownloadsStream = _storedDownloadsFor(
+      currentUser?.id,
+      appDatabase,
+    );
 
     return StreamBuilder<List<TaskRecord>>(
       stream: _activeTasksStream,
@@ -162,7 +188,11 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
         final downloadingEpisodeIds = <String>{
           for (final episode in visibleEpisodes)
             if (activeTasks.any(
-              (task) => downloadHandler.taskBelongsToItem(task, widget.item.id, episodeId: episode.id),
+              (task) => downloadHandler.taskBelongsToItem(
+                task,
+                widget.item.id,
+                episodeId: episode.id,
+              ),
             ))
               episode.id,
         };
@@ -171,7 +201,8 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
           stream: storedDownloadsStream,
           initialData: const <InternalDownload>[],
           builder: (context, storedSnapshot) {
-            final storedDownloads = storedSnapshot.data ?? const <InternalDownload>[];
+            final storedDownloads =
+                storedSnapshot.data ?? const <InternalDownload>[];
             final downloadsByEpisodeId = <String, InternalDownload>{
               for (final download in storedDownloads)
                 if (download.episode case final episode?) episode.id: download,
@@ -180,12 +211,14 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
             final unfinishedEpisodes = <Episode>[];
 
             for (final episode in visibleEpisodes) {
-              final isDownloaded = downloadsByEpisodeId[episode.id]?.isComplete ?? false;
+              final isDownloaded =
+                  downloadsByEpisodeId[episode.id]?.isComplete ?? false;
               if (isDownloaded || downloadingEpisodeIds.contains(episode.id)) {
                 continue;
               }
 
-              final progress = progressMap[mediaProgressKey(widget.item.id, episode.id)];
+              final progress =
+                  progressMap[mediaProgressKey(widget.item.id, episode.id)];
               final isFinished = progress != null && progress.isFinished;
               if (isFinished) {
                 continue;
@@ -202,7 +235,8 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
               stream: audioHandler.queueSnapshotStream,
               initialData: audioHandler.queueSnapshot,
               builder: (context, queueSnapshotBuilder) {
-                final queueSnapshot = queueSnapshotBuilder.data ?? const PlayerQueueSnapshot();
+                final queueSnapshot =
+                    queueSnapshotBuilder.data ?? const PlayerQueueSnapshot();
                 final queuedEpisodeIds = queueSnapshot.entries
                     .where((entry) => entry.item.itemId == widget.item.id)
                     .map((entry) => entry.item.episodeId)
@@ -217,82 +251,121 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                     final latestEpisodeId = firstPlayableEpisode?.id;
                     final isCurrentLatestEpisode =
                         latestEpisodeId != null &&
-                        audioHandler.currentMediaItem?.itemId == widget.item.id &&
-                        audioHandler.currentMediaItem?.episodeId == latestEpisodeId;
-                    final isPlayingCurrentLatestEpisode = isCurrentLatestEpisode && (playerState?.playing ?? false);
+                        audioHandler.currentMediaItem?.itemId ==
+                            widget.item.id &&
+                        audioHandler.currentMediaItem?.episodeId ==
+                            latestEpisodeId;
+                    final isPlayingCurrentLatestEpisode =
+                        isCurrentLatestEpisode &&
+                        (playerState?.playing ?? false);
 
                     return StreamBuilder<bool>(
                       stream: audioHandler.queueTransitionLoadingStream,
                       initialData: audioHandler.queueTransitionLoading,
                       builder: (context, queueTransitionSnapshot) {
                         final isQueueTransitionLoading =
-                            queueTransitionSnapshot.data ?? audioHandler.queueTransitionLoading;
+                            queueTransitionSnapshot.data ??
+                            audioHandler.queueTransitionLoading;
                         final isLoadingCurrentLatestEpisode =
                             latestEpisodeId != null &&
                             isQueueTransitionLoading &&
-                            audioHandler.isQueueTransitionForItem(widget.item.id, episodeId: latestEpisodeId);
+                            audioHandler.isQueueTransitionForItem(
+                              widget.item.id,
+                              episodeId: latestEpisodeId,
+                            );
 
                         return CustomScrollView(
                           slivers: [
                             SliverToBoxAdapter(
                               child: Padding(
-                                padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 10),
+                                padding: EdgeInsets.fromLTRB(
+                                  horizontalPadding,
+                                  8,
+                                  horizontalPadding,
+                                  10,
+                                ),
                                 child: Center(
                                   child: ConstrainedBox(
-                                    constraints: BoxConstraints(maxWidth: maxWidth),
+                                    constraints: BoxConstraints(
+                                      maxWidth: maxWidth,
+                                    ),
                                     child: PodcastHeaderCard(
                                       item: widget.item,
-                                      cover: api.getLibraryItemApi().getLibraryItemCover(
-                                        widget.item.id,
-                                        item: widget.item,
-                                      ),
+                                      cover: api
+                                          .getLibraryItemApi()
+                                          .getLibraryItemCover(
+                                            widget.item.id,
+                                            item: widget.item,
+                                          ),
                                       totalEpisodes: allEpisodes.length,
                                       visibleEpisodes: visibleEpisodes.length,
                                       duration: totalDuration,
                                       showFullDescription: _showFullDescription,
-                                      isCurrentPlayableEpisode: isCurrentLatestEpisode,
-                                      isPlayingCurrentPlayableEpisode: isPlayingCurrentLatestEpisode,
-                                      isLoadingCurrentPlayableEpisode: isLoadingCurrentLatestEpisode,
+                                      isCurrentPlayableEpisode:
+                                          isCurrentLatestEpisode,
+                                      isPlayingCurrentPlayableEpisode:
+                                          isPlayingCurrentLatestEpisode,
+                                      isLoadingCurrentPlayableEpisode:
+                                          isLoadingCurrentLatestEpisode,
                                       isFindingEpisodes: _isFetchingPodcastFeed,
-                                      onShuffle: showShuffleButton && hasRandomPlaybackTarget([widget.item])
-                                          ? () => unawaited(playRandomLibraryItemOrEpisode([widget.item]))
+                                      onShuffle:
+                                          showShuffleButton &&
+                                              hasRandomPlaybackTarget([
+                                                widget.item,
+                                              ])
+                                          ? () => unawaited(
+                                              playRandomLibraryItemOrEpisode([
+                                                widget.item,
+                                              ]),
+                                            )
                                           : null,
                                       onBack: () => context.pop(),
                                       onPlayLatest: firstPlayableEpisode == null
                                           ? null
                                           : () {
-                                              final episodeToPlay = firstPlayableEpisode;
+                                              final episodeToPlay =
+                                                  firstPlayableEpisode;
 
                                               if (isCurrentLatestEpisode) {
                                                 audioHandler.play();
                                                 return;
                                               }
 
-                                              _playEpisode(episodeToPlay, visibleEpisodes);
+                                              _playEpisode(
+                                                episodeToPlay,
+                                                visibleEpisodes,
+                                              );
                                             },
                                       onPauseLatest: isCurrentLatestEpisode
                                           ? () {
                                               audioHandler.pause();
                                             }
                                           : null,
-                                      onFindEpisodes: canEditItems ? _findEpisodes : null,
+                                      onFindEpisodes: canEditItems
+                                          ? _findEpisodes
+                                          : null,
                                       onEditPodcast: canEditItems
-                                          ? () => openSingleLibraryItemEditorDialog(
-                                              context: context,
-                                              item: widget.item,
-                                              filterData: filterData,
-                                            )
+                                          ? () =>
+                                                openSingleLibraryItemEditorDialog(
+                                                  context: context,
+                                                  item: widget.item,
+                                                  filterData: filterData,
+                                                )
                                           : null,
                                       onDownloadPress: widget.canDownload
                                           ? () => _showDownloadOptionsDialog(
-                                              notStartedEpisodes: notStartedEpisodes,
-                                              unfinishedEpisodes: unfinishedEpisodes,
-                                              activePodcastTasks: activePodcastTasks,
+                                              notStartedEpisodes:
+                                                  notStartedEpisodes,
+                                              unfinishedEpisodes:
+                                                  unfinishedEpisodes,
+                                              activePodcastTasks:
+                                                  activePodcastTasks,
                                             )
                                           : null,
                                       onToggleDescription: () {
                                         setState(() {
-                                          _showFullDescription = !_showFullDescription;
+                                          _showFullDescription =
+                                              !_showFullDescription;
                                         });
                                       },
                                     ),
@@ -310,18 +383,25 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                 ),
                                 child: Center(
                                   child: ConstrainedBox(
-                                    constraints: BoxConstraints(maxWidth: maxWidth),
+                                    constraints: BoxConstraints(
+                                      maxWidth: maxWidth,
+                                    ),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.surfaceContainerLow,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .surfaceContainerLow,
                                         borderRadius: BorderRadius.circular(16),
                                       ),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           PodcastEpisodesHeaderCard(
-                                            totalEpisodeCount: allEpisodes.length,
-                                            visibleEpisodeCount: visibleEpisodes.length,
+                                            totalEpisodeCount:
+                                                allEpisodes.length,
+                                            visibleEpisodeCount:
+                                                visibleEpisodes.length,
                                             searchQuery: _searchQuery,
                                             searchController: _searchController,
                                             isMobileLayout: context.isMobile,
@@ -343,13 +423,20 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                                 _progressFilter = filter;
                                               });
 
-                                              final currentUserId = ref.read(currentUserProvider).value?.id;
+                                              final currentUserId = ref
+                                                  .read(currentUserProvider)
+                                                  .value
+                                                  ?.id;
                                               unawaited(
                                                 ref
-                                                    .read(settingsManagerProvider.notifier)
+                                                    .read(
+                                                      settingsManagerProvider
+                                                          .notifier,
+                                                    )
                                                     .setUserSetting<String>(
                                                       currentUserId,
-                                                      SettingKeys.podcastEpisodeProgressFilter,
+                                                      SettingKeys
+                                                          .podcastEpisodeProgressFilter,
                                                       filter.name,
                                                     ),
                                               );
@@ -359,19 +446,27 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                                 _sortMode = sortMode;
                                               });
 
-                                              final currentUserId = ref.read(currentUserProvider).value?.id;
+                                              final currentUserId = ref
+                                                  .read(currentUserProvider)
+                                                  .value
+                                                  ?.id;
                                               unawaited(
                                                 ref
-                                                    .read(settingsManagerProvider.notifier)
+                                                    .read(
+                                                      settingsManagerProvider
+                                                          .notifier,
+                                                    )
                                                     .setUserSetting<String>(
                                                       currentUserId,
-                                                      SettingKeys.podcastEpisodeSortMode,
+                                                      SettingKeys
+                                                          .podcastEpisodeSortMode,
                                                       sortMode.name,
                                                     ),
                                               );
                                             },
                                             selectionMode: _selectionMode,
-                                            selectedCount: _selectedEpisodeIds.length,
+                                            selectedCount:
+                                                _selectedEpisodeIds.length,
                                             onClearSelection: () {
                                               setState(() {
                                                 _selectionMode = false;
@@ -380,11 +475,19 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                             },
                                             onSelectAll: () {
                                               setState(() {
-                                                _selectedEpisodeIds.addAll(visibleEpisodes.map((e) => e.id));
+                                                _selectedEpisodeIds.addAll(
+                                                  visibleEpisodes.map(
+                                                    (e) => e.id,
+                                                  ),
+                                                );
                                               });
                                             },
                                             onDownloadSelected: () {
-                                              _downloadSelectedEpisodes(visibleEpisodes, storedDownloads, activeTasks);
+                                              _downloadSelectedEpisodes(
+                                                visibleEpisodes,
+                                                storedDownloads,
+                                                activeTasks,
+                                              );
                                             },
                                           ),
                                           if (visibleEpisodes.isEmpty) ...[
@@ -392,7 +495,9 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                             const Padding(
                                               padding: EdgeInsets.all(24),
                                               child: Center(
-                                                child: Text('No episodes match the current search/filter settings.'),
+                                                child: Text(
+                                                  'No episodes match the current search/filter settings.',
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -410,21 +515,37 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                 maxWidth: maxWidth,
                                 itemBuilder: (context, index) {
                                   final episode = visibleEpisodes[index];
-                                  final episodeProgress = progressMap[mediaProgressKey(widget.item.id, episode.id)];
-                                  final isEpisodeFinished = isPodcastEpisodeFinished(
-                                    item: widget.item,
-                                    episode: episode,
-                                    progressByKey: progressMap,
+                                  final episodeProgress =
+                                      progressMap[mediaProgressKey(
+                                        widget.item.id,
+                                        episode.id,
+                                      )];
+                                  final isEpisodeFinished =
+                                      isPodcastEpisodeFinished(
+                                        item: widget.item,
+                                        episode: episode,
+                                        progressByKey: progressMap,
+                                      );
+                                  final isQueued = queuedEpisodeIds.contains(
+                                    episode.id,
                                   );
-                                  final isQueued = queuedEpisodeIds.contains(episode.id);
 
                                   final isCurrentEpisode =
-                                      audioHandler.currentMediaItem?.itemId == widget.item.id &&
-                                      audioHandler.currentMediaItem?.episodeId == episode.id;
-                                  final isPlayingCurrentEpisode = isCurrentEpisode && (playerState?.playing ?? false);
-                                  final episodeDownload = downloadsByEpisodeId[episode.id];
-                                  final isDownloaded = episodeDownload?.isComplete ?? false;
-                                  final isDownloading = downloadingEpisodeIds.contains(episode.id);
+                                      audioHandler.currentMediaItem?.itemId ==
+                                          widget.item.id &&
+                                      audioHandler
+                                              .currentMediaItem
+                                              ?.episodeId ==
+                                          episode.id;
+                                  final isPlayingCurrentEpisode =
+                                      isCurrentEpisode &&
+                                      (playerState?.playing ?? false);
+                                  final episodeDownload =
+                                      downloadsByEpisodeId[episode.id];
+                                  final isDownloaded =
+                                      episodeDownload?.isComplete ?? false;
+                                  final isDownloading = downloadingEpisodeIds
+                                      .contains(episode.id);
 
                                   return PodcastEpisodeTile(
                                     episode: episode,
@@ -434,23 +555,31 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                     isDownloaded: isDownloaded,
                                     isQueued: isQueued,
                                     isCurrentEpisode: isCurrentEpisode,
-                                    isPlayingCurrentEpisode: isPlayingCurrentEpisode,
+                                    isPlayingCurrentEpisode:
+                                        isPlayingCurrentEpisode,
                                     selectionMode: _selectionMode,
-                                    isSelected: _selectedEpisodeIds.contains(episode.id),
+                                    isSelected: _selectedEpisodeIds.contains(
+                                      episode.id,
+                                    ),
                                     onSelectedChanged: (selected) {
                                       setState(() {
                                         if (selected == true) {
                                           _selectedEpisodeIds.add(episode.id);
                                           _selectionMode = true;
                                         } else {
-                                          _selectedEpisodeIds.remove(episode.id);
+                                          _selectedEpisodeIds.remove(
+                                            episode.id,
+                                          );
                                           if (_selectedEpisodeIds.isEmpty) {
                                             _selectionMode = false;
                                           }
                                         }
                                       });
                                     },
-                                    onOpenDetails: () => _openEpisodeDetails(episode, visibleEpisodes),
+                                    onOpenDetails: () => _openEpisodeDetails(
+                                      episode,
+                                      visibleEpisodes,
+                                    ),
                                     onPlayPressed: episode.audioFile == null
                                         ? null
                                         : () {
@@ -463,22 +592,37 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                               return;
                                             }
 
-                                            _playEpisode(episode, visibleEpisodes);
+                                            _playEpisode(
+                                              episode,
+                                              visibleEpisodes,
+                                            );
                                           },
                                     onQueueToggle: () {
                                       if (isQueued) {
-                                        audioHandler.removeFromQueueByItemId(widget.item.id, episodeId: episode.id);
+                                        audioHandler.removeFromQueueByItemId(
+                                          widget.item.id,
+                                          episodeId: episode.id,
+                                        );
                                         return;
                                       }
 
-                                      audioHandler.addPodcastEpisodeToQueue(widget.item, episode);
+                                      audioHandler.addPodcastEpisodeToQueue(
+                                        widget.item,
+                                        episode,
+                                      );
                                     },
-                                    onDownloadPressed: widget.canDownload && !isDownloaded
+                                    onDownloadPressed:
+                                        widget.canDownload && !isDownloaded
                                         ? () => _queueEpisodeDownload(episode)
                                         : null,
-                                    onDeletePressed: isDownloaded && currentUser != null && episodeDownload != null
-                                        ? () =>
-                                              _deleteEpisodeDownload(download: episodeDownload, userId: currentUser.id)
+                                    onDeletePressed:
+                                        isDownloaded &&
+                                            currentUser != null &&
+                                            episodeDownload != null
+                                        ? () => _deleteEpisodeDownload(
+                                            download: episodeDownload,
+                                            userId: currentUser.id,
+                                          )
                                         : null,
                                     showMarkAsUnfinished: isEpisodeFinished,
                                     onMoreActionSelected: (action) async {
@@ -515,7 +659,9 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                             PlayHistoryView.location(
                                               itemId: widget.item.id,
                                               episodeId: episode.id,
-                                              itemTitle: podcastEpisodeTitle(episode),
+                                              itemTitle: podcastEpisodeTitle(
+                                                episode,
+                                              ),
                                             ),
                                           );
                                           return;
@@ -551,8 +697,11 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
 
     final feedUrl = widget.item.media?.podcastMedia?.metadata.feedUrl?.trim();
     if (feedUrl == null || feedUrl.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('This podcast does not have an RSS feed URL.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This podcast does not have an RSS feed URL.'),
+        ),
+      );
       return;
     }
 
@@ -567,13 +716,17 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
         throw Exception('API not available');
       }
 
-      final response = await api.getPodcastApi().getPodcastFeed(rssFeed: feedUrl);
+      final response = await api.getPodcastApi().getPodcastFeed(
+        rssFeed: feedUrl,
+      );
       feed = response.data?.podcast;
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not load podcast feed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not load podcast feed: $e')),
+      );
       return;
     } finally {
       if (mounted) {
@@ -591,8 +744,11 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
         .where((episode) => (episode.enclosure?.url ?? '').trim().isNotEmpty)
         .toList(growable: false);
     if (feedEpisodes.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('No downloadable episodes were found in the RSS feed.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No downloadable episodes were found in the RSS feed.'),
+        ),
+      );
       return;
     }
 
@@ -600,7 +756,8 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
       context: context,
       podcastTitle: widget.item.title,
       episodes: feedEpisodes,
-      existingEpisodes: widget.item.media?.podcastMedia?.episodes ?? const <Episode>[],
+      existingEpisodes:
+          widget.item.media?.podcastMedia?.episodes ?? const <Episode>[],
     );
 
     if (!mounted || selectedEpisodes == null || selectedEpisodes.isEmpty) {
@@ -610,7 +767,9 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
     await _downloadPodcastFeedEpisodes(selectedEpisodes);
   }
 
-  Future<void> _downloadPodcastFeedEpisodes(List<PodcastFeedEpisode> episodes) async {
+  Future<void> _downloadPodcastFeedEpisodes(
+    List<PodcastFeedEpisode> episodes,
+  ) async {
     final api = ref.read(absApiProvider);
     if (api == null) {
       return;
@@ -620,7 +779,10 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
       final started = await runWithLoadingSnackBar<bool>(
         context: context,
         message: 'Queuing episode downloads...',
-        action: () => api.getPodcastApi().downloadPodcastEpisodes(libraryItemId: widget.item.id, episodes: episodes),
+        action: () => api.getPodcastApi().downloadPodcastEpisodes(
+          libraryItemId: widget.item.id,
+          episodes: episodes,
+        ),
       );
       if (!mounted) {
         return;
@@ -630,23 +792,35 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
         final count = episodes.length;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(count == 1 ? 'Started downloading 1 episode.' : 'Started downloading $count episodes.'),
+            content: Text(
+              count == 1
+                  ? 'Started downloading 1 episode.'
+                  : 'Started downloading $count episodes.',
+            ),
           ),
         );
         ref.invalidate(libraryItemProvider(widget.item.id));
       } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Could not queue podcast episodes for download.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not queue podcast episodes for download.'),
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not queue podcast episodes: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not queue podcast episodes: $e')),
+      );
     }
   }
 
-  Future<void> _openEpisodeDetails(Episode episode, List<Episode> orderedEpisodes) async {
+  Future<void> _openEpisodeDetails(
+    Episode episode,
+    List<Episode> orderedEpisodes,
+  ) async {
     if (context.isMobile) {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -682,7 +856,9 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
   }
 
   void _playEpisode(Episode episode, List<Episode> orderedEpisodes) {
-    final episodeIndex = orderedEpisodes.indexWhere((candidate) => candidate.id == episode.id);
+    final episodeIndex = orderedEpisodes.indexWhere(
+      (candidate) => candidate.id == episode.id,
+    );
     audioHandler.playPodcastEpisode(
       widget.item,
       episode,
@@ -697,47 +873,71 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Download added to queue.')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Download added to queue.')));
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not start download: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not start download: $e')));
     }
   }
 
-  Stream<List<InternalDownload>> _storedDownloadsFor(String? userId, AppDatabase appDatabase) {
+  Stream<List<InternalDownload>> _storedDownloadsFor(
+    String? userId,
+    AppDatabase appDatabase,
+  ) {
     if (_storedDownloadsStream == null || _storedDownloadsUserId != userId) {
       _storedDownloadsUserId = userId;
       _storedDownloadsStream = userId == null
           ? Stream<List<InternalDownload>>.value(const <InternalDownload>[])
-          : appDatabase.watchStoredDownloadsByUserForItem(userId, widget.item.id);
+          : appDatabase.watchStoredDownloadsByUserForItem(
+              userId,
+              widget.item.id,
+            );
     }
     return _storedDownloadsStream!;
   }
 
-  Future<void> _deleteEpisodeDownload({required InternalDownload download, required String userId}) async {
+  Future<void> _deleteEpisodeDownload({
+    required InternalDownload download,
+    required String userId,
+  }) async {
     try {
       final result = await runWithLoadingSnackBar(
         context: context,
         message: 'Deleting downloaded files...',
-        action: () => downloadHandler.deleteDownloadedItem(download, userId: userId),
+        action: () =>
+            downloadHandler.deleteDownloadedItem(download, userId: userId),
       );
       if (!mounted) {
         return;
       }
-      final failedSuffix = result.failedFiles > 0 ? ' ${result.failedFiles} file(s) could not be removed.' : '';
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Deleted ${result.deletedFiles} file(s).$failedSuffix')));
+      final failedSuffix = result.failedFiles > 0
+          ? ' ${result.failedFiles} file(s) could not be removed.'
+          : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted ${result.deletedFiles} file(s).$failedSuffix'),
+        ),
+      );
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not delete download: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not delete download: $e')));
     }
   }
 
-  List<Episode> _buildVisibleEpisodes(List<Episode> episodes, Map<String, MediaProgress> progressMap) {
+  List<Episode> _buildVisibleEpisodes(
+    List<Episode> episodes,
+    Map<String, MediaProgress> progressMap,
+  ) {
     final normalizedQuery = _searchQuery.trim().toLowerCase();
 
     final filtered = episodes
@@ -746,7 +946,8 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
             return false;
           }
 
-          final progress = progressMap[mediaProgressKey(widget.item.id, episode.id)];
+          final progress =
+              progressMap[mediaProgressKey(widget.item.id, episode.id)];
           if (!_matchesFilter(progress)) {
             return false;
           }
@@ -802,9 +1003,13 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
       case PodcastEpisodeSortMode.oldestFirst:
         return _episodeTimestamp(left).compareTo(_episodeTimestamp(right));
       case PodcastEpisodeSortMode.titleAsc:
-        return podcastEpisodeTitle(left).toLowerCase().compareTo(podcastEpisodeTitle(right).toLowerCase());
+        return podcastEpisodeTitle(left)
+            .toLowerCase()
+            .compareTo(podcastEpisodeTitle(right).toLowerCase());
       case PodcastEpisodeSortMode.titleDesc:
-        return podcastEpisodeTitle(right).toLowerCase().compareTo(podcastEpisodeTitle(left).toLowerCase());
+        return podcastEpisodeTitle(right)
+            .toLowerCase()
+            .compareTo(podcastEpisodeTitle(left).toLowerCase());
     }
   }
 
@@ -849,8 +1054,13 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.cancel_outlined, color: Colors.red),
-                  title: const Text('Cancel active downloads', style: TextStyle(color: Colors.red)),
-                  subtitle: Text('${activePodcastTasks.length} downloads active'),
+                  title: const Text(
+                    'Cancel active downloads',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  subtitle: Text(
+                    '${activePodcastTasks.length} downloads active',
+                  ),
                   onTap: () {
                     Navigator.pop(dialogContext);
                     _cancelActiveDownloads(activePodcastTasks);
@@ -859,7 +1069,12 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
               ],
             ],
           ),
-          actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel'))],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+          ],
         );
       },
     );
@@ -870,15 +1085,25 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
     var count = 0;
     for (final episode in episodes) {
       try {
-        await downloadHandler.downloadFile(widget.item.id, episodeId: episode.id);
+        await downloadHandler.downloadFile(
+          widget.item.id,
+          episodeId: episode.id,
+        );
         count++;
       } catch (e) {
-        logger('Could not download episode ${episode.title}: $e', tag: 'PodcastView', level: InfoLevel.error);
+        logger(
+          'Could not download episode ${episode.title}: $e',
+          tag: 'PodcastView',
+          level: InfoLevel.error,
+        );
       }
     }
     if (mounted) {
-      final message = count == 1 ? '1 download added to queue.' : '$count downloads added to queue.';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      final message = count == 1
+          ? '1 download added to queue.'
+          : '$count downloads added to queue.';
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -891,7 +1116,9 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
       }
     }
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Cancelled $count ongoing download(s).')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cancelled $count ongoing download(s).')),
+      );
     }
   }
 
@@ -902,17 +1129,26 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
   ) async {
     final episodesToDownload = visibleEpisodes.where((e) {
       if (!_selectedEpisodeIds.contains(e.id)) return false;
-      final isDownloaded = storedDownloads.any((d) => d.episode?.id == e.id && d.isComplete);
+      final isDownloaded = storedDownloads.any(
+        (d) => d.episode?.id == e.id && d.isComplete,
+      );
       final isDownloading = activeTasks.any(
-        (task) => downloadHandler.taskBelongsToItem(task, widget.item.id, episodeId: e.id),
+        (task) => downloadHandler.taskBelongsToItem(
+          task,
+          widget.item.id,
+          episodeId: e.id,
+        ),
       );
       return !isDownloaded && !isDownloading;
     }).toList();
 
     if (episodesToDownload.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('No new episodes to download in selection.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No new episodes to download in selection.'),
+          ),
+        );
       }
       setState(() {
         _selectionMode = false;
@@ -938,7 +1174,8 @@ bool _samePodcastTaskState(List<TaskRecord> previous, List<TaskRecord> next) {
   for (var index = 0; index < previous.length; index++) {
     final previousTask = previous[index];
     final nextTask = next[index];
-    if (previousTask.taskId != nextTask.taskId || previousTask.status != nextTask.status) {
+    if (previousTask.taskId != nextTask.taskId ||
+        previousTask.status != nextTask.status) {
       return false;
     }
   }
@@ -946,7 +1183,10 @@ bool _samePodcastTaskState(List<TaskRecord> previous, List<TaskRecord> next) {
 }
 
 class _PodcastProgressSnapshot {
-  const _PodcastProgressSnapshot({required this.progressMap, required this.episodeProgress});
+  const _PodcastProgressSnapshot({
+    required this.progressMap,
+    required this.episodeProgress,
+  });
 
   factory _PodcastProgressSnapshot.from(
     Map<String, MediaProgress>? progressMap, {
@@ -957,7 +1197,8 @@ class _PodcastProgressSnapshot {
     return _PodcastProgressSnapshot(
       progressMap: resolvedMap,
       episodeProgress: <MediaProgress?>[
-        for (final episode in episodes) resolvedMap[mediaProgressKey(libraryItemId, episode.id)],
+        for (final episode in episodes)
+          resolvedMap[mediaProgressKey(libraryItemId, episode.id)],
       ],
     );
   }
@@ -970,7 +1211,8 @@ class _PodcastProgressSnapshot {
     if (identical(this, other)) {
       return true;
     }
-    if (other is! _PodcastProgressSnapshot || episodeProgress.length != other.episodeProgress.length) {
+    if (other is! _PodcastProgressSnapshot ||
+        episodeProgress.length != other.episodeProgress.length) {
       return false;
     }
 

@@ -33,7 +33,9 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
   }
 
   bool _isMissingBookmarkForUpdateError(Object error) {
-    return error is DioException && (error.response?.statusCode == 404 || error.response?.statusCode == 500);
+    return error is DioException &&
+        (error.response?.statusCode == 404 ||
+            error.response?.statusCode == 500);
   }
 
   bool _isConnectivityError(Object error) {
@@ -56,9 +58,13 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
     }
   }
 
-  Future<List<StoredBookmarkSyncEntry>> _pendingEntriesForUser(String userId) async {
+  Future<List<StoredBookmarkSyncEntry>> _pendingEntriesForUser(
+    String userId,
+  ) async {
     try {
-      return await ref.read(appDatabaseProvider).getStoredBookmarkSyncByUser(userId);
+      return await ref
+          .read(appDatabaseProvider)
+          .getStoredBookmarkSyncByUser(userId);
     } catch (e, s) {
       logger(
         'Failed to load pending bookmark sync entries for user $userId: $e\n$s',
@@ -69,13 +75,17 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
     }
   }
 
-  List<Bookmark> _applyPendingMutations(List<Bookmark> bookmarks, List<StoredBookmarkSyncEntry> pendingEntries) {
+  List<Bookmark> _applyPendingMutations(
+    List<Bookmark> bookmarks,
+    List<StoredBookmarkSyncEntry> pendingEntries,
+  ) {
     final merged = <String, Bookmark>{};
     for (final bookmark in bookmarks) {
       merged[_bookmarkKey(bookmark.libraryItemId, bookmark.time)] = bookmark;
     }
 
-    final sortedPending = [...pendingEntries]..sort((left, right) => left.updatedAt.compareTo(right.updatedAt));
+    final sortedPending = [...pendingEntries]
+      ..sort((left, right) => left.updatedAt.compareTo(right.updatedAt));
 
     for (final pending in sortedPending) {
       if (pending.time <= 0) {
@@ -98,7 +108,8 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
         libraryItemId: pending.itemId,
         title: title,
         time: pending.time,
-        createdAt: existing?.createdAt ?? pending.updatedAt.millisecondsSinceEpoch,
+        createdAt:
+            existing?.createdAt ?? pending.updatedAt.millisecondsSinceEpoch,
       );
     }
 
@@ -132,7 +143,11 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
         );
   }
 
-  Future<void> _queueBookmarkDelete({required String userId, required String itemId, required int time}) {
+  Future<void> _queueBookmarkDelete({
+    required String userId,
+    required String itemId,
+    required int time,
+  }) {
     return ref
         .read(appDatabaseProvider)
         .upsertStoredBookmarkSync(
@@ -151,7 +166,9 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
     var replaced = false;
 
     for (final existing in bookmarks) {
-      final isSameBookmark = existing.libraryItemId == bookmark.libraryItemId && existing.time == bookmark.time;
+      final isSameBookmark =
+          existing.libraryItemId == bookmark.libraryItemId &&
+          existing.time == bookmark.time;
       if (isSameBookmark) {
         if (!replaced) {
           updated.add(bookmark);
@@ -172,7 +189,10 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
   void _removeBookmarkFromState({required String itemId, required int time}) {
     final bookmarks = state.asData?.value ?? const <Bookmark>[];
     final updated = bookmarks
-        .where((bookmark) => !(bookmark.libraryItemId == itemId && bookmark.time == time))
+        .where(
+          (bookmark) =>
+              !(bookmark.libraryItemId == itemId && bookmark.time == time),
+        )
         .toList(growable: false);
     state = AsyncData(updated);
   }
@@ -187,7 +207,10 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
 
     final localBookmarks = user.bookmarks ?? const <Bookmark>[];
     final pendingEntries = await _pendingEntriesForUser(user.id);
-    final optimisticLocal = _applyPendingMutations(localBookmarks, pendingEntries);
+    final optimisticLocal = _applyPendingMutations(
+      localBookmarks,
+      pendingEntries,
+    );
     state = AsyncData(optimisticLocal);
 
     if (canReachServer) {
@@ -205,7 +228,11 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
     try {
       return await _fetchBookmarks(userId: user.id);
     } catch (e, s) {
-      logger('Failed to fetch bookmarks during build: $e\n$s', tag: 'UserBookmarksProvider', level: InfoLevel.warning);
+      logger(
+        'Failed to fetch bookmarks during build: $e\n$s',
+        tag: 'UserBookmarksProvider',
+        level: InfoLevel.warning,
+      );
       return optimisticLocal;
     }
   }
@@ -213,7 +240,10 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
   Future<List<Bookmark>> _fetchBookmarks({required String userId}) async {
     final pendingEntries = await _pendingEntriesForUser(userId);
     final localBookmarks = state.asData?.value ?? const <Bookmark>[];
-    final optimisticLocal = _applyPendingMutations(localBookmarks, pendingEntries);
+    final optimisticLocal = _applyPendingMutations(
+      localBookmarks,
+      pendingEntries,
+    );
 
     if (!ref.read(serverReachabilityProvider)) {
       state = AsyncData(optimisticLocal);
@@ -226,9 +256,14 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
       return optimisticLocal;
     }
 
-    final remoteBookmarks = serverSupportsMediaProgressAndBookmarkRoutes(ref.read(serverVersionProvider))
-        ? (await api.getMeApi().getAllBookmarks()).data?.bookmarks ?? const <Bookmark>[]
-        : (await api.getMeApi().getUser()).data?.bookmarks ?? const <Bookmark>[];
+    final remoteBookmarks =
+        serverSupportsMediaProgressAndBookmarkRoutes(
+          ref.read(serverVersionProvider),
+        )
+        ? (await api.getMeApi().getAllBookmarks()).data?.bookmarks ??
+              const <Bookmark>[]
+        : (await api.getMeApi().getUser()).data?.bookmarks ??
+              const <Bookmark>[];
 
     final merged = _applyPendingMutations(remoteBookmarks, pendingEntries);
     state = AsyncData(merged);
@@ -246,7 +281,11 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
       await syncPendingMutations(userId: userId);
       await _fetchBookmarks(userId: userId);
     } catch (e, s) {
-      logger('Failed to refresh bookmarks: $e\n$s', tag: 'UserBookmarksProvider', level: InfoLevel.error);
+      logger(
+        'Failed to refresh bookmarks: $e\n$s',
+        tag: 'UserBookmarksProvider',
+        level: InfoLevel.error,
+      );
     }
   }
 
@@ -271,37 +310,58 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
       return 0;
     }
 
-    final sortedPending = [...pendingEntries]..sort((left, right) => left.updatedAt.compareTo(right.updatedAt));
+    final sortedPending = [...pendingEntries]
+      ..sort((left, right) => left.updatedAt.compareTo(right.updatedAt));
     var syncedCount = 0;
 
     for (final pending in sortedPending) {
       if (pending.time <= 0) {
-        await db.deleteStoredBookmarkSync(pending.userId, pending.itemId, pending.time);
+        await db.deleteStoredBookmarkSync(
+          pending.userId,
+          pending.itemId,
+          pending.time,
+        );
         continue;
       }
 
       try {
         if (pending.deleted) {
-          final deleted = await api.getMeApi().deleteBookmark(pending.itemId, pending.time);
+          final deleted = await api.getMeApi().deleteBookmark(
+            pending.itemId,
+            pending.time,
+          );
           if (!deleted) {
             continue;
           }
         } else {
           final title = pending.title?.trim();
           if (title == null || title.isEmpty) {
-            await db.deleteStoredBookmarkSync(pending.userId, pending.itemId, pending.time);
+            await db.deleteStoredBookmarkSync(
+              pending.userId,
+              pending.itemId,
+              pending.time,
+            );
             continue;
           }
 
-          final request = CreateBookmarkRequest(time: pending.time, title: title);
+          final request = CreateBookmarkRequest(
+            time: pending.time,
+            title: title,
+          );
           Response<Bookmark> response;
           try {
-            response = await api.getMeApi().updateBookmark(pending.itemId, updateBookmarkRequest: request);
+            response = await api.getMeApi().updateBookmark(
+              pending.itemId,
+              updateBookmarkRequest: request,
+            );
           } catch (error) {
             if (!_isMissingBookmarkForUpdateError(error)) {
               rethrow;
             }
-            response = await api.getMeApi().createBookmark(pending.itemId, createBookmarkRequest: request);
+            response = await api.getMeApi().createBookmark(
+              pending.itemId,
+              createBookmarkRequest: request,
+            );
           }
 
           if (response.data == null) {
@@ -309,11 +369,19 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
           }
         }
 
-        await db.deleteStoredBookmarkSync(pending.userId, pending.itemId, pending.time);
+        await db.deleteStoredBookmarkSync(
+          pending.userId,
+          pending.itemId,
+          pending.time,
+        );
         syncedCount++;
       } catch (e, s) {
         if (_isNotFoundError(e)) {
-          await db.deleteStoredBookmarkSync(pending.userId, pending.itemId, pending.time);
+          await db.deleteStoredBookmarkSync(
+            pending.userId,
+            pending.itemId,
+            pending.time,
+          );
           syncedCount++;
           continue;
         }
@@ -333,7 +401,11 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
     return syncedCount;
   }
 
-  Future<Bookmark?> createBookmark({required String itemId, required int time, required String title}) async {
+  Future<Bookmark?> createBookmark({
+    required String itemId,
+    required int time,
+    required String title,
+  }) async {
     final trimmedTitle = title.trim();
     if (time <= 0 || trimmedTitle.isEmpty) {
       return null;
@@ -349,7 +421,12 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
 
     final userId = _activeUserId();
     if (userId != null) {
-      await _queueBookmarkCreate(userId: userId, itemId: itemId, time: time, title: trimmedTitle);
+      await _queueBookmarkCreate(
+        userId: userId,
+        itemId: itemId,
+        time: time,
+        title: trimmedTitle,
+      );
     }
 
     final api = ref.read(absApiProvider);
@@ -361,7 +438,10 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
     try {
       final response = await api.getMeApi().createBookmark(
         itemId,
-        createBookmarkRequest: CreateBookmarkRequest(time: time, title: trimmedTitle),
+        createBookmarkRequest: CreateBookmarkRequest(
+          time: time,
+          title: trimmedTitle,
+        ),
       );
 
       final createdBookmark = response.data;
@@ -370,7 +450,9 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
       }
 
       if (userId != null) {
-        await ref.read(appDatabaseProvider).deleteStoredBookmarkSync(userId, itemId, time);
+        await ref
+            .read(appDatabaseProvider)
+            .deleteStoredBookmarkSync(userId, itemId, time);
       }
 
       _upsertBookmarkInState(createdBookmark);
@@ -378,18 +460,26 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
     } catch (e, s) {
       if (_isNotFoundError(e)) {
         if (userId != null) {
-          await ref.read(appDatabaseProvider).deleteStoredBookmarkSync(userId, itemId, time);
+          await ref
+              .read(appDatabaseProvider)
+              .deleteStoredBookmarkSync(userId, itemId, time);
         }
         _removeBookmarkFromState(itemId: itemId, time: time);
         return null;
       }
 
-      logger('Failed to create bookmark remotely, keeping queued mutation: $e\n$s', tag: 'UserBookmarksProvider');
+      logger(
+        'Failed to create bookmark remotely, keeping queued mutation: $e\n$s',
+        tag: 'UserBookmarksProvider',
+      );
       return optimisticBookmark;
     }
   }
 
-  Future<Bookmark?> updateBookmark({required Bookmark bookmark, required String title}) async {
+  Future<Bookmark?> updateBookmark({
+    required Bookmark bookmark,
+    required String title,
+  }) async {
     final trimmedTitle = title.trim();
     if (bookmark.time <= 0 || trimmedTitle.isEmpty) {
       return null;
@@ -414,16 +504,25 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
       return optimisticBookmark;
     }
 
-    final request = CreateBookmarkRequest(time: bookmark.time, title: trimmedTitle);
+    final request = CreateBookmarkRequest(
+      time: bookmark.time,
+      title: trimmedTitle,
+    );
     try {
       Response<Bookmark> response;
       try {
-        response = await api.getMeApi().updateBookmark(bookmark.libraryItemId, updateBookmarkRequest: request);
+        response = await api.getMeApi().updateBookmark(
+          bookmark.libraryItemId,
+          updateBookmarkRequest: request,
+        );
       } catch (error) {
         if (!_isMissingBookmarkForUpdateError(error)) {
           rethrow;
         }
-        response = await api.getMeApi().createBookmark(bookmark.libraryItemId, createBookmarkRequest: request);
+        response = await api.getMeApi().createBookmark(
+          bookmark.libraryItemId,
+          createBookmarkRequest: request,
+        );
       }
 
       final updatedBookmark = response.data;
@@ -432,18 +531,30 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
       }
 
       if (userId != null) {
-        await ref.read(appDatabaseProvider).deleteStoredBookmarkSync(userId, bookmark.libraryItemId, bookmark.time);
+        await ref
+            .read(appDatabaseProvider)
+            .deleteStoredBookmarkSync(
+              userId,
+              bookmark.libraryItemId,
+              bookmark.time,
+            );
       }
 
       _upsertBookmarkInState(updatedBookmark);
       return updatedBookmark;
     } catch (e, s) {
-      logger('Failed to update bookmark remotely, keeping queued mutation: $e\n$s', tag: 'UserBookmarksProvider');
+      logger(
+        'Failed to update bookmark remotely, keeping queued mutation: $e\n$s',
+        tag: 'UserBookmarksProvider',
+      );
       return optimisticBookmark;
     }
   }
 
-  Future<bool> deleteBookmark({required String itemId, required int time}) async {
+  Future<bool> deleteBookmark({
+    required String itemId,
+    required int time,
+  }) async {
     if (time <= 0) {
       return false;
     }
@@ -464,18 +575,25 @@ class UserBookmarksNotifier extends _$UserBookmarksNotifier {
     try {
       final deleted = await api.getMeApi().deleteBookmark(itemId, time);
       if (deleted && userId != null) {
-        await ref.read(appDatabaseProvider).deleteStoredBookmarkSync(userId, itemId, time);
+        await ref
+            .read(appDatabaseProvider)
+            .deleteStoredBookmarkSync(userId, itemId, time);
       }
       return true;
     } catch (e, s) {
       if (_isNotFoundError(e)) {
         if (userId != null) {
-          await ref.read(appDatabaseProvider).deleteStoredBookmarkSync(userId, itemId, time);
+          await ref
+              .read(appDatabaseProvider)
+              .deleteStoredBookmarkSync(userId, itemId, time);
         }
         return true;
       }
 
-      logger('Failed to delete bookmark remotely, keeping queued mutation: $e\n$s', tag: 'UserBookmarksProvider');
+      logger(
+        'Failed to delete bookmark remotely, keeping queued mutation: $e\n$s',
+        tag: 'UserBookmarksProvider',
+      );
       return true;
     }
   }

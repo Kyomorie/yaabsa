@@ -101,7 +101,12 @@ class ListApi {
     return ABSApi.makeApiPostRequest(
       route: '/api/playlists',
       fromJson: (data) => Playlist.fromJson(data),
-      bodyData: {'libraryId': libraryId, 'name': name, 'description': ?description, 'items': items},
+      bodyData: {
+        'libraryId': libraryId,
+        'name': name,
+        'description': ?description,
+        'items': items,
+      },
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -192,7 +197,12 @@ class ListApi {
     return ABSApi.makeApiPostRequest(
       route: '/api/collections',
       fromJson: (data) => Collection.fromJson(data),
-      bodyData: {'libraryId': libraryId, 'name': name, 'description': ?description, 'books': bookIds},
+      bodyData: {
+        'libraryId': libraryId,
+        'name': name,
+        'description': ?description,
+        'books': bookIds,
+      },
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,

@@ -1,7 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
 class AdminUserSelectableOption {
-  const AdminUserSelectableOption({required this.id, required this.label, this.subtitle});
+  const AdminUserSelectableOption({
+    required this.id,
+    required this.label,
+    this.subtitle,
+  });
 
   final String id;
   final String label;
@@ -30,15 +34,21 @@ class AdminUserMultiSelectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allSelected = options.isNotEmpty && selectedIds.length == options.length;
+    final allSelected =
+        options.isNotEmpty && selectedIds.length == options.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            Expanded(child: Text(title, style: Theme.of(context).textTheme.titleSmall)),
-            Text('${selectedIds.length}/${options.length}', style: Theme.of(context).textTheme.bodySmall),
+            Expanded(
+              child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+            ),
+            Text(
+              '${selectedIds.length}/${options.length}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -48,7 +58,9 @@ class AdminUserMultiSelectCard extends StatelessWidget {
               onPressed: !enabled || allSelected
                   ? null
                   : () {
-                      onSelectionChanged(options.map((option) => option.id).toSet());
+                      onSelectionChanged(
+                        options.map((option) => option.id).toSet(),
+                      );
                     },
               child: const Text('Select all'),
             ),
@@ -67,14 +79,19 @@ class AdminUserMultiSelectCard extends StatelessWidget {
         if (options.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(emptyMessage, style: Theme.of(context).textTheme.bodyMedium),
+            child: Text(
+              emptyMessage,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           )
         else
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ListView.separated(
@@ -89,8 +106,14 @@ class AdminUserMultiSelectCard extends StatelessWidget {
                   return CheckboxListTile(
                     dense: true,
                     value: isSelected,
-                    title: Text(option.label, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: subtitle == null ? null : Text(subtitle, maxLines: 1),
+                    title: Text(
+                      option.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: subtitle == null
+                        ? null
+                        : Text(subtitle, maxLines: 1),
                     controlAffinity: ListTileControlAffinity.leading,
                     onChanged: !enabled
                         ? null

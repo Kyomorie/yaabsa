@@ -12,5 +12,6 @@ abstract class SearchSeries with _$SearchSeries {
     @JsonKey(name: "books") required List<LibraryItem> books,
   }) = _SearchSeries;
 
-  factory SearchSeries.fromJson(Map<String, dynamic> json) => _$SearchSeriesFromJson(json);
+  factory SearchSeries.fromJson(Map<String, dynamic> json) =>
+      _$SearchSeriesFromJson(json);
 }

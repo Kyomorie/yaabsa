@@ -34,9 +34,10 @@ class CollectionsState {
   }
 }
 
-final collectionsProvider = AsyncNotifierProvider.family<CollectionsNotifier, CollectionsState, String>(
-  CollectionsNotifier.new,
-);
+final collectionsProvider =
+    AsyncNotifierProvider.family<CollectionsNotifier, CollectionsState, String>(
+      CollectionsNotifier.new,
+    );
 
 class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
   CollectionsNotifier(this.libraryId);
@@ -49,16 +50,27 @@ class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
       throw Exception('User not authenticated or API not available.');
     }
 
-    final response = await absApi.getListApi().getCollections(forceServer: forceServer);
+    final response = await absApi.getListApi().getCollections(
+      forceServer: forceServer,
+    );
     final data = response.data;
     if (data == null) {
       throw Exception('No collections data received from API.');
     }
 
-    final filteredCollections = data.items.where((item) => item.libraryId == libraryId).toList(growable: false)
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final filteredCollections =
+        data.items
+            .where((item) => item.libraryId == libraryId)
+            .toList(growable: false)
+          ..sort(
+            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+          );
 
-    return CollectionsState(items: filteredCollections, libraryId: libraryId, totalItems: filteredCollections.length);
+    return CollectionsState(
+      items: filteredCollections,
+      libraryId: libraryId,
+      totalItems: filteredCollections.length,
+    );
   }
 
   @override
@@ -66,7 +78,10 @@ class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
     return _fetchCollections();
   }
 
-  Future<void> refresh({bool withLoading = true, bool forceServer = true}) async {
+  Future<void> refresh({
+    bool withLoading = true,
+    bool forceServer = true,
+  }) async {
     if (withLoading) {
       state = const AsyncValue.loading();
     }
@@ -110,7 +125,11 @@ class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
     return created;
   }
 
-  Future<Collection> updateCollection(String collectionId, {required String name, String? description}) async {
+  Future<Collection> updateCollection(
+    String collectionId, {
+    required String name,
+    String? description,
+  }) async {
     final absApi = ref.read(absApiProvider);
     if (absApi == null) {
       throw Exception('User not authenticated or API not available.');
@@ -131,7 +150,10 @@ class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
     return updated;
   }
 
-  Future<Collection> addBooksToCollection(String collectionId, {required List<String> bookIds}) async {
+  Future<Collection> addBooksToCollection(
+    String collectionId, {
+    required List<String> bookIds,
+  }) async {
     if (bookIds.isEmpty) {
       throw Exception('No books selected.');
     }
@@ -141,7 +163,10 @@ class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
       throw Exception('User not authenticated or API not available.');
     }
 
-    final updatedResponse = await absApi.getListApi().addBooksToCollection(collectionId, bookIds: bookIds);
+    final updatedResponse = await absApi.getListApi().addBooksToCollection(
+      collectionId,
+      bookIds: bookIds,
+    );
 
     final updated = updatedResponse.data;
     if (updated == null) {
@@ -152,7 +177,10 @@ class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
     return updated;
   }
 
-  Future<Collection> removeBooksFromCollection(String collectionId, {required List<String> bookIds}) async {
+  Future<Collection> removeBooksFromCollection(
+    String collectionId, {
+    required List<String> bookIds,
+  }) async {
     if (bookIds.isEmpty) {
       throw Exception('No books selected.');
     }
@@ -162,7 +190,10 @@ class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
       throw Exception('User not authenticated or API not available.');
     }
 
-    final updatedResponse = await absApi.getListApi().removeBooksFromCollection(collectionId, bookIds: bookIds);
+    final updatedResponse = await absApi.getListApi().removeBooksFromCollection(
+      collectionId,
+      bookIds: bookIds,
+    );
 
     final updated = updatedResponse.data;
     if (updated == null) {
@@ -182,7 +213,9 @@ class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
     final normalizedDesired = _normalizeItemIds(desiredBookIds);
 
     if (normalizedDesired.isEmpty) {
-      throw Exception('Collections cannot be empty. Keep at least one book selected.');
+      throw Exception(
+        'Collections cannot be empty. Keep at least one book selected.',
+      );
     }
 
     if (_sameOrder(normalizedCurrent, normalizedDesired)) {
@@ -203,18 +236,31 @@ class CollectionsNotifier extends AsyncNotifier<CollectionsState> {
     final currentSet = normalizedCurrent.toSet();
     final desiredSet = normalizedDesired.toSet();
 
-    final booksToAdd = normalizedDesired.where((id) => !currentSet.contains(id)).toList(growable: false);
-    final booksToRemove = normalizedCurrent.where((id) => !desiredSet.contains(id)).toList(growable: false);
+    final booksToAdd = normalizedDesired
+        .where((id) => !currentSet.contains(id))
+        .toList(growable: false);
+    final booksToRemove = normalizedCurrent
+        .where((id) => !desiredSet.contains(id))
+        .toList(growable: false);
 
     if (booksToAdd.isNotEmpty) {
-      await absApi.getListApi().addBooksToCollection(collectionId, bookIds: booksToAdd);
+      await absApi.getListApi().addBooksToCollection(
+        collectionId,
+        bookIds: booksToAdd,
+      );
     }
 
     if (booksToRemove.isNotEmpty) {
-      await absApi.getListApi().removeBooksFromCollection(collectionId, bookIds: booksToRemove);
+      await absApi.getListApi().removeBooksFromCollection(
+        collectionId,
+        bookIds: booksToRemove,
+      );
     }
 
-    final updatedResponse = await absApi.getListApi().updateCollection(collectionId, books: normalizedDesired);
+    final updatedResponse = await absApi.getListApi().updateCollection(
+      collectionId,
+      books: normalizedDesired,
+    );
 
     await refresh(withLoading: false, forceServer: true);
 

@@ -81,10 +81,20 @@ class LastPlayedMiniPlayerSnapshot {
       final authorValue = decoded['author'];
       final coverValue = decoded['cover'];
 
-      final episodeId = episodeIdValue is String && episodeIdValue.trim().isNotEmpty ? episodeIdValue.trim() : null;
-      final subtitle = subtitleValue is String && subtitleValue.trim().isNotEmpty ? subtitleValue.trim() : null;
-      final author = authorValue is String && authorValue.trim().isNotEmpty ? authorValue.trim() : null;
-      final cover = coverValue is String && coverValue.trim().isNotEmpty ? Uri.tryParse(coverValue.trim()) : null;
+      final episodeId =
+          episodeIdValue is String && episodeIdValue.trim().isNotEmpty
+          ? episodeIdValue.trim()
+          : null;
+      final subtitle =
+          subtitleValue is String && subtitleValue.trim().isNotEmpty
+          ? subtitleValue.trim()
+          : null;
+      final author = authorValue is String && authorValue.trim().isNotEmpty
+          ? authorValue.trim()
+          : null;
+      final cover = coverValue is String && coverValue.trim().isNotEmpty
+          ? Uri.tryParse(coverValue.trim())
+          : null;
 
       return LastPlayedMiniPlayerSnapshot(
         itemId: itemIdValue.trim(),
@@ -143,7 +153,10 @@ enum AutoQueueStartType { none, series, playlist, collection }
 class AutoQueueStart {
   const AutoQueueStart({required this.type, this.sourceId, this.globalIndex});
 
-  const AutoQueueStart.none() : type = AutoQueueStartType.none, sourceId = null, globalIndex = null;
+  const AutoQueueStart.none()
+    : type = AutoQueueStartType.none,
+      sourceId = null,
+      globalIndex = null;
 
   final AutoQueueStartType type;
   final String? sourceId;
@@ -176,7 +189,10 @@ class _AutoQueueRequestContext {
       sourceType: _AutoQueueSourceType.series,
       libraryId: libraryId,
       initialPage: initialPage,
-      filter: LibraryFilter.grouped(LibraryFilterGroup.series, seriesId).queryValue,
+      filter: LibraryFilter.grouped(
+        LibraryFilterGroup.series,
+        seriesId,
+      ).queryValue,
       collapseseries: 0,
       seriesId: seriesId,
     );
@@ -216,11 +232,15 @@ class _AutoQueueRequestContext {
     List<Episode>? seededPodcastEpisodes,
   }) {
     final chronologicalEpisodes =
-        (seededPodcastEpisodes ?? podcastItem.media?.podcastMedia?.episodes ?? const <Episode>[])
+        (seededPodcastEpisodes ??
+                podcastItem.media?.podcastMedia?.episodes ??
+                const <Episode>[])
             .where((episode) => episode.audioFile != null)
             .toList(growable: true)
           ..sort(_podcastEpisodeOldestFirstComparator);
-    final episodeIndex = chronologicalEpisodes.indexWhere((episode) => episode.id == episodeId);
+    final episodeIndex = chronologicalEpisodes.indexWhere(
+      (episode) => episode.id == episodeId,
+    );
 
     return _AutoQueueRequestContext._(
       sourceType: _AutoQueueSourceType.podcast,
@@ -249,7 +269,8 @@ class _AutoQueueRequestContext {
 }
 
 int _podcastEpisodeOldestFirstComparator(Episode left, Episode right) {
-  final byTimestamp = _podcastEpisodeQueueTimestamp(left).compareTo(_podcastEpisodeQueueTimestamp(right));
+  final byTimestamp = _podcastEpisodeQueueTimestamp(left)
+      .compareTo(_podcastEpisodeQueueTimestamp(right));
   if (byTimestamp != 0) {
     return byTimestamp;
   }
@@ -259,7 +280,9 @@ int _podcastEpisodeOldestFirstComparator(Episode left, Episode right) {
     return byIndex;
   }
 
-  return (left.title ?? '').toLowerCase().compareTo((right.title ?? '').toLowerCase());
+  return (left.title ?? '').toLowerCase().compareTo(
+    (right.title ?? '').toLowerCase(),
+  );
 }
 
 int _podcastEpisodeQueueTimestamp(Episode episode) {
@@ -267,7 +290,11 @@ int _podcastEpisodeQueueTimestamp(Episode episode) {
 }
 
 class _AutoQueueItemCandidate {
-  const _AutoQueueItemCandidate({required this.queueItem, required this.referenceKey, required this.displayInfo});
+  const _AutoQueueItemCandidate({
+    required this.queueItem,
+    required this.referenceKey,
+    required this.displayInfo,
+  });
 
   final QueueItem queueItem;
   final String referenceKey;
@@ -275,7 +302,12 @@ class _AutoQueueItemCandidate {
 }
 
 class _AutoQueuePageResult {
-  const _AutoQueuePageResult({required this.items, required this.total, required this.page, required this.pageSize});
+  const _AutoQueuePageResult({
+    required this.items,
+    required this.total,
+    required this.page,
+    required this.pageSize,
+  });
 
   final List<_AutoQueueItemCandidate> items;
   final int total;

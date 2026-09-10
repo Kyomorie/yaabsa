@@ -19,7 +19,9 @@ class ThemePresetOptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final borderColor = selected ? colorScheme.primary : colorScheme.outlineVariant.withValues(alpha: 0.7);
+    final borderColor = selected
+        ? colorScheme.primary
+        : colorScheme.outlineVariant.withValues(alpha: 0.7);
     final cardBackground = selected
         ? colorScheme.primaryContainer.withValues(alpha: 0.34)
         : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35);
@@ -48,13 +50,22 @@ class ThemePresetOptionCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                        style: Theme.of(context).textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                     if (selected)
-                      Icon(Icons.check_circle, color: colorScheme.primary, size: 18)
+                      Icon(
+                        Icons.check_circle,
+                        color: colorScheme.primary,
+                        size: 18,
+                      )
                     else
-                      Icon(Icons.circle_outlined, color: colorScheme.outline, size: 18),
+                      Icon(
+                        Icons.circle_outlined,
+                        color: colorScheme.outline,
+                        size: 18,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -70,7 +81,10 @@ class ThemePresetOptionCard extends StatelessWidget {
                           Container(
                             width: 28,
                             height: 16,
-                            decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(999)),
+                            decoration: BoxDecoration(
+                              color: accentColor,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -107,8 +121,10 @@ class ThemePresetOptionCard extends StatelessWidget {
                   description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: colorScheme.onSurfaceVariant, height: 1.25),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.25,
+                  ),
                 ),
               ],
             ),

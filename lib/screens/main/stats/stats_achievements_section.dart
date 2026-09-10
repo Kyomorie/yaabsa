@@ -119,7 +119,9 @@ class StatsAchievementsSection extends StatelessWidget {
           title: 'Longest session',
           icon: Icons.hourglass_top_rounded,
           current: detailedStats.longestSessionTime,
-          currentLabel: formatListeningSeconds(detailedStats.longestSessionTime),
+          currentLabel: formatListeningSeconds(
+            detailedStats.longestSessionTime,
+          ),
           levels: const [
             _AchievementLevel(threshold: 900, label: 'Settling In'),
             _AchievementLevel(threshold: 1800, label: 'Half-Hour Hero'),
@@ -134,7 +136,9 @@ class StatsAchievementsSection extends StatelessWidget {
           title: 'Average session',
           icon: Icons.timer_rounded,
           current: detailedStats.averageSessionTime,
-          currentLabel: formatListeningSeconds(detailedStats.averageSessionTime),
+          currentLabel: formatListeningSeconds(
+            detailedStats.averageSessionTime,
+          ),
           levels: const [
             _AchievementLevel(threshold: 300, label: 'Quick Chapter'),
             _AchievementLevel(threshold: 900, label: 'Focused Listener'),
@@ -148,7 +152,9 @@ class StatsAchievementsSection extends StatelessWidget {
           title: 'Audiobook listening',
           icon: Icons.menu_book_rounded,
           current: detailedStats.totalBookListeningTime,
-          currentLabel: formatListeningSeconds(detailedStats.totalBookListeningTime),
+          currentLabel: formatListeningSeconds(
+            detailedStats.totalBookListeningTime,
+          ),
           levels: const [
             _AchievementLevel(threshold: 3600, label: 'Book Beginner'),
             _AchievementLevel(threshold: 36000, label: 'Chapter Chaser'),
@@ -163,7 +169,9 @@ class StatsAchievementsSection extends StatelessWidget {
           title: 'Podcast listening',
           icon: Icons.podcasts_rounded,
           current: detailedStats.totalPodcastListeningTime,
-          currentLabel: formatListeningSeconds(detailedStats.totalPodcastListeningTime),
+          currentLabel: formatListeningSeconds(
+            detailedStats.totalPodcastListeningTime,
+          ),
           levels: const [
             _AchievementLevel(threshold: 3600, label: 'First Episode'),
             _AchievementLevel(threshold: 18000, label: 'Podcast Curious'),
@@ -177,8 +185,12 @@ class StatsAchievementsSection extends StatelessWidget {
         _AchievementProgress.resolve(
           title: 'Listening journey',
           icon: Icons.route_rounded,
-          current: _journeyDays(detailedStats.firstSessionAt, detailedStats.lastSessionAt).toDouble(),
-          currentLabel: '${_journeyDays(detailedStats.firstSessionAt, detailedStats.lastSessionAt)} days',
+          current: _journeyDays(
+            detailedStats.firstSessionAt,
+            detailedStats.lastSessionAt,
+          ).toDouble(),
+          currentLabel:
+              '${_journeyDays(detailedStats.firstSessionAt, detailedStats.lastSessionAt)} days',
           levels: const [
             _AchievementLevel(threshold: 1, label: 'Journey Begins'),
             _AchievementLevel(threshold: 7, label: 'One Week In'),
@@ -200,7 +212,8 @@ class StatsAchievementsSection extends StatelessWidget {
             : constraints.maxWidth >= 480
             ? 2
             : 1;
-        final cardWidth = (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
+        final cardWidth =
+            (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -219,7 +232,8 @@ class StatsAchievementsSection extends StatelessWidget {
             if (sessionAnalytics.isLoading) ...[
               const SizedBox(height: 16),
               _DetailedAchievementsLoading(state: sessionAnalytics),
-            ] else if (sessionAnalytics.errorMessage != null && detailedStats == null) ...[
+            ] else if (sessionAnalytics.errorMessage != null &&
+                detailedStats == null) ...[
               const SizedBox(height: 16),
               _DetailedAchievementsError(onRetry: onRetrySessionAnalytics),
             ],
@@ -231,7 +245,8 @@ class StatsAchievementsSection extends StatelessWidget {
 
   List<DateTime> _activeDates(UserListeningStats stats) {
     final uniqueDays = <int, DateTime>{};
-    for (final entry in stats.days?.entries ?? const <MapEntry<String, double>>[]) {
+    for (final entry
+        in stats.days?.entries ?? const <MapEntry<String, double>>[]) {
       if (entry.value <= 0) continue;
       final parsed = DateTime.tryParse(entry.key);
       if (parsed == null) continue;
@@ -257,7 +272,10 @@ class StatsAchievementsSection extends StatelessWidget {
   }
 
   int _journeyDays(int? firstSessionAt, int? lastSessionAt) {
-    if (firstSessionAt == null || lastSessionAt == null || lastSessionAt < firstSessionAt) return 0;
+    if (firstSessionAt == null ||
+        lastSessionAt == null ||
+        lastSessionAt < firstSessionAt)
+      return 0;
     return DateTime.fromMillisecondsSinceEpoch(lastSessionAt)
             .difference(DateTime.fromMillisecondsSinceEpoch(firstSessionAt))
             .inDays +
@@ -293,26 +311,42 @@ class _AchievementCard extends StatelessWidget {
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Color.alphaBlend(accent.withValues(alpha: 0.14), colors.surfaceContainerHighest),
+                  color: Color.alphaBlend(
+                    accent.withValues(alpha: 0.14),
+                    colors.surfaceContainerHighest,
+                  ),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(achievement.icon, color: accent),
               ),
               const Spacer(),
-              if (achievement.unlockedLevel != null) Icon(Icons.verified_rounded, color: accent),
+              if (achievement.unlockedLevel != null)
+                Icon(Icons.verified_rounded, color: accent),
             ],
           ),
           const SizedBox(height: 14),
-          Text(achievement.title, style: theme.textTheme.labelMedium?.copyWith(color: colors.onSurfaceVariant)),
+          Text(
+            achievement.title,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: 3),
           Text(
             achievement.unlockedLevel?.label ?? 'Not unlocked yet',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 2),
-          Text(achievement.currentLabel, style: theme.textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant)),
+          Text(
+            achievement.currentLabel,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: 14),
           _AchievementMilestoneStrip(achievement: achievement, accent: accent),
           const SizedBox(height: 8),
@@ -331,7 +365,9 @@ class _AchievementCard extends StatelessWidget {
                 ? 'Highest milestone reached'
                 : 'Next: ${achievement.nextLevel!.label} • ${achievement.nextValueLabel}',
             softWrap: true,
-            style: theme.textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -340,7 +376,10 @@ class _AchievementCard extends StatelessWidget {
 }
 
 class _AchievementMilestoneStrip extends StatelessWidget {
-  const _AchievementMilestoneStrip({required this.achievement, required this.accent});
+  const _AchievementMilestoneStrip({
+    required this.achievement,
+    required this.accent,
+  });
 
   final _AchievementProgress achievement;
   final Color accent;
@@ -455,7 +494,9 @@ class _AchievementProgress {
     final targetThreshold = next?.threshold ?? previousThreshold;
     final progress = next == null
         ? 1.0
-        : ((current - previousThreshold) / (targetThreshold - previousThreshold)).clamp(0.0, 1.0);
+        : ((current - previousThreshold) /
+                  (targetThreshold - previousThreshold))
+              .clamp(0.0, 1.0);
 
     return _AchievementProgress(
       title: title,

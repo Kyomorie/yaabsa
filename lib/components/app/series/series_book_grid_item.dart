@@ -33,7 +33,10 @@ class SeriesBookGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sequence = _resolveSeriesSequenceForItem(item: item, seriesId: seriesId);
+    final sequence = _resolveSeriesSequenceForItem(
+      item: item,
+      seriesId: seriesId,
+    );
     final sequenceBadge = sequence == null ? null : '#$sequence';
 
     return LibraryItemWidget(
@@ -53,7 +56,10 @@ class SeriesBookGridItem extends StatelessWidget {
     );
   }
 
-  static String? _resolveSeriesSequenceForItem({required LibraryItem item, required String seriesId}) {
+  static String? _resolveSeriesSequenceForItem({
+    required LibraryItem item,
+    required String seriesId,
+  }) {
     final seriesEntries = item.media?.bookMedia?.metadata.series;
     if (seriesEntries != null && seriesEntries.isNotEmpty) {
       for (final entry in seriesEntries) {

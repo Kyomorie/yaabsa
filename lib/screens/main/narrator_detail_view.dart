@@ -10,7 +10,10 @@ class NarratorDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final narratorFilter = LibraryFilter.grouped(LibraryFilterGroup.narrators, narratorName).queryValue;
+    final narratorFilter = LibraryFilter.grouped(
+      LibraryFilterGroup.narrators,
+      narratorName,
+    ).queryValue;
 
     return Column(
       children: [
@@ -25,7 +28,9 @@ class NarratorDetailView extends StatelessWidget {
                     return;
                   }
 
-                  context.go('/?tab=narrators&intent=${DateTime.now().microsecondsSinceEpoch}');
+                  context.go(
+                    '/?tab=narrators&intent=${DateTime.now().microsecondsSinceEpoch}',
+                  );
                 },
                 icon: const Icon(Icons.arrow_back_rounded),
                 tooltip: 'Back',

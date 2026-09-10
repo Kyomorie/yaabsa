@@ -12,7 +12,9 @@ part of 'socket_provider.dart';
 @ProviderFor(absSocketClient)
 final absSocketClientProvider = AbsSocketClientProvider._();
 
-final class AbsSocketClientProvider extends $FunctionalProvider<ABSSocketClient, ABSSocketClient, ABSSocketClient>
+final class AbsSocketClientProvider
+    extends
+        $FunctionalProvider<ABSSocketClient, ABSSocketClient, ABSSocketClient>
     with $Provider<ABSSocketClient> {
   AbsSocketClientProvider._()
     : super(
@@ -30,7 +32,8 @@ final class AbsSocketClientProvider extends $FunctionalProvider<ABSSocketClient,
 
   @$internal
   @override
-  $ProviderElement<ABSSocketClient> $createElement($ProviderPointer pointer) => $ProviderElement(pointer);
+  $ProviderElement<ABSSocketClient> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
   ABSSocketClient create(Ref ref) {
@@ -39,7 +42,10 @@ final class AbsSocketClientProvider extends $FunctionalProvider<ABSSocketClient,
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(ABSSocketClient value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<ABSSocketClient>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ABSSocketClient>(value),
+    );
   }
 }
 

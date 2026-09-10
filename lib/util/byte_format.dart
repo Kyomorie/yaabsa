@@ -22,7 +22,11 @@ String formatByteRate(num bytesPerSecond, {int decimals = 1}) {
   return '${formatByteSize(bytesPerSecond, decimals: decimals)}/s';
 }
 
-String formatByteProgress({required int transferredBytes, required int totalBytes, int decimals = 1}) {
+String formatByteProgress({
+  required int transferredBytes,
+  required int totalBytes,
+  int decimals = 1,
+}) {
   if (totalBytes <= 0) {
     return '${formatByteSize(transferredBytes, decimals: decimals)} / --';
   }

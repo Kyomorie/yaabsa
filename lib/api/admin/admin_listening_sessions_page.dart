@@ -19,7 +19,9 @@ abstract class AdminListeningSessionsPage with _$AdminListeningSessionsPage {
       numPages: json['numPages'] as int? ?? 0,
       page: json['page'] as int? ?? 0,
       itemsPerPage: json['itemsPerPage'] as int? ?? 0,
-      sessions: adminListeningSessionsFromDynamic(json['sessions'] ?? const <dynamic>[]),
+      sessions: adminListeningSessionsFromDynamic(
+        json['sessions'] ?? const <dynamic>[],
+      ),
     );
   }
 }

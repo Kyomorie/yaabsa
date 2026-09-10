@@ -6,7 +6,8 @@ enum PlaybackFailureAction { transcode, retryStream, ignore, fail }
 PlaybackFailureAction classifyPlaybackError(PlayerException error) {
   final message = '${error.message ?? ''} ${error.toString()}'.toLowerCase();
 
-  if (RegExp(r'\bhttps?\s*(?:error|status)?\s*[:=]?\s*([45]\d{2})\b').hasMatch(message) ||
+  if (RegExp(r'\bhttps?\s*(?:error|status)?\s*[:=]?\s*([45]\d{2})\b')
+          .hasMatch(message) ||
       RegExp(r'\b(?:401|403|404|500|501|502|503|504)\b').hasMatch(message) ||
       message.contains('server unavailable') ||
       message.contains('service unavailable') ||

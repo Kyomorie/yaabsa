@@ -22,5 +22,6 @@ abstract class PodcastMetadata with _$PodcastMetadata {
     @JsonKey(name: "titleIgnorePrefix") String? titleIgnorePrefix,
   }) = _PodcastMetadata;
 
-  factory PodcastMetadata.fromJson(Map<String, dynamic> json) => _$PodcastMetadataFromJson(json);
+  factory PodcastMetadata.fromJson(Map<String, dynamic> json) =>
+      _$PodcastMetadataFromJson(json);
 }

@@ -18,19 +18,24 @@ class AdminServerBackupsView extends ConsumerStatefulWidget {
   const AdminServerBackupsView({super.key});
 
   @override
-  ConsumerState<AdminServerBackupsView> createState() => _AdminServerBackupsViewState();
+  ConsumerState<AdminServerBackupsView> createState() =>
+      _AdminServerBackupsViewState();
 }
 
-class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView> {
+class _AdminServerBackupsViewState
+    extends ConsumerState<AdminServerBackupsView> {
   static const String _serverSettingsId = 'server-settings';
   static const String _defaultCronExpression = '30 1 * * *';
   static const double _tableMinHeightForStaticLayout = 220;
   static const double _contentSectionSpacing = 8;
 
   final TextEditingController _backupPathController = TextEditingController();
-  final TextEditingController _cronExpressionController = TextEditingController();
-  final TextEditingController _backupsToKeepController = TextEditingController();
-  final TextEditingController _maxBackupSizeController = TextEditingController();
+  final TextEditingController _cronExpressionController =
+      TextEditingController();
+  final TextEditingController _backupsToKeepController =
+      TextEditingController();
+  final TextEditingController _maxBackupSizeController =
+      TextEditingController();
   final GlobalKey _topContentKey = GlobalKey();
 
   String? _activeUserId;
@@ -121,11 +126,13 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
 
   void _applyServerBackupSettings(ServerSettings settings) {
     final backupSchedule = settings.backupSchedule;
-    final cronExpression = backupSchedule is String && backupSchedule.trim().isNotEmpty
+    final cronExpression =
+        backupSchedule is String && backupSchedule.trim().isNotEmpty
         ? backupSchedule.trim()
         : _defaultCronExpression;
 
-    _enableAutomaticBackups = backupSchedule is String && backupSchedule.trim().isNotEmpty;
+    _enableAutomaticBackups =
+        backupSchedule is String && backupSchedule.trim().isNotEmpty;
     _cronExpressionController.text = cronExpression;
     _backupsToKeepController.text = (settings.backupsToKeep ?? 2).toString();
     _maxBackupSizeController.text = (settings.maxBackupSize ?? 1).toString();
@@ -168,8 +175,12 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
         return;
       }
 
-      final backups = _sortedBackups(responseData?.backups ?? const <AdminBackup>[]);
-      final backupLocation = (responseData?.backupLocation ?? serverSettings?.backupPath ?? '').trim();
+      final backups = _sortedBackups(
+        responseData?.backups ?? const <AdminBackup>[],
+      );
+      final backupLocation =
+          (responseData?.backupLocation ?? serverSettings?.backupPath ?? '')
+              .trim();
 
       setState(() {
         _backups = backups;
@@ -194,7 +205,10 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
       }
 
       setState(() {
-        _errorMessage = _resolveErrorMessage(error, fallback: 'Failed to load backups.');
+        _errorMessage = _resolveErrorMessage(
+          error,
+          fallback: 'Failed to load backups.',
+        );
       });
     } finally {
       if (mounted) {
@@ -334,7 +348,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
     });
 
     try {
-      await api.getAdminApi().updateBackupPath(payload: UpdateBackupPathRequest(path: nextPath));
+      await api.getAdminApi().updateBackupPath(
+        payload: UpdateBackupPathRequest(path: nextPath),
+      );
 
       if (!mounted) {
         return;
@@ -352,7 +368,10 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
         return;
       }
 
-      final message = _resolveErrorMessage(error, fallback: 'Failed to update backup location.');
+      final message = _resolveErrorMessage(
+        error,
+        fallback: 'Failed to update backup location.',
+      );
       _showMessage(message);
     } finally {
       if (mounted) {
@@ -377,10 +396,16 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
     }
 
     final cronError = _validateCronExpression(_cronExpressionController.text);
-    final backupsToKeepError = _validateBackupsToKeep(_backupsToKeepController.text);
-    final maxBackupSizeError = _validateMaxBackupSize(_maxBackupSizeController.text);
+    final backupsToKeepError = _validateBackupsToKeep(
+      _backupsToKeepController.text,
+    );
+    final maxBackupSizeError = _validateMaxBackupSize(
+      _maxBackupSizeController.text,
+    );
 
-    if (cronError != null || backupsToKeepError != null || maxBackupSizeError != null) {
+    if (cronError != null ||
+        backupsToKeepError != null ||
+        maxBackupSizeError != null) {
       setState(() {
         _cronExpressionError = cronError;
         _backupsToKeepError = backupsToKeepError;
@@ -391,7 +416,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
 
     final backupsToKeep = int.parse(_backupsToKeepController.text.trim());
     final maxBackupSize = int.parse(_maxBackupSizeController.text.trim());
-    final backupSchedule = _enableAutomaticBackups ? _cronExpressionController.text.trim() : false;
+    final backupSchedule = _enableAutomaticBackups
+        ? _cronExpressionController.text.trim()
+        : false;
 
     final api = ref.read(absApiProvider);
     if (api == null) {
@@ -433,7 +460,10 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
         return;
       }
 
-      final message = _resolveErrorMessage(error, fallback: 'Failed to update backup settings.');
+      final message = _resolveErrorMessage(
+        error,
+        fallback: 'Failed to update backup settings.',
+      );
       _showMessage(message);
     } finally {
       if (mounted) {
@@ -467,12 +497,17 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
       }
 
       setState(() {
-        _backups = _sortedBackups(response.data?.backups ?? const <AdminBackup>[]);
+        _backups = _sortedBackups(
+          response.data?.backups ?? const <AdminBackup>[],
+        );
       });
 
       _showMessage('Backup created successfully.');
     } catch (error) {
-      final message = listManagementErrorMessage(error, fallback: 'Failed to create backup.');
+      final message = listManagementErrorMessage(
+        error,
+        fallback: 'Failed to create backup.',
+      );
       _showMessage(message);
     } finally {
       if (mounted) {
@@ -515,7 +550,12 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
     });
 
     try {
-      final formData = FormData.fromMap({'file': await MultipartFile.fromFile(filePath, filename: pickedFile.name)});
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: pickedFile.name,
+        ),
+      });
       final response = await api.getAdminApi().uploadBackup(formData: formData);
 
       if (!mounted) {
@@ -523,12 +563,17 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
       }
 
       setState(() {
-        _backups = _sortedBackups(response.data?.backups ?? const <AdminBackup>[]);
+        _backups = _sortedBackups(
+          response.data?.backups ?? const <AdminBackup>[],
+        );
       });
 
       _showMessage('Backup uploaded successfully.');
     } catch (error) {
-      final message = listManagementErrorMessage(error, fallback: 'Failed to upload backup.');
+      final message = listManagementErrorMessage(
+        error,
+        fallback: 'Failed to upload backup.',
+      );
       _showMessage(message);
     } finally {
       if (mounted) {
@@ -539,13 +584,21 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
     }
   }
 
-  Uri _backupDownloadUri({required String backupId, required String baseUrl, String? token}) {
+  Uri _backupDownloadUri({
+    required String backupId,
+    required String baseUrl,
+    String? token,
+  }) {
     final baseUri = Uri.parse(baseUrl);
-    final basePath = baseUri.path.endsWith('/') ? baseUri.path.substring(0, baseUri.path.length - 1) : baseUri.path;
+    final basePath = baseUri.path.endsWith('/')
+        ? baseUri.path.substring(0, baseUri.path.length - 1)
+        : baseUri.path;
 
     return baseUri.replace(
       path: '$basePath/api/backups/${Uri.encodeComponent(backupId)}/download',
-      queryParameters: (token ?? '').trim().isEmpty ? null : <String, String>{'token': token!.trim()},
+      queryParameters: (token ?? '').trim().isEmpty
+          ? null
+          : <String, String>{'token': token!.trim()},
     );
   }
 
@@ -558,14 +611,23 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
 
     _setBusyBackup(backup.id, true);
     try {
-      final uri = _backupDownloadUri(backupId: backup.id, baseUrl: api.basePathOverride, token: api.token);
+      final uri = _backupDownloadUri(
+        backupId: backup.id,
+        baseUrl: api.basePathOverride,
+        token: api.token,
+      );
 
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!opened) {
         _showMessage('Failed to open backup download URL.');
       }
     } catch (error) {
-      _showMessage(_resolveErrorMessage(error, fallback: 'Failed to open backup download URL.'));
+      _showMessage(
+        _resolveErrorMessage(
+          error,
+          fallback: 'Failed to open backup download URL.',
+        ),
+      );
     } finally {
       _setBusyBackup(backup.id, false);
     }
@@ -573,7 +635,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
 
   Future<void> _restoreBackup(AdminBackup backup) async {
     if (!backup.canRestore) {
-      _showMessage('This backup was created by an unsupported legacy server format.');
+      _showMessage(
+        'This backup was created by an unsupported legacy server format.',
+      );
       return;
     }
 
@@ -587,8 +651,14 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
             'This replaces the current server database and metadata cache.',
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Restore')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Restore'),
+            ),
           ],
         );
       },
@@ -607,9 +677,14 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
     _setBusyBackup(backup.id, true);
     try {
       await api.getAdminApi().applyBackup(backupId: backup.id);
-      _showMessage('Backup restore started. Reload the app after the server finishes applying it.');
+      _showMessage(
+        'Backup restore started. Reload the app after the server finishes applying it.',
+      );
     } catch (error) {
-      final message = listManagementErrorMessage(error, fallback: 'Failed to restore backup.');
+      final message = listManagementErrorMessage(
+        error,
+        fallback: 'Failed to restore backup.',
+      );
       _showMessage(message);
     } finally {
       _setBusyBackup(backup.id, false);
@@ -620,7 +695,8 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
     final confirmed = await showListManagementDeleteDialog(
       context: context,
       title: 'Delete backup?',
-      message: 'Delete backup from ${formatDateTimeLabel(backup.createdDateTime)}? This action cannot be undone.',
+      message:
+          'Delete backup from ${formatDateTimeLabel(backup.createdDateTime)}? This action cannot be undone.',
     );
 
     if (!confirmed) {
@@ -642,12 +718,17 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
       }
 
       setState(() {
-        _backups = _sortedBackups(response.data?.backups ?? const <AdminBackup>[]);
+        _backups = _sortedBackups(
+          response.data?.backups ?? const <AdminBackup>[],
+        );
       });
 
       _showMessage('Backup deleted.');
     } catch (error) {
-      final message = listManagementErrorMessage(error, fallback: 'Failed to delete backup.');
+      final message = listManagementErrorMessage(
+        error,
+        fallback: 'Failed to delete backup.',
+      );
       _showMessage(message);
     } finally {
       _setBusyBackup(backup.id, false);
@@ -655,7 +736,8 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
   }
 
   Widget _buildToolbar({required bool compact}) {
-    final canStartOperation = !_isLoading && !_isCreatingBackup && !_isUploadingBackup;
+    final canStartOperation =
+        !_isLoading && !_isCreatingBackup && !_isUploadingBackup;
 
     if (compact) {
       return Row(
@@ -663,7 +745,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
         children: [
           IconButton.filledTonal(
             tooltip: 'Refresh',
-            onPressed: _isLoading ? null : () => unawaited(_loadBackupsData(showLoading: true)),
+            onPressed: _isLoading
+                ? null
+                : () => unawaited(_loadBackupsData(showLoading: true)),
             icon: const Icon(Icons.refresh_rounded),
           ),
           const SizedBox(width: 6),
@@ -671,7 +755,11 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
             tooltip: 'Upload backup',
             onPressed: canStartOperation ? _uploadBackup : null,
             icon: _isUploadingBackup
-                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.upload_file_rounded),
           ),
           const SizedBox(width: 6),
@@ -679,7 +767,11 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
             tooltip: 'Create backup',
             onPressed: canStartOperation ? _createBackup : null,
             icon: _isCreatingBackup
-                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.archive_rounded),
           ),
         ],
@@ -689,7 +781,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
     return Row(
       children: [
         OutlinedButton.icon(
-          onPressed: _isLoading ? null : () => unawaited(_loadBackupsData(showLoading: true)),
+          onPressed: _isLoading
+              ? null
+              : () => unawaited(_loadBackupsData(showLoading: true)),
           icon: const Icon(Icons.refresh_rounded),
           label: const Text('Refresh'),
         ),
@@ -697,7 +791,11 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
         OutlinedButton.icon(
           onPressed: canStartOperation ? _uploadBackup : null,
           icon: _isUploadingBackup
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : const Icon(Icons.upload_file_outlined),
           label: const Text('Upload Backup'),
         ),
@@ -705,7 +803,11 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
         FilledButton.icon(
           onPressed: canStartOperation ? _createBackup : null,
           icon: _isCreatingBackup
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : const Icon(Icons.archive_rounded),
           label: const Text('Create Backup'),
         ),
@@ -720,17 +822,24 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
     }
 
     return Card(
-      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
+      color: Theme.of(context).colorScheme.errorContainer
+          .withValues(alpha: 0.45),
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Row(
           children: [
-            Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error_outline_rounded,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(width: 10),
             Expanded(child: Text(message)),
             const SizedBox(width: 10),
-            TextButton(onPressed: () => unawaited(_loadBackupsData(showLoading: true)), child: const Text('Retry')),
+            TextButton(
+              onPressed: () => unawaited(_loadBackupsData(showLoading: true)),
+              child: const Text('Retry'),
+            ),
           ],
         ),
       ),
@@ -772,7 +881,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
           onAutomaticBackupsChanged: (enabled) {
             setState(() {
               _enableAutomaticBackups = enabled;
-              _cronExpressionError = _validateCronExpression(_cronExpressionController.text);
+              _cronExpressionError = _validateCronExpression(
+                _cronExpressionController.text,
+              );
             });
           },
           onSaveBackupSettings: _saveBackupSettings,
@@ -781,7 +892,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
               return;
             }
             setState(() {
-              _backupPathError = _validateBackupPath(_backupPathController.text);
+              _backupPathError = _validateBackupPath(
+                _backupPathController.text,
+              );
             });
           },
           onCronChanged: (_) {
@@ -789,7 +902,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
               return;
             }
             setState(() {
-              _cronExpressionError = _validateCronExpression(_cronExpressionController.text);
+              _cronExpressionError = _validateCronExpression(
+                _cronExpressionController.text,
+              );
             });
           },
           onBackupsToKeepChanged: (_) {
@@ -797,7 +912,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
               return;
             }
             setState(() {
-              _backupsToKeepError = _validateBackupsToKeep(_backupsToKeepController.text);
+              _backupsToKeepError = _validateBackupsToKeep(
+                _backupsToKeepController.text,
+              );
             });
           },
           onMaxBackupSizeChanged: (_) {
@@ -805,7 +922,9 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
               return;
             }
             setState(() {
-              _maxBackupSizeError = _validateMaxBackupSize(_maxBackupSizeController.text);
+              _maxBackupSizeError = _validateMaxBackupSize(
+                _maxBackupSizeController.text,
+              );
             });
           },
         ),
@@ -871,19 +990,27 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
           builder: (context, constraints) {
             _queueTopContentMeasurement();
 
-            final topContent = KeyedSubtree(key: _topContentKey, child: _buildTopContent());
+            final topContent = KeyedSubtree(
+              key: _topContentKey,
+              child: _buildTopContent(),
+            );
             final viewportHeight = constraints.maxHeight;
             final usePageScroll =
                 _isBackupConfigurationExpanded &&
                 (_topContentHeight <= 0 ||
-                    _topContentHeight + _contentSectionSpacing + _tableMinHeightForStaticLayout > viewportHeight);
+                    _topContentHeight +
+                            _contentSectionSpacing +
+                            _tableMinHeightForStaticLayout >
+                        viewportHeight);
 
             final body = usePageScroll
                 ? CustomScrollView(
                     physics: const ClampingScrollPhysics(),
                     slivers: [
                       SliverToBoxAdapter(child: topContent),
-                      const SliverToBoxAdapter(child: SizedBox(height: _contentSectionSpacing)),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: _contentSectionSpacing),
+                      ),
                       SliverFillRemaining(hasScrollBody: true, child: table),
                     ],
                   )
@@ -896,7 +1023,15 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
                     ],
                   );
 
-            return Padding(padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 16), child: body);
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                8,
+                horizontalPadding,
+                16,
+              ),
+              child: body,
+            );
           },
         );
       },
@@ -906,7 +1041,10 @@ class _AdminServerBackupsViewState extends ConsumerState<AdminServerBackupsView>
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          'Failed to load user data: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       ),
     );
   }

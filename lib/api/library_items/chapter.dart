@@ -19,5 +19,6 @@ abstract class Chapter with _$Chapter {
     return InternalChapter(start: start, end: end, title: title);
   }
 
-  factory Chapter.fromJson(Map<String, dynamic> json) => _$ChapterFromJson(json);
+  factory Chapter.fromJson(Map<String, dynamic> json) =>
+      _$ChapterFromJson(json);
 }

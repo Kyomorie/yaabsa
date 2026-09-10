@@ -90,7 +90,8 @@ class YaabsaExpressiveDropdownField<T> extends StatelessWidget {
               ? theme.colorScheme.onSecondaryContainer
               : theme.colorScheme.onSurface;
 
-          final Widget? defaultTrailingIcon = showSelectedCheckmark && isSelected
+          final Widget? defaultTrailingIcon =
+              showSelectedCheckmark && isSelected
               ? Icon(Icons.check_rounded, size: 18, color: foregroundColor)
               : null;
 
@@ -104,7 +105,9 @@ class YaabsaExpressiveDropdownField<T> extends StatelessWidget {
             style: baseEntryStyle.copyWith(
               backgroundColor: WidgetStatePropertyAll<Color?>(
                 showSelectedHighlight && isSelected
-                    ? theme.colorScheme.secondaryContainer.withValues(alpha: 0.78)
+                    ? theme.colorScheme.secondaryContainer.withValues(
+                        alpha: 0.78,
+                      )
                     : null,
               ),
               foregroundColor: WidgetStatePropertyAll<Color?>(foregroundColor),
@@ -117,18 +120,26 @@ class YaabsaExpressiveDropdownField<T> extends StatelessWidget {
     final MenuStyle effectiveMenuStyle =
         menuStyle ??
         MenuStyle(
-          backgroundColor: WidgetStatePropertyAll<Color>(theme.colorScheme.surfaceContainerHigh),
-          surfaceTintColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+          backgroundColor: WidgetStatePropertyAll<Color>(
+            theme.colorScheme.surfaceContainerHigh,
+          ),
+          surfaceTintColor: const WidgetStatePropertyAll<Color>(
+            Colors.transparent,
+          ),
           elevation: const WidgetStatePropertyAll<double>(3),
           shape: WidgetStatePropertyAll<OutlinedBorder>(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          padding: const WidgetStatePropertyAll<EdgeInsetsGeometry>(EdgeInsets.symmetric(vertical: 4)),
+          padding: const WidgetStatePropertyAll<EdgeInsetsGeometry>(
+            EdgeInsets.symmetric(vertical: 4),
+          ),
         );
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double? resolvedWidth = width ?? (constraints.maxWidth.isFinite ? constraints.maxWidth : null);
+        final double? resolvedWidth =
+            width ??
+            (constraints.maxWidth.isFinite ? constraints.maxWidth : null);
 
         return DropdownMenuFormField<T>(
           key: ValueKey<T?>(selectedValue),
@@ -140,13 +151,22 @@ class YaabsaExpressiveDropdownField<T> extends StatelessWidget {
           requestFocusOnTap: requestFocusOnTap,
           dropdownMenuEntries: entries,
           trailingIcon:
-              trailingIcon ?? Icon(Icons.keyboard_arrow_down_rounded, color: theme.colorScheme.onSurfaceVariant),
+              trailingIcon ??
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
           selectedTrailingIcon:
-              selectedTrailingIcon ?? Icon(Icons.keyboard_arrow_up_rounded, color: theme.colorScheme.onSurfaceVariant),
+              selectedTrailingIcon ??
+              Icon(
+                Icons.keyboard_arrow_up_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
           alignmentOffset: alignmentOffset,
           menuStyle: effectiveMenuStyle,
           textStyle: effectiveTextStyle,
-          decorationBuilder: (context, _) => decoration ?? const InputDecoration(),
+          decorationBuilder: (context, _) =>
+              decoration ?? const InputDecoration(),
           onSelected: enabled ? onChanged : null,
         );
       },
@@ -195,18 +215,27 @@ class YaabsaExpressiveDropdown<T> extends StatelessWidget {
         decoration ??
         InputDecoration(
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 8,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.34)),
+            borderSide: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.34),
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.34)),
+            borderSide: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.34),
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            borderSide: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
           ),
         );
 

@@ -20,7 +20,8 @@ class AdminServerUsersView extends ConsumerStatefulWidget {
   const AdminServerUsersView({super.key});
 
   @override
-  ConsumerState<AdminServerUsersView> createState() => _AdminServerUsersViewState();
+  ConsumerState<AdminServerUsersView> createState() =>
+      _AdminServerUsersViewState();
 }
 
 class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
@@ -81,7 +82,9 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
         return byType;
       }
 
-      final byName = left.username.toLowerCase().compareTo(right.username.toLowerCase());
+      final byName = left.username.toLowerCase().compareTo(
+        right.username.toLowerCase(),
+      );
       if (byName != 0) {
         return byName;
       }
@@ -94,7 +97,9 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
   List<Library> _sortedLibraries(List<Library> libraries) {
     final sorted = List<Library>.from(libraries);
     sorted.sort((left, right) {
-      final byName = left.name.toLowerCase().compareTo(right.name.toLowerCase());
+      final byName = left.name.toLowerCase().compareTo(
+        right.name.toLowerCase(),
+      );
       if (byName != 0) {
         return byName;
       }
@@ -104,8 +109,14 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
   }
 
   List<String> _sortedTags(List<String> tags) {
-    final sorted = tags.map((entry) => entry.trim()).where((entry) => entry.isNotEmpty).toSet().toList();
-    sorted.sort((left, right) => left.toLowerCase().compareTo(right.toLowerCase()));
+    final sorted = tags
+        .map((entry) => entry.trim())
+        .where((entry) => entry.isNotEmpty)
+        .toSet()
+        .toList();
+    sorted.sort(
+      (left, right) => left.toLowerCase().compareTo(right.toLowerCase()),
+    );
     return sorted;
   }
 
@@ -141,7 +152,9 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
 
   void _removeUserFromList(String userId) {
     setState(() {
-      _users = _users.where((entry) => entry.id != userId).toList(growable: false);
+      _users = _users
+          .where((entry) => entry.id != userId)
+          .toList(growable: false);
     });
   }
 
@@ -154,7 +167,8 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
     return _users
         .where((user) {
           final email = user.email ?? '';
-          final searchable = '${user.username} ${user.type} $email'.toLowerCase();
+          final searchable = '${user.username} ${user.type} $email'
+              .toLowerCase();
           return searchable.contains(normalizedQuery);
         })
         .toList(growable: false);
@@ -188,16 +202,25 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
 
       MagicConfigKeyMarker? authenticationCodeKey;
       try {
-        final settings = (await api.getAdminApi().getAuthenticationSettings()).data;
+        final settings =
+            (await api.getAdminApi().getAuthenticationSettings()).data;
         authenticationCodeKey =
             MagicConfigKeyMarker.extract(settings?.authLoginCustomMessage) ??
             MagicConfigKeyMarker.fromSerializedName(
-              MagicConfigKeyMarker.extractFromSanitizedHtml(settings?.authLoginCustomMessage),
+              MagicConfigKeyMarker.extractFromSanitizedHtml(
+                settings?.authLoginCustomMessage,
+              ),
             );
       } catch (_) {}
 
-      final users = _sortedUsers(List<AdminUser>.from(usersResponse.data?.users ?? const <AdminUser>[]));
-      final libraries = _sortedLibraries(List<Library>.from(librariesResponse.data?.libraries ?? const <Library>[]));
+      final users = _sortedUsers(
+        List<AdminUser>.from(usersResponse.data?.users ?? const <AdminUser>[]),
+      );
+      final libraries = _sortedLibraries(
+        List<Library>.from(
+          librariesResponse.data?.libraries ?? const <Library>[],
+        ),
+      );
       final tags = _sortedTags(tagsResponse.data?.tags ?? const <String>[]);
 
       if (!mounted) {
@@ -245,12 +268,16 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
       return null;
     }
 
-    final settingsResponse = await api.getAdminApi().getAuthenticationSettings();
+    final settingsResponse = await api
+        .getAdminApi()
+        .getAuthenticationSettings();
     final settings = settingsResponse.data;
     final existingMarker =
         MagicConfigKeyMarker.extract(settings?.authLoginCustomMessage) ??
         MagicConfigKeyMarker.fromSerializedName(
-          MagicConfigKeyMarker.extractFromSanitizedHtml(settings?.authLoginCustomMessage),
+          MagicConfigKeyMarker.extractFromSanitizedHtml(
+            settings?.authLoginCustomMessage,
+          ),
         );
     if (existingMarker != null) {
       if (mounted) {
@@ -273,8 +300,14 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
           'yaabsa needs to store a server-specific encryption key in the login message. It is hidden from browsers, but anyone who can read the public login message can retrieve it. This key makes Authentication Codes compatible and opaque. This makes sure that if you ever leak a key neither username nor password can be extracted without that key. If you rotate the key and the key is lost, the information of the key is secure.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Create key')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Create key'),
+          ),
         ],
       ),
     );
@@ -285,17 +318,25 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
     final marker = MagicConfigKeyMarker.generate();
     await api.getAdminApi().updateAuthenticationSettings(
       payload: UpdateAdminAuthenticationSettingsRequest(
-        authLoginCustomMessage: MagicConfigKeyMarker.appendToHtml(settings?.authLoginCustomMessage, marker),
+        authLoginCustomMessage: MagicConfigKeyMarker.appendToHtml(
+          settings?.authLoginCustomMessage,
+          marker,
+        ),
       ),
     );
-    final savedSettings = (await api.getAdminApi().getAuthenticationSettings()).data;
+    final savedSettings =
+        (await api.getAdminApi().getAuthenticationSettings()).data;
     final savedMarker =
         MagicConfigKeyMarker.extract(savedSettings?.authLoginCustomMessage) ??
         MagicConfigKeyMarker.fromSerializedName(
-          MagicConfigKeyMarker.extractFromSanitizedHtml(savedSettings?.authLoginCustomMessage),
+          MagicConfigKeyMarker.extractFromSanitizedHtml(
+            savedSettings?.authLoginCustomMessage,
+          ),
         );
     if (savedMarker == null || savedMarker.encodedKey != marker.encodedKey) {
-      _showMessage('Audiobookshelf did not preserve the Authentication Code key. No Authentication Code was created.');
+      _showMessage(
+        'Audiobookshelf did not preserve the Authentication Code key. No Authentication Code was created.',
+      );
       return null;
     }
     if (mounted) {
@@ -353,7 +394,9 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
       localServerUrl: server.localUrl,
       username: username,
       password: password,
-      headers: Map<String, String>.from(server.headers ?? const <String, String>{}),
+      headers: Map<String, String>.from(
+        server.headers ?? const <String, String>{},
+      ),
       allowPassword: allowPassword,
       ensureMarker: _ensureMagicKey,
     );
@@ -374,10 +417,15 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
           'Authentication Codes use one server-wide key. Deleting it will invalidate every Authentication Code. Existing signed-in accounts are not affected.',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Delete Authentication Code'),
           ),
         ],
@@ -391,11 +439,14 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
       _isDeletingAuthenticationCode = true;
     });
     try {
-      final settings = (await api.getAdminApi().getAuthenticationSettings()).data;
+      final settings =
+          (await api.getAdminApi().getAuthenticationSettings()).data;
       final marker =
           MagicConfigKeyMarker.extract(settings?.authLoginCustomMessage) ??
           MagicConfigKeyMarker.fromSerializedName(
-            MagicConfigKeyMarker.extractFromSanitizedHtml(settings?.authLoginCustomMessage),
+            MagicConfigKeyMarker.extractFromSanitizedHtml(
+              settings?.authLoginCustomMessage,
+            ),
           );
       if (marker == null) {
         if (mounted) {
@@ -410,7 +461,9 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
 
       await api.getAdminApi().updateAuthenticationSettings(
         payload: UpdateAdminAuthenticationSettingsRequest(
-          authLoginCustomMessage: MagicConfigKeyMarker.visibleHtml(settings?.authLoginCustomMessage),
+          authLoginCustomMessage: MagicConfigKeyMarker.visibleHtml(
+            settings?.authLoginCustomMessage,
+          ),
         ),
       );
       if (mounted) {
@@ -419,7 +472,9 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
           _authenticationCodeKeyLoaded = true;
         });
       }
-      _showMessage('Authentication Code deleted. Existing Authentication Codes are no longer valid.');
+      _showMessage(
+        'Authentication Code deleted. Existing Authentication Codes are no longer valid.',
+      );
     } catch (error) {
       _showMessage('Failed to delete Authentication Code: $error');
     } finally {
@@ -499,7 +554,11 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
         _upsertUserInList(createdUser);
       }
 
-      await _showMagicConfig(username: payload.username, password: payload.password, allowPassword: true);
+      await _showMagicConfig(
+        username: payload.username,
+        password: payload.password,
+        allowPassword: true,
+      );
       _showMessage('User created successfully.');
     } catch (error) {
       _showMessage('Failed to create user: $error');
@@ -539,7 +598,10 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
 
     _setBusyForUser(user.id, true);
     try {
-      final response = await api.getAdminApi().updateUser(userId: user.id, payload: payload);
+      final response = await api.getAdminApi().updateUser(
+        userId: user.id,
+        payload: payload,
+      );
       final updatedUser = response.data;
 
       if (updatedUser == null) {
@@ -574,9 +636,14 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
 
     _setBusyForUser(user.id, true);
     try {
-      final payload = AdminUserUpsertRequest.fromUser(user).copyWith(isActive: !user.isActive);
-      final response = await api.getAdminApi().updateUser(userId: user.id, payload: payload);
-      final updatedUser = response.data ?? user.copyWith(isActive: !user.isActive);
+      final payload = AdminUserUpsertRequest.fromUser(user)
+          .copyWith(isActive: !user.isActive);
+      final response = await api.getAdminApi().updateUser(
+        userId: user.id,
+        payload: payload,
+      );
+      final updatedUser =
+          response.data ?? user.copyWith(isActive: !user.isActive);
       _upsertUserInList(updatedUser);
 
       if (_activeUserId == user.id) {
@@ -591,7 +658,10 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
     }
   }
 
-  Future<void> _deleteUser(AdminUser user, {required String? activeUserId}) async {
+  Future<void> _deleteUser(
+    AdminUser user, {
+    required String? activeUserId,
+  }) async {
     if (activeUserId == user.id) {
       _showMessage('You cannot delete the currently signed-in user.');
       return;
@@ -608,12 +678,19 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete User'),
-          content: Text('Delete user "${user.username}"? This cannot be undone.'),
+          content: Text(
+            'Delete user "${user.username}"? This cannot be undone.',
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: OutlinedButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
               child: const Text('Delete'),
             ),
           ],
@@ -649,17 +726,22 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
     }
 
     return Card(
-      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
+      color: Theme.of(context).colorScheme.errorContainer
+          .withValues(alpha: 0.45),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Row(
           children: [
-            Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error_outline_rounded,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(width: 10),
             Expanded(child: Text(message)),
             const SizedBox(width: 10),
             TextButton(
-              onPressed: () => unawaited(_loadUserManagementData(showLoading: true)),
+              onPressed: () =>
+                  unawaited(_loadUserManagementData(showLoading: true)),
               child: const Text('Retry'),
             ),
           ],
@@ -670,13 +752,20 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
 
   Widget _buildToolbar({required bool compact}) {
     final controlsDisabled =
-        _isLoading || _isCreatingUser || _isCreatingAuthenticationCodeKey || _isDeletingAuthenticationCode;
+        _isLoading ||
+        _isCreatingUser ||
+        _isCreatingAuthenticationCodeKey ||
+        _isDeletingAuthenticationCode;
     final hasAuthenticationCode = _authenticationCodeKey != null;
     final authenticationCodeActionLabel = hasAuthenticationCode
         ? 'Delete Authentication Code'
         : 'Create Authentication Code';
-    final authenticationCodeActionIcon = hasAuthenticationCode ? Icons.delete_sweep_outlined : Icons.qr_code_2_rounded;
-    final authenticationCodeAction = hasAuthenticationCode ? _deleteAuthenticationCode : _createAuthenticationCodeKey;
+    final authenticationCodeActionIcon = hasAuthenticationCode
+        ? Icons.delete_sweep_outlined
+        : Icons.qr_code_2_rounded;
+    final authenticationCodeAction = hasAuthenticationCode
+        ? _deleteAuthenticationCode
+        : _createAuthenticationCodeKey;
 
     if (compact) {
       return Column(
@@ -700,7 +789,11 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
                 child: FilledButton.icon(
                   onPressed: controlsDisabled ? null : _createUser,
                   icon: _isCreatingUser
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Icon(Icons.person_add_alt_1_rounded),
                   label: const Text('Add user'),
                 ),
@@ -718,7 +811,10 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
               const SizedBox(width: 4),
               IconButton(
                 tooltip: 'Refresh',
-                onPressed: _isLoading ? null : () => unawaited(_loadUserManagementData(showLoading: true)),
+                onPressed: _isLoading
+                    ? null
+                    : () =>
+                          unawaited(_loadUserManagementData(showLoading: true)),
                 icon: const Icon(Icons.refresh_rounded),
               ),
             ],
@@ -744,7 +840,9 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
         ),
         const SizedBox(width: 10),
         OutlinedButton.icon(
-          onPressed: _isLoading ? null : () => unawaited(_loadUserManagementData(showLoading: true)),
+          onPressed: _isLoading
+              ? null
+              : () => unawaited(_loadUserManagementData(showLoading: true)),
           icon: const Icon(Icons.refresh_rounded),
           label: const Text('Refresh'),
         ),
@@ -752,7 +850,11 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
         FilledButton.icon(
           onPressed: controlsDisabled ? null : _createUser,
           icon: _isCreatingUser
-              ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : const Icon(Icons.person_add_alt_1_rounded),
           label: const Text('Add user'),
         ),
@@ -799,12 +901,15 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
                   user.username,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 AdminUserBadge(
                   label: user.isActive ? 'ACTIVE' : 'DISABLED',
                   color: statusColor,
-                  icon: user.isActive ? Icons.check_circle_rounded : Icons.do_not_disturb_on_rounded,
+                  icon: user.isActive
+                      ? Icons.check_circle_rounded
+                      : Icons.do_not_disturb_on_rounded,
                 ),
                 if (user.hasLinkedOpenId)
                   AdminUserBadge(
@@ -833,12 +938,15 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
                       user.username,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     AdminUserBadge(
                       label: user.isActive ? 'ACTIVE' : 'DISABLED',
                       color: statusColor,
-                      icon: user.isActive ? Icons.check_circle_rounded : Icons.do_not_disturb_on_rounded,
+                      icon: user.isActive
+                          ? Icons.check_circle_rounded
+                          : Icons.do_not_disturb_on_rounded,
                     ),
                     if (user.hasLinkedOpenId)
                       AdminUserBadge(
@@ -850,7 +958,9 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  (email?.isNotEmpty ?? false) ? (email ?? 'No email') : 'No email',
+                  (email?.isNotEmpty ?? false)
+                      ? (email ?? 'No email')
+                      : 'No email',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall,
@@ -865,8 +975,12 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
           label: 'Type',
           width: 100,
           alignment: ExpressiveTableCellAlignment.center,
-          cellBuilder: (context, user) =>
-              Text(user.type.toLowerCase(), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+          cellBuilder: (context, user) => Text(
+            user.type.toLowerCase(),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         ExpressiveTableColumn<AdminUser>(
           id: 'email',
@@ -887,16 +1001,22 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
           label: 'Created',
           width: 148,
           showOnMobile: false,
-          cellBuilder: (context, user) =>
-              Text(_formatEpoch(user.createdAt), maxLines: 1, overflow: TextOverflow.ellipsis),
+          cellBuilder: (context, user) => Text(
+            _formatEpoch(user.createdAt),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         ExpressiveTableColumn<AdminUser>(
           id: 'last-seen',
           label: 'Last seen',
           width: 148,
           headerTooltip: 'Last seen updates when the user connects via websocket. It may not reflect offline-listening syncs or third-party clients that do not use websockets.',
-          cellBuilder: (context, user) =>
-              Text(_formatEpoch(user.lastSeen), maxLines: 1, overflow: TextOverflow.ellipsis),
+          cellBuilder: (context, user) => Text(
+            _formatEpoch(user.lastSeen),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
       actions: [
@@ -904,7 +1024,11 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
           icon: Icons.qr_code_2_rounded,
           tooltip: 'Create Authentication Code',
           onPressed: (user) async {
-            await _showMagicConfig(username: user.username, password: null, allowPassword: false);
+            await _showMagicConfig(
+              username: user.username,
+              password: null,
+              allowPassword: false,
+            );
           },
         ),
         ExpressiveTableAction<AdminUser>(
@@ -917,8 +1041,11 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
           icon: Icons.power_settings_new_rounded,
           tooltip: 'Enable or disable user',
           isVisible: (user) => !user.isRoot,
-          iconBuilder: (user) => user.isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
-          tooltipBuilder: (user) => user.isActive ? 'Disable user' : 'Enable user',
+          iconBuilder: (user) => user.isActive
+              ? Icons.block_rounded
+              : Icons.check_circle_outline_rounded,
+          tooltipBuilder: (user) =>
+              user.isActive ? 'Disable user' : 'Enable user',
           onPressed: _toggleUserActive,
         ),
         ExpressiveTableAction<AdminUser>(
@@ -1007,7 +1134,10 @@ class _AdminServerUsersViewState extends ConsumerState<AdminServerUsersView> {
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          'Failed to load user data: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       ),
     );
   }

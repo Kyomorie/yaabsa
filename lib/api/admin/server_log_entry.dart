@@ -11,8 +11,10 @@ abstract class ServerLogEntry with _$ServerLogEntry {
     @JsonKey(name: 'source') String? source,
     @JsonKey(name: 'message') required String message,
     @JsonKey(name: 'levelName') required String levelName,
-    @JsonKey(name: 'level', fromJson: jsonIntRequiredFromDynamic) required int level,
+    @JsonKey(name: 'level', fromJson: jsonIntRequiredFromDynamic)
+    required int level,
   }) = _ServerLogEntry;
 
-  factory ServerLogEntry.fromJson(Map<String, dynamic> json) => _$ServerLogEntryFromJson(json);
+  factory ServerLogEntry.fromJson(Map<String, dynamic> json) =>
+      _$ServerLogEntryFromJson(json);
 }

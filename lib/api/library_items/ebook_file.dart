@@ -15,5 +15,6 @@ abstract class EbookFile with _$EbookFile {
     @JsonKey(name: "updatedAt") int? updatedAt,
   }) = _EbookFile;
 
-  factory EbookFile.fromJson(Map<String, dynamic> json) => _$EbookFileFromJson(json);
+  factory EbookFile.fromJson(Map<String, dynamic> json) =>
+      _$EbookFileFromJson(json);
 }

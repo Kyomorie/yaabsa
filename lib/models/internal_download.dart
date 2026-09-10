@@ -18,20 +18,29 @@ abstract class InternalDownload with _$InternalDownload {
     @JsonKey(name: "episode") required Episode? episode,
     @JsonKey(name: "tracks") required List<InternalTrack> tracks,
     @JsonKey(name: "expectedFileCount") int? expectedFileCount,
-    @JsonKey(name: "auxiliaryFilePaths") @Default(<String>[]) List<String> auxiliaryFilePaths,
+    @JsonKey(name: "auxiliaryFilePaths")
+    @Default(<String>[])
+    List<String> auxiliaryFilePaths,
     @JsonKey(name: "saf", defaultValue: false) required bool saf,
     @JsonKey(name: "coverPath") String? coverPath,
-    @JsonKey(name: "sidecarPaths") @Default(<String>[]) List<String> sidecarPaths,
+    @JsonKey(name: "sidecarPaths")
+    @Default(<String>[])
+    List<String> sidecarPaths,
     @JsonKey(name: "downloadType") @Default('both') String downloadType,
     @JsonKey(name: 'downloadBasePath') String? downloadBasePath,
     @JsonKey(name: 'downloadOrigin') @Default('manual') String downloadOrigin,
-    @JsonKey(name: 'smartProfileIds') @Default(<String>[]) List<String> smartProfileIds,
+    @JsonKey(name: 'smartProfileIds')
+    @Default(<String>[])
+    List<String> smartProfileIds,
     @JsonKey(name: 'managedBytes') int? managedBytes,
     @JsonKey(name: 'completedAt') int? completedAt,
   }) = _InternalDownload;
 
   bool get isPodcast {
-    assert(item != null || episode != null, 'Either item or episode must be provided');
+    assert(
+      item != null || episode != null,
+      'Either item or episode must be provided',
+    );
     // This just means podcast. Maybe a better name, because I ran into my own confusion why item was nullable.
     return episode != null;
   }
@@ -45,7 +54,9 @@ abstract class InternalDownload with _$InternalDownload {
   }
 
   int get numberOfDownloadedTracks {
-    return tracks.where((track) => track.url != null && track.url!.trim().isNotEmpty).length;
+    return tracks
+        .where((track) => track.url != null && track.url!.trim().isNotEmpty)
+        .length;
   }
 
   int get numberOfFiles {
@@ -84,7 +95,9 @@ abstract class InternalDownload with _$InternalDownload {
   }
 
   int get numberOfDownloadedFiles {
-    final uniqueAuxiliaryFiles = auxiliaryFilePaths.where((path) => path.trim().isNotEmpty).toSet();
+    final uniqueAuxiliaryFiles = auxiliaryFilePaths
+        .where((path) => path.trim().isNotEmpty)
+        .toSet();
     return numberOfDownloadedTracks + uniqueAuxiliaryFiles.length;
   }
 
@@ -101,11 +114,14 @@ abstract class InternalDownload with _$InternalDownload {
     final hasEbook = auxiliaryFilePaths.any(FileFormats.isEbook);
 
     final ebookAvailable = item?.media?.bookMedia?.ebookFile != null;
-    final audioAvailable = (item?.media?.bookMedia?.audioFiles?.isNotEmpty ?? false) || (episode != null);
+    final audioAvailable =
+        (item?.media?.bookMedia?.audioFiles?.isNotEmpty ?? false) ||
+        (episode != null);
 
     bool audioComplete = true;
     if (audioAvailable) {
-      audioComplete = numberOfDownloadedTracks == numberOfTracks && numberOfTracks > 0;
+      audioComplete =
+          numberOfDownloadedTracks == numberOfTracks && numberOfTracks > 0;
     }
 
     bool ebookComplete = true;
@@ -123,10 +139,16 @@ abstract class InternalDownload with _$InternalDownload {
     }
 
     final resolvedTracks = await Future.wait(
-      tracks.map((track) async => track.copyWith(url: await resolveStoredDownloadPath(track.url, basePath))),
+      tracks.map(
+        (track) async => track.copyWith(
+          url: await resolveStoredDownloadPath(track.url, basePath),
+        ),
+      ),
     );
     final resolvedAuxiliaryPaths = await Future.wait(
-      auxiliaryFilePaths.map((path) => resolveStoredDownloadPath(path, basePath)),
+      auxiliaryFilePaths.map(
+        (path) => resolveStoredDownloadPath(path, basePath),
+      ),
     );
     final resolvedSidecarPaths = await Future.wait(
       sidecarPaths.map((path) => resolveStoredDownloadPath(path, basePath)),
@@ -134,11 +156,16 @@ abstract class InternalDownload with _$InternalDownload {
 
     return copyWith(
       tracks: resolvedTracks,
-      auxiliaryFilePaths: resolvedAuxiliaryPaths.whereType<String>().toList(growable: false),
-      sidecarPaths: resolvedSidecarPaths.whereType<String>().toList(growable: false),
+      auxiliaryFilePaths: resolvedAuxiliaryPaths.whereType<String>().toList(
+        growable: false,
+      ),
+      sidecarPaths: resolvedSidecarPaths.whereType<String>().toList(
+        growable: false,
+      ),
       coverPath: await resolveStoredDownloadPath(coverPath, basePath),
     );
   }
 
-  factory InternalDownload.fromJson(Map<String, dynamic> json) => _$InternalDownloadFromJson(json);
+  factory InternalDownload.fromJson(Map<String, dynamic> json) =>
+      _$InternalDownloadFromJson(json);
 }

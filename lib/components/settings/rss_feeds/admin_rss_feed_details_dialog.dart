@@ -14,23 +14,33 @@ Future<void> showAdminRssFeedDetailsDialog({
   return showDialog<void>(
     context: context,
     builder: (dialogContext) {
-      return _AdminRssFeedDetailsDialog(feed: feed, feedUrl: feedUrl, coverImageUrl: coverImageUrl);
+      return _AdminRssFeedDetailsDialog(
+        feed: feed,
+        feedUrl: feedUrl,
+        coverImageUrl: coverImageUrl,
+      );
     },
   );
 }
 
 class _AdminRssFeedDetailsDialog extends StatefulWidget {
-  const _AdminRssFeedDetailsDialog({required this.feed, required this.feedUrl, required this.coverImageUrl});
+  const _AdminRssFeedDetailsDialog({
+    required this.feed,
+    required this.feedUrl,
+    required this.coverImageUrl,
+  });
 
   final AdminRssFeed feed;
   final String? feedUrl;
   final String? coverImageUrl;
 
   @override
-  State<_AdminRssFeedDetailsDialog> createState() => _AdminRssFeedDetailsDialogState();
+  State<_AdminRssFeedDetailsDialog> createState() =>
+      _AdminRssFeedDetailsDialogState();
 }
 
-class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> {
+class _AdminRssFeedDetailsDialogState
+    extends State<_AdminRssFeedDetailsDialog> {
   late final TextEditingController _titleController;
   late final TextEditingController _feedUrlController;
   late final TextEditingController _descriptionController;
@@ -43,10 +53,18 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
 
     final metadata = widget.feed.meta;
     _titleController = TextEditingController(text: widget.feed.resolvedTitle);
-    _feedUrlController = TextEditingController(text: (widget.feedUrl ?? widget.feed.feedUrl ?? '').trim());
-    _descriptionController = TextEditingController(text: (metadata?.description ?? '').trim());
-    _ownerNameController = TextEditingController(text: (metadata?.ownerName ?? '').trim());
-    _ownerEmailController = TextEditingController(text: (metadata?.ownerEmail ?? '').trim());
+    _feedUrlController = TextEditingController(
+      text: (widget.feedUrl ?? widget.feed.feedUrl ?? '').trim(),
+    );
+    _descriptionController = TextEditingController(
+      text: (metadata?.description ?? '').trim(),
+    );
+    _ownerNameController = TextEditingController(
+      text: (metadata?.ownerName ?? '').trim(),
+    );
+    _ownerEmailController = TextEditingController(
+      text: (metadata?.ownerEmail ?? '').trim(),
+    );
   }
 
   @override
@@ -96,7 +114,10 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
   String? _episodeNumberLabel(AdminRssFeedEpisode episode) {
     final season = episode.season?.trim();
     final episodeNumber = episode.episode?.trim();
-    if (season != null && season.isNotEmpty && episodeNumber != null && episodeNumber.isNotEmpty) {
+    if (season != null &&
+        season.isNotEmpty &&
+        episodeNumber != null &&
+        episodeNumber.isNotEmpty) {
       return 'S$season E$episodeNumber';
     }
 
@@ -159,7 +180,11 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
   Widget _buildCover() {
     final imageUrl = widget.coverImageUrl?.trim();
     if (imageUrl == null || imageUrl.isEmpty) {
-      return const SizedBox(width: 64, height: 64, child: Icon(Icons.rss_feed_rounded));
+      return const SizedBox(
+        width: 64,
+        height: 64,
+        child: Icon(Icons.rss_feed_rounded),
+      );
     }
 
     return ClipRRect(
@@ -170,7 +195,11 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
         height: 64,
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
-          return const SizedBox(width: 64, height: 64, child: Icon(Icons.rss_feed_rounded));
+          return const SizedBox(
+            width: 64,
+            height: 64,
+            child: Icon(Icons.rss_feed_rounded),
+          );
         },
       ),
     );
@@ -203,12 +232,19 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.feed.resolvedTitle, style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          widget.feed.resolvedTitle,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 2),
                         Text(
                           '${_entityLabel(widget.feed.entityType)} • $episodeCount episodes',
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
                         ),
                       ],
                     ),
@@ -216,7 +252,11 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
                 ],
               ),
               const SizedBox(height: 12),
-              StyledTextField(label: 'Title', controller: _titleController, readOnly: true),
+              StyledTextField(
+                label: 'Title',
+                controller: _titleController,
+                readOnly: true,
+              ),
               const SizedBox(height: 10),
               StyledTextField(
                 label: 'Feed URL',
@@ -224,13 +264,20 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
                 readOnly: true,
                 suffixIcon: IconButton(
                   tooltip: 'Copy feed URL',
-                  onPressed: _feedUrlController.text.trim().isEmpty ? null : _copyFeedUrl,
+                  onPressed: _feedUrlController.text.trim().isEmpty
+                      ? null
+                      : _copyFeedUrl,
                   icon: const Icon(Icons.copy_rounded),
                 ),
               ),
               if (hasDescription) ...[
                 const SizedBox(height: 10),
-                StyledTextField(label: 'Description', controller: _descriptionController, readOnly: true, maxLines: 3),
+                StyledTextField(
+                  label: 'Description',
+                  controller: _descriptionController,
+                  readOnly: true,
+                  maxLines: 3,
+                ),
               ],
               if (hasOwnerName || hasOwnerEmail) ...[
                 const SizedBox(height: 10),
@@ -238,12 +285,21 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
                   children: [
                     if (hasOwnerName)
                       Expanded(
-                        child: StyledTextField(label: 'Owner Name', controller: _ownerNameController, readOnly: true),
+                        child: StyledTextField(
+                          label: 'Owner Name',
+                          controller: _ownerNameController,
+                          readOnly: true,
+                        ),
                       ),
-                    if (hasOwnerName && hasOwnerEmail) const SizedBox(width: 10),
+                    if (hasOwnerName && hasOwnerEmail)
+                      const SizedBox(width: 10),
                     if (hasOwnerEmail)
                       Expanded(
-                        child: StyledTextField(label: 'Owner Email', controller: _ownerEmailController, readOnly: true),
+                        child: StyledTextField(
+                          label: 'Owner Email',
+                          controller: _ownerEmailController,
+                          readOnly: true,
+                        ),
                       ),
                   ],
                 ),
@@ -252,11 +308,16 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
                 const SizedBox(height: 8),
                 Text(
                   'This feed is marked to prevent indexing.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: Theme.of(context).colorScheme.primary),
                 ),
               ],
               const SizedBox(height: 12),
-              Text('Episodes', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Episodes',
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 8),
               Expanded(
                 child: ExpressiveActionTable<AdminRssFeedEpisode>(
@@ -279,14 +340,22 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(_episodeTitle(episode), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            Text(
+                              _episodeTitle(episode),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             if (tags.isNotEmpty)
                               Text(
                                 tags.join(' • '),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
                               ),
                           ],
                         );
@@ -298,7 +367,8 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
                       label: 'Duration',
                       width: 110,
                       alignment: ExpressiveTableCellAlignment.center,
-                      cellBuilder: (context, episode) => Text(_episodeDuration(episode)),
+                      cellBuilder: (context, episode) =>
+                          Text(_episodeDuration(episode)),
                     ),
                     ExpressiveTableColumn<AdminRssFeedEpisode>(
                       id: 'author',
@@ -307,8 +377,14 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
                       showOnMobile: false,
                       cellBuilder: (context, episode) {
                         final author = episode.author?.trim();
-                        final resolved = author == null || author.isEmpty ? 'Unknown' : author;
-                        return Text(resolved, maxLines: 1, overflow: TextOverflow.ellipsis);
+                        final resolved = author == null || author.isEmpty
+                            ? 'Unknown'
+                            : author;
+                        return Text(
+                          resolved,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        );
                       },
                     ),
                     ExpressiveTableColumn<AdminRssFeedEpisode>(
@@ -319,8 +395,14 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
                       showOnMobile: false,
                       cellBuilder: (context, episode) {
                         final size = episode.enclosure?.size;
-                        final resolved = size == null || size <= 0 ? 'Unknown' : formatBytes(size);
-                        return Text(resolved, maxLines: 1, overflow: TextOverflow.ellipsis);
+                        final resolved = size == null || size <= 0
+                            ? 'Unknown'
+                            : formatBytes(size);
+                        return Text(
+                          resolved,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        );
                       },
                     ),
                   ],
@@ -334,7 +416,12 @@ class _AdminRssFeedDetailsDialogState extends State<_AdminRssFeedDetailsDialog> 
           ),
         ),
       ),
-      actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close'))],
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
+      ],
     );
   }
 }

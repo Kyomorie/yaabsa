@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/components/settings/settings_navigation_section.dart';
 import 'package:yaabsa/components/settings/settings_switch_tile.dart';
@@ -11,7 +12,9 @@ class PlayerSettingsCompatibility extends StatelessWidget {
 
   static const String routeName = '/settings/player/compatibility';
   static bool get isSupported =>
-      !kIsWeb && (defaultTargetPlatform == TargetPlatform.linux || defaultTargetPlatform == TargetPlatform.windows);
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.windows);
 
   @override
   Widget build(BuildContext context) {

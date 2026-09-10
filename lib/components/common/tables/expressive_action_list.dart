@@ -3,7 +3,12 @@ import 'package:material_ui/material_ui.dart';
 enum ExpressiveListActionTone { neutral, primary, danger }
 
 class ExpressiveListField<T> {
-  const ExpressiveListField({required this.id, required this.label, required this.valueBuilder, this.tooltipBuilder});
+  const ExpressiveListField({
+    required this.id,
+    required this.label,
+    required this.valueBuilder,
+    this.tooltipBuilder,
+  });
 
   final String id;
   final String label;
@@ -100,12 +105,17 @@ class ExpressiveActionList<T> extends StatelessWidget {
     return null;
   }
 
-  Widget _fieldValue(BuildContext context, ExpressiveListField<T> field, T row) {
+  Widget _fieldValue(
+    BuildContext context,
+    ExpressiveListField<T> field,
+    T row,
+  ) {
     final valueWidget = field.valueBuilder(context, row);
     final explicitTooltip = field.tooltipBuilder?.call(row)?.trim();
     final inferredTooltip = _inferTooltipFromWidget(valueWidget)?.trim();
 
-    final tooltipMessage = (explicitTooltip != null && explicitTooltip.isNotEmpty)
+    final tooltipMessage =
+        (explicitTooltip != null && explicitTooltip.isNotEmpty)
         ? explicitTooltip
         : (inferredTooltip != null && inferredTooltip.isNotEmpty)
         ? inferredTooltip
@@ -114,7 +124,11 @@ class ExpressiveActionList<T> extends StatelessWidget {
     return Tooltip(message: tooltipMessage, child: valueWidget);
   }
 
-  Widget _buildFieldRow(BuildContext context, ExpressiveListField<T> field, T row) {
+  Widget _buildFieldRow(
+    BuildContext context,
+    ExpressiveListField<T> field,
+    T row,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Row(
@@ -124,7 +138,8 @@ class ExpressiveActionList<T> extends StatelessWidget {
           width: 108,
           child: Text(
             field.label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.labelMedium
+                ?.copyWith(color: colorScheme.onSurfaceVariant),
           ),
         ),
         const SizedBox(width: 8),
@@ -139,7 +154,11 @@ class ExpressiveActionList<T> extends StatelessWidget {
 
     final actionWidgets = <Widget>[
       if (busyRowIds.contains(key))
-        const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+        const SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        )
       else
         Wrap(
           spacing: 2,
@@ -151,7 +170,11 @@ class ExpressiveActionList<T> extends StatelessWidget {
                 tooltip: action.tooltip,
                 visualDensity: VisualDensity.compact,
                 onPressed: () => _handleActionTap(action, row),
-                icon: Icon(action.icon, size: 19, color: _actionColor(context, action.tone)),
+                icon: Icon(
+                  action.icon,
+                  size: 19,
+                  color: _actionColor(context, action.tone),
+                ),
               ),
           ],
         ),
@@ -159,7 +182,10 @@ class ExpressiveActionList<T> extends StatelessWidget {
       if (_isReorderable && index != null)
         ReorderableDragStartListener(
           index: index,
-          child: Icon(Icons.drag_indicator_rounded, color: colorScheme.onSurfaceVariant),
+          child: Icon(
+            Icons.drag_indicator_rounded,
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
     ];
 
@@ -175,7 +201,9 @@ class ExpressiveActionList<T> extends StatelessWidget {
       color: colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.28)),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.28),
+        ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -185,13 +213,20 @@ class ExpressiveActionList<T> extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (var fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) ...[
+              for (
+                var fieldIndex = 0;
+                fieldIndex < fields.length;
+                fieldIndex++
+              ) ...[
                 _buildFieldRow(context, fields[fieldIndex], row),
                 if (fieldIndex != fields.length - 1) const SizedBox(height: 8),
               ],
               if (actions.isNotEmpty || _isReorderable) ...[
                 const SizedBox(height: 8),
-                Divider(color: colorScheme.outlineVariant.withValues(alpha: 0.25), height: 1),
+                Divider(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.25),
+                  height: 1,
+                ),
                 const SizedBox(height: 4),
                 _buildRowActions(context, row, index: index),
               ],
@@ -202,7 +237,11 @@ class ExpressiveActionList<T> extends StatelessWidget {
     );
 
     if (_isReorderable) {
-      return Padding(key: ValueKey(rowId(row)), padding: const EdgeInsets.only(bottom: 10), child: rowBody);
+      return Padding(
+        key: ValueKey(rowId(row)),
+        padding: const EdgeInsets.only(bottom: 10),
+        child: rowBody,
+      );
     }
 
     return rowBody;
@@ -218,15 +257,27 @@ class ExpressiveActionList<T> extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(emptyTitle, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            emptyTitle,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (emptySubtitle != null && emptySubtitle!.trim().isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(emptySubtitle!, style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
+            Text(
+              emptySubtitle!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ],
       ),
@@ -248,7 +299,12 @@ class ExpressiveActionList<T> extends StatelessWidget {
   }
 
   Widget _buildEmptyList(BuildContext context) {
-    return ListView(physics: physics, shrinkWrap: shrinkWrap, padding: padding, children: [_buildEmptyState(context)]);
+    return ListView(
+      physics: physics,
+      shrinkWrap: shrinkWrap,
+      padding: padding,
+      children: [_buildEmptyState(context)],
+    );
   }
 
   Widget _buildStandardList(BuildContext context) {
@@ -295,6 +351,8 @@ class ExpressiveActionList<T> extends StatelessWidget {
       return _buildEmptyList(context);
     }
 
-    return _isReorderable ? _buildReorderableList(context) : _buildStandardList(context);
+    return _isReorderable
+        ? _buildReorderableList(context)
+        : _buildStandardList(context);
   }
 }

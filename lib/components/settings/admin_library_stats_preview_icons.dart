@@ -4,7 +4,11 @@ import 'package:yaabsa/components/stats/stats_components.dart';
 import 'package:yaabsa/util/item_formatters.dart';
 
 class AdminLibraryStatsPreviewIcons extends StatelessWidget {
-  const AdminLibraryStatsPreviewIcons({super.key, required this.stats, required this.isBookLibrary});
+  const AdminLibraryStatsPreviewIcons({
+    super.key,
+    required this.stats,
+    required this.isBookLibrary,
+  });
 
   final LibraryStats stats;
   final bool isBookLibrary;
@@ -27,9 +31,21 @@ class AdminLibraryStatsPreviewIcons extends StatelessWidget {
           emphasized: true,
         ),
         if (isBookLibrary)
-          StatsMetric(icon: Icons.people_alt_rounded, value: _formatCount(stats.totalAuthors ?? 0), label: 'Authors'),
-        StatsMetric(icon: Icons.sell_rounded, value: _formatCount(stats.totalGenres ?? 0), label: 'Genres'),
-        StatsMetric(icon: Icons.storage_rounded, value: formatBytes(stats.totalSize ?? 0), label: 'Total size'),
+          StatsMetric(
+            icon: Icons.people_alt_rounded,
+            value: _formatCount(stats.totalAuthors ?? 0),
+            label: 'Authors',
+          ),
+        StatsMetric(
+          icon: Icons.sell_rounded,
+          value: _formatCount(stats.totalGenres ?? 0),
+          label: 'Genres',
+        ),
+        StatsMetric(
+          icon: Icons.storage_rounded,
+          value: formatBytes(stats.totalSize ?? 0),
+          label: 'Total size',
+        ),
         StatsMetric(
           icon: Icons.audio_file_rounded,
           value: _formatCount(stats.numAudioTracks ?? 0),
@@ -43,7 +59,8 @@ class AdminLibraryStatsPreviewIcons extends StatelessWidget {
 String _formatRuntimeCompact(double seconds) {
   if (seconds <= 0) return '0h';
   final duration = Duration(seconds: seconds.round());
-  if (duration.inDays > 0) return '${duration.inDays}d ${duration.inHours.remainder(24)}h';
+  if (duration.inDays > 0)
+    return '${duration.inDays}d ${duration.inHours.remainder(24)}h';
   if (duration.inHours > 0) return '${duration.inHours}h';
   if (duration.inMinutes > 0) return '${duration.inMinutes}m';
   return '${duration.inSeconds}s';

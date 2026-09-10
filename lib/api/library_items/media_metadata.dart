@@ -30,5 +30,6 @@ abstract class MediaMetadata with _$MediaMetadata {
     @JsonKey(name: "abridged") bool? abridged,
   }) = _MediaMetadata;
 
-  factory MediaMetadata.fromJson(Map<String, dynamic> json) => _$MediaMetadataFromJson(json);
+  factory MediaMetadata.fromJson(Map<String, dynamic> json) =>
+      _$MediaMetadataFromJson(json);
 }

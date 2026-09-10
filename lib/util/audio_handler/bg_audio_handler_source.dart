@@ -13,34 +13,57 @@ extension _BGAudioHandlerSource on BGAudioHandler {
     final requestHeaders = _currentRequestHeadersInternal;
     final source = _currentMediaItem!.toAudioSources(headers: requestHeaders);
     if (!ignoreSavedProgress) {
-      final sessionStartTimeSeconds = _ref.read(sessionRepositoryProvider).currentSession?.startTime;
+      final sessionStartTimeSeconds = _ref
+          .read(sessionRepositoryProvider)
+          .currentSession
+          ?.startTime;
       if (sessionStartTimeSeconds != null && sessionStartTimeSeconds > 0) {
-        initialPosition = Duration(microseconds: (sessionStartTimeSeconds * Duration.microsecondsPerSecond).round());
+        initialPosition = Duration(
+          microseconds:
+              (sessionStartTimeSeconds * Duration.microsecondsPerSecond)
+                  .round(),
+        );
       } else {
         final currentProgress = _ref.read(
           mediaProgressProvider.select((asyncValue) {
-            return asyncValue.value?[mediaProgressKey(_currentMediaItem!.itemId, _currentMediaItem!.episodeId)];
+            return asyncValue.value?[mediaProgressKey(
+              _currentMediaItem!.itemId,
+              _currentMediaItem!.episodeId,
+            )];
           }),
         );
 
         if (currentProgress != null) {
           if (currentProgress.isFinished == true) {
             initialPosition = Duration.zero;
-            logger('Progress indicates finished. Starting from beginning', tag: 'AudioHandler', level: InfoLevel.debug);
+            logger(
+              'Progress indicates finished. Starting from beginning',
+              tag: 'AudioHandler',
+              level: InfoLevel.debug,
+            );
           } else {
             initialPosition = Duration(
-              microseconds: ((currentProgress.currentTime) * Duration.microsecondsPerSecond).round(),
+              microseconds:
+                  ((currentProgress.currentTime) *
+                          Duration.microsecondsPerSecond)
+                      .round(),
             );
           }
         }
       }
     }
 
-    logger('Setting source with initial position: $initialPosition', tag: 'AudioHandler', level: InfoLevel.debug);
+    logger(
+      'Setting source with initial position: $initialPosition',
+      tag: 'AudioHandler',
+      level: InfoLevel.debug,
+    );
 
     final trackIndex = _currentMediaItem!.getIndexForDuration(initialPosition);
     final trackCount = _currentMediaItem!.tracks.length;
-    final trackStartDuration = _currentMediaItem!.startDurationForTrack(trackIndex);
+    final trackStartDuration = _currentMediaItem!.startDurationForTrack(
+      trackIndex,
+    );
     final relativeTrackInitialPosition = initialPosition > trackStartDuration
         ? initialPosition - trackStartDuration
         : Duration.zero;
@@ -61,10 +84,15 @@ extension _BGAudioHandlerSource on BGAudioHandler {
         sourceLoad,
         sourceLoadError.future.then<dynamic>((error) => throw error),
       ]);
-      if (_ref.read(sessionRepositoryProvider).currentSession?.playMethod == 2) {
+      if (_ref.read(sessionRepositoryProvider).currentSession?.playMethod ==
+          2) {
         await loadResult.timeout(
           const Duration(seconds: 15),
-          onTimeout: () => throw PlayerException(1, 'Timed out waiting for transcoded stream', trackIndex),
+          onTimeout: () => throw PlayerException(
+            1,
+            'Timed out waiting for transcoded stream',
+            trackIndex,
+          ),
         );
       } else {
         await loadResult;
@@ -87,8 +115,12 @@ extension _BGAudioHandlerSource on BGAudioHandler {
         );
         await _safePlayerStop();
         await Future<void>.delayed(delay);
-        if (!identical(_currentMediaItem, loadingMedia) || _isDisposing || isCastControlActive) {
-          throw PlayerInterruptedException('Transcoded stream loading interrupted');
+        if (!identical(_currentMediaItem, loadingMedia) ||
+            _isDisposing ||
+            isCastControlActive) {
+          throw PlayerInterruptedException(
+            'Transcoded stream loading interrupted',
+          );
         }
         return await _setSource(
           initialPosition: initialPosition,
@@ -99,7 +131,11 @@ extension _BGAudioHandlerSource on BGAudioHandler {
       if (identical(_currentMediaItem, loadingMedia) &&
           !_isDisposing &&
           classifyPlaybackError(error) == PlaybackFailureAction.transcode &&
-          await _attemptTranscodeFallback(error, initialPosition: initialPosition, resumePlayback: false)) {
+          await _attemptTranscodeFallback(
+            error,
+            initialPosition: initialPosition,
+            resumePlayback: false,
+          )) {
         return;
       }
 
@@ -136,7 +172,11 @@ extension _BGAudioHandlerSource on BGAudioHandler {
 
   Map<String, String> get _currentRequestHeadersInternal {
     final user = _ref.read(currentUserProvider).value;
-    final isHls = _currentMediaItem?.tracks.any((track) => track.mimeType.toLowerCase().contains('mpegurl')) ?? false;
+    final isHls =
+        _currentMediaItem?.tracks.any(
+          (track) => track.mimeType.toLowerCase().contains('mpegurl'),
+        ) ??
+        false;
     return buildRequestHeaders(
       serverHeaders: user?.server?.headers,
       bearerToken: isHls ? user?.preferredAuthToken : null,

@@ -55,7 +55,10 @@ class PodcastEpisodesHeaderCard extends StatelessWidget {
                 tooltip: 'Clear selection',
               ),
               const SizedBox(width: 8),
-              Text('$selectedCount selected', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                '$selectedCount selected',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const Spacer(),
               if (onSelectAll != null)
                 IconButton(
@@ -89,7 +92,11 @@ class PodcastEpisodesHeaderCard extends StatelessWidget {
         hintText: 'Search episodes by title',
         suffixIcon: searchQuery.trim().isEmpty
             ? null
-            : IconButton(onPressed: onClearSearch, icon: const Icon(Icons.close_rounded), tooltip: 'Clear search'),
+            : IconButton(
+                onPressed: onClearSearch,
+                icon: const Icon(Icons.close_rounded),
+                tooltip: 'Clear search',
+              ),
         border: const OutlineInputBorder(),
       ),
     );
@@ -99,7 +106,12 @@ class PodcastEpisodesHeaderCard extends StatelessWidget {
       onSelected: onFilterChanged,
       itemBuilder: (context) {
         return PodcastEpisodeProgressFilter.values
-            .map((value) => PopupMenuItem(value: value, child: Text(podcastEpisodeProgressFilterLabel(value))))
+            .map(
+              (value) => PopupMenuItem(
+                value: value,
+                child: Text(podcastEpisodeProgressFilterLabel(value)),
+              ),
+            )
             .toList(growable: false);
       },
       child: _PopupActionButton(
@@ -113,10 +125,18 @@ class PodcastEpisodesHeaderCard extends StatelessWidget {
       onSelected: onSortChanged,
       itemBuilder: (context) {
         return PodcastEpisodeSortMode.values
-            .map((value) => PopupMenuItem(value: value, child: Text(podcastEpisodeSortModeLabel(value))))
+            .map(
+              (value) => PopupMenuItem(
+                value: value,
+                child: Text(podcastEpisodeSortModeLabel(value)),
+              ),
+            )
             .toList(growable: false);
       },
-      child: _PopupActionButton(icon: Icons.sort_rounded, label: 'Sort: ${podcastEpisodeSortModeLabel(sortMode)}'),
+      child: _PopupActionButton(
+        icon: Icons.sort_rounded,
+        label: 'Sort: ${podcastEpisodeSortModeLabel(sortMode)}',
+      ),
     );
 
     return Card(
@@ -131,8 +151,10 @@ class PodcastEpisodesHeaderCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               resultLabel,
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w400),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w400,
+              ),
             ),
             const SizedBox(height: 8),
             if (isMobileLayout)
@@ -188,7 +210,9 @@ class _PopupActionButton extends StatelessWidget {
         children: [
           Icon(icon, size: 18),
           const SizedBox(width: 8),
-          Flexible(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Flexible(
+            child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
           const SizedBox(width: 6),
           const Icon(Icons.arrow_drop_down_rounded),
         ],

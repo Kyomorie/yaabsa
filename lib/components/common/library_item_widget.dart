@@ -80,18 +80,28 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
   @override
   Widget build(BuildContext context) {
     final progressMap = widget.showProgress
-        ? (ref.watch(mediaProgressProvider).asData?.value ?? const <String, MediaProgress>{})
+        ? (ref.watch(mediaProgressProvider).asData?.value ??
+              const <String, MediaProgress>{})
         : null;
     final shelfEpisode = _podcastShelfEpisode();
     final displayTitle = _resolvedDisplayTitle(shelfEpisode);
-    final progress = widget.showProgress ? _resolveProgress(progressMap!) : null;
+    final progress = widget.showProgress
+        ? _resolveProgress(progressMap!)
+        : null;
     final isDownloaded = ref.watch(
-      completedDownloadForItemProvider(widget.libraryItem.id, episodeId: shelfEpisode?.id),
+      completedDownloadForItemProvider(
+        widget.libraryItem.id,
+        episodeId: shelfEpisode?.id,
+      ),
     );
-    final collapsedSeriesBookCount = widget.libraryItem.collapsedSeries?.numBooks ?? 0;
+    final collapsedSeriesBookCount =
+        widget.libraryItem.collapsedSeries?.numBooks ?? 0;
     final collapsedSeriesId = widget.libraryItem.collapsedSeries?.id;
     final isCollapsedSeriesCard = widget.libraryItem.collapsedSeries != null;
-    final isPodcast = !(widget.libraryItem.media?.hasAudio ?? widget.libraryItem.media?.hasBook ?? true);
+    final isPodcast =
+        !(widget.libraryItem.media?.hasAudio ??
+            widget.libraryItem.media?.hasBook ??
+            true);
     final unplayedEpisodes = isPodcast
         ? ((widget.libraryItem.media?.podcastMedia?.numEpisodes ?? 0) -
               ref
@@ -101,11 +111,20 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                   .length)
         : 0;
 
-    final sequenceBadgeLabel = unplayedEpisodes > 0 ? unplayedEpisodes.toString() : widget.sequenceBadge?.trim();
-    final showSequenceBadge = unplayedEpisodes > 0 || (sequenceBadgeLabel != null && sequenceBadgeLabel.isNotEmpty);
+    final sequenceBadgeLabel = unplayedEpisodes > 0
+        ? unplayedEpisodes.toString()
+        : widget.sequenceBadge?.trim();
+    final showSequenceBadge =
+        unplayedEpisodes > 0 ||
+        (sequenceBadgeLabel != null && sequenceBadgeLabel.isNotEmpty);
 
     final progressValue =
-        (progress != null ? (progress.progress != 0.0 ? progress.progress : progress.ebookProgress) : 0.0) ?? 0.0;
+        (progress != null
+            ? (progress.progress != 0.0
+                  ? progress.progress
+                  : progress.ebookProgress)
+            : 0.0) ??
+        0.0;
     final showProgressRing = widget.showProgress && progressValue > 0;
 
     return StreamBuilder<PlayerState>(
@@ -115,11 +134,16 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
         final playerState = snapshot.data;
         final isCurrentItem =
             audioHandler.currentMediaItem?.itemId == widget.libraryItem.id &&
-            (shelfEpisode == null || audioHandler.currentMediaItem?.episodeId == shelfEpisode.id);
-        final isPlayingCurrentItem = isCurrentItem && (playerState?.playing ?? false);
+            (shelfEpisode == null ||
+                audioHandler.currentMediaItem?.episodeId == shelfEpisode.id);
+        final isPlayingCurrentItem =
+            isCurrentItem && (playerState?.playing ?? false);
         final colorScheme = Theme.of(context).colorScheme;
         final isFinished =
-            showProgressRing && (progressValue >= 0.999 == true ? true : (progress?.isFinished ?? false));
+            showProgressRing &&
+            (progressValue >= 0.999 == true
+                ? true
+                : (progress?.isFinished ?? false));
         const activeBorderWidth = 4.0;
         const selectedBorderWidth = 2.5;
         final hasSelectionBorder = widget.selectionMode && widget.isSelected;
@@ -131,7 +155,9 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
         final activeCoverInset = borderWidth > 0 ? (borderWidth / 4) : 0.0;
         final coverRadius = BorderRadius.circular(isCurrentItem ? 14 : 16);
         final activeBorderColor = isCurrentItem
-            ? colorScheme.primary.withValues(alpha: isPlayingCurrentItem ? 1.0 : 0.75)
+            ? colorScheme.primary.withValues(
+                alpha: isPlayingCurrentItem ? 1.0 : 0.75,
+              )
             : colorScheme.primary;
 
         void handleCardTap() {
@@ -143,7 +169,9 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
             return;
           }
 
-          if (isCollapsedSeriesCard && collapsedSeriesId != null && collapsedSeriesId.isNotEmpty) {
+          if (isCollapsedSeriesCard &&
+              collapsedSeriesId != null &&
+              collapsedSeriesId.isNotEmpty) {
             context.push('/series/$collapsedSeriesId');
             return;
           }
@@ -176,13 +204,21 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
           widget.onToggleSelection?.call();
         }
 
-        final showSelectionDot = (widget.selectionMode || _showHoverSelectionDot) && !isCollapsedSeriesCard;
+        final showSelectionDot =
+            (widget.selectionMode || _showHoverSelectionDot) &&
+            !isCollapsedSeriesCard;
         final selectionOverlayAlpha = widget.isSelected ? 0.15 : 0.5;
         final downloadBadgeTop = showSelectionDot ? 34.0 : 4.0;
-        final sequenceBadgeTop = isDownloaded ? downloadBadgeTop + 30.0 : (showSelectionDot ? 34.0 : 4.0);
+        final sequenceBadgeTop = isDownloaded
+            ? downloadBadgeTop + 30.0
+            : (showSelectionDot ? 34.0 : 4.0);
         final canShowEditControls =
-            widget.canEdit && widget.onEdit != null && !widget.selectionMode && !isCollapsedSeriesCard;
-        final showDesktopHoverEdit = canShowEditControls && _isDesktopPlatform && _isHovered;
+            widget.canEdit &&
+            widget.onEdit != null &&
+            !widget.selectionMode &&
+            !isCollapsedSeriesCard;
+        final showDesktopHoverEdit =
+            canShowEditControls && _isDesktopPlatform && _isHovered;
         final topRightPrimaryTop = 4.0;
         final desktopEditLeft = showSelectionDot ? 38.0 : 4.0;
 
@@ -195,7 +231,9 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
               padding: EdgeInsets.all(activeCoverInset),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                border: borderWidth > 0 ? Border.all(color: activeBorderColor, width: borderWidth) : null,
+                border: borderWidth > 0
+                    ? Border.all(color: activeBorderColor, width: borderWidth)
+                    : null,
               ),
               child: Stack(
                 children: [
@@ -204,18 +242,22 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                     child: widget.squareCover
                         ? AspectRatio(
                             aspectRatio: 1,
-                            child: widget.api.getLibraryItemApi().getLibraryItemCover(
-                              widget.libraryItem.id,
-                              item: widget.libraryItem,
-                            ),
+                            child: widget.api
+                                .getLibraryItemApi()
+                                .getLibraryItemCover(
+                                  widget.libraryItem.id,
+                                  item: widget.libraryItem,
+                                ),
                           )
                         : SizedBox(
                             width: double.infinity,
                             height: 200,
-                            child: widget.api.getLibraryItemApi().getLibraryItemCover(
-                              widget.libraryItem.id,
-                              item: widget.libraryItem,
-                            ),
+                            child: widget.api
+                                .getLibraryItemApi()
+                                .getLibraryItemCover(
+                                  widget.libraryItem.id,
+                                  item: widget.libraryItem,
+                                ),
                           ),
                   ),
                   if (widget.selectionMode)
@@ -223,7 +265,11 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                       child: IgnorePointer(
                         child: ClipRRect(
                           borderRadius: coverRadius,
-                          child: ColoredBox(color: Colors.black.withValues(alpha: selectionOverlayAlpha)),
+                          child: ColoredBox(
+                            color: Colors.black.withValues(
+                              alpha: selectionOverlayAlpha,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -242,13 +288,21 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                               color: widget.isSelected
                                   ? colorScheme.primary
                                   : colorScheme.surface.withValues(alpha: 0.85),
-                              border: Border.all(color: widget.isSelected ? colorScheme.primary : colorScheme.outline),
+                              border: Border.all(
+                                color: widget.isSelected
+                                    ? colorScheme.primary
+                                    : colorScheme.outline,
+                              ),
                             ),
                             padding: const EdgeInsets.all(6),
                             child: Icon(
-                              widget.isSelected ? Icons.check : Icons.circle_outlined,
+                              widget.isSelected
+                                  ? Icons.check
+                                  : Icons.circle_outlined,
                               size: 14,
-                              color: widget.isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                              color: widget.isSelected
+                                  ? colorScheme.onPrimary
+                                  : colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -259,9 +313,16 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                       top: downloadBadgeTop,
                       left: 4,
                       child: Container(
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(100), color: colorScheme.primary),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(100),
+                          color: colorScheme.primary,
+                        ),
                         padding: const EdgeInsets.all(6),
-                        child: Icon(Icons.cloud_done_rounded, size: 14, color: colorScheme.onPrimary),
+                        child: Icon(
+                          Icons.cloud_done_rounded,
+                          size: 14,
+                          color: colorScheme.onPrimary,
+                        ),
                       ),
                     ),
                   if (showSequenceBadge)
@@ -271,10 +332,17 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(100),
-                          color: colorScheme.primaryContainer.withValues(alpha: 0.92),
-                          border: Border.all(color: colorScheme.primary.withValues(alpha: 0.42)),
+                          color: colorScheme.primaryContainer.withValues(
+                            alpha: 0.92,
+                          ),
+                          border: Border.all(
+                            color: colorScheme.primary.withValues(alpha: 0.42),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         child: Text(
                           sequenceBadgeLabel!,
                           style: Theme.of(context).textTheme.labelSmall
@@ -295,7 +363,10 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                                 borderRadius: BorderRadius.circular(100),
                                 color: colorScheme.secondaryContainer,
                               ),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 5,
+                              ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -307,10 +378,14 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                                   const SizedBox(width: 4),
                                   Text(
                                     '$collapsedSeriesBookCount',
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: colorScheme.onSecondaryContainer,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color:
+                                              colorScheme.onSecondaryContainer,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -321,7 +396,9 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                         : Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(100),
-                              color: isFinished ? colorScheme.primary : colorScheme.surface.withAlpha(230),
+                              color: isFinished
+                                  ? colorScheme.primary
+                                  : colorScheme.surface.withAlpha(230),
                             ),
                             child: LibraryItemOverlayPlayButton(
                               libraryItem: widget.libraryItem,
@@ -333,7 +410,8 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                               isPlayingCurrentItem: isPlayingCurrentItem,
                               onPlay: widget.onPlay,
                               isEbook:
-                                  !(widget.libraryItem.media?.hasAudio ?? false) &&
+                                  !(widget.libraryItem.media?.hasAudio ??
+                                      false) &&
                                   (widget.libraryItem.media?.hasBook ?? false),
                             ),
                           ),
@@ -350,11 +428,17 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(100),
-                              color: colorScheme.surface.withValues(alpha: 0.85),
+                              color: colorScheme.surface.withValues(
+                                alpha: 0.85,
+                              ),
                               border: Border.all(color: colorScheme.outline),
                             ),
                             padding: const EdgeInsets.all(6),
-                            child: Icon(Icons.edit_rounded, size: 14, color: colorScheme.onSurfaceVariant),
+                            child: Icon(
+                              Icons.edit_rounded,
+                              size: 14,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ),
@@ -367,13 +451,16 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
               displayTitle,
               maxLines: widget.compact ? 1 : 2,
               overflow: TextOverflow.ellipsis,
-              style: widget.compact ? Theme.of(context).textTheme.bodyMedium : null,
+              style: widget.compact
+                  ? Theme.of(context).textTheme.bodyMedium
+                  : null,
             ),
             if (widget.subtitle != null && !widget.subtitle!.isEmpty)
               AdditionalInformationText(
                 subtitle: widget.subtitle!,
-                style: Theme.of(context).textTheme.bodySmall
-                    ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
           ],
         );
@@ -381,10 +468,14 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
         final canHandleTap = !(widget.selectionMode && isCollapsedSeriesCard);
 
         return Padding(
-          padding: widget.compact ? const EdgeInsets.all(4) : const EdgeInsets.all(8),
+          padding: widget.compact
+              ? const EdgeInsets.all(4)
+              : const EdgeInsets.all(8),
           child: _isDesktopPlatform
               ? MouseRegion(
-                  cursor: canHandleTap ? SystemMouseCursors.click : SystemMouseCursors.basic,
+                  cursor: canHandleTap
+                      ? SystemMouseCursors.click
+                      : SystemMouseCursors.basic,
                   onEnter: (_) => setState(() => _isHovered = true),
                   onExit: (_) => setState(() => _isHovered = false),
                   child: GestureDetector(
@@ -392,7 +483,8 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                     onTap: canHandleTap ? handleCardTap : null,
                     onLongPress:
                         (isCollapsedSeriesCard ||
-                            (widget.onEnterSelectionMode == null && widget.onToggleSelection == null))
+                            (widget.onEnterSelectionMode == null &&
+                                widget.onToggleSelection == null))
                         ? null
                         : handleCardLongPress,
                     child: cardContent,
@@ -402,7 +494,8 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
                   onTap: canHandleTap ? handleCardTap : null,
                   onLongPress:
                       (isCollapsedSeriesCard ||
-                          (widget.onEnterSelectionMode == null && widget.onToggleSelection == null))
+                          (widget.onEnterSelectionMode == null &&
+                              widget.onToggleSelection == null))
                       ? null
                       : handleCardLongPress,
                   borderRadius: BorderRadius.circular(16),
@@ -423,7 +516,8 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
   }
 
   List<Episode> _playablePodcastEpisodes() {
-    return (widget.libraryItem.media?.podcastMedia?.episodes ?? const <Episode>[])
+    return (widget.libraryItem.media?.podcastMedia?.episodes ??
+            const <Episode>[])
         .where((episode) => episode.audioFile != null)
         .toList(growable: false);
   }
@@ -444,7 +538,10 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
   MediaProgress? _resolveProgress(Map<String, MediaProgress> progressMap) {
     final shelfEpisode = _podcastShelfEpisode();
     if (shelfEpisode != null) {
-      return progressMap[mediaProgressKey(widget.libraryItem.id, shelfEpisode.id)];
+      return progressMap[mediaProgressKey(
+        widget.libraryItem.id,
+        shelfEpisode.id,
+      )];
     }
 
     final itemProgress = progressMap[widget.libraryItem.id];
@@ -458,7 +555,8 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
     }
 
     for (final episode in podcastEpisodes) {
-      final episodeProgress = progressMap[mediaProgressKey(widget.libraryItem.id, episode.id)];
+      final episodeProgress =
+          progressMap[mediaProgressKey(widget.libraryItem.id, episode.id)];
       if (episodeProgress != null) {
         return episodeProgress;
       }

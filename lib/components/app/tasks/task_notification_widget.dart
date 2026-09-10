@@ -11,24 +11,31 @@ class TaskNotificationWidget extends ConsumerStatefulWidget {
   const TaskNotificationWidget({super.key});
 
   @override
-  ConsumerState<TaskNotificationWidget> createState() => _TaskNotificationWidgetState();
+  ConsumerState<TaskNotificationWidget> createState() =>
+      _TaskNotificationWidgetState();
 }
 
-class _TaskNotificationWidgetState extends ConsumerState<TaskNotificationWidget> {
+class _TaskNotificationWidgetState
+    extends ConsumerState<TaskNotificationWidget> {
   final GlobalKey _notificationButtonKey = GlobalKey();
   final Set<String> _seenTaskIds = <String>{};
 
   @override
   Widget build(BuildContext context) {
     final taskState = ref.watch(serverTasksProvider);
-    final tasks = [...taskState.tasks]..sort((left, right) => (right.startedAt ?? 0).compareTo(left.startedAt ?? 0));
+    final tasks = [...taskState.tasks]
+      ..sort(
+        (left, right) => (right.startedAt ?? 0).compareTo(left.startedAt ?? 0),
+      );
 
     if (tasks.isEmpty) {
       return const SizedBox.shrink();
     }
 
     final tasksRunning = tasks.any((task) => !task.isFinished);
-    final hasUnseenCompletedTask = tasks.any((task) => task.isFinished && !_seenTaskIds.contains(task.id));
+    final hasUnseenCompletedTask = tasks.any(
+      (task) => task.isFinished && !_seenTaskIds.contains(task.id),
+    );
 
     return Tooltip(
       message: tasksRunning ? 'Tasks' : 'Activities',
@@ -36,7 +43,9 @@ class _TaskNotificationWidgetState extends ConsumerState<TaskNotificationWidget>
         buttonKey: _notificationButtonKey,
         tasksRunning: tasksRunning,
         hasUnseenCompletedTask: hasUnseenCompletedTask,
-        onTap: () => context.isDesktop ? _openDesktopTaskDropdown(context) : _openTaskSheet(context),
+        onTap: () => context.isDesktop
+            ? _openDesktopTaskDropdown(context)
+            : _openTaskSheet(context),
       ),
     );
   }
@@ -62,7 +71,9 @@ class _TaskNotificationWidgetState extends ConsumerState<TaskNotificationWidget>
       isScrollControlled: true,
       builder: (sheetContext) {
         return ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.72),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.72,
+          ),
           child: TaskNotificationPanel(
             maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.72,
             onClearActivity: () => Navigator.of(sheetContext).pop(),
@@ -83,13 +94,17 @@ class _TaskNotificationWidgetState extends ConsumerState<TaskNotificationWidget>
   Future<void> _openDesktopTaskDropdown(BuildContext context) async {
     _markCurrentTasksAsSeen();
 
-    final buttonRenderObject = _notificationButtonKey.currentContext?.findRenderObject();
+    final buttonRenderObject = _notificationButtonKey.currentContext
+        ?.findRenderObject();
     final overlayRenderObject = Overlay.of(context).context.findRenderObject();
     if (buttonRenderObject is! RenderBox || overlayRenderObject is! RenderBox) {
       return;
     }
 
-    final buttonOffset = buttonRenderObject.localToGlobal(Offset.zero, ancestor: overlayRenderObject);
+    final buttonOffset = buttonRenderObject.localToGlobal(
+      Offset.zero,
+      ancestor: overlayRenderObject,
+    );
     final overlaySize = overlayRenderObject.size;
 
     const panelWidth = 420.0;
@@ -99,7 +114,9 @@ class _TaskNotificationWidgetState extends ConsumerState<TaskNotificationWidget>
     final top = (buttonOffset.dy + buttonRenderObject.size.height + 6)
         .clamp(12.0, overlaySize.height - 220.0)
         .toDouble();
-    final availableHeight = (overlaySize.height - top - 12.0).clamp(220.0, overlaySize.height * 0.72).toDouble();
+    final availableHeight = (overlaySize.height - top - 12.0)
+        .clamp(220.0, overlaySize.height * 0.72)
+        .toDouble();
 
     await showGeneralDialog<void>(
       context: context,
@@ -135,8 +152,14 @@ class _TaskNotificationWidgetState extends ConsumerState<TaskNotificationWidget>
         );
       },
       transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
-        final opacity = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
-        final offset = Tween<Offset>(begin: const Offset(0, -0.03), end: Offset.zero).animate(opacity);
+        final opacity = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        final offset = Tween<Offset>(
+          begin: const Offset(0, -0.03),
+          end: Offset.zero,
+        ).animate(opacity);
         return FadeTransition(
           opacity: opacity,
           child: SlideTransition(position: offset, child: child),
@@ -173,14 +196,23 @@ class _NotificationIconButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
         child: Stack(
           alignment: Alignment.center,
           children: [
             tasksRunning
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.2))
-                : Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2.2),
+                  )
+                : Icon(
+                    Icons.notifications_none_rounded,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             if (hasUnseenCompletedTask)
               Positioned(
                 top: 8,

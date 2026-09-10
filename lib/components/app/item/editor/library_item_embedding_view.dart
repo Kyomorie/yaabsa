@@ -53,8 +53,10 @@ class LibraryItemEmbeddingView extends StatelessWidget {
       );
     }
 
-    final metadataEntries = (metadataObject ?? const <String, dynamic>{}).entries.toList(growable: false)
-      ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()));
+    final metadataEntries =
+        (metadataObject ?? const <String, dynamic>{}).entries.toList(
+          growable: false,
+        )..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()));
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
@@ -77,7 +79,8 @@ class LibraryItemEmbeddingView extends StatelessWidget {
             child: _StatusCard(
               icon: Icons.error_outline,
               message: errorMessage!,
-              color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
+              color: Theme.of(context).colorScheme.errorContainer
+                  .withValues(alpha: 0.45),
               iconColor: Theme.of(context).colorScheme.error,
             ),
           ),
@@ -87,14 +90,17 @@ class LibraryItemEmbeddingView extends StatelessWidget {
             child: _StatusCard(
               icon: Icons.info_outline,
               message: infoMessage!,
-              color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.45),
+              color: Theme.of(context).colorScheme.primaryContainer
+                  .withValues(alpha: 0.45),
               iconColor: Theme.of(context).colorScheme.primary,
             ),
           ),
         const SizedBox(height: 12),
         LayoutBuilder(
           builder: (context, constraints) {
-            final panelWidth = constraints.maxWidth >= 980 ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth;
+            final panelWidth = constraints.maxWidth >= 980
+                ? (constraints.maxWidth - 12) / 2
+                : constraints.maxWidth;
 
             return Wrap(
               spacing: 12,
@@ -106,7 +112,10 @@ class LibraryItemEmbeddingView extends StatelessWidget {
                     title: 'Metadata To Embed',
                     child: isMetadataLoading
                         ? const Center(
-                            child: Padding(padding: EdgeInsets.all(18), child: CircularProgressIndicator()),
+                            child: Padding(
+                              padding: EdgeInsets.all(18),
+                              child: CircularProgressIndicator(),
+                            ),
                           )
                         : _MetadataRows(entries: metadataEntries),
                   ),
@@ -187,8 +196,9 @@ class _EmbedActionCard extends StatelessWidget {
             ),
             Text(
               'Forces chapter markers to be rewritten in the output files, even when chapters already exist.',
-              style: Theme.of(context).textTheme.bodySmall
-                  ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -204,7 +214,11 @@ class _EmbedActionCard extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: controlsLocked ? null : onStartEmbedding,
                   icon: controlsLocked
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.1))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2.1),
+                        )
                       : const Icon(Icons.auto_fix_high_rounded),
                   label: Text(startLabel),
                 ),
@@ -266,7 +280,10 @@ class _MetadataRows extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
-              color: i.isOdd ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : null,
+              color: i.isOdd
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3)
+                  : null,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Row(
@@ -276,12 +293,16 @@ class _MetadataRows extends StatelessWidget {
                   width: 130,
                   child: Text(
                     entries[i].key,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(_formatMetadataValue(entries[i].value), style: Theme.of(context).textTheme.bodySmall),
+                  child: Text(
+                    _formatMetadataValue(entries[i].value),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ),
               ],
             ),
@@ -299,7 +320,10 @@ class _ChapterRows extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (chapters.isEmpty) {
-      return const Padding(padding: EdgeInsets.symmetric(vertical: 10), child: Text('No chapters available.'));
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 10),
+        child: Text('No chapters available.'),
+      );
     }
 
     return Column(
@@ -309,24 +333,41 @@ class _ChapterRows extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
-              color: i.isOdd ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3) : null,
+              color: i.isOdd
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3)
+                  : null,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: Text(chapters[i].title, style: Theme.of(context).textTheme.bodySmall)),
+                Expanded(
+                  child: Text(
+                    chapters[i].title,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
                 const SizedBox(width: 8),
-                Text(_formatClock(chapters[i].start), style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  _formatClock(chapters[i].start),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 const SizedBox(width: 8),
                 Text('→', style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(width: 8),
-                Text(_formatClock(chapters[i].end), style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  _formatClock(chapters[i].end),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 const SizedBox(width: 8),
                 Text(
-                  formatDurationLong(chapterDuration(chapters[i].start, chapters[i].end)),
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  formatDurationLong(
+                    chapterDuration(chapters[i].start, chapters[i].end),
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -337,7 +378,12 @@ class _ChapterRows extends StatelessWidget {
 }
 
 class _StatusCard extends StatelessWidget {
-  const _StatusCard({required this.icon, required this.message, required this.color, required this.iconColor});
+  const _StatusCard({
+    required this.icon,
+    required this.message,
+    required this.color,
+    required this.iconColor,
+  });
 
   final IconData icon;
   final String message;

@@ -13,7 +13,8 @@ abstract class CreatePodcastResponse with _$CreatePodcastResponse {
     @JsonKey(name: 'item') LibraryItem? item,
   }) = _CreatePodcastResponse;
 
-  factory CreatePodcastResponse.fromJson(Map<String, dynamic> json) => _$CreatePodcastResponseFromJson(json);
+  factory CreatePodcastResponse.fromJson(Map<String, dynamic> json) =>
+      _$CreatePodcastResponseFromJson(json);
 
   LibraryItem? get createdItem => libraryItem ?? item;
 }

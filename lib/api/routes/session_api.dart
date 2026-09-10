@@ -30,7 +30,8 @@ class SessionApi {
 
     return ABSApi.makeApiGetRequest(
       route: '/api/sessions',
-      fromJson: (data) => AdminListeningSessionsPage.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          AdminListeningSessionsPage.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -46,7 +47,8 @@ class SessionApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/sessions/open',
-      fromJson: (data) => OpenSessionsResponse.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          OpenSessionsResponse.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -78,7 +80,8 @@ class SessionApi {
   }) async {
     return ABSApi.makeApiGetRequest(
       route: '/api/session/$id',
-      fromJson: (data) => PlaybackSession.fromJson(data as Map<String, dynamic>),
+      fromJson: (data) =>
+          PlaybackSession.fromJson(data as Map<String, dynamic>),
       cancelToken: cancelToken,
       headers: headers,
       extra: extra,
@@ -137,7 +140,12 @@ class SessionApi {
   }) async {
     if (deleteFirst) {
       try {
-        await deleteSessionById(request.id, cancelToken: cancelToken, headers: headers, extra: extra);
+        await deleteSessionById(
+          request.id,
+          cancelToken: cancelToken,
+          headers: headers,
+          extra: extra,
+        );
       } catch (_) {}
     }
     await ABSApi.makeApiPostRequest(

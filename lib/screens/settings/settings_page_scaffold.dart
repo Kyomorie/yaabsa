@@ -48,7 +48,8 @@ class SettingsPageScaffold extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -57,7 +58,10 @@ class SettingsPageScaffold extends StatelessWidget {
       Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: maxWidth),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
         ),
       ),
     ];
@@ -69,7 +73,10 @@ class SettingsPageScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = _buildContent(context);
     if (embedded) {
-      return Material(color: Theme.of(context).scaffoldBackgroundColor, child: content);
+      return Material(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: content,
+      );
     }
 
     return Scaffold(

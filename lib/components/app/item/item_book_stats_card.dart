@@ -57,10 +57,14 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
         throw Exception('Library ID is null');
       }
 
-      final libraryDetailsResponse = await api.getLibraryApi().getLibraryDetails(libraryId);
+      final libraryDetailsResponse = await api
+          .getLibraryApi()
+          .getLibraryDetails(libraryId);
       final library = libraryDetailsResponse.data?.library;
-      final markAsFinishedPercentComplete = library?.settings.markAsFinishedPercentComplete ?? 1.0;
-      final markAsFinishedTimeRemaining = library?.settings.markAsFinishedTimeRemaining ?? 0;
+      final markAsFinishedPercentComplete =
+          library?.settings.markAsFinishedPercentComplete ?? 1.0;
+      final markAsFinishedTimeRemaining =
+          library?.settings.markAsFinishedTimeRemaining ?? 0;
 
       final allSessions = <PlaybackSession>[];
       int page = 0;
@@ -94,17 +98,26 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
           return aTime.compareTo(bTime);
         });
 
-      final double totalSeconds = sortedSessions.fold<double>(0.0, (sum, s) => sum + (s.timeListening ?? 0.0));
+      final double totalSeconds = sortedSessions.fold<double>(
+        0.0,
+        (sum, s) => sum + (s.timeListening ?? 0.0),
+      );
 
-      final validTimeSessions = sortedSessions.where((s) => (s.startedAt ?? s.updatedAt ?? 0) > 0).toList();
+      final validTimeSessions = sortedSessions
+          .where((s) => (s.startedAt ?? s.updatedAt ?? 0) > 0)
+          .toList();
       final firstSession = validTimeSessions.firstOrNull;
       final lastSession = validTimeSessions.lastOrNull;
 
       final firstStarted = firstSession != null
-          ? DateTime.fromMillisecondsSinceEpoch(firstSession.startedAt ?? firstSession.updatedAt!)
+          ? DateTime.fromMillisecondsSinceEpoch(
+              firstSession.startedAt ?? firstSession.updatedAt!,
+            )
           : null;
       final lastStarted = lastSession != null
-          ? DateTime.fromMillisecondsSinceEpoch(lastSession.startedAt ?? lastSession.updatedAt!)
+          ? DateTime.fromMillisecondsSinceEpoch(
+              lastSession.startedAt ?? lastSession.updatedAt!,
+            )
           : null;
 
       final finishes = <DateTime>[];
@@ -131,8 +144,12 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
       }
 
       // If the book is currently finished, remove the most recent finish if it matches the current finishedAt
-      if (widget.isItemFinished && finishes.isNotEmpty && widget.itemProgress?.finishedAt != null) {
-        final currentFinishedDate = DateTime.fromMillisecondsSinceEpoch(widget.itemProgress!.finishedAt!);
+      if (widget.isItemFinished &&
+          finishes.isNotEmpty &&
+          widget.itemProgress?.finishedAt != null) {
+        final currentFinishedDate = DateTime.fromMillisecondsSinceEpoch(
+          widget.itemProgress!.finishedAt!,
+        );
         // If the last finish is within a day of the current finishedAt, it's likely the same finish
         if (finishes.last.difference(currentFinishedDate).abs().inDays < 1) {
           finishes.removeLast();
@@ -175,7 +192,10 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
     final colorScheme = theme.colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(color: colorScheme.surfaceContainerLow, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -192,7 +212,10 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -217,7 +240,9 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
   Widget build(BuildContext context) {
     final allFinishes = <DateTime>[];
     if (widget.isItemFinished && widget.itemProgress?.finishedAt != null) {
-      allFinishes.add(DateTime.fromMillisecondsSinceEpoch(widget.itemProgress!.finishedAt!));
+      allFinishes.add(
+        DateTime.fromMillisecondsSinceEpoch(widget.itemProgress!.finishedAt!),
+      );
     }
     allFinishes.addAll(_pastFinishDates);
 
@@ -243,10 +268,19 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Row(
               children: [
-                Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error, size: 20),
+                Icon(
+                  Icons.error_outline_rounded,
+                  color: Theme.of(context).colorScheme.error,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -258,7 +292,8 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
               final isWide = context.isDesktop;
               final columns = isWide ? 5 : (context.isTablet ? 3 : 2);
               const spacing = 4.0;
-              final cardWidth = (parentWidth - (spacing * (columns - 1))) / columns;
+              final cardWidth =
+                  (parentWidth - (spacing * (columns - 1))) / columns;
 
               return Wrap(
                 spacing: spacing,
@@ -285,9 +320,17 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
                     child: _buildStatCard(
                       context: context,
                       label: 'Status',
-                      value: widget.isItemFinished ? 'Finished' : '${(widget.progressValue * 100).toStringAsFixed(1)}%',
-                      subtitle: widget.isItemFinished && widget.itemProgress?.finishedAt != null
-                          ? _formatDate(DateTime.fromMillisecondsSinceEpoch(widget.itemProgress!.finishedAt!))
+                      value: widget.isItemFinished
+                          ? 'Finished'
+                          : '${(widget.progressValue * 100).toStringAsFixed(1)}%',
+                      subtitle:
+                          widget.isItemFinished &&
+                              widget.itemProgress?.finishedAt != null
+                          ? _formatDate(
+                              DateTime.fromMillisecondsSinceEpoch(
+                                widget.itemProgress!.finishedAt!,
+                              ),
+                            )
                           : 'In progress',
                     ),
                   ),
@@ -296,7 +339,9 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
                     child: _buildStatCard(
                       context: context,
                       label: 'First Started',
-                      value: _firstStarted != null ? _formatDate(_firstStarted!) : 'N/A',
+                      value: _firstStarted != null
+                          ? _formatDate(_firstStarted!)
+                          : 'N/A',
                     ),
                   ),
                   SizedBox(
@@ -304,7 +349,9 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
                     child: _buildStatCard(
                       context: context,
                       label: 'Last Started',
-                      value: _lastStarted != null ? _formatDate(_lastStarted!) : 'N/A',
+                      value: _lastStarted != null
+                          ? _formatDate(_lastStarted!)
+                          : 'N/A',
                     ),
                   ),
                 ],
@@ -315,8 +362,10 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
             const SizedBox(height: 24),
             Text(
               'Finish History',
-              style: Theme.of(context).textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 12),
             ...allFinishes.asMap().entries.map((entry) {
@@ -336,10 +385,13 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
                       alignment: Alignment.center,
                       child: Text(
                         '${allFinishes.length - index}',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ),
                     const SizedBox(width: 14),
@@ -348,12 +400,17 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
                       children: [
                         Text(
                           'Finished',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         Text(
                           _formatDate(date),
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
                         ),
                       ],
                     ),
@@ -368,7 +425,8 @@ class _ItemBookStatsCardState extends ConsumerState<ItemBookStatsCard> {
             widget.isItemFinished
                 ? 'Finished'
                 : 'Current progress: ${(widget.progressValue * 100).toStringAsFixed(1)}%',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+            style: Theme.of(context).textTheme.bodyLarge
+                ?.copyWith(fontWeight: FontWeight.w500),
           ),
         ],
       ],

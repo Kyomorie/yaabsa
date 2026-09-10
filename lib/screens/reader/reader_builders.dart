@@ -15,15 +15,27 @@ extension _ReaderBuilders on _ReaderState {
       child: Material(
         color: Colors.transparent,
         child: Container(
-          padding: EdgeInsets.only(top: topPadding, left: 8, right: 8, bottom: 8),
+          padding: EdgeInsets.only(
+            top: topPadding,
+            left: 8,
+            right: 8,
+            bottom: 8,
+          ),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface.withAlpha(220),
-            border: Border(bottom: BorderSide(color: theme.colorScheme.outlineVariant.withAlpha(100))),
+            border: Border(
+              bottom: BorderSide(
+                color: theme.colorScheme.outlineVariant.withAlpha(100),
+              ),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => Navigator.pop(context)),
+              IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.pop(context),
+              ),
               const SizedBox(width: 8),
               const Spacer(),
               if (isEpubMode)
@@ -40,7 +52,11 @@ extension _ReaderBuilders on _ReaderState {
                 ),
               if (_hasMediaOverlays)
                 IconButton(
-                  icon: Icon(_mediaOverlayState != 'stopped' ? Icons.hearing_disabled : Icons.hearing),
+                  icon: Icon(
+                    _mediaOverlayState != 'stopped'
+                        ? Icons.hearing_disabled
+                        : Icons.hearing,
+                  ),
                   onPressed: () {
                     if (_mediaOverlayState != 'stopped') {
                       unawaited(epubController.stopMediaOverlay());
@@ -51,7 +67,9 @@ extension _ReaderBuilders on _ReaderState {
                       unawaited(epubController.startMediaOverlay());
                     }
                   },
-                  tooltip: _mediaOverlayState != 'stopped' ? 'Stop Narration' : 'Start Narration',
+                  tooltip: _mediaOverlayState != 'stopped'
+                      ? 'Stop Narration'
+                      : 'Start Narration',
                 ),
               Builder(
                 builder: (context) => IconButton(
@@ -64,7 +82,8 @@ extension _ReaderBuilders on _ReaderState {
               ),
               IconButton(
                 icon: const Icon(Icons.settings),
-                onPressed: () => _showReaderSettingsSheet(isEpubMode: isEpubMode),
+                onPressed: () =>
+                    _showReaderSettingsSheet(isEpubMode: isEpubMode),
                 tooltip: 'Settings',
               ),
             ],
@@ -76,7 +95,9 @@ extension _ReaderBuilders on _ReaderState {
 
   Widget? _buildDrawer({required bool isEpubMode}) {
     final theme = Theme.of(context);
-    final hasToc = isEpubMode ? (_epubToc != null && _epubToc!.isNotEmpty) : (_pdfToc != null && _pdfToc!.isNotEmpty);
+    final hasToc = isEpubMode
+        ? (_epubToc != null && _epubToc!.isNotEmpty)
+        : (_pdfToc != null && _pdfToc!.isNotEmpty);
 
     return Drawer(
       child: SafeArea(
@@ -87,7 +108,9 @@ extension _ReaderBuilders on _ReaderState {
               padding: const EdgeInsets.all(16),
               child: Text(
                 'Table of Contents',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const Divider(),
@@ -96,8 +119,12 @@ extension _ReaderBuilders on _ReaderState {
                   ? const Center(child: Text('No table of contents available'))
                   : ListView(
                       children: isEpubMode
-                          ? _epubToc!.map((item) => _buildEpubTocTile(item, context)).toList()
-                          : _pdfToc!.map((node) => _buildPdfTocTile(node, context)).toList(),
+                          ? _epubToc!
+                                .map((item) => _buildEpubTocTile(item, context))
+                                .toList()
+                          : _pdfToc!
+                                .map((node) => _buildPdfTocTile(node, context))
+                                .toList(),
                     ),
             ),
           ],
@@ -123,7 +150,9 @@ extension _ReaderBuilders on _ReaderState {
 
     return ExpansionTile(
       title: Text(item.label ?? 'Untitled'),
-      children: item.subitems!.map((sub) => _buildEpubTocTile(sub, context)).toList(),
+      children: item.subitems!
+          .map((sub) => _buildEpubTocTile(sub, context))
+          .toList(),
     );
   }
 
@@ -144,7 +173,9 @@ extension _ReaderBuilders on _ReaderState {
 
     return ExpansionTile(
       title: Text(node.title),
-      children: node.children.map((sub) => _buildPdfTocTile(sub, context)).toList(),
+      children: node.children
+          .map((sub) => _buildPdfTocTile(sub, context))
+          .toList(),
     );
   }
 
@@ -158,7 +189,9 @@ extension _ReaderBuilders on _ReaderState {
       useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (bottomSheetContext) {
         return ClipRRect(
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
@@ -173,12 +206,16 @@ extension _ReaderBuilders on _ReaderState {
                     builder = (BuildContext context) => const ReaderSettings();
                     break;
                   case ReaderTtsSettings.routeName:
-                    builder = (BuildContext context) => const ReaderTtsSettings();
+                    builder = (BuildContext context) =>
+                        const ReaderTtsSettings();
                     break;
                   default:
                     throw Exception('Invalid route: ${settings.name}');
                 }
-                return MaterialPageRoute<void>(builder: builder, settings: settings);
+                return MaterialPageRoute<void>(
+                  builder: builder,
+                  settings: settings,
+                );
               },
             ),
           ),
@@ -194,7 +231,10 @@ extension _ReaderBuilders on _ReaderState {
     required String? bookExtension,
     File? bookFile,
   }) {
-    final requestHeaders = buildRequestHeaders(serverHeaders: user.server?.headers, bearerToken: authToken);
+    final requestHeaders = buildRequestHeaders(
+      serverHeaders: user.server?.headers,
+      bearerToken: authToken,
+    );
     final url = _ebookUrl(user);
 
     return ReaderEpubView(
@@ -222,7 +262,13 @@ extension _ReaderBuilders on _ReaderState {
             ),
           );
           request.response.statusCode = response.statusCode ?? 200;
-          final ignoreHeaders = {'content-length', 'content-encoding', 'transfer-encoding', 'connection', 'host'};
+          final ignoreHeaders = {
+            'content-length',
+            'content-encoding',
+            'transfer-encoding',
+            'connection',
+            'host',
+          };
           response.headers.forEach((key, values) {
             if (ignoreHeaders.contains(key.toLowerCase())) return;
             for (final value in values) {
@@ -237,7 +283,11 @@ extension _ReaderBuilders on _ReaderState {
             await request.response.close();
           }
         } catch (e) {
-          logger('bookFetcher error fetching $url: $e', tag: 'EpubReader', level: InfoLevel.error);
+          logger(
+            'bookFetcher error fetching $url: $e',
+            tag: 'EpubReader',
+            level: InfoLevel.error,
+          );
           request.response.statusCode = 500;
           request.response.headers.set('Access-Control-Allow-Origin', '*');
           request.response.write('Internal Server Error: $e');
@@ -278,7 +328,11 @@ extension _ReaderBuilders on _ReaderState {
           await _removeEpubAnnotation(annotation);
           return;
         }
-        await _editEpubAnnotation(annotation, noteText: action.note, color: action.color);
+        await _editEpubAnnotation(
+          annotation,
+          noteText: action.note,
+          color: action.color,
+        );
       },
       onAnnotationAdded: (annotation) {
         if (!mounted) return;
@@ -301,7 +355,10 @@ extension _ReaderBuilders on _ReaderState {
     File? pdfFile,
   }) {
     final int initialPage = _parseStoredPdfPage(initialLocation);
-    final requestHeaders = buildRequestHeaders(serverHeaders: user.server?.headers, bearerToken: authToken);
+    final requestHeaders = buildRequestHeaders(
+      serverHeaders: user.server?.headers,
+      bearerToken: authToken,
+    );
     _triggerAutoAnnotationLoadIfNeeded(isEpubMode: false);
 
     return ReaderPdfView(
@@ -349,7 +406,9 @@ extension _ReaderBuilders on _ReaderState {
               tooltip: 'Stop Narration',
             ),
             IconButton(
-              icon: Icon(_mediaOverlayState == 'paused' ? Icons.play_arrow : Icons.pause),
+              icon: Icon(
+                _mediaOverlayState == 'paused' ? Icons.play_arrow : Icons.pause,
+              ),
               onPressed: () {
                 if (_mediaOverlayState == 'paused') {
                   unawaited(epubController.resumeMediaOverlay());

@@ -19,15 +19,24 @@ class AdminToolLibrarySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final allSelected = libraries.isNotEmpty && selectedLibraryIds.length == libraries.length;
+    final allSelected =
+        libraries.isNotEmpty && selectedLibraryIds.length == libraries.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
           children: [
-            Expanded(child: Text('Target libraries', style: Theme.of(context).textTheme.titleSmall)),
-            Text('${selectedLibraryIds.length}/${libraries.length}', style: Theme.of(context).textTheme.bodySmall),
+            Expanded(
+              child: Text(
+                'Target libraries',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
+            Text(
+              '${selectedLibraryIds.length}/${libraries.length}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -36,12 +45,16 @@ class AdminToolLibrarySelector extends StatelessWidget {
             TextButton(
               onPressed: !enabled || allSelected
                   ? null
-                  : () => onSelectionChanged(libraries.map((library) => library.id).toSet()),
+                  : () => onSelectionChanged(
+                      libraries.map((library) => library.id).toSet(),
+                    ),
               child: const Text('Select all'),
             ),
             const SizedBox(width: 8),
             TextButton(
-              onPressed: !enabled || selectedLibraryIds.isEmpty ? null : () => onSelectionChanged(<String>{}),
+              onPressed: !enabled || selectedLibraryIds.isEmpty
+                  ? null
+                  : () => onSelectionChanged(<String>{}),
               child: const Text('Clear all'),
             ),
           ],
@@ -50,14 +63,19 @@ class AdminToolLibrarySelector extends StatelessWidget {
         if (libraries.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text('No libraries available.', style: Theme.of(context).textTheme.bodyMedium),
+            child: Text(
+              'No libraries available.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           )
         else
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxHeight),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ListView.separated(
@@ -76,7 +94,9 @@ class AdminToolLibrarySelector extends StatelessWidget {
                     onChanged: !enabled
                         ? null
                         : (next) {
-                            final nextSelection = Set<String>.from(selectedLibraryIds);
+                            final nextSelection = Set<String>.from(
+                              selectedLibraryIds,
+                            );
                             if (next ?? false) {
                               nextSelection.add(library.id);
                             } else {

@@ -3,14 +3,26 @@ import 'package:yaabsa/components/common/tables/expressive_tile_list.dart';
 
 @immutable
 class LibraryMetadataSourceEntry {
-  const LibraryMetadataSourceEntry({required this.id, required this.label, required this.enabled});
+  const LibraryMetadataSourceEntry({
+    required this.id,
+    required this.label,
+    required this.enabled,
+  });
 
   final String id;
   final String label;
   final bool enabled;
 
-  LibraryMetadataSourceEntry copyWith({String? id, String? label, bool? enabled}) {
-    return LibraryMetadataSourceEntry(id: id ?? this.id, label: label ?? this.label, enabled: enabled ?? this.enabled);
+  LibraryMetadataSourceEntry copyWith({
+    String? id,
+    String? label,
+    bool? enabled,
+  }) {
+    return LibraryMetadataSourceEntry(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      enabled: enabled ?? this.enabled,
+    );
   }
 }
 
@@ -35,7 +47,9 @@ class LibraryMetadataPrecedenceEditor extends StatelessWidget {
       return 'Disabled';
     }
 
-    final enabledSources = sources.where((entry) => entry.enabled).toList(growable: false);
+    final enabledSources = sources
+        .where((entry) => entry.enabled)
+        .toList(growable: false);
     final index = enabledSources.indexWhere((entry) => entry.id == source.id);
     if (index < 0) {
       return 'Enabled';
@@ -63,7 +77,12 @@ class LibraryMetadataPrecedenceEditor extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text('Metadata precedence', style: Theme.of(context).textTheme.titleSmall)),
+            Expanded(
+              child: Text(
+                'Metadata precedence',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+            ),
             TextButton.icon(
               onPressed: enabled ? onResetToDefault : null,
               icon: const Icon(Icons.restart_alt_rounded),
@@ -85,7 +104,10 @@ class LibraryMetadataPrecedenceEditor extends StatelessWidget {
                 return [
                   Switch.adaptive(
                     value: entry.enabled,
-                    onChanged: enabled ? (value) => onToggleSource(entry.copyWith(enabled: value)) : null,
+                    onChanged: enabled
+                        ? (value) =>
+                              onToggleSource(entry.copyWith(enabled: value))
+                        : null,
                   ),
                 ];
               },

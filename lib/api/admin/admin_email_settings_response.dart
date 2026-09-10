@@ -6,8 +6,10 @@ part 'admin_email_settings_response.g.dart';
 
 @freezed
 abstract class AdminEmailSettingsResponse with _$AdminEmailSettingsResponse {
-  const factory AdminEmailSettingsResponse({@JsonKey(name: 'settings') AdminEmailSettings? settings}) =
-      _AdminEmailSettingsResponse;
+  const factory AdminEmailSettingsResponse({
+    @JsonKey(name: 'settings') AdminEmailSettings? settings,
+  }) = _AdminEmailSettingsResponse;
 
-  factory AdminEmailSettingsResponse.fromJson(Map<String, dynamic> json) => _$AdminEmailSettingsResponseFromJson(json);
+  factory AdminEmailSettingsResponse.fromJson(Map<String, dynamic> json) =>
+      _$AdminEmailSettingsResponseFromJson(json);
 }

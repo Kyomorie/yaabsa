@@ -57,7 +57,9 @@ String quillDocumentToHtml(Document document) {
   }
 
   if (currentSpans.isNotEmpty) {
-    lines.add(_HtmlLine(spans: currentSpans, attributes: const <String, dynamic>{}));
+    lines.add(
+      _HtmlLine(spans: currentSpans, attributes: const <String, dynamic>{}),
+    );
   }
 
   if (lines.isEmpty) {
@@ -72,7 +74,8 @@ String quillDocumentToHtml(Document document) {
     if (listType == 'bullet' || listType == 'ordered') {
       final listTag = listType == 'ordered' ? 'ol' : 'ul';
       html.write('<$listTag>');
-      while (index < lines.length && lines[index].attributes['list'] == listType) {
+      while (index < lines.length &&
+          lines[index].attributes['list'] == listType) {
         html.write('<li>${_renderInlineSpans(lines[index].spans)}</li>');
         index++;
       }
@@ -87,7 +90,12 @@ String quillDocumentToHtml(Document document) {
   return html.toString();
 }
 
-void _appendHtmlNode(dom.Node node, Delta delta, _InlineAttributes inline, String? listType) {
+void _appendHtmlNode(
+  dom.Node node,
+  Delta delta,
+  _InlineAttributes inline,
+  String? listType,
+) {
   if (node is dom.Text) {
     _appendText(node.text, delta, inline);
     return;
@@ -107,12 +115,16 @@ void _appendHtmlNode(dom.Node node, Delta delta, _InlineAttributes inline, Strin
       delta.insert('\n');
       return;
     case 'ul':
-      for (final child in node.children.where((entry) => entry.localName?.toLowerCase() == 'li')) {
+      for (final child in node.children.where(
+        (entry) => entry.localName?.toLowerCase() == 'li',
+      )) {
         _appendHtmlNode(child, delta, inline, 'bullet');
       }
       return;
     case 'ol':
-      for (final child in node.children.where((entry) => entry.localName?.toLowerCase() == 'li')) {
+      for (final child in node.children.where(
+        (entry) => entry.localName?.toLowerCase() == 'li',
+      )) {
         _appendHtmlNode(child, delta, inline, 'ordered');
       }
       return;
@@ -120,7 +132,12 @@ void _appendHtmlNode(dom.Node node, Delta delta, _InlineAttributes inline, Strin
       for (final child in node.nodes) {
         _appendHtmlNode(child, delta, inline, listType);
       }
-      _insertNewline(delta, listType == null ? const <String, dynamic>{} : <String, dynamic>{'list': listType});
+      _insertNewline(
+        delta,
+        listType == null
+            ? const <String, dynamic>{}
+            : <String, dynamic>{'list': listType},
+      );
       return;
     case 'h1':
     case 'h2':
@@ -216,7 +233,10 @@ bool _deltaEndsWithNewline(Delta delta) {
 }
 
 bool _isBlockAttribute(String key) {
-  return key == 'list' || key == 'header' || key == 'blockquote' || key == 'code-block';
+  return key == 'list' ||
+      key == 'header' ||
+      key == 'blockquote' ||
+      key == 'code-block';
 }
 
 Map<String, dynamic> _toStringDynamicMap(Object? raw) {
@@ -311,16 +331,46 @@ class _InlineAttributes {
   final bool code;
   final String? link;
 
-  _InlineAttributes withBold() =>
-      _InlineAttributes(bold: true, italic: italic, underline: underline, strike: strike, code: code, link: link);
-  _InlineAttributes withItalic() =>
-      _InlineAttributes(bold: bold, italic: true, underline: underline, strike: strike, code: code, link: link);
-  _InlineAttributes withUnderline() =>
-      _InlineAttributes(bold: bold, italic: italic, underline: true, strike: strike, code: code, link: link);
-  _InlineAttributes withStrike() =>
-      _InlineAttributes(bold: bold, italic: italic, underline: underline, strike: true, code: code, link: link);
-  _InlineAttributes withCode() =>
-      _InlineAttributes(bold: bold, italic: italic, underline: underline, strike: strike, code: true, link: link);
+  _InlineAttributes withBold() => _InlineAttributes(
+    bold: true,
+    italic: italic,
+    underline: underline,
+    strike: strike,
+    code: code,
+    link: link,
+  );
+  _InlineAttributes withItalic() => _InlineAttributes(
+    bold: bold,
+    italic: true,
+    underline: underline,
+    strike: strike,
+    code: code,
+    link: link,
+  );
+  _InlineAttributes withUnderline() => _InlineAttributes(
+    bold: bold,
+    italic: italic,
+    underline: true,
+    strike: strike,
+    code: code,
+    link: link,
+  );
+  _InlineAttributes withStrike() => _InlineAttributes(
+    bold: bold,
+    italic: italic,
+    underline: underline,
+    strike: true,
+    code: code,
+    link: link,
+  );
+  _InlineAttributes withCode() => _InlineAttributes(
+    bold: bold,
+    italic: italic,
+    underline: underline,
+    strike: strike,
+    code: true,
+    link: link,
+  );
   _InlineAttributes withLink(String? value) => _InlineAttributes(
     bold: bold,
     italic: italic,

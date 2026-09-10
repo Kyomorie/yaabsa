@@ -5,7 +5,8 @@ part 'user_item_progress_updated_event.freezed.dart';
 part 'user_item_progress_updated_event.g.dart';
 
 @freezed
-abstract class UserItemProgressUpdatedEvent with _$UserItemProgressUpdatedEvent {
+abstract class UserItemProgressUpdatedEvent
+    with _$UserItemProgressUpdatedEvent {
   const factory UserItemProgressUpdatedEvent({
     @JsonKey(name: "id") required String id,
     @JsonKey(name: "data") required MediaProgress data,

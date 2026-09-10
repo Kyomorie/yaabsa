@@ -12,9 +12,11 @@ extension LibraryViewSubtitleViewX on LibraryViewSubtitleView {
   };
 
   String get settingKey => switch (this) {
-    LibraryViewSubtitleView.library => SettingKeys.libraryViewSubtitlePreferences,
+    LibraryViewSubtitleView.library =>
+      SettingKeys.libraryViewSubtitlePreferences,
     LibraryViewSubtitleView.series => SettingKeys.seriesViewSubtitlePreferences,
-    LibraryViewSubtitleView.authors => SettingKeys.authorsViewSubtitlePreferences,
+    LibraryViewSubtitleView.authors =>
+      SettingKeys.authorsViewSubtitlePreferences,
   };
 }
 
@@ -30,9 +32,11 @@ extension LibraryViewSubtitleModeX on LibraryViewSubtitleMode {
   };
 
   String get description => switch (this) {
-    LibraryViewSubtitleMode.sort => 'Shows the information based on the current filter',
+    LibraryViewSubtitleMode.sort =>
+      'Shows the information based on the current filter',
     LibraryViewSubtitleMode.none => 'Never show any information',
-    LibraryViewSubtitleMode.custom => 'Choose up to three fields to show below the item/series/author',
+    LibraryViewSubtitleMode.custom =>
+      'Choose up to three fields to show below the item/series/author',
   };
 
   static LibraryViewSubtitleMode? tryParse(String? raw) {
@@ -105,7 +109,10 @@ extension LibraryViewSubtitleFieldX on LibraryViewSubtitleField {
 }
 
 class LibraryViewSubtitlePreferences {
-  const LibraryViewSubtitlePreferences({required this.mode, required this.fields});
+  const LibraryViewSubtitlePreferences({
+    required this.mode,
+    required this.fields,
+  });
 
   final LibraryViewSubtitleMode mode;
   final List<LibraryViewSubtitleField> fields;
@@ -139,29 +146,40 @@ class LibraryViewSubtitlePreferencesCodec {
     LibraryViewSubtitleField.updatedAt,
   ];
 
-  static List<LibraryViewSubtitleField> fieldsFor(LibraryViewSubtitleView view) => switch (view) {
+  static List<LibraryViewSubtitleField> fieldsFor(
+    LibraryViewSubtitleView view,
+  ) => switch (view) {
     LibraryViewSubtitleView.library => libraryFields,
     LibraryViewSubtitleView.series => seriesFields,
     LibraryViewSubtitleView.authors => authorsFields,
   };
 
-  static LibraryViewSubtitlePreferences defaultsFor(LibraryViewSubtitleView view) {
+  static LibraryViewSubtitlePreferences defaultsFor(
+    LibraryViewSubtitleView view,
+  ) {
     return const LibraryViewSubtitlePreferences(
       mode: LibraryViewSubtitleMode.sort,
       fields: <LibraryViewSubtitleField>[],
     );
   }
 
-  static String defaultEncodedFor(LibraryViewSubtitleView view) => encode(defaultsFor(view));
+  static String defaultEncodedFor(LibraryViewSubtitleView view) =>
+      encode(defaultsFor(view));
 
   static String encode(LibraryViewSubtitlePreferences preferences) {
     return jsonEncode({
       'mode': preferences.mode.storageKey,
-      'fields': preferences.fields.take(maxCustomFields).map((field) => field.storageKey).toList(growable: false),
+      'fields': preferences.fields
+          .take(maxCustomFields)
+          .map((field) => field.storageKey)
+          .toList(growable: false),
     });
   }
 
-  static LibraryViewSubtitlePreferences decode(String? raw, LibraryViewSubtitleView view) {
+  static LibraryViewSubtitlePreferences decode(
+    String? raw,
+    LibraryViewSubtitleView view,
+  ) {
     final fallback = defaultsFor(view);
     if (raw == null || raw.trim().isEmpty) {
       return fallback;
@@ -173,12 +191,17 @@ class LibraryViewSubtitlePreferencesCodec {
         return fallback;
       }
 
-      final mode = LibraryViewSubtitleModeX.tryParse(decodedRaw['mode']?.toString()) ?? fallback.mode;
+      final mode =
+          LibraryViewSubtitleModeX.tryParse(decodedRaw['mode']?.toString()) ??
+          fallback.mode;
       final availableFields = fieldsFor(view).toSet();
       final rawFields = decodedRaw['fields'];
       final fields = rawFields is List
           ? rawFields
-                .map((value) => LibraryViewSubtitleFieldX.tryParse(value?.toString()))
+                .map(
+                  (value) =>
+                      LibraryViewSubtitleFieldX.tryParse(value?.toString()),
+                )
                 .whereType<LibraryViewSubtitleField>()
                 .where(availableFields.contains)
                 .toSet()

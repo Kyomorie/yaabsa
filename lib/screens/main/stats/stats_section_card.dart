@@ -38,7 +38,9 @@ class StatsSectionCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           subtitle!,
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ],

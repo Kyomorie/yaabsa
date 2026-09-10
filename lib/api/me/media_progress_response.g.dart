@@ -6,7 +6,9 @@ part of 'media_progress_response.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_MediaProgressResponse _$MediaProgressResponseFromJson(Map<String, dynamic> json) => _MediaProgressResponse(
+_MediaProgressResponse _$MediaProgressResponseFromJson(
+  Map<String, dynamic> json,
+) => _MediaProgressResponse(
   mediaProgress:
       (json['mediaProgress'] as List<dynamic>?)
           ?.map((e) => MediaProgress.fromJson(e as Map<String, dynamic>))
@@ -14,6 +16,6 @@ _MediaProgressResponse _$MediaProgressResponseFromJson(Map<String, dynamic> json
       const <MediaProgress>[],
 );
 
-Map<String, dynamic> _$MediaProgressResponseToJson(_MediaProgressResponse instance) => <String, dynamic>{
-  'mediaProgress': instance.mediaProgress,
-};
+Map<String, dynamic> _$MediaProgressResponseToJson(
+  _MediaProgressResponse instance,
+) => <String, dynamic>{'mediaProgress': instance.mediaProgress};

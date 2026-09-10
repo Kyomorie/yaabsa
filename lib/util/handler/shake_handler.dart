@@ -45,18 +45,33 @@ class ShakeRewindHandler {
     _updateShakeThreshold();
     _hasVibrator = await DeviceCapabilities.supportsVibrationFeedback();
 
-    logger('Initializing ShakeRewindHandler', tag: 'ShakeRewindHandler', level: InfoLevel.info);
+    logger(
+      'Initializing ShakeRewindHandler',
+      tag: 'ShakeRewindHandler',
+      level: InfoLevel.info,
+    );
 
-    _playerStateSub = audioHandler.playerControlStateStream.listen((_) => _syncListenerState());
+    _playerStateSub = audioHandler.playerControlStateStream.listen(
+      (_) => _syncListenerState(),
+    );
     _sleepTimerSub = containerRef.listen<SleepTimerData>(
       sleepTimerHandlerProvider,
       (previous, next) => _syncListenerState(),
       fireImmediately: true,
     );
 
-    _shakeToResetSleepTimerSub = _watchSetting(SettingKeys.shakeToResetSleepTimer, _syncListenerState);
-    _shakeToRewindSub = _watchSetting(SettingKeys.shakeToRewind, _syncListenerState);
-    _shakeSensitivitySub = _watchSetting(SettingKeys.shakeSensitivity, _updateShakeThreshold);
+    _shakeToResetSleepTimerSub = _watchSetting(
+      SettingKeys.shakeToResetSleepTimer,
+      _syncListenerState,
+    );
+    _shakeToRewindSub = _watchSetting(
+      SettingKeys.shakeToRewind,
+      _syncListenerState,
+    );
+    _shakeSensitivitySub = _watchSetting(
+      SettingKeys.shakeSensitivity,
+      _updateShakeThreshold,
+    );
 
     _syncListenerState();
   }
@@ -67,13 +82,18 @@ class ShakeRewindHandler {
     _active = true;
     _reset();
 
-    _accelerometerSub = accelerometerEventStream(samplingPeriod: _samplingInterval).listen(
-      _handleEvent,
-      onError: (Object error, StackTrace stackTrace) {
-        logger('Accelerometer listener failed: $error', tag: 'ShakeRewindHandler', level: InfoLevel.warning);
-        _stop();
-      },
-    );
+    _accelerometerSub =
+        accelerometerEventStream(samplingPeriod: _samplingInterval).listen(
+          _handleEvent,
+          onError: (Object error, StackTrace stackTrace) {
+            logger(
+              'Accelerometer listener failed: $error',
+              tag: 'ShakeRewindHandler',
+              level: InfoLevel.warning,
+            );
+            _stop();
+          },
+        );
   }
 
   void _stop() {
@@ -137,16 +157,26 @@ class ShakeRewindHandler {
 
   Future<void> _triggerActionByPriority() async {
     if (_shouldHandleSleepTimerReset) {
-      final didReset = containerRef.read(sleepTimerHandlerProvider.notifier).reset();
+      final didReset = containerRef
+          .read(sleepTimerHandlerProvider.notifier)
+          .reset();
       if (didReset) {
-        logger('Shake sleep timer reset triggered', tag: 'ShakeRewindHandler', level: InfoLevel.info);
+        logger(
+          'Shake sleep timer reset triggered',
+          tag: 'ShakeRewindHandler',
+          level: InfoLevel.info,
+        );
         await _vibrateIfEnabled();
       }
       return;
     }
 
     if (_canRewind) {
-      logger('Shake rewind triggered', tag: 'ShakeRewindHandler', level: InfoLevel.info);
+      logger(
+        'Shake rewind triggered',
+        tag: 'ShakeRewindHandler',
+        level: InfoLevel.info,
+      );
       await audioHandler.rewind();
       await _vibrateIfEnabled();
     }
@@ -160,11 +190,18 @@ class ShakeRewindHandler {
     try {
       await Vibration.vibrate();
     } catch (error) {
-      logger('Failed to trigger vibration: $error', tag: 'ShakeRewindHandler', level: InfoLevel.warning);
+      logger(
+        'Failed to trigger vibration: $error',
+        tag: 'ShakeRewindHandler',
+        level: InfoLevel.warning,
+      );
     }
   }
 
-  ProviderSubscription<AsyncValue<String?>> _watchSetting(String key, void Function() onChange) {
+  ProviderSubscription<AsyncValue<String?>> _watchSetting(
+    String key,
+    void Function() onChange,
+  ) {
     return containerRef.listen<AsyncValue<String?>>(
       globalSettingByKeyProvider(key),
       (previous, next) => onChange(),
@@ -178,11 +215,15 @@ class ShakeRewindHandler {
   }
 
   bool _boolSetting(String key) {
-    return containerRef.read(settingsManagerProvider.notifier).getGlobalSetting<bool>(key);
+    return containerRef
+        .read(settingsManagerProvider.notifier)
+        .getGlobalSetting<bool>(key);
   }
 
   double _doubleSetting(String key) {
-    return containerRef.read(settingsManagerProvider.notifier).getGlobalSetting<double>(key);
+    return containerRef
+        .read(settingsManagerProvider.notifier)
+        .getGlobalSetting<double>(key);
   }
 
   bool get _shouldHandleSleepTimerReset {
@@ -198,7 +239,8 @@ class ShakeRewindHandler {
   }
 
   bool get _shouldListen {
-    return DeviceCapabilities.supportsShakeActions && (_shouldHandleSleepTimerReset || _canRewind);
+    return DeviceCapabilities.supportsShakeActions &&
+        (_shouldHandleSleepTimerReset || _canRewind);
   }
 
   void _reset() {

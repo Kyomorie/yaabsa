@@ -7,8 +7,11 @@ part 'admin_backup_list_response.g.dart';
 @freezed
 abstract class AdminBackupListResponse with _$AdminBackupListResponse {
   const factory AdminBackupListResponse({
-    @JsonKey(name: 'backups') @Default(<AdminBackup>[]) List<AdminBackup> backups,
+    @JsonKey(name: 'backups')
+    @Default(<AdminBackup>[])
+    List<AdminBackup> backups,
   }) = _AdminBackupListResponse;
 
-  factory AdminBackupListResponse.fromJson(Map<String, dynamic> json) => _$AdminBackupListResponseFromJson(json);
+  factory AdminBackupListResponse.fromJson(Map<String, dynamic> json) =>
+      _$AdminBackupListResponseFromJson(json);
 }

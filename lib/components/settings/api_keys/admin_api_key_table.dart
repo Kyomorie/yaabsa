@@ -69,13 +69,18 @@ class AdminApiKeyTable extends StatelessWidget {
           id: 'name',
           label: 'Name',
           width: 180,
-          cellBuilder: (context, apiKey) => Text(apiKey.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          cellBuilder: (context, apiKey) =>
+              Text(apiKey.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         ),
         ExpressiveTableColumn<AdminApiKey>(
           id: 'owner',
           label: 'Owner',
           width: 130,
-          cellBuilder: (context, apiKey) => Text(_ownerLabel(apiKey), maxLines: 1, overflow: TextOverflow.ellipsis),
+          cellBuilder: (context, apiKey) => Text(
+            _ownerLabel(apiKey),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
         ExpressiveTableColumn<AdminApiKey>(
           id: 'status',
@@ -91,7 +96,9 @@ class AdminApiKeyTable extends StatelessWidget {
             _expiresLabel(apiKey),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: apiKey.isExpired ? colorScheme.error : null),
+            style: TextStyle(
+              color: apiKey.isExpired ? colorScheme.error : null,
+            ),
           ),
         ),
         ExpressiveTableColumn<AdminApiKey>(

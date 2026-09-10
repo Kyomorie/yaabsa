@@ -15,7 +15,8 @@ abstract class SmartDownloadPolicy with _$SmartDownloadPolicy {
     @Default(true) bool descending,
   }) = _SmartDownloadPolicy;
 
-  factory SmartDownloadPolicy.fromJson(Map<String, dynamic> json) => _$SmartDownloadPolicyFromJson(json);
+  factory SmartDownloadPolicy.fromJson(Map<String, dynamic> json) =>
+      _$SmartDownloadPolicyFromJson(json);
 }
 
 @unfreezed
@@ -29,7 +30,8 @@ abstract class SmartDownloadProfile with _$SmartDownloadProfile {
     @Default(<MediaSourceDescriptor>[]) List<MediaSourceDescriptor> sources,
   }) = _SmartDownloadProfile;
 
-  factory SmartDownloadProfile.fromJson(Map<String, dynamic> json) => _$SmartDownloadProfileFromJson(json);
+  factory SmartDownloadProfile.fromJson(Map<String, dynamic> json) =>
+      _$SmartDownloadProfileFromJson(json);
 }
 
 @freezed
@@ -43,5 +45,6 @@ abstract class SmartDownloadClaim with _$SmartDownloadClaim {
     int? completedAt,
   }) = _SmartDownloadClaim;
 
-  factory SmartDownloadClaim.fromJson(Map<String, dynamic> json) => _$SmartDownloadClaimFromJson(json);
+  factory SmartDownloadClaim.fromJson(Map<String, dynamic> json) =>
+      _$SmartDownloadClaimFromJson(json);
 }

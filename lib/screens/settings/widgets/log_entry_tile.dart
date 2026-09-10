@@ -25,7 +25,10 @@ class LogEntryTile extends StatelessWidget {
             Container(
               width: 30,
               height: 30,
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(8)),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Icon(_iconForLevel(entry.level), size: 18, color: color),
             ),
             const SizedBox(width: 10),
@@ -33,7 +36,12 @@ class LogEntryTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(entry.message, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                  Text(
+                    entry.message,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
@@ -41,7 +49,8 @@ class LogEntryTile extends StatelessWidget {
                     children: [
                       _MetaChip(label: _formatTimestamp(entry.timestamp)),
                       _MetaChip(label: entry.level.name.toUpperCase()),
-                      if (entry.tag != null && entry.tag!.trim().isNotEmpty) _MetaChip(label: entry.tag!.trim()),
+                      if (entry.tag != null && entry.tag!.trim().isNotEmpty)
+                        _MetaChip(label: entry.tag!.trim()),
                     ],
                   ),
                 ],
@@ -96,10 +105,17 @@ class _MetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.55,
+        ),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(label, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }

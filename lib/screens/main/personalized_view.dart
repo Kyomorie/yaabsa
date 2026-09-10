@@ -50,17 +50,26 @@ class PersonalizedView extends HookConsumerWidget {
       final isResolvingLibrary =
           (currentUserAsync.isLoading && !currentUserAsync.hasValue) ||
           (librariesAsync.isLoading && !librariesAsync.hasValue) ||
-          (selectedLibraryIdAsync.isLoading && !selectedLibraryIdAsync.hasValue);
+          (selectedLibraryIdAsync.isLoading &&
+              !selectedLibraryIdAsync.hasValue);
       if (isResolvingLibrary) {
         return const Center(child: CircularProgressIndicator());
       }
 
-      return const Center(child: Text('No library selected. Please select a library via the switcher.'));
+      return const Center(
+        child: Text(
+          'No library selected. Please select a library via the switcher.',
+        ),
+      );
     }
 
     final serverReachable = ref.watch(serverStatusProvider).value ?? true;
-    final personalizedLibraryAsyncValue = ref.watch(personalizedLibraryProvider(selectedLibrary.id));
-    final downloadsAsyncValue = ref.watch(libraryDownloadsProvider(selectedLibrary.id));
+    final personalizedLibraryAsyncValue = ref.watch(
+      personalizedLibraryProvider(selectedLibrary.id),
+    );
+    final downloadsAsyncValue = ref.watch(
+      libraryDownloadsProvider(selectedLibrary.id),
+    );
     final downloads = downloadsAsyncValue.value;
     final downloadItems = downloads
         ?.map((d) {
@@ -71,7 +80,9 @@ class PersonalizedView extends HookConsumerWidget {
             final podcastMedia = media?.podcastMedia;
             if (media != null && podcastMedia != null) {
               item = item.copyWith(
-                media: media.copyWith(podcastMedia: podcastMedia.copyWith(episodes: [d.episode!])),
+                media: media.copyWith(
+                  podcastMedia: podcastMedia.copyWith(episodes: [d.episode!]),
+                ),
               );
             }
           }
@@ -80,20 +91,29 @@ class PersonalizedView extends HookConsumerWidget {
         .whereType<LibraryItem>()
         .toList();
     final showShelfPlayButtonSettingValue = ref.watch(
-      globalSettingByKeyProvider(SettingKeys.personalizedShelfShowPlayVisibleButton),
+      globalSettingByKeyProvider(
+        SettingKeys.personalizedShelfShowPlayVisibleButton,
+      ),
     );
     final showShelfPlayButton = SettingsParser.decodeValue<bool>(
       showShelfPlayButtonSettingValue.value,
-      defaultSettings[SettingKeys.personalizedShelfShowPlayVisibleButton] as bool,
+      defaultSettings[SettingKeys.personalizedShelfShowPlayVisibleButton]
+          as bool,
     );
     final filterDataAsync = serverReachable
         ? ref.watch(libraryFilterDataProvider(selectedLibrary.id))
         : const AsyncData<LibraryFilterData?>(null);
     final currentUser = currentUserAsync.value;
     ref.watch(userSettingsWatcherProvider);
-    final managementPreferences = readServerManagementPreferences(ref, currentUser?.id);
-    final mediaProgressMap = ref.watch(mediaProgressProvider).asData?.value ?? const <String, MediaProgress>{};
-    final personalizedLibraryForWidgets = personalizedLibraryAsyncValue.asData?.value;
+    final managementPreferences = readServerManagementPreferences(
+      ref,
+      currentUser?.id,
+    );
+    final mediaProgressMap =
+        ref.watch(mediaProgressProvider).asData?.value ??
+        const <String, MediaProgress>{};
+    final personalizedLibraryForWidgets =
+        personalizedLibraryAsyncValue.asData?.value;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final appLifecycleState = useAppLifecycleState();
 
@@ -117,7 +137,8 @@ class PersonalizedView extends HookConsumerWidget {
             );
 
             if (appLifecycleState == AppLifecycleState.resumed) {
-              final shouldPopulateAll = await WidgetBridge.consumePopulateAllRequest();
+              final shouldPopulateAll =
+                  await WidgetBridge.consumePopulateAllRequest();
               if (shouldPopulateAll) {
                 await WidgetBridge.triggerWidgetUpdate();
               }
@@ -140,25 +161,44 @@ class PersonalizedView extends HookConsumerWidget {
     );
 
     Future<void> refreshPersonalizedLibrary({bool withLoading = false}) {
-      return _retryPersonalizedLibrary(ref: ref, libraryId: selectedLibrary.id, withLoading: withLoading);
+      return _retryPersonalizedLibrary(
+        ref: ref,
+        libraryId: selectedLibrary.id,
+        withLoading: withLoading,
+      );
     }
 
     final personalizedLibrary = personalizedLibraryAsyncValue.value;
     final isLibraryLoading =
-        (personalizedLibraryAsyncValue.isLoading && personalizedLibrary == null) || currentUserAsync.isLoading;
-    final libraryError = personalizedLibraryAsyncValue.hasError && personalizedLibrary == null
+        (personalizedLibraryAsyncValue.isLoading &&
+            personalizedLibrary == null) ||
+        currentUserAsync.isLoading;
+    final libraryError =
+        personalizedLibraryAsyncValue.hasError && personalizedLibrary == null
         ? personalizedLibraryAsyncValue.error
         : null;
 
-    final shelfMediaType = HomeLibraryMediaType.fromLibraryMediaType(selectedLibrary.mediaType);
-    final shelfSettingKey = PersonalizedShelfPreferencesCodec.settingKeyFor(shelfMediaType);
-    final shelfDefaultValue = PersonalizedShelfPreferencesCodec.defaultEncodedFor(shelfMediaType);
+    final shelfMediaType = HomeLibraryMediaType.fromLibraryMediaType(
+      selectedLibrary.mediaType,
+    );
+    final shelfSettingKey = PersonalizedShelfPreferencesCodec.settingKeyFor(
+      shelfMediaType,
+    );
+    final shelfDefaultValue =
+        PersonalizedShelfPreferencesCodec.defaultEncodedFor(shelfMediaType);
     final shelfSettingValue = currentUser == null
         ? shelfDefaultValue
         : ref
               .read(settingsManagerProvider.notifier)
-              .getUserSetting<String>(currentUser.id, shelfSettingKey, defaultValue: shelfDefaultValue);
-    final shelfPreferences = PersonalizedShelfPreferencesCodec.decode(shelfSettingValue, shelfMediaType);
+              .getUserSetting<String>(
+                currentUser.id,
+                shelfSettingKey,
+                defaultValue: shelfDefaultValue,
+              );
+    final shelfPreferences = PersonalizedShelfPreferencesCodec.decode(
+      shelfSettingValue,
+      shelfMediaType,
+    );
     final downloadsSectionEnabled =
         shelfPreferences.orderedSectionIds.contains('downloads') &&
         !shelfPreferences.hiddenSectionIds.contains('downloads');
@@ -169,13 +209,17 @@ class PersonalizedView extends HookConsumerWidget {
         (downloadItems?.isNotEmpty ?? false);
 
     if (libraryError != null && !showOfflineDownloadsOnly) {
-      final title = serverReachable ? 'Could not load personalized shelf' : 'Server connection unavailable';
+      final title = serverReachable
+          ? 'Could not load personalized shelf'
+          : 'Server connection unavailable';
       final message = serverReachable
           ? 'Pull down to retry loading personalized sections.'
           : 'You appear to be offline. Pull down to retry after reconnecting.';
 
       return _PersonalizedFeedbackView(
-        icon: serverReachable ? Icons.error_outline_rounded : Icons.cloud_off_rounded,
+        icon: serverReachable
+            ? Icons.error_outline_rounded
+            : Icons.cloud_off_rounded,
         title: title,
         message: message,
         detail: libraryError.toString(),
@@ -193,10 +237,16 @@ class PersonalizedView extends HookConsumerWidget {
       );
     }
 
-    if (personalizedLibrary == null && !isLibraryLoading && !showOfflineDownloadsOnly) {
+    if (personalizedLibrary == null &&
+        !isLibraryLoading &&
+        !showOfflineDownloadsOnly) {
       return _PersonalizedFeedbackView(
-        icon: serverReachable ? Icons.view_carousel_outlined : Icons.cloud_off_rounded,
-        title: serverReachable ? 'No personalized items found' : 'Personalized shelf is offline',
+        icon: serverReachable
+            ? Icons.view_carousel_outlined
+            : Icons.cloud_off_rounded,
+        title: serverReachable
+            ? 'No personalized items found'
+            : 'Personalized shelf is offline',
         message: serverReachable
             ? 'No personalized sections are available for this library yet.'
             : 'Unable to reach the server right now. Pull down to retry.',
@@ -221,7 +271,10 @@ class PersonalizedView extends HookConsumerWidget {
         final title = section?.label ?? sectionId;
         final kind = _kindForSectionId(sectionId);
 
-        if (sectionId == 'downloads' && downloads != null && downloads.isNotEmpty && api != null) {
+        if (sectionId == 'downloads' &&
+            downloads != null &&
+            downloads.isNotEmpty &&
+            api != null) {
           sections.add(
             _SectionData(
               id: 'downloads',
@@ -232,11 +285,22 @@ class PersonalizedView extends HookConsumerWidget {
             ),
           );
         } else {
-          sections.add(_SectionData(id: sectionId, title: title, kind: kind, entities: const [], isShimmer: true));
+          sections.add(
+            _SectionData(
+              id: sectionId,
+              title: title,
+              kind: kind,
+              entities: const [],
+              isShimmer: true,
+            ),
+          );
         }
       }
     } else {
-      var rawSections = _buildSections(personalizedLibrary ?? const PersonalizedLibrary(), downloadItems);
+      var rawSections = _buildSections(
+        personalizedLibrary ?? const PersonalizedLibrary(),
+        downloadItems,
+      );
       sections = _applyShelfSectionPreferences(rawSections, shelfPreferences);
     }
 
@@ -263,15 +327,19 @@ class PersonalizedView extends HookConsumerWidget {
         final canManageBooks = selectedLibrary.mediaType == 'book';
         final hasUpdatePermission = currentUser?.permissions.update ?? false;
         final hasDeletePermission = currentUser?.permissions.delete ?? false;
-        final canEditItems = hasUpdatePermission && managementPreferences.editItemsEnabled;
+        final canEditItems =
+            hasUpdatePermission && managementPreferences.editItemsEnabled;
         final canQuickMatchItems =
-            canManageBooks && canEditItems && managementPreferences.allowMatchesQuickMatchesEnabled;
+            canManageBooks &&
+            canEditItems &&
+            managementPreferences.allowMatchesQuickMatchesEnabled;
         final editableItemIds = visibleLibraryItems
             .where((item) => item.collapsedSeries == null)
             .map((item) => item.id)
             .toList(growable: false);
 
-        if (editingItemId.value != null && !editableItemIds.contains(editingItemId.value)) {
+        if (editingItemId.value != null &&
+            !editableItemIds.contains(editingItemId.value)) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             editingItemId.value = null;
           });
@@ -282,9 +350,15 @@ class PersonalizedView extends HookConsumerWidget {
           libraryId: selectedLibrary.id,
           visibleItems: visibleLibraryItems,
           canAddToPlaylist: canManageBooks && currentUser != null,
-          canAddToCollection: canManageBooks && hasUpdatePermission && managementPreferences.collectionsEnabled,
+          canAddToCollection:
+              canManageBooks &&
+              hasUpdatePermission &&
+              managementPreferences.collectionsEnabled,
           canQuickMatchItems: canQuickMatchItems,
-          canDeleteItems: canManageBooks && hasDeletePermission && managementPreferences.deleteItemsEnabled,
+          canDeleteItems:
+              canManageBooks &&
+              hasDeletePermission &&
+              managementPreferences.deleteItemsEnabled,
           currentUserId: currentUser?.id,
           onAfterDelete: () => refreshPersonalizedLibrary(withLoading: false),
           builder: (context, selection) {
@@ -293,7 +367,8 @@ class PersonalizedView extends HookConsumerWidget {
                 Positioned.fill(
                   child: Column(
                     children: [
-                      if (!serverReachable && !isLibraryLoading) const _PersonalizedConnectionBanner(),
+                      if (!serverReachable && !isLibraryLoading)
+                        const _PersonalizedConnectionBanner(),
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: refreshPersonalizedLibrary,
@@ -307,7 +382,8 @@ class PersonalizedView extends HookConsumerWidget {
                               verticalPadding,
                             ),
                             itemCount: sections.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: 12),
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               final section = sections[index];
                               if (section.isShimmer) {
@@ -327,11 +403,14 @@ class PersonalizedView extends HookConsumerWidget {
                                 mediaProgressMap: mediaProgressMap,
                                 selectionMode: selection.selectionMode,
                                 selectedItemIds: selection.selectedItemIds,
-                                onToggleSelection: selection.toggleSelectionById,
-                                onEnterSelectionMode: selection.enterSelectionById,
+                                onToggleSelection:
+                                    selection.toggleSelectionById,
+                                onEnterSelectionMode:
+                                    selection.enterSelectionById,
                                 canEditItems: canEditItems,
                                 onEditItem: (item) {
-                                  if (selection.selectionMode || item.collapsedSeries != null) {
+                                  if (selection.selectionMode ||
+                                      item.collapsedSeries != null) {
                                     return;
                                   }
                                   editingItemId.value = item.id;
@@ -345,7 +424,8 @@ class PersonalizedView extends HookConsumerWidget {
                   ),
                 ),
                 ScrollToTopButton(controller: scrollController),
-                if (editingItemId.value != null && editableItemIds.contains(editingItemId.value))
+                if (editingItemId.value != null &&
+                    editableItemIds.contains(editingItemId.value))
                   LibraryItemEditOverlay(
                     orderedItemIds: editableItemIds,
                     currentItemId: editingItemId.value!,
@@ -376,7 +456,9 @@ Future<void> _retryPersonalizedLibrary({
     ref.invalidate(serverStatusProvider);
   }
 
-  await ref.read(personalizedLibraryProvider(libraryId).notifier).refresh(libraryId, withLoading: withLoading);
+  await ref
+      .read(personalizedLibraryProvider(libraryId).notifier)
+      .refresh(libraryId, withLoading: withLoading);
 }
 
 class _PersonalizedConnectionBanner extends StatelessWidget {
@@ -396,12 +478,17 @@ class _PersonalizedConnectionBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.cloud_off_rounded, size: 18, color: colorScheme.onErrorContainer),
+          Icon(
+            Icons.cloud_off_rounded,
+            size: 18,
+            color: colorScheme.onErrorContainer,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Server connection is unstable. Displaying the latest available shelf data.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onErrorContainer),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.onErrorContainer),
             ),
           ),
         ],
@@ -436,20 +523,31 @@ class _PersonalizedFeedbackView extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
               ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 32,
+                ),
                 child: Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(icon, size: 36, color: Theme.of(context).colorScheme.primary),
+                      Icon(
+                        icon,
+                        size: 36,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(height: 12),
-                      Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         message,
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       if (detail != null && detail!.isNotEmpty) ...[
                         const SizedBox(height: 8),
@@ -459,7 +557,11 @@ class _PersonalizedFeedbackView extends StatelessWidget {
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              ?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
                         ),
                       ],
                       const SizedBox(height: 14),
@@ -530,7 +632,10 @@ class _SectionData {
   final bool isShimmer;
 }
 
-List<_SectionData> _buildSections(PersonalizedLibrary library, List<LibraryItem>? downloadedItems) {
+List<_SectionData> _buildSections(
+  PersonalizedLibrary library,
+  List<LibraryItem>? downloadedItems,
+) {
   final sections = <_SectionData>[];
 
   void addSection<T>(ShelfEntry<T>? shelf, _ShelfEntityKind kind) {
@@ -569,11 +674,21 @@ List<_SectionData> _buildSections(PersonalizedLibrary library, List<LibraryItem>
 
   if (downloadedItems == null) {
     sections.add(
-      _SectionData(id: 'downloads', title: 'Downloads', kind: _ShelfEntityKind.libraryItem, entities: const []),
+      _SectionData(
+        id: 'downloads',
+        title: 'Downloads',
+        kind: _ShelfEntityKind.libraryItem,
+        entities: const [],
+      ),
     );
   } else if (downloadedItems.isNotEmpty) {
     sections.add(
-      _SectionData(id: 'downloads', title: 'Downloads', kind: _ShelfEntityKind.libraryItem, entities: downloadedItems),
+      _SectionData(
+        id: 'downloads',
+        title: 'Downloads',
+        kind: _ShelfEntityKind.libraryItem,
+        entities: downloadedItems,
+      ),
     );
   }
 
@@ -610,7 +725,9 @@ List<_SectionData> _applyShelfSectionPreferences(
 
   for (final sectionId in preferences.orderedSectionIds) {
     final section = sectionById[sectionId];
-    if (section == null || hiddenSectionIds.contains(section.id) || !includedIds.add(section.id)) {
+    if (section == null ||
+        hiddenSectionIds.contains(section.id) ||
+        !includedIds.add(section.id)) {
       continue;
     }
 
@@ -628,7 +745,9 @@ List<_SectionData> _applyShelfSectionPreferences(
   return orderedSections;
 }
 
-List<LibraryItem> _collectVisibleShelfLibraryItems(List<_SectionData> sections) {
+List<LibraryItem> _collectVisibleShelfLibraryItems(
+  List<_SectionData> sections,
+) {
   final items = <LibraryItem>[];
   final seenIds = <String>{};
 
@@ -679,7 +798,8 @@ class _SectionRow extends StatelessWidget {
   final ValueChanged<LibraryItem> onEditItem;
 
   bool get _supportsPlayVisibleButton {
-    return section.id == _continueListeningShelfId || section.id == _newestEpisodesShelfId;
+    return section.id == _continueListeningShelfId ||
+        section.id == _newestEpisodesShelfId;
   }
 
   List<_SectionPlayableEntry> _collectPlayableEntries() {
@@ -693,7 +813,9 @@ class _SectionRow extends StatelessWidget {
       if (entity.mediaType == 'podcast') {
         final playableEpisode = _playablePodcastEpisode(entity);
         if (playableEpisode != null) {
-          playableEntries.add(_SectionPlayableEntry.podcastEpisode(entity, playableEpisode));
+          playableEntries.add(
+            _SectionPlayableEntry.podcastEpisode(entity, playableEpisode),
+          );
         }
         continue;
       }
@@ -725,7 +847,8 @@ class _SectionRow extends StatelessWidget {
     }
 
     for (final episode in episodes) {
-      final episodeProgress = mediaProgressMap[mediaProgressKey(item.id, episode.id)];
+      final episodeProgress =
+          mediaProgressMap[mediaProgressKey(item.id, episode.id)];
       if (_isFinishedProgress(episodeProgress)) {
         continue;
       }
@@ -740,7 +863,10 @@ class _SectionRow extends StatelessWidget {
     return progress?.isFinished ?? false;
   }
 
-  Future<void> _playVisibleShelfItems(BuildContext context, List<_SectionPlayableEntry> playableEntries) async {
+  Future<void> _playVisibleShelfItems(
+    BuildContext context,
+    List<_SectionPlayableEntry> playableEntries,
+  ) async {
     if (playableEntries.isEmpty) {
       return;
     }
@@ -748,7 +874,10 @@ class _SectionRow extends StatelessWidget {
     try {
       final firstEntry = playableEntries.first;
       if (firstEntry.episode != null) {
-        audioHandler.setQueueFromPodcastEpisode(firstEntry.item, firstEntry.episode!);
+        audioHandler.setQueueFromPodcastEpisode(
+          firstEntry.item,
+          firstEntry.episode!,
+        );
       } else {
         audioHandler.setQueueFromLibraryItem(firstEntry.item);
       }
@@ -767,7 +896,9 @@ class _SectionRow extends StatelessWidget {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to queue visible items: $error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to queue visible items: $error')),
+      );
     }
   }
 
@@ -776,7 +907,10 @@ class _SectionRow extends StatelessWidget {
     final scrollController = ScrollController();
     final playableEntries = _collectPlayableEntries();
     final canShowPlayVisibleButton =
-        !selectionMode && showPlayVisibleButton && _supportsPlayVisibleButton && playableEntries.isNotEmpty;
+        !selectionMode &&
+        showPlayVisibleButton &&
+        _supportsPlayVisibleButton &&
+        playableEntries.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -786,7 +920,10 @@ class _SectionRow extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
-              child: Text(section.title, style: Theme.of(context).textTheme.titleMedium),
+              child: Text(
+                section.title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -937,7 +1074,11 @@ class _SectionList extends StatelessWidget {
     );
   }
 
-  Widget _buildEntityTile(BuildContext context, Object entity, double seriesTileWidth) {
+  Widget _buildEntityTile(
+    BuildContext context,
+    Object entity,
+    double seriesTileWidth,
+  ) {
     switch (section.kind) {
       case _ShelfEntityKind.libraryItem:
         return _buildLibraryItemTile(entity as LibraryItem);
@@ -1025,7 +1166,8 @@ class _MetaCard extends StatelessWidget {
                 if (subtitle != null && subtitle!.isNotEmpty)
                   Text(
                     subtitle!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1056,7 +1198,9 @@ LibraryItem _withLocalCoverPath(LibraryItem item, String? coverPathOverride) {
     }
 
     return item.copyWith(
-      media: media.copyWith(bookMedia: bookMedia.copyWith(coverPath: normalizedCoverPath)),
+      media: media.copyWith(
+        bookMedia: bookMedia.copyWith(coverPath: normalizedCoverPath),
+      ),
     );
   }
 
@@ -1067,7 +1211,9 @@ LibraryItem _withLocalCoverPath(LibraryItem item, String? coverPathOverride) {
     }
 
     return item.copyWith(
-      media: media.copyWith(podcastMedia: podcastMedia.copyWith(coverPath: normalizedCoverPath)),
+      media: media.copyWith(
+        podcastMedia: podcastMedia.copyWith(coverPath: normalizedCoverPath),
+      ),
     );
   }
 
@@ -1095,7 +1241,8 @@ class _ShelfTargetShimmer extends StatefulWidget {
   State<_ShelfTargetShimmer> createState() => _ShelfTargetShimmerState();
 }
 
-class _ShelfTargetShimmerState extends State<_ShelfTargetShimmer> with SingleTickerProviderStateMixin {
+class _ShelfTargetShimmerState extends State<_ShelfTargetShimmer>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1300),
@@ -1169,7 +1316,10 @@ class _ShimmerSectionRow extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 4, right: 4, bottom: 8),
-              child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -1215,9 +1365,13 @@ class _ShimmerSectionRow extends StatelessWidget {
                           width: cardWidth,
                           height: kind == _ShelfEntityKind.libraryItem
                               ? cardWidth
-                              : (kind == _ShelfEntityKind.series ? cardWidth : 120),
+                              : (kind == _ShelfEntityKind.series
+                                    ? cardWidth
+                                    : 120),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
@@ -1226,7 +1380,9 @@ class _ShimmerSectionRow extends StatelessWidget {
                           width: cardWidth * 0.7,
                           height: 12,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(6),
                           ),
                         ),

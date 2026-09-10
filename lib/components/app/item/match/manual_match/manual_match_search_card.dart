@@ -44,14 +44,21 @@ class ManualMatchSearchCard extends StatelessWidget {
             );
             final authorField = TextField(
               controller: authorController,
-              decoration: const InputDecoration(labelText: 'Author', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                labelText: 'Author',
+                border: OutlineInputBorder(),
+              ),
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => onSearch(),
             );
             final searchButton = FilledButton.icon(
               onPressed: searching ? null : onSearch,
               icon: searching
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.2))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2.2),
+                    )
                   : const Icon(Icons.search_rounded),
               label: Text(searching ? 'Searching...' : 'Search'),
             );
@@ -108,10 +115,17 @@ class ManualMatchSearchCard extends StatelessWidget {
   Widget _buildProviderField(BuildContext context) {
     return providersAsync.when(
       loading: () => const InputDecorator(
-        decoration: InputDecoration(labelText: 'Providers', border: OutlineInputBorder()),
+        decoration: InputDecoration(
+          labelText: 'Providers',
+          border: OutlineInputBorder(),
+        ),
         child: Row(
           children: [
-            SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2.0)),
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2.0),
+            ),
             SizedBox(width: 8),
             Text('Loading...'),
           ],
@@ -133,7 +147,10 @@ class ManualMatchSearchCard extends StatelessWidget {
       data: (providers) {
         if (providers.isEmpty) {
           return const InputDecorator(
-            decoration: InputDecoration(labelText: 'Providers', border: OutlineInputBorder()),
+            decoration: InputDecoration(
+              labelText: 'Providers',
+              border: OutlineInputBorder(),
+            ),
             child: Text('No providers available'),
           );
         }

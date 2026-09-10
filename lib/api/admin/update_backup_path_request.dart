@@ -5,7 +5,10 @@ part 'update_backup_path_request.g.dart';
 
 @freezed
 abstract class UpdateBackupPathRequest with _$UpdateBackupPathRequest {
-  const factory UpdateBackupPathRequest({@JsonKey(name: 'path') required String path}) = _UpdateBackupPathRequest;
+  const factory UpdateBackupPathRequest({
+    @JsonKey(name: 'path') required String path,
+  }) = _UpdateBackupPathRequest;
 
-  factory UpdateBackupPathRequest.fromJson(Map<String, dynamic> json) => _$UpdateBackupPathRequestFromJson(json);
+  factory UpdateBackupPathRequest.fromJson(Map<String, dynamic> json) =>
+      _$UpdateBackupPathRequestFromJson(json);
 }

@@ -37,7 +37,11 @@ Stream<bool> serverStatus(Ref ref) async* {
   void markUnreachable(String reason) {
     final wasReachable = ref.read(serverReachabilityProvider);
     if (wasReachable) {
-      logger('Server marked unreachable via $reason', tag: 'ServerStatusProvider', level: InfoLevel.debug);
+      logger(
+        'Server marked unreachable via $reason',
+        tag: 'ServerStatusProvider',
+        level: InfoLevel.debug,
+      );
       ref.read(serverReachabilityProvider.notifier).setUnreachable();
     }
     scheduleNextCheck(false);
@@ -46,7 +50,11 @@ Stream<bool> serverStatus(Ref ref) async* {
   void markReachable(String reason) {
     final wasReachable = ref.read(serverReachabilityProvider);
     if (!wasReachable) {
-      logger('Server marked reachable via $reason', tag: 'ServerStatusProvider', level: InfoLevel.debug);
+      logger(
+        'Server marked reachable via $reason',
+        tag: 'ServerStatusProvider',
+        level: InfoLevel.debug,
+      );
       ref.read(serverReachabilityProvider.notifier).setReachable();
     }
     scheduleNextCheck(true);
@@ -101,18 +109,30 @@ Stream<bool> serverStatus(Ref ref) async* {
         ref: ref,
         currentUser: currentUser,
         nextConnection: ServerConnection.external,
-        reason: localUrl == null ? 'ping.external.success' : 'ping.external.fallback_success',
+        reason: localUrl == null
+            ? 'ping.external.success'
+            : 'ping.external.fallback_success',
       );
-      markReachable(localUrl == null ? 'ping.external.success' : 'ping.external.fallback_success');
+      markReachable(
+        localUrl == null
+            ? 'ping.external.success'
+            : 'ping.external.fallback_success',
+      );
       return;
     }
 
-    markUnreachable(localUrl == null ? 'ping.external.failed' : 'ping.local_and_external.failed');
+    markUnreachable(
+      localUrl == null
+          ? 'ping.external.failed'
+          : 'ping.local_and_external.failed',
+    );
   };
 
   unawaited(checkStatus());
 
-  final connectivitySubscription = connectivity.onConnectivityChanged.listen((_) {
+  final connectivitySubscription = connectivity.onConnectivityChanged.listen((
+    _,
+  ) {
     timer?.cancel();
     unawaited(checkStatus());
   });
@@ -159,7 +179,9 @@ Future<void> _onServerReachable(Ref ref, {required bool reconnected}) async {
 
   try {
     logger(
-      reconnected ? 'Reconnected to server' : 'Server reachable, checking offline sync backlog',
+      reconnected
+          ? 'Reconnected to server'
+          : 'Server reachable, checking offline sync backlog',
       tag: 'ServerStatusProvider',
       level: InfoLevel.debug,
     );
@@ -171,9 +193,14 @@ Future<void> _onServerReachable(Ref ref, {required bool reconnected}) async {
 
     final offlineSync = await db.getAllSyncs();
     if (offlineSync.isEmpty) {
-      logger('No offline syncs found', tag: 'ServerStatusProvider', level: InfoLevel.debug);
+      logger(
+        'No offline syncs found',
+        tag: 'ServerStatusProvider',
+        level: InfoLevel.debug,
+      );
     } else {
-      final sortedSyncs = [...offlineSync]..sort((left, right) => left.lastUpdated.compareTo(right.lastUpdated));
+      final sortedSyncs = [...offlineSync]
+        ..sort((left, right) => left.lastUpdated.compareTo(right.lastUpdated));
 
       for (final sync in sortedSyncs) {
         if (!userIds.contains(sync.userId)) {
@@ -189,12 +216,17 @@ Future<void> _onServerReachable(Ref ref, {required bool reconnected}) async {
         final synced = await sessionRepository.replayStoredSync(sync);
         if (synced) {
           await db.deleteSync(sync.sessionId);
-          logger('Sync completed successfully for session ID: ${sync.sessionId}', tag: 'ServerStatusProvider');
+          logger(
+            'Sync completed successfully for session ID: ${sync.sessionId}',
+            tag: 'ServerStatusProvider',
+          );
         }
       }
     }
 
-    final bookmarkSyncCount = await ref.read(userBookmarksProvider.notifier).syncPendingMutations();
+    final bookmarkSyncCount = await ref
+        .read(userBookmarksProvider.notifier)
+        .syncPendingMutations();
     if (bookmarkSyncCount > 0) {
       logger(
         'Synced $bookmarkSyncCount queued bookmark mutations.',
@@ -213,7 +245,10 @@ Future<bool> _isServerReachable({
   required Map<String, String>? headers,
   required String? bearerToken,
 }) async {
-  final requestHeaders = buildRequestHeaders(serverHeaders: headers, bearerToken: bearerToken);
+  final requestHeaders = buildRequestHeaders(
+    serverHeaders: headers,
+    bearerToken: bearerToken,
+  );
   final dio = createNativeDio(
     options: BaseOptions(
       baseUrl: baseUrl,

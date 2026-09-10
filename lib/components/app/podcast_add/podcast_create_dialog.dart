@@ -31,7 +31,12 @@ Future<CreatePodcastRequest?> showPodcastCreateDialog({
 }
 
 class _PodcastCreateDialog extends StatefulWidget {
-  const _PodcastCreateDialog({required this.library, required this.feed, this.searchResult, this.rssFeedOverride});
+  const _PodcastCreateDialog({
+    required this.library,
+    required this.feed,
+    this.searchResult,
+    this.rssFeedOverride,
+  });
 
   final Library library;
   final PodcastFeed feed;
@@ -59,7 +64,8 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
   List<String> _genres = const <String>[];
   List<String> _genresSuggestions = const <String>[];
 
-  List<LibraryFolder> get _folders => widget.library.folders ?? const <LibraryFolder>[];
+  List<LibraryFolder> get _folders =>
+      widget.library.folders ?? const <LibraryFolder>[];
 
   LibraryFolder? get _selectedFolder {
     final currentFolderId = _selectedFolderId;
@@ -97,7 +103,9 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
     _itunesIdController = TextEditingController(text: seed.itunesId);
     _languageController = TextEditingController(text: seed.language);
 
-    _podcastType = seed.type.trim().toLowerCase() == 'serial' ? 'serial' : 'episodic';
+    _podcastType = seed.type.trim().toLowerCase() == 'serial'
+        ? 'serial'
+        : 'episodic';
     _explicit = seed.explicit;
     _genres = List<String>.from(seed.genres);
     _genresSuggestions = seed.genreSuggestions;
@@ -122,7 +130,10 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
     final imageUrl = _trimToNull(_imageUrlController.text);
     final pathPreview = selectedFolder == null
         ? null
-        : p.join(selectedFolder.fullPath, _sanitizePathSegment(_titleController.text));
+        : p.join(
+            selectedFolder.fullPath,
+            _sanitizePathSegment(_titleController.text),
+          );
 
     return AlertDialog(
       title: const Text('Add Podcast'),
@@ -144,7 +155,8 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
                         : Image.network(
                             imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => const _DialogCoverFallback(),
+                            errorBuilder: (_, _, _) =>
+                                const _DialogCoverFallback(),
                           ),
                   ),
                 ),
@@ -162,8 +174,14 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
                           controller: _titleController,
                           onChanged: (_) => setState(() {}),
                         ),
-                        LibraryItemEditorTextField(label: 'Author', controller: _authorController),
-                        LibraryItemEditorTextField(label: 'Language', controller: _languageController),
+                        LibraryItemEditorTextField(
+                          label: 'Author',
+                          controller: _authorController,
+                        ),
+                        LibraryItemEditorTextField(
+                          label: 'Language',
+                          controller: _languageController,
+                        ),
                         LibraryItemEditorTextField(
                           label: 'RSS Feed URL *',
                           hintText: 'https://example.com/feed.xml',
@@ -173,7 +191,10 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
                           value: _podcastType,
                           onChanged: (value) {
                             setState(() {
-                              _podcastType = value.trim().toLowerCase() == 'serial' ? 'serial' : 'episodic';
+                              _podcastType =
+                                  value.trim().toLowerCase() == 'serial'
+                                  ? 'serial'
+                                  : 'episodic';
                             });
                           },
                         ),
@@ -191,7 +212,11 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    LibraryItemEditorTextField(label: 'Description', controller: _descriptionController, maxLines: 4),
+                    LibraryItemEditorTextField(
+                      label: 'Description',
+                      controller: _descriptionController,
+                      maxLines: 4,
+                    ),
                   ],
                 ),
               ),
@@ -205,7 +230,12 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
                       label: 'Library folder *',
                       value: _selectedFolderId,
                       items: _folders
-                          .map((folder) => DropdownMenuItem<String>(value: folder.id, child: Text(folder.fullPath)))
+                          .map(
+                            (folder) => DropdownMenuItem<String>(
+                              value: folder.id,
+                              child: Text(folder.fullPath),
+                            ),
+                          )
                           .toList(growable: false),
                       onChanged: (value) {
                         setState(() {
@@ -216,7 +246,10 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
                     if (pathPreview != null) ...[
                       const SizedBox(height: 8),
                       LibraryItemEditorFieldContainer(
-                        child: Text(pathPreview, style: Theme.of(context).textTheme.bodySmall),
+                        child: Text(
+                          pathPreview,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ),
                     ],
                     const SizedBox(height: 8),
@@ -261,7 +294,10 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
         FilledButton.icon(
           onPressed: () {
             final request = _buildRequest();
@@ -329,7 +365,8 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
   }
 
   void _showValidationError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   bool _isValidHttpUrl(String value) {
@@ -343,8 +380,13 @@ class _PodcastCreateDialogState extends State<_PodcastCreateDialog> {
   }
 
   String _sanitizePathSegment(String value) {
-    final withoutInvalidChars = value.replaceAll(RegExp(r'[<>:"/\\|?*]'), ' ').trim();
-    final collapsedWhitespace = withoutInvalidChars.replaceAll(RegExp(r'\s+'), ' ');
+    final withoutInvalidChars = value
+        .replaceAll(RegExp(r'[<>:"/\\|?*]'), ' ')
+        .trim();
+    final collapsedWhitespace = withoutInvalidChars.replaceAll(
+      RegExp(r'\s+'),
+      ' ',
+    );
     return collapsedWhitespace.isEmpty ? 'Podcast' : collapsedWhitespace;
   }
 }
@@ -388,7 +430,9 @@ class _PodcastCreateSeed {
 
     final preferredGenres = (search?.genres.isNotEmpty == true)
         ? search!.genres
-        : (metadata.categories.isNotEmpty ? metadata.categories : const <String>[]);
+        : (metadata.categories.isNotEmpty
+              ? metadata.categories
+              : const <String>[]);
 
     return _PodcastCreateSeed(
       title: _firstNonEmpty([search?.title, metadata.title]),
@@ -400,14 +444,22 @@ class _PodcastCreateSeed {
         metadata.description,
       ]),
       releaseDate: _firstNonEmpty([search?.releaseDate, metadata.pubDate]),
-      feedUrl: _firstNonEmpty([rssFeedOverride, search?.feedUrl, metadata.feedUrl]),
+      feedUrl: _firstNonEmpty([
+        rssFeedOverride,
+        search?.feedUrl,
+        metadata.feedUrl,
+      ]),
       imageUrl: _firstNonEmpty([search?.cover, metadata.image]),
       itunesId: _firstNonEmpty([search?.id]),
       language: _firstNonEmpty([search?.language, metadata.language]),
-      explicit: search?.explicit ?? _explicitFromString(metadata.explicit) ?? false,
+      explicit:
+          search?.explicit ?? _explicitFromString(metadata.explicit) ?? false,
       type: _firstNonEmpty([search?.type, metadata.type, 'episodic']),
       genres: _compactStrings(preferredGenres),
-      genreSuggestions: _compactStrings([...metadata.categories, if (search != null) ...search.genres]),
+      genreSuggestions: _compactStrings([
+        ...metadata.categories,
+        if (search != null) ...search.genres,
+      ]),
     );
   }
 }
@@ -422,12 +474,17 @@ class _CreateDialogResponsiveFields extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final twoColumns = constraints.maxWidth >= 720;
-        final fieldWidth = twoColumns ? (constraints.maxWidth - 8) / 2 : constraints.maxWidth;
+        final fieldWidth = twoColumns
+            ? (constraints.maxWidth - 8) / 2
+            : constraints.maxWidth;
 
         return Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: [for (final child in children) SizedBox(width: fieldWidth, child: child)],
+          children: [
+            for (final child in children)
+              SizedBox(width: fieldWidth, child: child),
+          ],
         );
       },
     );
@@ -440,9 +497,15 @@ class _DialogCoverFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
       child: Center(
-        child: Icon(Icons.podcasts_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 34),
+        child: Icon(
+          Icons.podcasts_rounded,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          size: 34,
+        ),
       ),
     );
   }

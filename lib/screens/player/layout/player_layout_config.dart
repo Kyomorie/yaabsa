@@ -5,7 +5,16 @@ import 'package:yaabsa/api/json/value_parsers.dart';
 import 'package:yaabsa/screens/player/player_empty_state_mode.dart';
 import 'package:yaabsa/util/globals.dart';
 
-enum PlayerComponentType { cover, mediaInfo, seekBar, controls, utilities, subtitles, chapters, queue }
+enum PlayerComponentType {
+  cover,
+  mediaInfo,
+  seekBar,
+  controls,
+  utilities,
+  subtitles,
+  chapters,
+  queue,
+}
 
 enum PlayerUtilityType { sleepTimer, speed, bookmarks, chapter, volume, queue }
 
@@ -266,16 +275,17 @@ class PlayerComponentConstraints {
   }
 }
 
-const List<PlayerComponentType> defaultPlayerComponentOrder = <PlayerComponentType>[
-  PlayerComponentType.cover,
-  PlayerComponentType.mediaInfo,
-  PlayerComponentType.seekBar,
-  PlayerComponentType.controls,
-  PlayerComponentType.utilities,
-  PlayerComponentType.subtitles,
-  PlayerComponentType.chapters,
-  PlayerComponentType.queue,
-];
+const List<PlayerComponentType> defaultPlayerComponentOrder =
+    <PlayerComponentType>[
+      PlayerComponentType.cover,
+      PlayerComponentType.mediaInfo,
+      PlayerComponentType.seekBar,
+      PlayerComponentType.controls,
+      PlayerComponentType.utilities,
+      PlayerComponentType.subtitles,
+      PlayerComponentType.chapters,
+      PlayerComponentType.queue,
+    ];
 
 const List<PlayerUtilityType> defaultPlayerUtilityOrder = <PlayerUtilityType>[
   PlayerUtilityType.speed,
@@ -286,24 +296,61 @@ const List<PlayerUtilityType> defaultPlayerUtilityOrder = <PlayerUtilityType>[
   PlayerUtilityType.queue,
 ];
 
-const Map<PlayerComponentType, PlayerComponentConstraints> _componentConstraints =
-    <PlayerComponentType, PlayerComponentConstraints>{
-      PlayerComponentType.cover: PlayerComponentConstraints(minWidth: 6, maxWidth: 100, minHeight: 6, maxHeight: 100),
-      PlayerComponentType.mediaInfo: PlayerComponentConstraints(minWidth: 8, maxWidth: 40, minHeight: 6, maxHeight: 40),
-      PlayerComponentType.seekBar: PlayerComponentConstraints(minWidth: 20, maxWidth: 40, minHeight: 2, maxHeight: 10),
-      PlayerComponentType.controls: PlayerComponentConstraints(minWidth: 10, maxWidth: 40, minHeight: 4, maxHeight: 12),
-      PlayerComponentType.utilities: PlayerComponentConstraints(minWidth: 8, maxWidth: 40, minHeight: 4, maxHeight: 16),
-      PlayerComponentType.subtitles: PlayerComponentConstraints(
-        minWidth: 10,
-        maxWidth: 40,
-        minHeight: 2,
-        maxHeight: 10,
-      ),
-      PlayerComponentType.chapters: PlayerComponentConstraints(minWidth: 8, maxWidth: 40, minHeight: 6, maxHeight: 40),
-      PlayerComponentType.queue: PlayerComponentConstraints(minWidth: 8, maxWidth: 40, minHeight: 6, maxHeight: 40),
-    };
+const Map<PlayerComponentType, PlayerComponentConstraints>
+_componentConstraints = <PlayerComponentType, PlayerComponentConstraints>{
+  PlayerComponentType.cover: PlayerComponentConstraints(
+    minWidth: 6,
+    maxWidth: 100,
+    minHeight: 6,
+    maxHeight: 100,
+  ),
+  PlayerComponentType.mediaInfo: PlayerComponentConstraints(
+    minWidth: 8,
+    maxWidth: 40,
+    minHeight: 6,
+    maxHeight: 40,
+  ),
+  PlayerComponentType.seekBar: PlayerComponentConstraints(
+    minWidth: 20,
+    maxWidth: 40,
+    minHeight: 2,
+    maxHeight: 10,
+  ),
+  PlayerComponentType.controls: PlayerComponentConstraints(
+    minWidth: 10,
+    maxWidth: 40,
+    minHeight: 4,
+    maxHeight: 12,
+  ),
+  PlayerComponentType.utilities: PlayerComponentConstraints(
+    minWidth: 8,
+    maxWidth: 40,
+    minHeight: 4,
+    maxHeight: 16,
+  ),
+  PlayerComponentType.subtitles: PlayerComponentConstraints(
+    minWidth: 10,
+    maxWidth: 40,
+    minHeight: 2,
+    maxHeight: 10,
+  ),
+  PlayerComponentType.chapters: PlayerComponentConstraints(
+    minWidth: 8,
+    maxWidth: 40,
+    minHeight: 6,
+    maxHeight: 40,
+  ),
+  PlayerComponentType.queue: PlayerComponentConstraints(
+    minWidth: 8,
+    maxWidth: 40,
+    minHeight: 6,
+    maxHeight: 40,
+  ),
+};
 
-PlayerComponentConstraints playerComponentConstraintsFor(PlayerComponentType type) {
+PlayerComponentConstraints playerComponentConstraintsFor(
+  PlayerComponentType type,
+) {
   return _componentConstraints[type]!;
 }
 
@@ -406,17 +453,34 @@ class PlayerComponentPlacement {
       width: jsonIntRequiredFromDynamic(map['width'], 2),
       height: jsonIntRequiredFromDynamic(map['height'], 2),
       visible: jsonBoolRequiredFromDynamic(map['visible'], false),
-      emptyMode: PlayerCollectionEmptyModeX.fromSettingValue(map['emptyMode']?.toString()),
+      emptyMode: PlayerCollectionEmptyModeX.fromSettingValue(
+        map['emptyMode']?.toString(),
+      ),
       showAuthor: jsonBoolRequiredFromDynamic(map['showAuthor'], true),
       showNarrator: jsonBoolRequiredFromDynamic(map['showNarrator'], false),
       showSeries: jsonBoolRequiredFromDynamic(map['showSeries'], true),
-      textAlign: PlayerMetadataTextAlign.fromSettingValue(map['textAlign']?.toString()),
+      textAlign: PlayerMetadataTextAlign.fromSettingValue(
+        map['textAlign']?.toString(),
+      ),
       scale: (map['scale'] is num) ? (map['scale'] as num).toDouble() : 1.0,
-      mediaInfoFontScale: jsonDoubleRequiredFromDynamic(map['mediaInfoFontScale'], 1.0),
-      coverFitMode: PlayerCoverFitMode.fromSettingValue(map['coverFitMode']?.toString()),
-      seekTimePlacement: PlayerSeekTimePlacement.fromSettingValue(map['seekTimePlacement']?.toString()),
-      seekTrackHeight: jsonDoubleRequiredFromDynamic(map['seekTrackHeight'], 8.0),
-      seekTimeLabelFontSize: jsonDoubleRequiredFromDynamic(map['seekTimeLabelFontSize'], 12.0),
+      mediaInfoFontScale: jsonDoubleRequiredFromDynamic(
+        map['mediaInfoFontScale'],
+        1.0,
+      ),
+      coverFitMode: PlayerCoverFitMode.fromSettingValue(
+        map['coverFitMode']?.toString(),
+      ),
+      seekTimePlacement: PlayerSeekTimePlacement.fromSettingValue(
+        map['seekTimePlacement']?.toString(),
+      ),
+      seekTrackHeight: jsonDoubleRequiredFromDynamic(
+        map['seekTrackHeight'],
+        8.0,
+      ),
+      seekTimeLabelFontSize: jsonDoubleRequiredFromDynamic(
+        map['seekTimeLabelFontSize'],
+        12.0,
+      ),
       cardStyle: jsonBoolRequiredFromDynamic(map['cardStyle'], false),
     );
   }
@@ -457,14 +521,19 @@ class PlayerComponentPlacement {
       coverFitMode: coverFitMode ?? this.coverFitMode,
       seekTimePlacement: seekTimePlacement ?? this.seekTimePlacement,
       seekTrackHeight: seekTrackHeight ?? this.seekTrackHeight,
-      seekTimeLabelFontSize: seekTimeLabelFontSize ?? this.seekTimeLabelFontSize,
+      seekTimeLabelFontSize:
+          seekTimeLabelFontSize ?? this.seekTimeLabelFontSize,
       cardStyle: cardStyle ?? this.cardStyle,
     );
   }
 }
 
 class PlayerLayoutProfile {
-  const PlayerLayoutProfile({required this.placements, required this.utilityOrder, required this.hiddenUtilities});
+  const PlayerLayoutProfile({
+    required this.placements,
+    required this.utilityOrder,
+    required this.hiddenUtilities,
+  });
 
   final List<PlayerComponentPlacement> placements;
   final List<PlayerUtilityType> utilityOrder;
@@ -473,12 +542,19 @@ class PlayerLayoutProfile {
   factory PlayerLayoutProfile.defaults(PlayerLayoutScreenSize screenSize) {
     return PlayerLayoutProfile(
       placements: _defaultPlacementsForScreen(screenSize),
-      utilityOrder: List<PlayerUtilityType>.from(_defaultUtilityOrderForScreen(screenSize)),
-      hiddenUtilities: List<PlayerUtilityType>.from(_defaultHiddenUtilitiesForScreen(screenSize)),
+      utilityOrder: List<PlayerUtilityType>.from(
+        _defaultUtilityOrderForScreen(screenSize),
+      ),
+      hiddenUtilities: List<PlayerUtilityType>.from(
+        _defaultHiddenUtilitiesForScreen(screenSize),
+      ),
     );
   }
 
-  factory PlayerLayoutProfile.fromMap(PlayerLayoutScreenSize screenSize, Map<String, dynamic> map) {
+  factory PlayerLayoutProfile.fromMap(
+    PlayerLayoutScreenSize screenSize,
+    Map<String, dynamic> map,
+  ) {
     final rawPlacements = map['placements'];
     final parsedPlacements = <PlayerComponentPlacement>[];
 
@@ -490,7 +566,9 @@ class PlayerLayoutProfile {
             parsedPlacements.add(parsed);
           }
         } else if (entry is Map) {
-          final converted = entry.map((key, value) => MapEntry(key.toString(), value));
+          final converted = entry.map(
+            (key, value) => MapEntry(key.toString(), value),
+          );
           final parsed = PlayerComponentPlacement.fromMap(converted);
           if (parsed != null) {
             parsedPlacements.add(parsed);
@@ -499,22 +577,33 @@ class PlayerLayoutProfile {
       }
     }
 
-    final mergedPlacements = _mergeWithDefaultPlacements(screenSize, parsedPlacements);
+    final mergedPlacements = _mergeWithDefaultPlacements(
+      screenSize,
+      parsedPlacements,
+    );
 
     final fallbackUtilityOrder = _defaultUtilityOrderForScreen(screenSize);
 
     final parsedUtilityOrder = _utilityListFromDynamic(map['utilityOrder']);
     final utilityOrder = parsedUtilityOrder.isEmpty
         ? List<PlayerUtilityType>.from(fallbackUtilityOrder)
-        : _mergeWithDefaultUtilities(parsedUtilityOrder, fallbackOrder: fallbackUtilityOrder);
+        : _mergeWithDefaultUtilities(
+            parsedUtilityOrder,
+            fallbackOrder: fallbackUtilityOrder,
+          );
 
-    final savedHiddenUtilities = _dedupeUtilities(_utilityListFromDynamic(map['hiddenUtilities']));
+    final savedHiddenUtilities = _dedupeUtilities(
+      _utilityListFromDynamic(map['hiddenUtilities']),
+    );
     final parsedUtilitySet = parsedUtilityOrder.toSet();
-    final defaultHiddenUtilities = _defaultHiddenUtilitiesForScreen(screenSize).toSet();
+    final defaultHiddenUtilities = _defaultHiddenUtilitiesForScreen(screenSize)
+        .toSet();
     final hiddenUtilities = _dedupeUtilities(<PlayerUtilityType>[
       ...savedHiddenUtilities,
       for (final utility in utilityOrder)
-        if (!parsedUtilitySet.contains(utility) && defaultHiddenUtilities.contains(utility)) utility,
+        if (!parsedUtilitySet.contains(utility) &&
+            defaultHiddenUtilities.contains(utility))
+          utility,
     ]).where((type) => utilityOrder.contains(type)).toList(growable: false);
 
     return PlayerLayoutProfile(
@@ -526,9 +615,15 @@ class PlayerLayoutProfile {
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'placements': placements.map((placement) => placement.toMap()).toList(growable: false),
-      'utilityOrder': utilityOrder.map((entry) => entry.name).toList(growable: false),
-      'hiddenUtilities': hiddenUtilities.map((entry) => entry.name).toList(growable: false),
+      'placements': placements
+          .map((placement) => placement.toMap())
+          .toList(growable: false),
+      'utilityOrder': utilityOrder
+          .map((entry) => entry.name)
+          .toList(growable: false),
+      'hiddenUtilities': hiddenUtilities
+          .map((entry) => entry.name)
+          .toList(growable: false),
     };
   }
 
@@ -536,9 +631,15 @@ class PlayerLayoutProfile {
     return placements.firstWhere((placement) => placement.type == type);
   }
 
-  PlayerLayoutProfile upsertPlacement(PlayerComponentPlacement updatedPlacement) {
+  PlayerLayoutProfile upsertPlacement(
+    PlayerComponentPlacement updatedPlacement,
+  ) {
     final nextPlacements = placements
-        .map((placement) => placement.type == updatedPlacement.type ? updatedPlacement : placement)
+        .map(
+          (placement) => placement.type == updatedPlacement.type
+              ? updatedPlacement
+              : placement,
+        )
         .toList(growable: false);
 
     return copyWith(placements: nextPlacements);
@@ -570,7 +671,11 @@ class PlayerLayoutProfile {
 }
 
 class PlayerLayoutConfig {
-  const PlayerLayoutConfig({required this.mobile, required this.tablet, required this.desktop});
+  const PlayerLayoutConfig({
+    required this.mobile,
+    required this.tablet,
+    required this.desktop,
+  });
 
   final PlayerLayoutProfile mobile;
   final PlayerLayoutProfile tablet;
@@ -609,7 +714,10 @@ class PlayerLayoutConfig {
           PlayerLayoutScreenSize.tablet,
         ),
         desktop: _normalizeLegacyAdaptiveDefaults(
-          PlayerLayoutProfile.fromMap(PlayerLayoutScreenSize.desktop, desktopMap),
+          PlayerLayoutProfile.fromMap(
+            PlayerLayoutScreenSize.desktop,
+            desktopMap,
+          ),
           PlayerLayoutScreenSize.desktop,
         ),
       );
@@ -637,14 +745,29 @@ class PlayerLayoutConfig {
     }
   }
 
-  PlayerLayoutConfig copyWithProfile(PlayerLayoutScreenSize screenSize, PlayerLayoutProfile profile) {
+  PlayerLayoutConfig copyWithProfile(
+    PlayerLayoutScreenSize screenSize,
+    PlayerLayoutProfile profile,
+  ) {
     switch (screenSize) {
       case PlayerLayoutScreenSize.mobile:
-        return PlayerLayoutConfig(mobile: profile, tablet: tablet, desktop: desktop);
+        return PlayerLayoutConfig(
+          mobile: profile,
+          tablet: tablet,
+          desktop: desktop,
+        );
       case PlayerLayoutScreenSize.tablet:
-        return PlayerLayoutConfig(mobile: mobile, tablet: profile, desktop: desktop);
+        return PlayerLayoutConfig(
+          mobile: mobile,
+          tablet: profile,
+          desktop: desktop,
+        );
       case PlayerLayoutScreenSize.desktop:
-        return PlayerLayoutConfig(mobile: mobile, tablet: tablet, desktop: profile);
+        return PlayerLayoutConfig(
+          mobile: mobile,
+          tablet: tablet,
+          desktop: profile,
+        );
     }
   }
 }
@@ -669,7 +792,10 @@ Map<String, dynamic> _ensureMap(dynamic value) {
   return <String, dynamic>{};
 }
 
-PlayerLayoutProfile _normalizeLegacyAdaptiveDefaults(PlayerLayoutProfile profile, PlayerLayoutScreenSize screenSize) {
+PlayerLayoutProfile _normalizeLegacyAdaptiveDefaults(
+  PlayerLayoutProfile profile,
+  PlayerLayoutScreenSize screenSize,
+) {
   final legacyControlScale = switch (screenSize) {
     PlayerLayoutScreenSize.mobile => 1.3,
     PlayerLayoutScreenSize.tablet => 1.4,
@@ -691,9 +817,13 @@ PlayerLayoutProfile _normalizeLegacyAdaptiveDefaults(PlayerLayoutProfile profile
   }
 
   final seekBar = profile.placementFor(PlayerComponentType.seekBar);
-  if ((seekBar.seekTrackHeight - 8.0).abs() < 0.0001 && (seekBar.seekTimeLabelFontSize - 12.0).abs() < 0.0001) {
+  if ((seekBar.seekTrackHeight - 8.0).abs() < 0.0001 &&
+      (seekBar.seekTimeLabelFontSize - 12.0).abs() < 0.0001) {
     normalized = normalized.upsertPlacement(
-      seekBar.copyWith(seekTrackHeight: legacySeekTrackHeight, seekTimeLabelFontSize: legacySeekTimeLabelFontSize),
+      seekBar.copyWith(
+        seekTrackHeight: legacySeekTrackHeight,
+        seekTimeLabelFontSize: legacySeekTimeLabelFontSize,
+      ),
     );
   }
 
@@ -709,7 +839,11 @@ List<PlayerComponentPlacement> _mergeWithDefaultPlacements(
     for (final placement in placements) placement.type: placement,
   };
 
-  return defaults.map((defaultPlacement) => byType[defaultPlacement.type] ?? defaultPlacement).toList(growable: false);
+  return defaults
+      .map(
+        (defaultPlacement) => byType[defaultPlacement.type] ?? defaultPlacement,
+      )
+      .toList(growable: false);
 }
 
 List<PlayerUtilityType> _mergeWithDefaultUtilities(
@@ -742,11 +876,20 @@ List<PlayerUtilityType> _dedupeUtilities(List<PlayerUtilityType> utilities) {
   return deduped;
 }
 
-List<PlayerComponentPlacement> _defaultPlacementsForScreen(PlayerLayoutScreenSize screenSize) {
+List<PlayerComponentPlacement> _defaultPlacementsForScreen(
+  PlayerLayoutScreenSize screenSize,
+) {
   switch (screenSize) {
     case PlayerLayoutScreenSize.mobile:
       return const <PlayerComponentPlacement>[
-        PlayerComponentPlacement(type: PlayerComponentType.cover, x: 0, y: 0, width: 40, height: 15, visible: true),
+        PlayerComponentPlacement(
+          type: PlayerComponentType.cover,
+          x: 0,
+          y: 0,
+          width: 40,
+          height: 15,
+          visible: true,
+        ),
         PlayerComponentPlacement(
           type: PlayerComponentType.mediaInfo,
           x: 0,
@@ -756,7 +899,14 @@ List<PlayerComponentPlacement> _defaultPlacementsForScreen(PlayerLayoutScreenSiz
           visible: true,
           textAlign: PlayerMetadataTextAlign.center,
         ),
-        PlayerComponentPlacement(type: PlayerComponentType.utilities, x: 0, y: 40, width: 40, height: 4, visible: true),
+        PlayerComponentPlacement(
+          type: PlayerComponentType.utilities,
+          x: 0,
+          y: 40,
+          width: 40,
+          height: 4,
+          visible: true,
+        ),
         PlayerComponentPlacement(
           type: PlayerComponentType.subtitles,
           x: 0,
@@ -783,7 +933,14 @@ List<PlayerComponentPlacement> _defaultPlacementsForScreen(PlayerLayoutScreenSiz
           visible: false,
           emptyMode: PlayerCollectionEmptyMode.full,
         ),
-        PlayerComponentPlacement(type: PlayerComponentType.controls, x: 0, y: 35, width: 40, height: 4, visible: true),
+        PlayerComponentPlacement(
+          type: PlayerComponentType.controls,
+          x: 0,
+          y: 35,
+          width: 40,
+          height: 4,
+          visible: true,
+        ),
         PlayerComponentPlacement(
           type: PlayerComponentType.seekBar,
           x: 1,
@@ -852,7 +1009,14 @@ List<PlayerComponentPlacement> _defaultPlacementsForScreen(PlayerLayoutScreenSiz
           emptyMode: PlayerCollectionEmptyMode.full,
           cardStyle: true,
         ),
-        PlayerComponentPlacement(type: PlayerComponentType.controls, x: 0, y: 39, width: 40, height: 5, visible: true),
+        PlayerComponentPlacement(
+          type: PlayerComponentType.controls,
+          x: 0,
+          y: 39,
+          width: 40,
+          height: 5,
+          visible: true,
+        ),
         PlayerComponentPlacement(
           type: PlayerComponentType.seekBar,
           x: 1,
@@ -893,7 +1057,14 @@ List<PlayerComponentPlacement> _defaultPlacementsForScreen(PlayerLayoutScreenSiz
           visible: true,
           scale: 1.5,
         ),
-        PlayerComponentPlacement(type: PlayerComponentType.subtitles, x: 8, y: 3, width: 10, height: 2, visible: false),
+        PlayerComponentPlacement(
+          type: PlayerComponentType.subtitles,
+          x: 8,
+          y: 3,
+          width: 10,
+          height: 2,
+          visible: false,
+        ),
         PlayerComponentPlacement(
           type: PlayerComponentType.chapters,
           x: 27,
@@ -914,7 +1085,14 @@ List<PlayerComponentPlacement> _defaultPlacementsForScreen(PlayerLayoutScreenSiz
           emptyMode: PlayerCollectionEmptyMode.full,
           cardStyle: true,
         ),
-        PlayerComponentPlacement(type: PlayerComponentType.controls, x: 14, y: 35, width: 26, height: 4, visible: true),
+        PlayerComponentPlacement(
+          type: PlayerComponentType.controls,
+          x: 14,
+          y: 35,
+          width: 26,
+          height: 4,
+          visible: true,
+        ),
         PlayerComponentPlacement(
           type: PlayerComponentType.seekBar,
           x: 15,
@@ -930,18 +1108,30 @@ List<PlayerComponentPlacement> _defaultPlacementsForScreen(PlayerLayoutScreenSiz
   }
 }
 
-List<PlayerUtilityType> _defaultUtilityOrderForScreen(PlayerLayoutScreenSize screenSize) {
+List<PlayerUtilityType> _defaultUtilityOrderForScreen(
+  PlayerLayoutScreenSize screenSize,
+) {
   return defaultPlayerUtilityOrder;
 }
 
-List<PlayerUtilityType> _defaultHiddenUtilitiesForScreen(PlayerLayoutScreenSize screenSize) {
+List<PlayerUtilityType> _defaultHiddenUtilitiesForScreen(
+  PlayerLayoutScreenSize screenSize,
+) {
   switch (screenSize) {
     case PlayerLayoutScreenSize.mobile:
       return const <PlayerUtilityType>[PlayerUtilityType.bookmarks];
     case PlayerLayoutScreenSize.tablet:
-      return const <PlayerUtilityType>[PlayerUtilityType.bookmarks, PlayerUtilityType.chapter, PlayerUtilityType.queue];
+      return const <PlayerUtilityType>[
+        PlayerUtilityType.bookmarks,
+        PlayerUtilityType.chapter,
+        PlayerUtilityType.queue,
+      ];
     case PlayerLayoutScreenSize.desktop:
-      return const <PlayerUtilityType>[PlayerUtilityType.bookmarks, PlayerUtilityType.chapter, PlayerUtilityType.queue];
+      return const <PlayerUtilityType>[
+        PlayerUtilityType.bookmarks,
+        PlayerUtilityType.chapter,
+        PlayerUtilityType.queue,
+      ];
   }
 }
 
@@ -986,7 +1176,10 @@ PlayerLayoutProfile normalizePlayerLayoutProfile(
     final resolvedMaxHeight = constraints.resolvedMaxHeight(rows);
 
     final width = placement.width.clamp(constraints.minWidth, resolvedMaxWidth);
-    final height = placement.height.clamp(constraints.minHeight, resolvedMaxHeight);
+    final height = placement.height.clamp(
+      constraints.minHeight,
+      resolvedMaxHeight,
+    );
     var x = placement.x.clamp(0, columns - width);
     var y = placement.y.clamp(0, rows - height);
 
@@ -1008,7 +1201,9 @@ PlayerLayoutProfile normalizePlayerLayoutProfile(
       mark(x, y, width, height);
     }
 
-    normalized.add(placement.copyWith(x: x, y: y, width: width, height: height));
+    normalized.add(
+      placement.copyWith(x: x, y: y, width: width, height: height),
+    );
   }
 
   return profile.copyWith(placements: normalized);

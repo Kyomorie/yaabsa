@@ -22,7 +22,9 @@ class AuthorDetailView extends ConsumerWidget {
       return ConnectionIssueView.offline();
     }
 
-    final authorDetailsAsync = ref.watch(libraryAuthorDetailsProvider(authorId));
+    final authorDetailsAsync = ref.watch(
+      libraryAuthorDetailsProvider(authorId),
+    );
     return authorDetailsAsync.when(
       skipLoadingOnRefresh: true,
       skipLoadingOnReload: true,
@@ -61,7 +63,9 @@ class _AuthorDetailLoadedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final numBooks = author.libraryItems.length;
-    final subtitle = numBooks <= 0 ? null : '$numBooks ${numBooks == 1 ? 'book' : 'books'}';
+    final subtitle = numBooks <= 0
+        ? null
+        : '$numBooks ${numBooks == 1 ? 'book' : 'books'}';
 
     return Column(
       children: [
@@ -123,7 +127,9 @@ class _AuthorTopSection extends StatelessWidget {
                     return;
                   }
 
-                  context.go('/?tab=authors&intent=${DateTime.now().microsecondsSinceEpoch}');
+                  context.go(
+                    '/?tab=authors&intent=${DateTime.now().microsecondsSinceEpoch}',
+                  );
                 },
                 icon: const Icon(Icons.arrow_back_rounded),
                 tooltip: 'Back',
@@ -151,11 +157,13 @@ class _AuthorTopSection extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         subtitle!,
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
-                    if (description != null && description!.trim().isNotEmpty) ...[
+                    if (description != null &&
+                        description!.trim().isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
                         description!.trim(),
@@ -165,7 +173,11 @@ class _AuthorTopSection extends StatelessWidget {
                       ),
                     ] else if (isLoadingDetails) ...[
                       const SizedBox(height: 8),
-                      const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.2)),
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2.2),
+                      ),
                     ],
                   ],
                 ),

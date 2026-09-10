@@ -11,7 +11,9 @@ _Server _$ServerFromJson(Map<String, dynamic> json) => _Server(
   externalHost: json['host'] as String,
   externalSsl: json['ssl'] as bool,
   externalSubdirectory: json['subdirectory'] as String?,
-  headers: (json['headers'] as Map<String, dynamic>?)?.map((k, e) => MapEntry(k, e as String)),
+  headers: (json['headers'] as Map<String, dynamic>?)?.map(
+    (k, e) => MapEntry(k, e as String),
+  ),
   localHost: json['localHost'] as String?,
   localPort: (json['localPort'] as num?)?.toInt(),
   localSsl: json['localSsl'] as bool?,
@@ -38,4 +40,7 @@ Map<String, dynamic> _$ServerToJson(_Server instance) => <String, dynamic>{
   'activeConnection': _$ServerConnectionEnumMap[instance.activeConnection]!,
 };
 
-const _$ServerConnectionEnumMap = {ServerConnection.external: 'external', ServerConnection.local: 'local'};
+const _$ServerConnectionEnumMap = {
+  ServerConnection.external: 'external',
+  ServerConnection.local: 'local',
+};

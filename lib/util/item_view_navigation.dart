@@ -7,7 +7,11 @@ import 'package:yaabsa/provider/common/library_provider.dart';
 import 'package:yaabsa/provider/core/user_providers.dart';
 import 'package:yaabsa/util/setting_key.dart';
 
-Future<void> openLibraryWithFilter(BuildContext context, WidgetRef ref, {required String filter}) async {
+Future<void> openLibraryWithFilter(
+  BuildContext context,
+  WidgetRef ref, {
+  required String filter,
+}) async {
   final selectedLibrary = ref.read(selectedLibraryProvider);
   final currentUser = ref.read(currentUserProvider).value;
   if (selectedLibrary == null || currentUser == null) {
@@ -17,10 +21,18 @@ Future<void> openLibraryWithFilter(BuildContext context, WidgetRef ref, {require
 
   final collapseSeriesFallback = ref
       .read(settingsManagerProvider.notifier)
-      .getUserSetting<bool>(currentUser.id, SettingKeys.collapseSeries, defaultValue: false);
-  final initialCollapseSeries = selectedLibrary.mediaType == 'book' && collapseSeriesFallback ? 1 : 0;
+      .getUserSetting<bool>(
+        currentUser.id,
+        SettingKeys.collapseSeries,
+        defaultValue: false,
+      );
+  final initialCollapseSeries =
+      selectedLibrary.mediaType == 'book' && collapseSeriesFallback ? 1 : 0;
 
-  final provider = libraryItemsProvider(selectedLibrary.id, initialCollapseSeries: initialCollapseSeries);
+  final provider = libraryItemsProvider(
+    selectedLibrary.id,
+    initialCollapseSeries: initialCollapseSeries,
+  );
   await ref.read(provider.future);
   await ref.read(provider.notifier).setFilter(filter);
 

@@ -29,7 +29,10 @@ class LayoutHomeSidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final updateInfo = ref.watch(serverUpdateStateProvider).value;
-    final showUpdate = updateInfo != null && updateInfo.isUpdateAvailable && !updateInfo.isDismissed;
+    final showUpdate =
+        updateInfo != null &&
+        updateInfo.isUpdateAvailable &&
+        !updateInfo.isDismissed;
 
     return Material(
       elevation: 2.0,
@@ -56,7 +59,10 @@ class LayoutHomeSidebar extends ConsumerWidget {
               ),
             ),
             if (showUpdate) ...[
-              ServerUpdateWarning(variant: _getWarningVariant(), latestVersion: updateInfo.latestVersion),
+              ServerUpdateWarning(
+                variant: _getWarningVariant(),
+                latestVersion: updateInfo.latestVersion,
+              ),
               const Divider(height: 1, thickness: 1),
             ],
             const Divider(height: 1, thickness: 1),
@@ -126,7 +132,9 @@ class LayoutHomeSidebar extends ConsumerWidget {
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: isSelected ? selectedColor.withValues(alpha: 0.12) : Colors.transparent,
+                color: isSelected
+                    ? selectedColor.withValues(alpha: 0.12)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -155,7 +163,9 @@ class LayoutHomeSidebar extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
               decoration: BoxDecoration(
-                color: isSelected ? selectedColor.withValues(alpha: 0.12) : Colors.transparent,
+                color: isSelected
+                    ? selectedColor.withValues(alpha: 0.12)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -188,7 +198,9 @@ class LayoutHomeSidebar extends ConsumerWidget {
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSelected ? selectedColor.withValues(alpha: 0.12) : Colors.transparent,
+                  color: isSelected
+                      ? selectedColor.withValues(alpha: 0.12)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(item.icon, size: 22, color: itemColor),

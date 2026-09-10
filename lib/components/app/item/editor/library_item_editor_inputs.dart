@@ -2,7 +2,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/components/common/inputs/styled_form_fields.dart';
 
 class LibraryItemEditorSectionCard extends StatelessWidget {
-  const LibraryItemEditorSectionCard({super.key, required this.title, required this.child, this.subtitle});
+  const LibraryItemEditorSectionCard({
+    super.key,
+    required this.title,
+    required this.child,
+    this.subtitle,
+  });
 
   final String title;
   final String? subtitle;
@@ -12,20 +17,25 @@ class LibraryItemEditorSectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      decoration: BoxDecoration(color: colorScheme.surfaceContainer, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700, fontSize: 15),
+            style: Theme.of(context).textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700, fontSize: 15),
           ),
           if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
             const SizedBox(height: 2),
             Text(
               subtitle!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
           const SizedBox(height: 6),
@@ -68,7 +78,11 @@ class LibraryItemEditorTextField extends StatelessWidget {
 }
 
 class LibraryItemEditorPodcastTypeField extends StatelessWidget {
-  const LibraryItemEditorPodcastTypeField({super.key, required this.value, required this.onChanged});
+  const LibraryItemEditorPodcastTypeField({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
 
   final String value;
   final ValueChanged<String> onChanged;
@@ -77,7 +91,9 @@ class LibraryItemEditorPodcastTypeField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedValue = _allowedValues.contains(value.trim().toLowerCase()) ? value.trim().toLowerCase() : 'episodic';
+    final selectedValue = _allowedValues.contains(value.trim().toLowerCase())
+        ? value.trim().toLowerCase()
+        : 'episodic';
 
     return YaabsaDropdownField<String>(
       label: 'Podcast type',

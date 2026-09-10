@@ -12,14 +12,18 @@ enum PlayerLayoutMode {
   }) {
     for (final mode in values) {
       if (mode.name == value?.trim().toLowerCase()) {
-        if (mode == PlayerLayoutMode.custom && !hasExplicitSelection && !hasSavedCustomLayout) {
+        if (mode == PlayerLayoutMode.custom &&
+            !hasExplicitSelection &&
+            !hasSavedCustomLayout) {
           return PlayerLayoutMode.adaptive;
         }
         return mode;
       }
     }
 
-    return hasSavedCustomLayout ? PlayerLayoutMode.custom : PlayerLayoutMode.adaptive;
+    return hasSavedCustomLayout
+        ? PlayerLayoutMode.custom
+        : PlayerLayoutMode.adaptive;
   }
 }
 
@@ -81,7 +85,10 @@ enum PlayerTransportMode {
     String? value, {
     PlayerTransportMode fallback = PlayerTransportMode.both,
   }) {
-    return values.firstWhere((mode) => mode.name == value?.trim().toLowerCase(), orElse: () => fallback);
+    return values.firstWhere(
+      (mode) => mode.name == value?.trim().toLowerCase(),
+      orElse: () => fallback,
+    );
   }
 }
 
@@ -127,13 +134,23 @@ const List<PlayerActionType> defaultMiniPlayerActions = <PlayerActionType>[
 ];
 
 const PlayerActionType defaultMobilePlayerLeftAction = PlayerActionType.speed;
-const PlayerActionType defaultMobilePlayerRightAction = PlayerActionType.sleepTimer;
+const PlayerActionType defaultMobilePlayerRightAction =
+    PlayerActionType.sleepTimer;
 
-PlayerActionType decodePlayerAction(String? value, {required PlayerActionType fallback}) {
-  return PlayerActionType.values.firstWhere((action) => action.name == value?.trim(), orElse: () => fallback);
+PlayerActionType decodePlayerAction(
+  String? value, {
+  required PlayerActionType fallback,
+}) {
+  return PlayerActionType.values.firstWhere(
+    (action) => action.name == value?.trim(),
+    orElse: () => fallback,
+  );
 }
 
-PlayerActionType? decodeOptionalPlayerAction(String? value, {required PlayerActionType fallback}) {
+PlayerActionType? decodeOptionalPlayerAction(
+  String? value, {
+  required PlayerActionType fallback,
+}) {
   if (value?.trim().toLowerCase() == 'none') {
     return null;
   }
@@ -144,7 +161,10 @@ String encodePlayerActions(Iterable<PlayerActionType> actions) {
   return actions.map((action) => action.name).join(',');
 }
 
-List<PlayerActionType> decodePlayerActions(String? value, {required List<PlayerActionType> fallback}) {
+List<PlayerActionType> decodePlayerActions(
+  String? value, {
+  required List<PlayerActionType> fallback,
+}) {
   if (value == null) {
     return List<PlayerActionType>.from(fallback);
   }
@@ -166,9 +186,17 @@ List<PlayerActionType> decodePlayerActions(String? value, {required List<PlayerA
   return parsed;
 }
 
-enum AdaptivePlayerLayout { compactPortrait, compactLandscape, medium, expanded }
+enum AdaptivePlayerLayout {
+  compactPortrait,
+  compactLandscape,
+  medium,
+  expanded,
+}
 
-AdaptivePlayerLayout resolveAdaptivePlayerLayout(BuildContext context, BoxConstraints constraints) {
+AdaptivePlayerLayout resolveAdaptivePlayerLayout(
+  BuildContext context,
+  BoxConstraints constraints,
+) {
   final size = constraints.biggest;
   final isLandscape = size.width > size.height;
   final isShort = size.height < 620;

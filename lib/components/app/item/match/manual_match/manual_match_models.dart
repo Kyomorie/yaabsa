@@ -36,7 +36,10 @@ class ManualMatchResult {
     required String providerLabel,
   }) {
     final parsedAuthors = extractAuthorList(map);
-    final normalizedTitle = _asTrimmedString(map['title']) ?? _asTrimmedString(map['name']) ?? 'Untitled';
+    final normalizedTitle =
+        _asTrimmedString(map['title']) ??
+        _asTrimmedString(map['name']) ??
+        'Untitled';
 
     return ManualMatchResult(
       providerValue: providerValue,
@@ -47,7 +50,9 @@ class ManualMatchResult {
       narrators: extractStringList(map['narrators'] ?? map['narrator']),
       description: _asTrimmedString(map['description']),
       publisher: _asTrimmedString(map['publisher']),
-      publishedYear: _asTrimmedString(map['publishedYear']) ?? _asTrimmedString(map['publishYear']),
+      publishedYear:
+          _asTrimmedString(map['publishedYear']) ??
+          _asTrimmedString(map['publishYear']),
       runtimeLabel: formatDurationLong(Duration(minutes: map['duration'] ?? 0)),
       seriesEntries: extractSeriesEntries(map['series']),
       genres: extractStringList(map['genres']),
@@ -57,7 +62,10 @@ class ManualMatchResult {
       asin: _asTrimmedString(map['asin']),
       explicit: _asNullableBool(map['explicit']),
       abridged: _asNullableBool(map['abridged']),
-      coverUrl: _asTrimmedString(map['cover']) ?? _asTrimmedString(map['imageUrl']) ?? _asTrimmedString(map['image']),
+      coverUrl:
+          _asTrimmedString(map['cover']) ??
+          _asTrimmedString(map['imageUrl']) ??
+          _asTrimmedString(map['image']),
     );
   }
 
@@ -240,7 +248,10 @@ const Set<ManualMatchField> manualListFields = <ManualMatchField>{
 
 List<Map<String, dynamic>> extractManualMatchResultMaps(Object? responseData) {
   if (responseData is List) {
-    return responseData.whereType<Map>().map((entry) => Map<String, dynamic>.from(entry)).toList(growable: false);
+    return responseData
+        .whereType<Map>()
+        .map((entry) => Map<String, dynamic>.from(entry))
+        .toList(growable: false);
   }
 
   if (responseData is Map<String, dynamic>) {
@@ -248,7 +259,10 @@ List<Map<String, dynamic>> extractManualMatchResultMaps(Object? responseData) {
     for (final key in listKeys) {
       final value = responseData[key];
       if (value is List) {
-        return value.whereType<Map>().map((entry) => Map<String, dynamic>.from(entry)).toList(growable: false);
+        return value
+            .whereType<Map>()
+            .map((entry) => Map<String, dynamic>.from(entry))
+            .toList(growable: false);
       }
     }
 
@@ -307,7 +321,10 @@ List<String> extractStringList(Object? rawValue) {
         addValue(entry);
       } else if (entry is Map) {
         final map = Map<String, dynamic>.from(entry);
-        final name = _asTrimmedString(map['name']) ?? _asTrimmedString(map['title']) ?? _asTrimmedString(map['series']);
+        final name =
+            _asTrimmedString(map['name']) ??
+            _asTrimmedString(map['title']) ??
+            _asTrimmedString(map['series']);
         if (name != null) {
           addValue(name);
         }
@@ -328,13 +345,17 @@ List<ManualMatchSeriesEntry> extractSeriesEntries(Object? rawValue) {
       return;
     }
     final cleanSequence = sequence?.trim();
-    final key = '${cleanName.toLowerCase()}#${(cleanSequence ?? '').toLowerCase()}';
+    final key =
+        '${cleanName.toLowerCase()}#${(cleanSequence ?? '').toLowerCase()}';
     if (!seen.add(key)) {
       return;
     }
 
     normalized.add(
-      ManualMatchSeriesEntry(name: cleanName, sequence: cleanSequence?.isEmpty == true ? null : cleanSequence),
+      ManualMatchSeriesEntry(
+        name: cleanName,
+        sequence: cleanSequence?.isEmpty == true ? null : cleanSequence,
+      ),
     );
   }
 
@@ -356,7 +377,8 @@ List<ManualMatchSeriesEntry> extractSeriesEntries(Object? rawValue) {
       }
 
       final map = Map<String, dynamic>.from(entry);
-      final name = _asTrimmedString(map['name']) ?? _asTrimmedString(map['series']);
+      final name =
+          _asTrimmedString(map['name']) ?? _asTrimmedString(map['series']);
       if (name == null) {
         continue;
       }

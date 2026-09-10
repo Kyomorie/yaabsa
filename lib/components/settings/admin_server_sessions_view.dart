@@ -21,10 +21,12 @@ class AdminServerSessionsView extends ConsumerStatefulWidget {
   const AdminServerSessionsView({super.key});
 
   @override
-  ConsumerState<AdminServerSessionsView> createState() => _AdminServerSessionsViewState();
+  ConsumerState<AdminServerSessionsView> createState() =>
+      _AdminServerSessionsViewState();
 }
 
-class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsView> {
+class _AdminServerSessionsViewState
+    extends ConsumerState<AdminServerSessionsView> {
   static const int _defaultItemsPerPage = 10;
   static const List<int> _pageSizeOptions = <int>[10, 20, 50, 100];
 
@@ -69,7 +71,11 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
       });
     }
 
-    await Future.wait<void>([_loadUsers(), _loadLibrarySessions(), _loadOpenSessions()]);
+    await Future.wait<void>([
+      _loadUsers(),
+      _loadLibrarySessions(),
+      _loadOpenSessions(),
+    ]);
   }
 
   Future<void> _loadUsers() async {
@@ -87,14 +93,21 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
 
     try {
       final response = await api.getAdminApi().getUsers();
-      final users = List<SessionUserSummary>.from(response.data?.users ?? const <SessionUserSummary>[])
-        ..sort((a, b) => a.username.toLowerCase().compareTo(b.username.toLowerCase()));
+      final users =
+          List<SessionUserSummary>.from(
+            response.data?.users ?? const <SessionUserSummary>[],
+          )..sort(
+            (a, b) =>
+                a.username.toLowerCase().compareTo(b.username.toLowerCase()),
+          );
 
       if (!mounted) {
         return;
       }
 
-      final selectedFilterExists = users.any((entry) => entry.id == _selectedFilterUserId);
+      final selectedFilterExists = users.any(
+        (entry) => entry.id == _selectedFilterUserId,
+      );
       setState(() {
         _availableUsers = users;
         if (!selectedFilterExists) {
@@ -102,7 +115,11 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
         }
       });
     } catch (error, stackTrace) {
-      logger('Failed to load admin users: $error\n$stackTrace', tag: 'AdminServerSessionsView', level: InfoLevel.error);
+      logger(
+        'Failed to load admin users: $error\n$stackTrace',
+        tag: 'AdminServerSessionsView',
+        level: InfoLevel.error,
+      );
       if (!mounted) {
         return;
       }
@@ -142,10 +159,13 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
       );
 
       final data = response.data;
-      final sessions = List<AdminListeningSession>.from(data?.sessions ?? const <AdminListeningSession>[]);
+      final sessions = List<AdminListeningSession>.from(
+        data?.sessions ?? const <AdminListeningSession>[],
+      );
       final userMap = <String, String>{
         for (final entry in sessions)
-          if (entry.user != null && entry.user!.username.trim().isNotEmpty) entry.session.id: entry.user!.username,
+          if (entry.user != null && entry.user!.username.trim().isNotEmpty)
+            entry.session.id: entry.user!.username,
       };
 
       if (!mounted) {
@@ -155,7 +175,8 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
       setState(() {
         _librarySessions = sessions;
         _selectedLibrarySessionIds.removeWhere(
-          (sessionId) => !_librarySessions.any((entry) => entry.session.id == sessionId),
+          (sessionId) =>
+              !_librarySessions.any((entry) => entry.session.id == sessionId),
         );
         _librarySessionUsers
           ..clear()
@@ -203,10 +224,13 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
       final response = await api.getSessionApi().getOpenSessions();
       final data = response.data;
 
-      final openSessions = List<AdminListeningSession>.from(data?.sessions ?? const <AdminListeningSession>[]);
+      final openSessions = List<AdminListeningSession>.from(
+        data?.sessions ?? const <AdminListeningSession>[],
+      );
       final openSessionUsers = <String, String>{
         for (final entry in openSessions)
-          if (entry.user != null && entry.user!.username.trim().isNotEmpty) entry.session.id: entry.user!.username,
+          if (entry.user != null && entry.user!.username.trim().isNotEmpty)
+            entry.session.id: entry.user!.username,
       };
 
       if (!mounted) {
@@ -218,7 +242,9 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
         _openSessionUsers
           ..clear()
           ..addAll(openSessionUsers);
-        _shareSessions = List<OpenShareSession>.from(data?.shareSessions ?? const <OpenShareSession>[]);
+        _shareSessions = List<OpenShareSession>.from(
+          data?.shareSessions ?? const <OpenShareSession>[],
+        );
       });
     } catch (error, stackTrace) {
       logger(
@@ -293,7 +319,10 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
     await _loadLibrarySessions();
   }
 
-  void _onLibrarySessionSelectionChanged(PlaybackSession session, bool selected) {
+  void _onLibrarySessionSelectionChanged(
+    PlaybackSession session,
+    bool selected,
+  ) {
     setState(() {
       if (selected) {
         _selectedLibrarySessionIds.add(session.id);
@@ -307,9 +336,13 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
     return canDelete && _selectedLibrarySessionIds.isNotEmpty;
   }
 
-  Future<void> _bulkDeleteSelectedLibrarySessions({required bool canDelete}) async {
+  Future<void> _bulkDeleteSelectedLibrarySessions({
+    required bool canDelete,
+  }) async {
     final api = _api();
-    if (api == null || _isBulkDeleting || !_canDeleteSelectedLibrarySessions(canDelete)) {
+    if (api == null ||
+        _isBulkDeleting ||
+        !_canDeleteSelectedLibrarySessions(canDelete)) {
       return;
     }
 
@@ -327,10 +360,18 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Selected Sessions'),
-          content: Text('Delete ${selectedSessions.length} selected session(s)? This cannot be undone.'),
+          content: Text(
+            'Delete ${selectedSessions.length} selected session(s)? This cannot be undone.',
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
           ],
         );
       },
@@ -383,11 +424,17 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
 
     final messenger = ScaffoldMessenger.of(context);
     if (deletedCount > 0) {
-      messenger.showSnackBar(SnackBar(content: Text('Deleted $deletedCount session(s).')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('Deleted $deletedCount session(s).')),
+      );
     }
     if (failedSessionIds.isNotEmpty) {
       messenger.showSnackBar(
-        SnackBar(content: Text('Failed to delete ${failedSessionIds.length} session(s). Check logs for details.')),
+        SnackBar(
+          content: Text(
+            'Failed to delete ${failedSessionIds.length} session(s). Check logs for details.',
+          ),
+        ),
       );
     }
   }
@@ -411,7 +458,10 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
       canDelete: canDelete,
       onSave: canEdit
           ? (updatedSession) async {
-              await api.getSessionApi().syncLocalSession(updatedSession, deleteFirst: true);
+              await api.getSessionApi().syncLocalSession(
+                updatedSession,
+                deleteFirst: true,
+              );
               return true;
             }
           : null,
@@ -427,7 +477,10 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
     }
   }
 
-  Future<void> _openShareSessionDetails(OpenShareSession shareSession, {required bool canDelete}) async {
+  Future<void> _openShareSessionDetails(
+    OpenShareSession shareSession, {
+    required bool canDelete,
+  }) async {
     final api = _api();
     if (api == null) {
       return;
@@ -460,10 +513,14 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
       if (success && mounted) {
         await _loadOpenSessions();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Session closed successfully')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session closed successfully')),
+          );
         }
       } else if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to close session')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to close session')),
+        );
       }
     } catch (error, stackTrace) {
       logger(
@@ -472,7 +529,9 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
         level: InfoLevel.error,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to close session: $error')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to close session: $error')),
+        );
       }
     }
   }
@@ -501,12 +560,16 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
     }
 
     return Card(
-      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
+      color: Theme.of(context).colorScheme.errorContainer
+          .withValues(alpha: 0.45),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error_outline,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(width: 10),
             Expanded(child: Text(_errorMessage!)),
             const SizedBox(width: 10),
@@ -525,7 +588,11 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
   Widget _buildSectionTitle(String title, {String? trailingText}) {
     return Row(
       children: [
-        Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(width: 8),
         if (trailingText != null && trailingText.isNotEmpty)
           Text(trailingText, style: Theme.of(context).textTheme.bodySmall),
@@ -533,7 +600,10 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
     );
   }
 
-  Widget _buildLibrarySessionsSection({required bool canEdit, required bool canDelete}) {
+  Widget _buildLibrarySessionsSection({
+    required bool canEdit,
+    required bool canDelete,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -553,7 +623,10 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
           onNext: _currentPage < (_numPages - 1) ? _goToNextPage : null,
         ),
         if (_isLoadingLibrarySessions)
-          const Padding(padding: EdgeInsets.only(top: 8), child: LinearProgressIndicator(minHeight: 2)),
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
         if (_selectedLibrarySessionIds.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -562,13 +635,23 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
                 Text('${_selectedLibrarySessionIds.length} selected'),
                 const Spacer(),
                 FilledButton.icon(
-                  onPressed: (_isBulkDeleting || !_canDeleteSelectedLibrarySessions(canDelete))
+                  onPressed:
+                      (_isBulkDeleting ||
+                          !_canDeleteSelectedLibrarySessions(canDelete))
                       ? null
                       : () {
-                          unawaited(_bulkDeleteSelectedLibrarySessions(canDelete: canDelete));
+                          unawaited(
+                            _bulkDeleteSelectedLibrarySessions(
+                              canDelete: canDelete,
+                            ),
+                          );
                         },
                   icon: _isBulkDeleting
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Icon(Icons.delete_outline_rounded),
                   label: const Text('Delete Selected'),
                 ),
@@ -577,7 +660,9 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
           ),
         const SizedBox(height: 8),
         ListeningSessionTable(
-          sessions: _librarySessions.map((entry) => entry.session).toList(growable: false),
+          sessions: _librarySessions
+              .map((entry) => entry.session)
+              .toList(growable: false),
           usernameForSession: _usernameForLibrarySession,
           showSelection: true,
           selectedSessionIds: _selectedLibrarySessionIds,
@@ -596,16 +681,27 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
     );
   }
 
-  Widget _buildOpenSessionsSection({required bool canEdit, required bool canDelete}) {
+  Widget _buildOpenSessionsSection({
+    required bool canEdit,
+    required bool canDelete,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildSectionTitle('Open Sessions', trailingText: '${_openSessions.length} active'),
+        _buildSectionTitle(
+          'Open Sessions',
+          trailingText: '${_openSessions.length} active',
+        ),
         const SizedBox(height: 8),
         if (_isLoadingOpenSessions)
-          const Padding(padding: EdgeInsets.only(bottom: 8), child: LinearProgressIndicator(minHeight: 2)),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
         ListeningSessionTable(
-          sessions: _openSessions.map((entry) => entry.session).toList(growable: false),
+          sessions: _openSessions
+              .map((entry) => entry.session)
+              .toList(growable: false),
           emptyMessage: 'No open sessions found.',
           usernameForSession: _usernameForOpenSession,
           actionsColumnWidth: 52,
@@ -642,10 +738,16 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildSectionTitle('Shared Sessions', trailingText: '${sortedSessions.length} active'),
+        _buildSectionTitle(
+          'Shared Sessions',
+          trailingText: '${sortedSessions.length} active',
+        ),
         const SizedBox(height: 8),
         if (_isLoadingOpenSessions)
-          const Padding(padding: EdgeInsets.only(bottom: 8), child: LinearProgressIndicator(minHeight: 2)),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
         Card(
           margin: EdgeInsets.zero,
           child: sortedSessions.isEmpty
@@ -663,7 +765,8 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
                     final title = session.displayTitle?.trim();
                     final userName = session.user?.username.trim();
                     final subtitleParts = <String>[];
-                    if (session.displayAuthor != null && session.displayAuthor!.trim().isNotEmpty) {
+                    if (session.displayAuthor != null &&
+                        session.displayAuthor!.trim().isNotEmpty) {
                       subtitleParts.add(session.displayAuthor!.trim());
                     }
                     if (userName != null && userName.isNotEmpty) {
@@ -672,9 +775,13 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
                     subtitleParts.add(
                       formatDateTimeLabel(
                         (session.updatedAt ?? 0) > 0
-                            ? DateTime.fromMillisecondsSinceEpoch(session.updatedAt!)
+                            ? DateTime.fromMillisecondsSinceEpoch(
+                                session.updatedAt!,
+                              )
                             : (session.startedAt ?? 0) > 0
-                            ? DateTime.fromMillisecondsSinceEpoch(session.startedAt!)
+                            ? DateTime.fromMillisecondsSinceEpoch(
+                                session.startedAt!,
+                              )
                             : null,
                       ),
                     );
@@ -682,14 +789,23 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
                     return ListTile(
                       dense: true,
                       title: Text(
-                        (title == null || title.isEmpty) ? 'Unknown Item' : title,
+                        (title == null || title.isEmpty)
+                            ? 'Unknown Item'
+                            : title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      subtitle: Text(subtitleParts.join(' • '), maxLines: 2, overflow: TextOverflow.ellipsis),
+                      subtitle: Text(
+                        subtitleParts.join(' • '),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       trailing: const Icon(Icons.open_in_new_rounded, size: 18),
                       onTap: () async {
-                        await _openShareSessionDetails(session, canDelete: canDelete);
+                        await _openShareSessionDetails(
+                          session,
+                          canDelete: canDelete,
+                        );
                       },
                     );
                   },
@@ -715,7 +831,10 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
         Widget centeredContent(Widget child) {
           return Align(
             alignment: Alignment.topCenter,
-            child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1100), child: child),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1100),
+              child: child,
+            ),
           );
         }
 
@@ -746,18 +865,28 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 18),
             children: [
               centeredContent(_buildErrorCard()),
-              if (_errorMessage != null && _errorMessage!.isNotEmpty) centeredContent(const SizedBox(height: 10)),
+              if (_errorMessage != null && _errorMessage!.isNotEmpty)
+                centeredContent(const SizedBox(height: 10)),
               centeredContent(
                 Row(
                   children: [
                     Expanded(
                       child: YaabsaExpressiveDropdownField<String?>(
                         value: _selectedFilterUserId,
-                        decoration: const InputDecoration(labelText: 'Filter by User', border: OutlineInputBorder()),
+                        decoration: const InputDecoration(
+                          labelText: 'Filter by User',
+                          border: OutlineInputBorder(),
+                        ),
                         options: [
-                          const YaabsaDropdownOption<String?>(value: null, label: 'All Users'),
+                          const YaabsaDropdownOption<String?>(
+                            value: null,
+                            label: 'All Users',
+                          ),
                           ..._availableUsers.map(
-                            (user) => YaabsaDropdownOption<String?>(value: user.id, label: user.username),
+                            (user) => YaabsaDropdownOption<String?>(
+                              value: user.id,
+                              label: user.username,
+                            ),
                           ),
                         ],
                         onChanged: _isLoadingUsers
@@ -770,7 +899,10 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
                     const SizedBox(width: 10),
                     IconButton(
                       tooltip: 'Refresh sessions',
-                      onPressed: (_isLoadingUsers || _isLoadingLibrarySessions || _isLoadingOpenSessions)
+                      onPressed:
+                          (_isLoadingUsers ||
+                              _isLoadingLibrarySessions ||
+                              _isLoadingOpenSessions)
                           ? null
                           : () {
                               unawaited(_loadAllData());
@@ -781,9 +913,19 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
                 ),
               ),
               centeredContent(const SizedBox(height: 12)),
-              centeredContent(_buildLibrarySessionsSection(canEdit: canEdit, canDelete: canDelete)),
+              centeredContent(
+                _buildLibrarySessionsSection(
+                  canEdit: canEdit,
+                  canDelete: canDelete,
+                ),
+              ),
               centeredContent(const SizedBox(height: 16)),
-              centeredContent(_buildOpenSessionsSection(canEdit: canEdit, canDelete: canDelete)),
+              centeredContent(
+                _buildOpenSessionsSection(
+                  canEdit: canEdit,
+                  canDelete: canDelete,
+                ),
+              ),
               centeredContent(const SizedBox(height: 16)),
               centeredContent(_buildShareSessionsSection(canDelete: canDelete)),
             ],
@@ -796,7 +938,10 @@ class _AdminServerSessionsViewState extends ConsumerState<AdminServerSessionsVie
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          'Failed to load user data: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       ),
     );
   }

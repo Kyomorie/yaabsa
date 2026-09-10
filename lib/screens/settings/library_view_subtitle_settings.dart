@@ -28,7 +28,9 @@ class LibraryViewSubtitleSettings extends ConsumerWidget {
             if (user == null) {
               return const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                child: Text('No active user. Sign in to configure view subtitles.'),
+                child: Text(
+                  'No active user. Sign in to configure view subtitles.',
+                ),
               );
             }
 
@@ -36,7 +38,10 @@ class LibraryViewSubtitleSettings extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (final view in LibraryViewSubtitleView.values)
-                  LibraryViewSubtitlePreferencesEditor(userId: user.id, view: view),
+                  LibraryViewSubtitlePreferencesEditor(
+                    userId: user.id,
+                    view: view,
+                  ),
               ],
             );
           },
@@ -44,8 +49,10 @@ class LibraryViewSubtitleSettings extends ConsumerWidget {
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (error, _) =>
-              Padding(padding: const EdgeInsets.all(16), child: Text('Failed to load view subtitle settings: $error')),
+          error: (error, _) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Failed to load view subtitle settings: $error'),
+          ),
         ),
       ],
     );
@@ -53,22 +60,31 @@ class LibraryViewSubtitleSettings extends ConsumerWidget {
 }
 
 class LibraryViewSubtitlePreferencesEditor extends ConsumerStatefulWidget {
-  const LibraryViewSubtitlePreferencesEditor({required this.userId, required this.view, super.key});
+  const LibraryViewSubtitlePreferencesEditor({
+    required this.userId,
+    required this.view,
+    super.key,
+  });
 
   final String userId;
   final LibraryViewSubtitleView view;
 
   @override
-  ConsumerState<LibraryViewSubtitlePreferencesEditor> createState() => _LibraryViewSubtitlePreferencesEditorState();
+  ConsumerState<LibraryViewSubtitlePreferencesEditor> createState() =>
+      _LibraryViewSubtitlePreferencesEditorState();
 }
 
-class _LibraryViewSubtitlePreferencesEditorState extends ConsumerState<LibraryViewSubtitlePreferencesEditor> {
+class _LibraryViewSubtitlePreferencesEditorState
+    extends ConsumerState<LibraryViewSubtitlePreferencesEditor> {
   bool _isSaving = false;
 
   String get _subtitleSettingLabel => switch (widget.view) {
-    LibraryViewSubtitleView.library => 'Choose which information is displayed under items',
-    LibraryViewSubtitleView.series => 'Choose which information is displayed under series',
-    LibraryViewSubtitleView.authors => 'Choose which information is displayed under authors',
+    LibraryViewSubtitleView.library =>
+      'Choose which information is displayed under items',
+    LibraryViewSubtitleView.series =>
+      'Choose which information is displayed under series',
+    LibraryViewSubtitleView.authors =>
+      'Choose which information is displayed under authors',
   };
 
   Future<void> _persist(LibraryViewSubtitlePreferences preferences) async {
@@ -87,8 +103,11 @@ class _LibraryViewSubtitlePreferencesEditorState extends ConsumerState<LibraryVi
           );
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to update ${widget.view.label}: $error')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update ${widget.view.label}: $error'),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -98,7 +117,9 @@ class _LibraryViewSubtitlePreferencesEditorState extends ConsumerState<LibraryVi
   }
 
   Future<void> _reset() async {
-    await _persist(LibraryViewSubtitlePreferencesCodec.defaultsFor(widget.view));
+    await _persist(
+      LibraryViewSubtitlePreferencesCodec.defaultsFor(widget.view),
+    );
   }
 
   Future<void> _updateField(
@@ -112,9 +133,15 @@ class _LibraryViewSubtitlePreferencesEditorState extends ConsumerState<LibraryVi
 
     final nextFields = preferences.fields.toList();
     if (selected) {
-      if (nextFields.length >= LibraryViewSubtitlePreferencesCodec.maxCustomFields) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('You can only select up to 3 fields for custom subtitles')));
+      if (nextFields.length >=
+          LibraryViewSubtitlePreferencesCodec.maxCustomFields) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'You can only select up to 3 fields for custom subtitles',
+            ),
+          ),
+        );
         return;
       }
       nextFields.add(field);
@@ -122,7 +149,12 @@ class _LibraryViewSubtitlePreferencesEditorState extends ConsumerState<LibraryVi
       nextFields.remove(field);
     }
 
-    await _persist(LibraryViewSubtitlePreferences(mode: LibraryViewSubtitleMode.custom, fields: nextFields));
+    await _persist(
+      LibraryViewSubtitlePreferences(
+        mode: LibraryViewSubtitleMode.custom,
+        fields: nextFields,
+      ),
+    );
   }
 
   @override
@@ -134,19 +166,32 @@ class _LibraryViewSubtitlePreferencesEditorState extends ConsumerState<LibraryVi
         .getUserSetting<String>(
           widget.userId,
           widget.view.settingKey,
-          defaultValue: LibraryViewSubtitlePreferencesCodec.defaultEncodedFor(widget.view),
+          defaultValue: LibraryViewSubtitlePreferencesCodec.defaultEncodedFor(
+            widget.view,
+          ),
         );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SettingsEditorHeader(title: widget.view.label, onReset: _isSaving ? null : _reset),
+        SettingsEditorHeader(
+          title: widget.view.label,
+          onReset: _isSaving ? null : _reset,
+        ),
         StreamBuilder<UserSettingEntry?>(
-          stream: appDatabase.watchUserSetting(widget.userId, widget.view.settingKey),
+          stream: appDatabase.watchUserSetting(
+            widget.userId,
+            widget.view.settingKey,
+          ),
           builder: (context, snapshot) {
             final rawValue = snapshot.data?.value ?? fallbackRawValue;
-            final preferences = LibraryViewSubtitlePreferencesCodec.decode(rawValue, widget.view);
-            final fields = LibraryViewSubtitlePreferencesCodec.fieldsFor(widget.view);
+            final preferences = LibraryViewSubtitlePreferencesCodec.decode(
+              rawValue,
+              widget.view,
+            );
+            final fields = LibraryViewSubtitlePreferencesCodec.fieldsFor(
+              widget.view,
+            );
 
             return SettingsNavigationSection(
               title: '',
@@ -158,13 +203,23 @@ class _LibraryViewSubtitlePreferencesEditorState extends ConsumerState<LibraryVi
                     SettingDropdown<LibraryViewSubtitleMode>.remote(
                       label: _subtitleSettingLabel,
                       values: LibraryViewSubtitleMode.values,
-                      valueLabels: [for (final mode in LibraryViewSubtitleMode.values) mode.label],
-                      valueDescriptions: [for (final mode in LibraryViewSubtitleMode.values) mode.description],
+                      valueLabels: [
+                        for (final mode in LibraryViewSubtitleMode.values)
+                          mode.label,
+                      ],
+                      valueDescriptions: [
+                        for (final mode in LibraryViewSubtitleMode.values)
+                          mode.description,
+                      ],
                       value: preferences.mode,
                       enabled: !_isSaving,
                       isLoading: _isSaving,
-                      onValueChanged: (value) =>
-                          _persist(LibraryViewSubtitlePreferences(mode: value, fields: preferences.fields)),
+                      onValueChanged: (value) => _persist(
+                        LibraryViewSubtitlePreferences(
+                          mode: value,
+                          fields: preferences.fields,
+                        ),
+                      ),
                     ),
                     if (preferences.mode == LibraryViewSubtitleMode.custom) ...[
                       const Divider(height: 1),
@@ -172,7 +227,8 @@ class _LibraryViewSubtitlePreferencesEditorState extends ConsumerState<LibraryVi
                         fields: fields,
                         selectedFields: preferences.fields,
                         enabled: !_isSaving,
-                        onChanged: (field, selected) => _updateField(preferences, field, selected),
+                        onChanged: (field, selected) =>
+                            _updateField(preferences, field, selected),
                       ),
                     ],
                   ],
@@ -210,7 +266,9 @@ class _SubtitleFieldsSetting extends StatelessWidget {
             title: Text(field.label),
             contentPadding: const EdgeInsets.fromLTRB(36, 0, 16, 0),
             controlAffinity: ListTileControlAffinity.trailing,
-            onChanged: enabled ? (selected) => onChanged(field, selected) : null,
+            onChanged: enabled
+                ? (selected) => onChanged(field, selected)
+                : null,
           ),
       ],
     );

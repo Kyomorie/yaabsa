@@ -38,13 +38,17 @@ class _LocalCoverImageState extends State<LocalCoverImage> {
   @override
   void didUpdateWidget(covariant LocalCoverImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.coverPath != widget.coverPath || oldWidget.cacheKey != widget.cacheKey) {
+    if (oldWidget.coverPath != widget.coverPath ||
+        oldWidget.cacheKey != widget.cacheKey) {
       _resolveCoverPath();
     }
   }
 
   void _resolveCoverPath() {
-    _resolvedCoverPath = resolveDisplayCoverPath(widget.coverPath, cacheKey: widget.cacheKey);
+    _resolvedCoverPath = resolveDisplayCoverPath(
+      widget.coverPath,
+      cacheKey: widget.cacheKey,
+    );
   }
 
   @override

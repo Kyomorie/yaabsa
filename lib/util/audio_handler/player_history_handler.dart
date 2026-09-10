@@ -59,7 +59,10 @@ extension PlayerHistoryTypeX on PlayerHistoryType {
 }
 
 PlayerHistoryType playerHistoryTypeFromName(String name) {
-  return PlayerHistoryType.values.firstWhere((type) => type.name == name, orElse: () => PlayerHistoryType.unknown);
+  return PlayerHistoryType.values.firstWhere(
+    (type) => type.name == name,
+    orElse: () => PlayerHistoryType.unknown,
+  );
 }
 
 Map<String, dynamic> decodePlayerHistoryDetails(String? rawDetails) {
@@ -69,7 +72,9 @@ Map<String, dynamic> decodePlayerHistoryDetails(String? rawDetails) {
 
   try {
     final decoded = jsonDecode(rawDetails);
-    return decoded is Map<String, dynamic> ? decoded : const <String, dynamic>{};
+    return decoded is Map<String, dynamic>
+        ? decoded
+        : const <String, dynamic>{};
   } catch (_) {
     return const <String, dynamic>{};
   }
@@ -114,7 +119,8 @@ class PlayerHistoryHandler {
     final lastWrittenAt = _lastWriteByKey[key];
     final minimumInterval = _minimumIntervalForType(type);
 
-    if (lastWrittenAt != null && now.difference(lastWrittenAt) < minimumInterval) {
+    if (lastWrittenAt != null &&
+        now.difference(lastWrittenAt) < minimumInterval) {
       return true;
     }
 
@@ -153,10 +159,16 @@ class PlayerHistoryHandler {
         PlayerHistoryCompanion(
           itemId: Value(currentMedia.itemId),
           userId: Value(userId),
-          episodeId: currentMedia.episodeId != null ? Value(currentMedia.episodeId) : const Value.absent(),
-          currentTime: Value((position ?? audioHandler.position).inSecondsPrecise),
+          episodeId: currentMedia.episodeId != null
+              ? Value(currentMedia.episodeId)
+              : const Value.absent(),
+          currentTime: Value(
+            (position ?? audioHandler.position).inSecondsPrecise,
+          ),
           type: Value(type.name),
-          detailsJson: details.isEmpty ? const Value.absent() : Value(jsonEncode(details)),
+          detailsJson: details.isEmpty
+              ? const Value.absent()
+              : Value(jsonEncode(details)),
         ),
       );
     } catch (error, stackTrace) {

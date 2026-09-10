@@ -78,16 +78,23 @@ const String _bootRoutePath = '/boot';
 class _ActiveUserIdNotifier extends ChangeNotifier {
   _ActiveUserIdNotifier() : _db = containerRef.read(appDatabaseProvider) {
     _subscription = _db.watchGlobalSetting('activeUserId').listen((setting) {
-      logger('[_ActiveUserIdNotifier] watchGlobalSetting emitted: ${setting?.value}', tag: 'Router');
+      logger(
+        '[_ActiveUserIdNotifier] watchGlobalSetting emitted: ${setting?.value}',
+        tag: 'Router',
+      );
       _updateState(setting?.value, initialized: true);
     });
-    _currentUserSubscription = containerRef.listen<AsyncValue<User?>>(currentUserProvider, (previous, next) {
-      if (isAuthSecretsUnavailableError(next.error)) {
-        _updateKeyringUnavailable(true);
-      } else if (next.hasValue) {
-        _updateKeyringUnavailable(false);
-      }
-    }, fireImmediately: true);
+    _currentUserSubscription = containerRef.listen<AsyncValue<User?>>(
+      currentUserProvider,
+      (previous, next) {
+        if (isAuthSecretsUnavailableError(next.error)) {
+          _updateKeyringUnavailable(true);
+        } else if (next.hasValue) {
+          _updateKeyringUnavailable(false);
+        }
+      },
+      fireImmediately: true,
+    );
     unawaited(_loadInitialValue());
   }
 
@@ -116,7 +123,8 @@ class _ActiveUserIdNotifier extends ChangeNotifier {
   }
 
   void _updateState(String? nextUserId, {required bool initialized}) {
-    final changed = _activeUserId != nextUserId || _isInitialized != initialized;
+    final changed =
+        _activeUserId != nextUserId || _isInitialized != initialized;
     logger(
       '[_ActiveUserIdNotifier] _updateState: currentActiveUserId=$_activeUserId, nextActiveUserId=$nextUserId, currentInitialized=$_isInitialized, nextInitialized=$initialized, changed=$changed',
       tag: 'Router',
@@ -125,7 +133,10 @@ class _ActiveUserIdNotifier extends ChangeNotifier {
     _isInitialized = initialized;
 
     if (changed) {
-      logger('[_ActiveUserIdNotifier] calling notifyListeners()', tag: 'Router');
+      logger(
+        '[_ActiveUserIdNotifier] calling notifyListeners()',
+        tag: 'Router',
+      );
       notifyListeners();
     }
   }
@@ -154,7 +165,11 @@ class _ActiveUserIdNotifier extends ChangeNotifier {
 
 final _activeUserIdNotifier = _ActiveUserIdNotifier();
 
-Page<void> _buildAdaptiveHomeShellPage(BuildContext context, GoRouterState state, Widget child) {
+Page<void> _buildAdaptiveHomeShellPage(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
   return NoTransitionPage<void>(key: state.pageKey, child: child);
 }
 
@@ -197,13 +212,17 @@ final globalRouter = GoRouter(
   routes: [
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
-        if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+        if (!kIsWeb &&
+            (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
           return TrayManager(child);
         }
         return child;
       },
       routes: [
-        GoRoute(path: _bootRoutePath, builder: (context, state) => const _AppStartupScreen()),
+        GoRoute(
+          path: _bootRoutePath,
+          builder: (context, state) => const _AppStartupScreen(),
+        ),
         GoRoute(path: '/add-user', builder: (context, state) => SignIn()),
         GoRoute(
           path: '/player',
@@ -211,27 +230,35 @@ final globalRouter = GoRouter(
             key: state.pageKey,
             transitionDuration: const Duration(milliseconds: 320),
             reverseTransitionDuration: const Duration(milliseconds: 260),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              final curvedAnimation = CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-                reverseCurve: Curves.easeInCubic,
-              );
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  final curvedAnimation = CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                    reverseCurve: Curves.easeInCubic,
+                  );
 
-              return SlideTransition(
-                position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(curvedAnimation),
-                child: FadeTransition(
-                  opacity: Tween<double>(begin: 0.96, end: 1).animate(curvedAnimation),
-                  child: child,
-                ),
-              );
-            },
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 1),
+                      end: Offset.zero,
+                    ).animate(curvedAnimation),
+                    child: FadeTransition(
+                      opacity: Tween<double>(
+                        begin: 0.96,
+                        end: 1,
+                      ).animate(curvedAnimation),
+                      child: child,
+                    ),
+                  );
+                },
             child: const Player(),
           ),
         ),
         GoRoute(
           path: '/ebook/:id',
-          builder: (context, state) => Reader(itemId: state.pathParameters['id']!),
+          builder: (context, state) =>
+              Reader(itemId: state.pathParameters['id']!),
         ),
         GoRoute(
           path: PlayHistoryView.routeName,
@@ -239,7 +266,11 @@ final globalRouter = GoRouter(
             final itemId = state.uri.queryParameters['itemId'];
             final episodeId = state.uri.queryParameters['episodeId'];
             final itemTitle = state.uri.queryParameters['itemTitle'];
-            return PlayHistoryView(itemId: itemId, episodeId: episodeId, itemTitle: itemTitle);
+            return PlayHistoryView(
+              itemId: itemId,
+              episodeId: episodeId,
+              itemTitle: itemTitle,
+            );
           },
         ),
         GoRoute(
@@ -253,31 +284,59 @@ final globalRouter = GoRouter(
           routes: [
             GoRoute(
               path: MainSettingsScreen.routeName,
-              redirect: (context, state) => '/?tab=settings&intent=settings-main',
+              redirect: (context, state) =>
+                  '/?tab=settings&intent=settings-main',
             ),
             ShellRoute(
-              builder: (BuildContext context, GoRouterState state, Widget child) {
-                return child;
-              },
+              builder:
+                  (BuildContext context, GoRouterState state, Widget child) {
+                    return child;
+                  },
               routes: [
                 GoRoute(path: '/', builder: (context, state) => LayoutHome()),
                 ShellRoute(
-                  pageBuilder: (BuildContext context, GoRouterState state, Widget child) {
-                    return _buildAdaptiveHomeShellPage(context, state, LayoutHome(child: child));
-                  },
+                  pageBuilder:
+                      (
+                        BuildContext context,
+                        GoRouterState state,
+                        Widget child,
+                      ) {
+                        return _buildAdaptiveHomeShellPage(
+                          context,
+                          state,
+                          LayoutHome(child: child),
+                        );
+                      },
                   routes: [
-                    GoRoute(path: AppearanceSettings.routeName, builder: (context, state) => AppearanceSettings()),
-                    GoRoute(path: ThemeSettings.routeName, builder: (context, state) => const ThemeSettings()),
-                    GoRoute(path: GlobalPlayerSettings.routeName, builder: (context, state) => GlobalPlayerSettings()),
+                    GoRoute(
+                      path: AppearanceSettings.routeName,
+                      builder: (context, state) => AppearanceSettings(),
+                    ),
+                    GoRoute(
+                      path: ThemeSettings.routeName,
+                      builder: (context, state) => const ThemeSettings(),
+                    ),
+                    GoRoute(
+                      path: GlobalPlayerSettings.routeName,
+                      builder: (context, state) => GlobalPlayerSettings(),
+                    ),
                     GoRoute(
                       path: PlayerSettingsNotification.routeName,
-                      builder: (context, state) => const PlayerSettingsNotification(),
+                      builder: (context, state) =>
+                          const PlayerSettingsNotification(),
                     ),
-                    GoRoute(path: LibrarySettings.routeName, builder: (context, state) => LibrarySettings()),
-                    GoRoute(path: DownloadSettings.routeName, builder: (context, state) => const DownloadSettings()),
+                    GoRoute(
+                      path: LibrarySettings.routeName,
+                      builder: (context, state) => LibrarySettings(),
+                    ),
+                    GoRoute(
+                      path: DownloadSettings.routeName,
+                      builder: (context, state) => const DownloadSettings(),
+                    ),
                     GoRoute(
                       path: SmartDownloadsSettings.routeName,
-                      builder: (context, state) => const SmartDownloadsSettings(),
+                      builder: (context, state) =>
+                          const SmartDownloadsSettings(),
                     ),
                     GoRoute(
                       path: LibraryViewsSettings.routeName,
@@ -285,7 +344,8 @@ final globalRouter = GoRouter(
                     ),
                     GoRoute(
                       path: LibraryViewSubtitleSettings.routeName,
-                      builder: (context, state) => const LibraryViewSubtitleSettings(),
+                      builder: (context, state) =>
+                          const LibraryViewSubtitleSettings(),
                     ),
                     GoRoute(
                       path: LibraryShelfSettings.routeName,
@@ -295,15 +355,23 @@ final globalRouter = GoRouter(
                       path: LibraryOrderSettings.routeName,
                       builder: (context, state) => const LibraryOrderSettings(),
                     ),
-                    GoRoute(path: AndroidAutoSettings.routeName, builder: (context, state) => AndroidAutoSettings()),
-                    GoRoute(path: CachingSettings.routeName, builder: (context, state) => CachingSettings()),
+                    GoRoute(
+                      path: AndroidAutoSettings.routeName,
+                      builder: (context, state) => AndroidAutoSettings(),
+                    ),
+                    GoRoute(
+                      path: CachingSettings.routeName,
+                      builder: (context, state) => CachingSettings(),
+                    ),
                     GoRoute(
                       path: ServerConnectionSettings.routeName,
-                      builder: (context, state) => const ServerConnectionSettings(),
+                      builder: (context, state) =>
+                          const ServerConnectionSettings(),
                     ),
                     GoRoute(
                       path: ServerManagementSettings.routeName,
-                      builder: (context, state) => const ServerManagementSettings(),
+                      builder: (context, state) =>
+                          const ServerManagementSettings(),
                     ),
                     GoRoute(
                       path: AdminServerSettings.routeName,
@@ -311,72 +379,102 @@ final globalRouter = GoRouter(
                     ),
                     GoRoute(
                       path: AdminServerConfigurationSettings.routeName,
-                      builder: (context, state) => const AdminServerConfigurationSettings(),
+                      builder: (context, state) =>
+                          const AdminServerConfigurationSettings(),
                     ),
                     GoRoute(
                       path: AdminServerLogsSettings.routeName,
-                      builder: (context, state) => const AdminServerLogsSettings(),
+                      builder: (context, state) =>
+                          const AdminServerLogsSettings(),
                     ),
                     GoRoute(
                       path: AdminServerBackupsSettings.routeName,
-                      builder: (context, state) => const AdminServerBackupsSettings(),
+                      builder: (context, state) =>
+                          const AdminServerBackupsSettings(),
                     ),
                     GoRoute(
                       path: AdminServerLibrariesSettings.routeName,
-                      builder: (context, state) => const AdminServerLibrariesSettings(),
+                      builder: (context, state) =>
+                          const AdminServerLibrariesSettings(),
                     ),
                     GoRoute(
                       path: AdminServerLibraryStatsSettings.routeName,
-                      builder: (context, state) => const AdminServerLibraryStatsSettings(),
+                      builder: (context, state) =>
+                          const AdminServerLibraryStatsSettings(),
                     ),
                     GoRoute(
                       path: AdminServerApiKeysSettings.routeName,
-                      builder: (context, state) => const AdminServerApiKeysSettings(),
+                      builder: (context, state) =>
+                          const AdminServerApiKeysSettings(),
                     ),
                     GoRoute(
                       path: AdminServerSessionsSettings.routeName,
-                      builder: (context, state) => const AdminServerSessionsSettings(),
+                      builder: (context, state) =>
+                          const AdminServerSessionsSettings(),
                     ),
                     GoRoute(
                       path: AdminServerRssFeedsSettings.routeName,
-                      builder: (context, state) => const AdminServerRssFeedsSettings(),
+                      builder: (context, state) =>
+                          const AdminServerRssFeedsSettings(),
                     ),
                     GoRoute(
                       path: AdminServerEmailSettings.routeName,
-                      builder: (context, state) => const AdminServerEmailSettings(),
+                      builder: (context, state) =>
+                          const AdminServerEmailSettings(),
                     ),
                     GoRoute(
                       path: AdminServerAuthenticationSettings.routeName,
-                      builder: (context, state) => const AdminServerAuthenticationSettings(),
+                      builder: (context, state) =>
+                          const AdminServerAuthenticationSettings(),
                     ),
                     GoRoute(
                       path: AdminServerUsersSettings.routeName,
-                      builder: (context, state) => const AdminServerUsersSettings(),
+                      builder: (context, state) =>
+                          const AdminServerUsersSettings(),
                     ),
                     GoRoute(
                       path: AdminItemMetadataUtilsSettings.routeName,
-                      builder: (context, state) => const AdminItemMetadataUtilsSettings(),
+                      builder: (context, state) =>
+                          const AdminItemMetadataUtilsSettings(),
                     ),
-                    GoRoute(path: ToolsSettings.routeName, builder: (context, state) => const ToolsSettings()),
+                    GoRoute(
+                      path: ToolsSettings.routeName,
+                      builder: (context, state) => const ToolsSettings(),
+                    ),
                     GoRoute(
                       path: PathTagGenreUpdateSettings.routeName,
-                      builder: (context, state) => const PathTagGenreUpdateSettings(),
+                      builder: (context, state) =>
+                          const PathTagGenreUpdateSettings(),
                     ),
                     GoRoute(
                       path: CachingGeneralSettings.routeName,
                       builder: (context, state) => CachingGeneralSettings(),
                     ),
-                    GoRoute(path: CachingRouteSettings.routeName, builder: (context, state) => CachingRouteSettings()),
-                    GoRoute(path: PlayerSettings.routeName, builder: (context, state) => PlayerSettings()),
+                    GoRoute(
+                      path: CachingRouteSettings.routeName,
+                      builder: (context, state) => CachingRouteSettings(),
+                    ),
+                    GoRoute(
+                      path: PlayerSettings.routeName,
+                      builder: (context, state) => PlayerSettings(),
+                    ),
                     GoRoute(
                       path: PlayerSettingsCompatibility.routeName,
-                      builder: (context, state) => const PlayerSettingsCompatibility(),
+                      builder: (context, state) =>
+                          const PlayerSettingsCompatibility(),
                     ),
-                    GoRoute(path: ReaderSettings.routeName, builder: (context, state) => ReaderSettings()),
-                    GoRoute(path: ReaderTtsSettings.routeName, builder: (context, state) => const ReaderTtsSettings()),
+                    GoRoute(
+                      path: ReaderSettings.routeName,
+                      builder: (context, state) => ReaderSettings(),
+                    ),
+                    GoRoute(
+                      path: ReaderTtsSettings.routeName,
+                      builder: (context, state) => const ReaderTtsSettings(),
+                    ),
                     GoRoute(
                       path: PlayerSettingsEqualizer.routeName,
-                      builder: (context, state) => const PlayerSettingsEqualizer(),
+                      builder: (context, state) =>
+                          const PlayerSettingsEqualizer(),
                     ),
                     GoRoute(
                       path: PlayerSettingsGeneral.routeName,
@@ -396,7 +494,8 @@ final globalRouter = GoRouter(
                     ),
                     GoRoute(
                       path: PlayerSettingsShakeControls.routeName,
-                      builder: (context, state) => PlayerSettingsShakeControls(),
+                      builder: (context, state) =>
+                          PlayerSettingsShakeControls(),
                     ),
                     GoRoute(
                       path: AndroidAutoLibrarySettings.routeName,
@@ -404,7 +503,8 @@ final globalRouter = GoRouter(
                     ),
                     GoRoute(
                       path: AndroidAutoPodcastLibrarySettings.routeName,
-                      builder: (context, state) => AndroidAutoPodcastLibrarySettings(),
+                      builder: (context, state) =>
+                          AndroidAutoPodcastLibrarySettings(),
                     ),
                     GoRoute(
                       path: '/item/:id',
@@ -415,22 +515,30 @@ final globalRouter = GoRouter(
                     ),
                     GoRoute(
                       path: SubtitleReadingModeView.routeName,
-                      builder: (context, state) => const SubtitleReadingModeView(),
+                      builder: (context, state) =>
+                          const SubtitleReadingModeView(),
                     ),
                     GoRoute(
                       path: '/author/:id',
-                      builder: (context, state) => AuthorDetailView(authorId: state.pathParameters['id']!),
+                      builder: (context, state) => AuthorDetailView(
+                        authorId: state.pathParameters['id']!,
+                      ),
                     ),
                     GoRoute(
                       path: '/narrator/:name',
-                      builder: (context, state) =>
-                          NarratorDetailView(narratorName: Uri.decodeComponent(state.pathParameters['name']!)),
+                      builder: (context, state) => NarratorDetailView(
+                        narratorName: Uri.decodeComponent(
+                          state.pathParameters['name']!,
+                        ),
+                      ),
                     ),
                     GoRoute(
                       path: '/collection/:id',
                       builder: (context, state) {
                         final extra = state.extra;
-                        final initialEntry = extra is MultiBookEntryData ? extra : null;
+                        final initialEntry = extra is MultiBookEntryData
+                            ? extra
+                            : null;
                         return CollectionDetailView(
                           collectionId: state.pathParameters['id']!,
                           initialEntry: initialEntry,
@@ -441,16 +549,26 @@ final globalRouter = GoRouter(
                       path: '/playlist/:id',
                       builder: (context, state) {
                         final extra = state.extra;
-                        final initialEntry = extra is MultiBookEntryData ? extra : null;
-                        return PlaylistDetailView(playlistId: state.pathParameters['id']!, initialEntry: initialEntry);
+                        final initialEntry = extra is MultiBookEntryData
+                            ? extra
+                            : null;
+                        return PlaylistDetailView(
+                          playlistId: state.pathParameters['id']!,
+                          initialEntry: initialEntry,
+                        );
                       },
                     ),
                     GoRoute(
                       path: '/series/:id',
                       builder: (context, state) {
                         final extra = state.extra;
-                        final initialEntry = extra is MultiBookEntryData ? extra : null;
-                        return SeriesDetailView(seriesId: state.pathParameters['id']!, initialEntry: initialEntry);
+                        final initialEntry = extra is MultiBookEntryData
+                            ? extra
+                            : null;
+                        return SeriesDetailView(
+                          seriesId: state.pathParameters['id']!,
+                          initialEntry: initialEntry,
+                        );
                       },
                     ),
                   ],
@@ -471,7 +589,13 @@ class _AppStartupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(child: const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 2.6))),
+        child: Center(
+          child: const SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(strokeWidth: 2.6),
+          ),
+        ),
       ),
     );
   }

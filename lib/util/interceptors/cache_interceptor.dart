@@ -81,7 +81,9 @@ Future<void> invalidateCachedLibraryItemEntries({
   required String itemId,
   String? libraryId,
 }) async {
-  final userId = container.read(currentUserProvider).value?.id ?? container.read(absApiProvider)?.user?.id;
+  final userId =
+      container.read(currentUserProvider).value?.id ??
+      container.read(absApiProvider)?.user?.id;
   if (userId == null || userId.isEmpty) {
     return;
   }
@@ -148,7 +150,10 @@ class CacheInterceptor extends Interceptor {
   });
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     if (options.extra['noCache'] == true ||
         options.extra['doNotCache'] == true ||
         options.responseType == ResponseType.stream) {
@@ -164,12 +169,17 @@ class CacheInterceptor extends Interceptor {
       if (cachedData != null) {
         final DateTime cachedTime = DateTime.parse(cachedData['timestamp']);
         final DateTime now = DateTime.now();
-        final isFresh = now.difference(cachedTime) < matchingRoute.cacheDuration;
+        final isFresh =
+            now.difference(cachedTime) < matchingRoute.cacheDuration;
         final serverReachable = container.read(serverReachabilityProvider);
 
         if (isFresh || !serverReachable) {
-          final decodedHeaders = jsonDecode(cachedData['headers']) as Map<String, dynamic>;
-          final headers = decodedHeaders.map<String, List<String>>((key, dynamic value) {
+          final decodedHeaders =
+              jsonDecode(cachedData['headers']) as Map<String, dynamic>;
+          final headers = decodedHeaders.map<String, List<String>>((
+            key,
+            dynamic value,
+          ) {
             if (value is List) {
               return MapEntry(key, value.cast<String>());
             } else {
@@ -178,7 +188,9 @@ class CacheInterceptor extends Interceptor {
           });
 
           logger(
-            isFresh ? 'Cache hit: ${options.uri.toString()}' : 'Offline cache hit: ${options.uri.toString()}',
+            isFresh
+                ? 'Cache hit: ${options.uri.toString()}'
+                : 'Offline cache hit: ${options.uri.toString()}',
             tag: 'CacheInterceptor',
             level: InfoLevel.debug,
           );
@@ -193,7 +205,8 @@ class CacheInterceptor extends Interceptor {
           );
 
           if (boostLoading && serverReachable) {
-            final refreshedExtra = Map<String, dynamic>.from(options.extra)..['noCache'] = true;
+            final refreshedExtra = Map<String, dynamic>.from(options.extra)
+              ..['noCache'] = true;
             final refreshedOptions = options.copyWith(extra: refreshedExtra);
 
             final Dio dio = createNativeDio();
@@ -204,7 +217,11 @@ class CacheInterceptor extends Interceptor {
           }
           return;
         } else {
-          logger('Cache expired: ${options.uri.toString()}', tag: 'CacheInterceptor', level: InfoLevel.debug);
+          logger(
+            'Cache expired: ${options.uri.toString()}',
+            tag: 'CacheInterceptor',
+            level: InfoLevel.debug,
+          );
         }
       }
     }
@@ -225,7 +242,11 @@ class CacheInterceptor extends Interceptor {
         response.statusCode! >= 200 &&
         response.statusCode! < 300) {
       final String cacheKey = _getCacheKey(response.requestOptions.uri);
-      logger('Caching: ${response.requestOptions.uri.toString()}', tag: 'CacheInterceptor', level: InfoLevel.debug);
+      logger(
+        'Caching: ${response.requestOptions.uri.toString()}',
+        tag: 'CacheInterceptor',
+        level: InfoLevel.debug,
+      );
       await _cacheStore.record(cacheKey).put(cacheDb, {
         'data': response.data,
         'statusCode': response.statusCode,
@@ -240,7 +261,8 @@ class CacheInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (err.requestOptions.extra['doNotCache'] == true || err.requestOptions.responseType == ResponseType.stream) {
+    if (err.requestOptions.extra['doNotCache'] == true ||
+        err.requestOptions.responseType == ResponseType.stream) {
       return handler.next(err);
     }
     final matchingRoute = _getMatchingRoute(err.requestOptions);
@@ -250,8 +272,12 @@ class CacheInterceptor extends Interceptor {
       _cacheStore.record(cacheKey).get(cacheDb).then((cachedData) {
         if (cachedData != null) {
           try {
-            final decodedHeaders = jsonDecode(cachedData['headers']) as Map<String, dynamic>;
-            final headers = decodedHeaders.map<String, List<String>>((key, dynamic value) {
+            final decodedHeaders =
+                jsonDecode(cachedData['headers']) as Map<String, dynamic>;
+            final headers = decodedHeaders.map<String, List<String>>((
+              key,
+              dynamic value,
+            ) {
               if (value is List) {
                 return MapEntry(key, value.cast<String>());
               }
@@ -268,7 +294,11 @@ class CacheInterceptor extends Interceptor {
               ),
             );
           } catch (e) {
-            logger('Error while serving from cache: $e', tag: 'CacheInterceptor', level: InfoLevel.debug);
+            logger(
+              'Error while serving from cache: $e',
+              tag: 'CacheInterceptor',
+              level: InfoLevel.debug,
+            );
             return handler.next(err);
           }
         } else {
@@ -332,7 +362,8 @@ class CacheRouteDefinition {
     }
 
     for (var i = 0; i < patternSegments.length; i++) {
-      if (patternSegments[i].startsWith('{') && patternSegments[i].endsWith('}')) {
+      if (patternSegments[i].startsWith('{') &&
+          patternSegments[i].endsWith('}')) {
         continue;
       }
       if (patternSegments[i] != pathSegments[i]) {

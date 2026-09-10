@@ -8,7 +8,8 @@ import 'package:yaabsa/provider/core/server_status_provider.dart';
 import 'package:yaabsa/provider/core/user_providers.dart';
 import 'package:yaabsa/provider/core/oidc_provider.dart';
 import 'package:yaabsa/provider/wear/wear_providers.dart';
-import 'package:yaabsa/util/globals.dart' show appName, audioHandler, containerRef, isAudioHandlerInitialized;
+import 'package:yaabsa/util/globals.dart'
+    show appName, audioHandler, containerRef, isAudioHandlerInitialized;
 import 'package:yaabsa/util/aaos_service.dart';
 import 'package:yaabsa/util/app_theme.dart';
 import 'package:yaabsa/util/desktop_theme.dart';
@@ -30,7 +31,11 @@ Future<void> _resumeLastPlayedOnStartup() async {
       await audioHandler.playLastPlayedIfEnabledOnStartup();
     }
   } catch (e, s) {
-    logger('Startup last-played resume failed: $e\n$s', tag: 'Main', level: InfoLevel.warning);
+    logger(
+      'Startup last-played resume failed: $e\n$s',
+      tag: 'Main',
+      level: InfoLevel.warning,
+    );
   }
 }
 
@@ -44,9 +49,14 @@ Future<void> _configureAndroidEdgeToEdge() async {
   }
 
   try {
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge).timeout(const Duration(seconds: 2));
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge)
+        .timeout(const Duration(seconds: 2));
   } catch (e, s) {
-    logger('Failed to configure edge-to-edge UI: $e\n$s', tag: 'Main', level: InfoLevel.warning);
+    logger(
+      'Failed to configure edge-to-edge UI: $e\n$s',
+      tag: 'Main',
+      level: InfoLevel.warning,
+    );
   }
 }
 
@@ -54,22 +64,30 @@ void main() {
   runZonedGuarded(
     () async {
       await Init.globals();
-      final settingsManager = containerRef.read(settingsManagerProvider.notifier);
+      final settingsManager = containerRef.read(
+        settingsManagerProvider.notifier,
+      );
       await settingsManager.ensureInitialized();
 
       final startupLogLevelSetting = settingsManager.getGlobalSetting<String>(
         SettingKeys.appLogLevel,
         defaultValue: InfoLevel.warning.toString(),
       );
-      appLoggerService.setMinimumLevel(InfoLevel.fromSettingValue(startupLogLevelSetting));
+      appLoggerService.setMinimumLevel(
+        InfoLevel.fromSettingValue(startupLogLevelSetting),
+      );
 
       unawaited(containerRef.read(currentUserProvider.future));
       unawaited(containerRef.read(serverStatusProvider.future));
       containerRef.read(absSocketClientProvider);
-      containerRef.read(oidcStateProvider.notifier).initializeDeepLinkListener();
+      containerRef
+          .read(oidcStateProvider.notifier)
+          .initializeDeepLinkListener();
       Init.initLogger();
       try {
-        final handler = await Init.initAudioHandler().timeout(const Duration(seconds: 5));
+        final handler = await Init.initAudioHandler().timeout(
+          const Duration(seconds: 5),
+        );
         audioHandler = handler;
         unawaited(audioHandler.restoreLastPlayedMiniPlayerIfEnabled());
       } catch (e, s) {
@@ -81,7 +99,9 @@ void main() {
       }
 
       try {
-        await AaosService.instance.initialize().timeout(const Duration(seconds: 2));
+        await AaosService.instance.initialize().timeout(
+          const Duration(seconds: 2),
+        );
       } catch (e, s) {
         logger(
           'AaosService initialization timed out or failed on startup: $e\n$s',
@@ -96,12 +116,18 @@ void main() {
         initPhoneWearHandler();
       }
       await _configureAndroidEdgeToEdge();
-      runApp(UncontrolledProviderScope(container: containerRef, child: MyApp()));
+      runApp(
+        UncontrolledProviderScope(container: containerRef, child: MyApp()),
+      );
       containerRef.read(smartDownloadManagerProvider.notifier).markAppReady();
       unawaited(_resumeLastPlayedOnStartup());
     },
     (error, stack) {
-      logger('Uncaught Dart error: $error\n$stack', tag: 'ZoneError', level: InfoLevel.error);
+      logger(
+        'Uncaught Dart error: $error\n$stack',
+        tag: 'ZoneError',
+        level: InfoLevel.error,
+      );
     },
   );
 }
@@ -115,20 +141,31 @@ class MyApp extends ConsumerWidget {
       Future.microtask(() async {
         if (!isAudioHandlerInitialized) {
           try {
-            final handler = await Init.initAudioHandler().timeout(const Duration(seconds: 5));
+            final handler = await Init.initAudioHandler().timeout(
+              const Duration(seconds: 5),
+            );
             audioHandler = handler;
             unawaited(audioHandler.restoreLastPlayedMiniPlayerIfEnabled());
             unawaited(_resumeLastPlayedOnStartup());
           } catch (e, s) {
-            logger('Retry AudioHandler initialization failed: $e\n$s', tag: 'Main', level: InfoLevel.error);
+            logger(
+              'Retry AudioHandler initialization failed: $e\n$s',
+              tag: 'Main',
+              level: InfoLevel.error,
+            );
           }
         }
       });
     }
 
-    final appLogLevelSetting = ref.watch(globalSettingByKeyProvider(SettingKeys.appLogLevel)).asData?.value;
+    final appLogLevelSetting = ref
+        .watch(globalSettingByKeyProvider(SettingKeys.appLogLevel))
+        .asData
+        ?.value;
 
-    appLoggerService.setMinimumLevel(InfoLevel.fromSettingValue(appLogLevelSetting));
+    appLoggerService.setMinimumLevel(
+      InfoLevel.fromSettingValue(appLogLevelSetting),
+    );
 
     final themeSelection = watchAppThemeSelection(ref);
 
@@ -143,9 +180,14 @@ class MyApp extends ConsumerWidget {
 
         syncDesktopTheme(Theme.brightnessOf(context));
 
-        return ScaffoldMessenger(child: AndroidEdgeToEdgeInsetGuard(child: child));
+        return ScaffoldMessenger(
+          child: AndroidEdgeToEdgeInsetGuard(child: child),
+        );
       },
-      localizationsDelegates: [...GlobalMaterialLocalizations.delegates, FlutterQuillLocalizations.delegate],
+      localizationsDelegates: [
+        ...GlobalMaterialLocalizations.delegates,
+        FlutterQuillLocalizations.delegate,
+      ],
       themeMode: themeSelection.materialThemeMode,
       theme: themeSelection.themeData(Brightness.light),
       darkTheme: themeSelection.themeData(Brightness.dark),

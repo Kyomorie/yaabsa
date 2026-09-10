@@ -12,7 +12,9 @@ class StatsSummaryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = stats.items?.values.toList(growable: false) ?? const <ItemsListenedTo>[];
+    final items =
+        stats.items?.values.toList(growable: false) ??
+        const <ItemsListenedTo>[];
     final totalTime = stats.totalTime ?? 0;
     var bookListening = 0.0;
     var podcastListening = 0.0;
@@ -49,10 +51,26 @@ class StatsSummaryGrid extends StatelessWidget {
           value: formatListeningSeconds(stats.today),
           emphasized: true,
         ),
-        StatsMetric(icon: Icons.library_books_rounded, label: 'Items listened', value: '${items.length}'),
-        StatsMetric(icon: Icons.menu_book_rounded, label: 'Audiobooks', value: formatListeningSeconds(bookListening)),
-        StatsMetric(icon: Icons.podcasts_rounded, label: 'Podcasts', value: formatListeningSeconds(podcastListening)),
-        StatsMetric(icon: Icons.event_available_rounded, label: 'Active days', value: '$activeDays'),
+        StatsMetric(
+          icon: Icons.library_books_rounded,
+          label: 'Items listened',
+          value: '${items.length}',
+        ),
+        StatsMetric(
+          icon: Icons.menu_book_rounded,
+          label: 'Audiobooks',
+          value: formatListeningSeconds(bookListening),
+        ),
+        StatsMetric(
+          icon: Icons.podcasts_rounded,
+          label: 'Podcasts',
+          value: formatListeningSeconds(podcastListening),
+        ),
+        StatsMetric(
+          icon: Icons.event_available_rounded,
+          label: 'Active days',
+          value: '$activeDays',
+        ),
         StatsMetric(
           icon: Icons.local_fire_department_rounded,
           label: 'Listening streak',

@@ -8,9 +8,11 @@ part 'library_item_size_stats.g.dart';
 abstract class LibraryItemSizeStats with _$LibraryItemSizeStats {
   const factory LibraryItemSizeStats({
     @JsonKey(name: "id") required String id,
-    @JsonKey(name: "size", fromJson: jsonIntRequiredFromDynamic) required int size,
+    @JsonKey(name: "size", fromJson: jsonIntRequiredFromDynamic)
+    required int size,
     @JsonKey(name: "title") required String title,
   }) = _LibraryItemSizeStats;
 
-  factory LibraryItemSizeStats.fromJson(Map<String, dynamic> json) => _$LibraryItemSizeStatsFromJson(json);
+  factory LibraryItemSizeStats.fromJson(Map<String, dynamic> json) =>
+      _$LibraryItemSizeStatsFromJson(json);
 }

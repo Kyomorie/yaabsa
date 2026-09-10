@@ -2,7 +2,12 @@ import 'package:material_ui/material_ui.dart';
 import 'package:yaabsa/components/stats/stats_components.dart';
 
 class AdminLibraryStatsRankedEntry {
-  const AdminLibraryStatsRankedEntry({required this.label, required this.value, required this.trailing, this.onTap});
+  const AdminLibraryStatsRankedEntry({
+    required this.label,
+    required this.value,
+    required this.trailing,
+    this.onTap,
+  });
 
   final String label;
   final double value;
@@ -34,7 +39,12 @@ class AdminLibraryStatsRankedSection extends StatelessWidget {
       child: StatsRankedList(
         entries: [
           for (final entry in entries)
-            StatsRankedEntry(label: entry.label, value: entry.value, trailing: entry.trailing, onTap: entry.onTap),
+            StatsRankedEntry(
+              label: entry.label,
+              value: entry.value,
+              trailing: entry.trailing,
+              onTap: entry.onTap,
+            ),
         ],
         previewCount: maxItems,
         emptyMessage: emptyMessage,

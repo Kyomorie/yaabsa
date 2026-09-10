@@ -12,7 +12,8 @@ part of 'magic_config_provider.dart';
 @ProviderFor(MagicConfigImport)
 final magicConfigImportProvider = MagicConfigImportProvider._();
 
-final class MagicConfigImportProvider extends $NotifierProvider<MagicConfigImport, String?> {
+final class MagicConfigImportProvider
+    extends $NotifierProvider<MagicConfigImport, String?> {
   MagicConfigImportProvider._()
     : super(
         from: null,
@@ -33,7 +34,10 @@ final class MagicConfigImportProvider extends $NotifierProvider<MagicConfigImpor
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(String? value) {
-    return $ProviderOverride(origin: this, providerOverride: $SyncValueProvider<String?>(value));
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
   }
 }
 
@@ -45,7 +49,14 @@ abstract class _$MagicConfigImport extends $Notifier<String?> {
   @override
   WhenComplete runBuild() {
     final ref = this.ref as $Ref<String?, String?>;
-    final element = ref.element as $ClassProviderElement<AnyNotifier<String?, String?>, String?, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<String?, String?>,
+              String?,
+              Object?,
+              Object?
+            >;
     return element.handleCreate(ref, build);
   }
 }

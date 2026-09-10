@@ -22,7 +22,10 @@ class PlayerCoverComponent extends StatelessWidget {
     final requestHeaders = api == null
         ? const <String, String>{}
         : normalizeImageRequestHeaders(api!.dio.options.headers);
-    final imageProvider = coverImageProviderFromUri(media.cover, requestHeaders: requestHeaders);
+    final imageProvider = coverImageProviderFromUri(
+      media.cover,
+      requestHeaders: requestHeaders,
+    );
 
     const fallback = CoverPlaceholder(borderRadius: 10);
 
@@ -38,12 +41,23 @@ class PlayerCoverComponent extends StatelessWidget {
           if (!logicalExtent.isFinite || logicalExtent <= 0) {
             return null;
           }
-          return (logicalExtent * devicePixelRatio).ceil().clamp(1, playerCoverRequestDimension).toInt();
+          return (logicalExtent * devicePixelRatio)
+              .ceil()
+              .clamp(1, playerCoverRequestDimension)
+              .toInt();
         }
 
-        final cacheWidth = fitMode == PlayerCoverFitMode.height ? null : targetPixels(constraints.maxWidth);
-        final cacheHeight = fitMode == PlayerCoverFitMode.width ? null : targetPixels(constraints.maxHeight);
-        final displayProvider = ResizeImage.resizeIfNeeded(cacheWidth, cacheHeight, imageProvider);
+        final cacheWidth = fitMode == PlayerCoverFitMode.height
+            ? null
+            : targetPixels(constraints.maxWidth);
+        final cacheHeight = fitMode == PlayerCoverFitMode.width
+            ? null
+            : targetPixels(constraints.maxHeight);
+        final displayProvider = ResizeImage.resizeIfNeeded(
+          cacheWidth,
+          cacheHeight,
+          imageProvider,
+        );
 
         return RepaintBoundary(
           child: ClipRRect(

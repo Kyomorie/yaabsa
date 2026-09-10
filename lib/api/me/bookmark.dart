@@ -12,5 +12,6 @@ abstract class Bookmark with _$Bookmark {
     @JsonKey(name: "createdAt") required int createdAt,
   }) = _Bookmark;
 
-  factory Bookmark.fromJson(Map<String, dynamic> json) => _$BookmarkFromJson(json);
+  factory Bookmark.fromJson(Map<String, dynamic> json) =>
+      _$BookmarkFromJson(json);
 }

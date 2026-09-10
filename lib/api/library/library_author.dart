@@ -18,5 +18,6 @@ abstract class LibraryAuthor with _$LibraryAuthor {
     @JsonKey(name: 'lastFirst') String? lastFirst,
   }) = _LibraryAuthor;
 
-  factory LibraryAuthor.fromJson(Map<String, dynamic> json) => _$LibraryAuthorFromJson(json);
+  factory LibraryAuthor.fromJson(Map<String, dynamic> json) =>
+      _$LibraryAuthorFromJson(json);
 }

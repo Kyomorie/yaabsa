@@ -56,7 +56,9 @@ class _VolumeSliderState extends State<VolumeSlider> {
       stream: audioHandler.volumeStream,
       initialData: 1.0,
       builder: (context, snapshot) {
-        final volume = (snapshot.data ?? 1.0).clamp(0.0, audioHandler.maxVolume).toDouble();
+        final volume = (snapshot.data ?? 1.0)
+            .clamp(0.0, audioHandler.maxVolume)
+            .toDouble();
         if (volume > 0) {
           _lastNonZeroVolume = volume;
         }
@@ -79,7 +81,9 @@ class _VolumeSliderState extends State<VolumeSlider> {
                 child: IconButton(
                   tooltip: 'Volume ${(volume * 100).round()}%',
                   onPressed: () => _handlePress(context, volume),
-                  color: isBoosted ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: isBoosted
+                      ? colorScheme.primary
+                      : colorScheme.onSurface.withValues(alpha: 0.6),
                   icon: Icon(_iconForVolume(volume)),
                 ),
               ),
@@ -115,7 +119,9 @@ class _VolumeSliderState extends State<VolumeSlider> {
 
   void _toggleMute(double currentVolume) {
     if (currentVolume <= 0.01) {
-      final restoreVolume = _lastNonZeroVolume.clamp(0.0, audioHandler.maxVolume).toDouble();
+      final restoreVolume = _lastNonZeroVolume
+          .clamp(0.0, audioHandler.maxVolume)
+          .toDouble();
       audioHandler.setVolume(restoreVolume == 0 ? 1.0 : restoreVolume);
       return;
     }
@@ -195,7 +201,11 @@ class _VolumeSliderState extends State<VolumeSlider> {
 }
 
 class _VolumePopupOverlay extends StatelessWidget {
-  const _VolumePopupOverlay({required this.anchorLink, required this.onDismiss, required this.onHoverChanged});
+  const _VolumePopupOverlay({
+    required this.anchorLink,
+    required this.onDismiss,
+    required this.onHoverChanged,
+  });
 
   final LayerLink anchorLink;
   final VoidCallback onDismiss;
@@ -209,7 +219,10 @@ class _VolumePopupOverlay extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(behavior: HitTestBehavior.translucent, onTap: onDismiss),
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: onDismiss,
+            ),
           ),
           CompositedTransformFollower(
             link: anchorLink,
@@ -223,7 +236,9 @@ class _VolumePopupOverlay extends StatelessWidget {
               child: Material(
                 elevation: 10,
                 color: colorScheme.surface,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                   child: VolumeSliderPanel(axis: Axis.vertical),

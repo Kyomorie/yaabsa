@@ -19,7 +19,9 @@ final class BluetoothAudioDevicesProvider
           List<BluetoothAudioDevice>,
           FutureOr<List<BluetoothAudioDevice>>
         >
-    with $FutureModifier<List<BluetoothAudioDevice>>, $FutureProvider<List<BluetoothAudioDevice>> {
+    with
+        $FutureModifier<List<BluetoothAudioDevice>>,
+        $FutureProvider<List<BluetoothAudioDevice>> {
   BluetoothAudioDevicesProvider._()
     : super(
         from: null,
@@ -36,8 +38,9 @@ final class BluetoothAudioDevicesProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<BluetoothAudioDevice>> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+  $FutureProviderElement<List<BluetoothAudioDevice>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
 
   @override
   FutureOr<List<BluetoothAudioDevice>> create(Ref ref) {
@@ -45,4 +48,5 @@ final class BluetoothAudioDevicesProvider
   }
 }
 
-String _$bluetoothAudioDevicesHash() => r'79544a93c394588669996df46b8dbf578b768f22';
+String _$bluetoothAudioDevicesHash() =>
+    r'79544a93c394588669996df46b8dbf578b768f22';

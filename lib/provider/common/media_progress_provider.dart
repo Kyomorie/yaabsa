@@ -83,7 +83,11 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
         continue;
       }
 
-      merged[entry.key] = _preferMostRecentProgress(existing, entry.value, preferIncomingOnTie: preferIncomingOnTie);
+      merged[entry.key] = _preferMostRecentProgress(
+        existing,
+        entry.value,
+        preferIncomingOnTie: preferIncomingOnTie,
+      );
     }
 
     return merged;
@@ -96,14 +100,18 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
     final Map<String, MediaProgress> result = {};
     for (var p in progressList) {
       final key = _progressKeyFromMediaProgress(p);
-      if (!result.containsKey(key) || (_lastUpdatedMillis(p) > _lastUpdatedMillis(result[key]))) {
+      if (!result.containsKey(key) ||
+          (_lastUpdatedMillis(p) > _lastUpdatedMillis(result[key]))) {
         result[key] = p;
       }
     }
     return result;
   }
 
-  MediaProgress? _decodeProgressJsonOrNull(String rawJson, {required String source}) {
+  MediaProgress? _decodeProgressJsonOrNull(
+    String rawJson, {
+    required String source,
+  }) {
     try {
       final decoded = jsonDecode(rawJson);
       if (decoded is Map<String, dynamic>) {
@@ -112,7 +120,9 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
       if (decoded is Map) {
         return MediaProgress.fromJson(Map<String, dynamic>.from(decoded));
       }
-      throw const FormatException('Stored media progress payload is not a JSON object');
+      throw const FormatException(
+        'Stored media progress payload is not a JSON object',
+      );
     } catch (e, s) {
       logger(
         'Failed to decode media progress from $source: $e\n$s',
@@ -123,16 +133,22 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
     }
   }
 
-  Future<Map<String, MediaProgress>> _loadLocalProgressMap({String? userId}) async {
+  Future<Map<String, MediaProgress>> _loadLocalProgressMap({
+    String? userId,
+  }) async {
     final db = ref.read(appDatabaseProvider);
 
     final List<StoredSyncEntry> syncEntries = (userId == null || userId.isEmpty)
         ? await db.getAllSyncs()
         : await db.getAllSyncsByUser(userId);
 
-    final Map<String, MediaProgress> syncProgressMap = <String, MediaProgress>{};
+    final Map<String, MediaProgress> syncProgressMap =
+        <String, MediaProgress>{};
     for (final entry in syncEntries) {
-      final progress = _decodeProgressJsonOrNull(entry.mediaProgress, source: 'storedSyncs:${entry.sessionId}');
+      final progress = _decodeProgressJsonOrNull(
+        entry.mediaProgress,
+        source: 'storedSyncs:${entry.sessionId}',
+      );
       if (progress == null) {
         continue;
       }
@@ -151,7 +167,8 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
     }
 
     final cachedEntries = await db.getStoredMediaProgressByUser(userId);
-    final Map<String, MediaProgress> cachedProgressMap = <String, MediaProgress>{};
+    final Map<String, MediaProgress> cachedProgressMap =
+        <String, MediaProgress>{};
     for (final entry in cachedEntries) {
       final progress = _decodeProgressJsonOrNull(
         entry.mediaProgress,
@@ -179,7 +196,9 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
       return;
     }
 
-    final lastUpdate = DateTime.fromMillisecondsSinceEpoch(_lastUpdatedMillis(progress));
+    final lastUpdate = DateTime.fromMillisecondsSinceEpoch(
+      _lastUpdatedMillis(progress),
+    );
 
     try {
       await ref
@@ -200,15 +219,27 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
     }
   }
 
-  Future<void> _persistProgressList(Iterable<MediaProgress> progressList) async {
+  Future<void> _persistProgressList(
+    Iterable<MediaProgress> progressList,
+  ) async {
     for (final progress in progressList) {
       await _persistProgress(progress);
     }
   }
 
-  Future<void> _deleteCachedProgress({required String userId, required String libraryItemId, String? episodeId}) async {
+  Future<void> _deleteCachedProgress({
+    required String userId,
+    required String libraryItemId,
+    String? episodeId,
+  }) async {
     try {
-      await ref.read(appDatabaseProvider).deleteStoredMediaProgress(userId, libraryItemId, episodeId: episodeId);
+      await ref
+          .read(appDatabaseProvider)
+          .deleteStoredMediaProgress(
+            userId,
+            libraryItemId,
+            episodeId: episodeId,
+          );
     } catch (e, s) {
       logger(
         'Failed to delete cached media progress for ${_progressKey(libraryItemId, episodeId)}: $e\n$s',
@@ -221,8 +252,11 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
   Future<List<MediaProgress>> _fetchAllRemoteProgress(ABSApi absApi) async {
     final meApi = absApi.getMeApi();
 
-    if (!serverSupportsMediaProgressAndBookmarkRoutes(ref.read(serverVersionProvider))) {
-      return (await meApi.getUser()).data?.mediaProgress ?? const <MediaProgress>[];
+    if (!serverSupportsMediaProgressAndBookmarkRoutes(
+      ref.read(serverVersionProvider),
+    )) {
+      return (await meApi.getUser()).data?.mediaProgress ??
+          const <MediaProgress>[];
     }
 
     final response = await meApi.getAllMediaProgress();
@@ -299,7 +333,11 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
       state = AsyncData(mergedMap);
       await _persistProgressList(remoteMap.values);
     } catch (e, s) {
-      logger('Error refreshing all media progress: $e\n$s', tag: 'MediaProgressProvider', level: InfoLevel.error);
+      logger(
+        'Error refreshing all media progress: $e\n$s',
+        tag: 'MediaProgressProvider',
+        level: InfoLevel.error,
+      );
 
       if (baseMap.isEmpty) {
         state = AsyncError<Map<String, MediaProgress>>(e, s);
@@ -340,7 +378,10 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
 
     try {
       final meApi = absApi.getMeApi();
-      final response = await meApi.getProgress(libraryItemId, episodeId: episodeId);
+      final response = await meApi.getProgress(
+        libraryItemId,
+        episodeId: episodeId,
+      );
       final remoteProgress = response.data;
 
       if (remoteProgress == null) {
@@ -353,14 +394,19 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
           return localProgress;
         }
 
-        final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
+        final Map<String, MediaProgress> currentMap =
+            state.asData?.value ?? <String, MediaProgress>{};
         final Map<String, MediaProgress> updatedMap = {...currentMap};
         if (updatedMap.remove(key) != null) {
           state = AsyncData(updatedMap);
         }
 
         if (effectiveUserId != null && effectiveUserId.isNotEmpty) {
-          await _deleteCachedProgress(userId: effectiveUserId, libraryItemId: libraryItemId, episodeId: episodeId);
+          await _deleteCachedProgress(
+            userId: effectiveUserId,
+            libraryItemId: libraryItemId,
+            episodeId: episodeId,
+          );
         }
 
         return null;
@@ -380,11 +426,19 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
           level: InfoLevel.debug,
         );
       } else {
-        resolvedProgress = _preferMostRecentProgress(localProgress, remoteProgress, preferIncomingOnTie: true);
+        resolvedProgress = _preferMostRecentProgress(
+          localProgress,
+          remoteProgress,
+          preferIncomingOnTie: true,
+        );
       }
 
-      final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
-      final Map<String, MediaProgress> updatedMap = {...currentMap, key: resolvedProgress};
+      final Map<String, MediaProgress> currentMap =
+          state.asData?.value ?? <String, MediaProgress>{};
+      final Map<String, MediaProgress> updatedMap = {
+        ...currentMap,
+        key: resolvedProgress,
+      };
       state = AsyncData(updatedMap);
 
       if (!identical(resolvedProgress, remoteProgress)) {
@@ -415,7 +469,11 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
         }
 
         if (effectiveUserId != null && effectiveUserId.isNotEmpty) {
-          await _deleteCachedProgress(userId: effectiveUserId, libraryItemId: libraryItemId, episodeId: episodeId);
+          await _deleteCachedProgress(
+            userId: effectiveUserId,
+            libraryItemId: libraryItemId,
+            episodeId: episodeId,
+          );
         }
 
         return null;
@@ -437,14 +495,20 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
     }
   }
 
-  Future<MediaProgress?> updateMediaProgress(String libraryItemId, double currentTime, PlaybackSession session) async {
+  Future<MediaProgress?> updateMediaProgress(
+    String libraryItemId,
+    double currentTime,
+    PlaybackSession session,
+  ) async {
     try {
-      final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
+      final Map<String, MediaProgress> currentMap =
+          state.asData?.value ?? <String, MediaProgress>{};
       final key = _progressKey(libraryItemId, session.episodeId);
 
       MediaProgress? updatedProgress = currentMap[key];
 
-      final String effectiveUserId = (updatedProgress?.userId.isNotEmpty ?? false)
+      final String effectiveUserId =
+          (updatedProgress?.userId.isNotEmpty ?? false)
           ? updatedProgress!.userId
           : (_activeUserId() ?? session.userId);
 
@@ -456,12 +520,15 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
           level: InfoLevel.warning,
         );
       }
-      final double duration = updatedProgress.duration <= 0 ? (session.duration ?? 0) : updatedProgress.duration;
+      final double duration = updatedProgress.duration <= 0
+          ? (session.duration ?? 0)
+          : updatedProgress.duration;
       if (duration <= 0) {
         if (updatedProgress.mediaItemType == MediaItemType.BOOK) {
           var nextLastUpdate = DateTime.now().millisecondsSinceEpoch;
           final previousLastUpdate = updatedProgress.lastUpdate;
-          if (previousLastUpdate != null && previousLastUpdate >= nextLastUpdate) {
+          if (previousLastUpdate != null &&
+              previousLastUpdate >= nextLastUpdate) {
             nextLastUpdate = previousLastUpdate + 1;
           }
           updatedProgress = updatedProgress.copyWith(
@@ -498,7 +565,10 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
         lastUpdate: nextLastUpdate,
       );
 
-      final Map<String, MediaProgress> updatedMap = {...currentMap, key: updatedProgress};
+      final Map<String, MediaProgress> updatedMap = {
+        ...currentMap,
+        key: updatedProgress,
+      };
       state = AsyncData(updatedMap);
       await _persistProgress(updatedProgress);
       return updatedProgress;
@@ -515,12 +585,15 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
 
   void applyRemoteProgressUpdate(MediaProgress progress) {
     final key = _progressKeyFromMediaProgress(progress);
-    final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
+    final Map<String, MediaProgress> currentMap =
+        state.asData?.value ?? <String, MediaProgress>{};
     final existingProgress = currentMap[key];
 
     final incomingLastUpdated = _lastUpdatedMillis(progress);
     final existingLastUpdated = _lastUpdatedMillis(existingProgress);
-    final finishedStateChanged = existingProgress != null && progress.isFinished != existingProgress.isFinished;
+    final finishedStateChanged =
+        existingProgress != null &&
+        progress.isFinished != existingProgress.isFinished;
 
     if (incomingLastUpdated < existingLastUpdated && !finishedStateChanged) {
       logger(
@@ -554,7 +627,8 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
     String? episodeId,
   }) {
     final key = _progressKey(libraryItemId, episodeId);
-    final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
+    final Map<String, MediaProgress> currentMap =
+        state.asData?.value ?? <String, MediaProgress>{};
     final existingProgress = currentMap[key];
     if (existingProgress == null) {
       return;
@@ -578,6 +652,8 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
 
   List<MediaProgress> getAllProgressForLibraryItem(String libraryItemId) {
     final currentMap = state.asData?.value ?? <String, MediaProgress>{};
-    return currentMap.values.where((progress) => progress.libraryItemId == libraryItemId).toList(growable: false);
+    return currentMap.values
+        .where((progress) => progress.libraryItemId == libraryItemId)
+        .toList(growable: false);
   }
 }

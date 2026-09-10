@@ -6,7 +6,12 @@ const quickMatchNotSetLabel = 'Not set';
 const quickMatchCoverPreviewSize = 92.0;
 
 class QuickMatchPreviewEntry {
-  const QuickMatchPreviewEntry({required this.item, this.result, this.error, this.isLoading = false});
+  const QuickMatchPreviewEntry({
+    required this.item,
+    this.result,
+    this.error,
+    this.isLoading = false,
+  });
 
   final LibraryItem item;
   final ManualMatchResult? result;
@@ -15,7 +20,11 @@ class QuickMatchPreviewEntry {
 }
 
 class QuickMatchComparisonRow {
-  const QuickMatchComparisonRow({required this.label, required this.before, required this.after});
+  const QuickMatchComparisonRow({
+    required this.label,
+    required this.before,
+    required this.after,
+  });
 
   final String label;
   final String before;
@@ -41,7 +50,9 @@ List<QuickMatchComparisonRow> buildQuickMatchComparisonRows({
   final fields = <({String label, String current, String suggested})>[
     (
       label: 'Title',
-      current: stringValue(trimmedOrNull(metadata?.title) ?? trimmedOrNull(item.title)),
+      current: stringValue(
+        trimmedOrNull(metadata?.title) ?? trimmedOrNull(item.title),
+      ),
       suggested: stringValue(trimmedOrNull(result.title)),
     ),
     (
@@ -54,9 +65,21 @@ List<QuickMatchComparisonRow> buildQuickMatchComparisonRows({
       current: listValue(metadata?.authors?.map((entry) => entry.name)),
       suggested: listValue(result.authors),
     ),
-    (label: 'Narrators', current: listValue(metadata?.narrators), suggested: listValue(result.narrators)),
-    (label: 'Series', current: _seriesFromMetadata(metadata?.series), suggested: _seriesFromResult(result)),
-    (label: 'Genres', current: listValue(metadata?.genres), suggested: listValue(result.genres)),
+    (
+      label: 'Narrators',
+      current: listValue(metadata?.narrators),
+      suggested: listValue(result.narrators),
+    ),
+    (
+      label: 'Series',
+      current: _seriesFromMetadata(metadata?.series),
+      suggested: _seriesFromResult(result),
+    ),
+    (
+      label: 'Genres',
+      current: listValue(metadata?.genres),
+      suggested: listValue(result.genres),
+    ),
     (
       label: 'Published year',
       current: stringValue(trimmedOrNull(metadata?.publishedYear)),
@@ -87,8 +110,16 @@ List<QuickMatchComparisonRow> buildQuickMatchComparisonRows({
       current: stringValue(trimmedOrNull(metadata?.language)),
       suggested: stringValue(trimmedOrNull(result.language)),
     ),
-    (label: 'Explicit', current: boolValue(metadata?.explicit), suggested: boolValue(result.explicit)),
-    (label: 'Abridged', current: boolValue(metadata?.abridged), suggested: boolValue(result.abridged)),
+    (
+      label: 'Explicit',
+      current: boolValue(metadata?.explicit),
+      suggested: boolValue(result.explicit),
+    ),
+    (
+      label: 'Abridged',
+      current: boolValue(metadata?.abridged),
+      suggested: boolValue(result.abridged),
+    ),
   ];
 
   return fields
@@ -163,7 +194,9 @@ String _seriesFromMetadata(List<Series>? series) {
     return quickMatchNotSetLabel;
   }
 
-  return _seriesLabelFromEntries(series.map((entry) => (name: entry.name, sequence: entry.sequence)));
+  return _seriesLabelFromEntries(
+    series.map((entry) => (name: entry.name, sequence: entry.sequence)),
+  );
 }
 
 String _seriesFromResult(ManualMatchResult result) {
@@ -171,10 +204,16 @@ String _seriesFromResult(ManualMatchResult result) {
     return quickMatchNotSetLabel;
   }
 
-  return _seriesLabelFromEntries(result.seriesEntries.map((entry) => (name: entry.name, sequence: entry.sequence)));
+  return _seriesLabelFromEntries(
+    result.seriesEntries.map(
+      (entry) => (name: entry.name, sequence: entry.sequence),
+    ),
+  );
 }
 
-String _seriesLabelFromEntries(Iterable<({String? name, String? sequence})> entries) {
+String _seriesLabelFromEntries(
+  Iterable<({String? name, String? sequence})> entries,
+) {
   final labels = <String>[];
   for (final entry in entries) {
     final name = trimmedOrNull(entry.name);

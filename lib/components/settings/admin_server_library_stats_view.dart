@@ -18,10 +18,12 @@ class AdminServerLibraryStatsView extends ConsumerStatefulWidget {
   const AdminServerLibraryStatsView({super.key});
 
   @override
-  ConsumerState<AdminServerLibraryStatsView> createState() => _AdminServerLibraryStatsViewState();
+  ConsumerState<AdminServerLibraryStatsView> createState() =>
+      _AdminServerLibraryStatsViewState();
 }
 
-class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibraryStatsView> {
+class _AdminServerLibraryStatsViewState
+    extends ConsumerState<AdminServerLibraryStatsView> {
   final Map<String, LibraryStats> _statsByLibraryId = <String, LibraryStats>{};
 
   String? _activeUserId;
@@ -35,12 +37,17 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
     return normalizedType == 'admin' || normalizedType == 'root';
   }
 
-  Future<void> _loadStatsForLibrary(String libraryId, {bool forceRefresh = false}) async {
+  Future<void> _loadStatsForLibrary(
+    String libraryId, {
+    bool forceRefresh = false,
+  }) async {
     if (!forceRefresh && _statsByLibraryId.containsKey(libraryId)) return;
 
     final api = ref.read(absApiProvider);
     if (api == null) {
-      setState(() => _errorMessage = 'No active server connection is available.');
+      setState(
+        () => _errorMessage = 'No active server connection is available.',
+      );
       return;
     }
 
@@ -64,7 +71,10 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
           _activeLibraryId != libraryId) {
         return;
       }
-      setState(() => _errorMessage = 'The statistics for this library could not be loaded. $error');
+      setState(
+        () => _errorMessage =
+            'The statistics for this library could not be loaded. $error',
+      );
     } finally {
       if (mounted && requestGeneration == _requestGeneration) {
         setState(() => _loadingLibraryId = null);
@@ -72,7 +82,10 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
     }
   }
 
-  List<AdminLibraryStatsRankedEntry> _buildGenreEntries(BuildContext context, LibraryStats stats) {
+  List<AdminLibraryStatsRankedEntry> _buildGenreEntries(
+    BuildContext context,
+    LibraryStats stats,
+  ) {
     final totalItems = stats.totalItems ?? 0;
     return stats.genresWithCount
         .where((genre) => genre.genre.trim().isNotEmpty)
@@ -82,7 +95,10 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
             value: genre.count.toDouble(),
             trailing: '${_percentOfTotal(genre.count, totalItems)}%',
             onTap: () {
-              final filter = LibraryFilter.grouped(LibraryFilterGroup.genres, genre.genre).queryValue;
+              final filter = LibraryFilter.grouped(
+                LibraryFilterGroup.genres,
+                genre.genre,
+              ).queryValue;
               unawaited(openLibraryWithFilter(context, ref, filter: filter));
             },
           ),
@@ -90,7 +106,10 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
         .toList(growable: false);
   }
 
-  List<AdminLibraryStatsRankedEntry> _buildAuthorEntries(BuildContext context, LibraryStats stats) {
+  List<AdminLibraryStatsRankedEntry> _buildAuthorEntries(
+    BuildContext context,
+    LibraryStats stats,
+  ) {
     return stats.authorsWithCount
         .where((author) => author.name.trim().isNotEmpty)
         .map(
@@ -98,27 +117,40 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
             label: author.name,
             value: author.count.toDouble(),
             trailing: '${author.count}',
-            onTap: author.id.trim().isEmpty ? null : () => context.push('/author/${Uri.encodeComponent(author.id)}'),
+            onTap: author.id.trim().isEmpty
+                ? null
+                : () =>
+                      context.push('/author/${Uri.encodeComponent(author.id)}'),
           ),
         )
         .toList(growable: false);
   }
 
-  List<AdminLibraryStatsRankedEntry> _buildLongestItemEntries(BuildContext context, LibraryStats stats) {
+  List<AdminLibraryStatsRankedEntry> _buildLongestItemEntries(
+    BuildContext context,
+    LibraryStats stats,
+  ) {
     return stats.longestItems
         .where((item) => item.title.trim().isNotEmpty)
         .map(
           (item) => AdminLibraryStatsRankedEntry(
             label: item.title,
             value: item.duration,
-            trailing: formatDurationLong(Duration(seconds: item.duration.round())),
-            onTap: item.id.trim().isEmpty ? null : () => context.push('/item/${item.id}'),
+            trailing: formatDurationLong(
+              Duration(seconds: item.duration.round()),
+            ),
+            onTap: item.id.trim().isEmpty
+                ? null
+                : () => context.push('/item/${item.id}'),
           ),
         )
         .toList(growable: false);
   }
 
-  List<AdminLibraryStatsRankedEntry> _buildLargestItemEntries(BuildContext context, LibraryStats stats) {
+  List<AdminLibraryStatsRankedEntry> _buildLargestItemEntries(
+    BuildContext context,
+    LibraryStats stats,
+  ) {
     return stats.largestItems
         .where((item) => item.title.trim().isNotEmpty)
         .map(
@@ -126,13 +158,16 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
             label: item.title,
             value: item.size.toDouble(),
             trailing: formatBytes(item.size),
-            onTap: item.id.trim().isEmpty ? null : () => context.push('/item/${item.id}'),
+            onTap: item.id.trim().isEmpty
+                ? null
+                : () => context.push('/item/${item.id}'),
           ),
         )
         .toList(growable: false);
   }
 
-  int _percentOfTotal(int value, int total) => total <= 0 ? 0 : ((value / total) * 100).round();
+  int _percentOfTotal(int value, int total) =>
+      total <= 0 ? 0 : ((value / total) * 100).round();
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +188,8 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
           return const StatsMessage(
             icon: Icons.admin_panel_settings_outlined,
             title: 'Admin access required',
-            message: 'Library-wide statistics are only available to administrators.',
+            message:
+                'Library-wide statistics are only available to administrators.',
           );
         }
 
@@ -192,11 +228,19 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
 
         final isBookLibrary = selectedLibrary.mediaType.toLowerCase() == 'book';
         return Padding(
-          padding: EdgeInsets.fromLTRB(context.isMobile ? 12 : 24, 8, context.isMobile ? 12 : 24, 32),
+          padding: EdgeInsets.fromLTRB(
+            context.isMobile ? 12 : 24,
+            8,
+            context.isMobile ? 12 : 24,
+            32,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (isLoading && stats != null) ...[const SizedBox(height: 8), const LinearProgressIndicator()],
+              if (isLoading && stats != null) ...[
+                const SizedBox(height: 8),
+                const LinearProgressIndicator(),
+              ],
               const SizedBox(height: 8),
               if (_errorMessage case final message?)
                 StatsMessage(
@@ -204,7 +248,9 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
                   title: 'Unable to load library statistics',
                   message: message,
                   action: FilledButton.tonalIcon(
-                    onPressed: () => unawaited(_loadStatsForLibrary(libraryId, forceRefresh: true)),
+                    onPressed: () => unawaited(
+                      _loadStatsForLibrary(libraryId, forceRefresh: true),
+                    ),
                     icon: const Icon(Icons.refresh_rounded),
                     label: const Text('Try again'),
                   ),
@@ -220,10 +266,17 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
                   icon: Icons.space_dashboard_rounded,
                   trailing: IconButton.filled(
                     tooltip: 'Refresh library statistics',
-                    onPressed: isLoading ? null : () => unawaited(_loadStatsForLibrary(libraryId, forceRefresh: true)),
+                    onPressed: isLoading
+                        ? null
+                        : () => unawaited(
+                            _loadStatsForLibrary(libraryId, forceRefresh: true),
+                          ),
                     icon: const Icon(Icons.refresh_rounded),
                   ),
-                  child: AdminLibraryStatsPreviewIcons(stats: stats, isBookLibrary: isBookLibrary),
+                  child: AdminLibraryStatsPreviewIcons(
+                    stats: stats,
+                    isBookLibrary: isBookLibrary,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _LibraryRankingsGrid(
@@ -245,7 +298,8 @@ class _AdminServerLibraryStatsViewState extends ConsumerState<AdminServerLibrary
                       title: 'Longest items',
                       icon: Icons.timelapse_rounded,
                       entries: _buildLongestItemEntries(context, stats),
-                      emptyMessage: 'No item duration information is available.',
+                      emptyMessage:
+                          'No item duration information is available.',
                     ),
                     AdminLibraryStatsRankedSection(
                       title: 'Largest items',
@@ -284,11 +338,16 @@ class _LibraryRankingsGrid extends StatelessWidget {
       builder: (context, constraints) {
         final useTwoColumns = !context.isMobile && constraints.maxWidth >= 760;
         const spacing = 16.0;
-        final width = useTwoColumns ? (constraints.maxWidth - spacing) / 2 : constraints.maxWidth;
+        final width = useTwoColumns
+            ? (constraints.maxWidth - spacing) / 2
+            : constraints.maxWidth;
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: [for (final section in sections) SizedBox(width: width, child: section)],
+          children: [
+            for (final section in sections)
+              SizedBox(width: width, child: section),
+          ],
         );
       },
     );

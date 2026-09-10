@@ -4,7 +4,8 @@ part 'update_admin_email_settings_request.freezed.dart';
 part 'update_admin_email_settings_request.g.dart';
 
 @freezed
-abstract class UpdateAdminEmailSettingsRequest with _$UpdateAdminEmailSettingsRequest {
+abstract class UpdateAdminEmailSettingsRequest
+    with _$UpdateAdminEmailSettingsRequest {
   const factory UpdateAdminEmailSettingsRequest({
     @JsonKey(name: 'host') String? host,
     @JsonKey(name: 'port') int? port,

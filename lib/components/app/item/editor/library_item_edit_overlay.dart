@@ -43,22 +43,27 @@ class LibraryItemEditOverlay extends ConsumerStatefulWidget {
   final String currentItemId;
   final ValueChanged<String> onSelectItem;
   final VoidCallback onClose;
-  final Future<void> Function(String itemId, LibraryItem? updatedItem) onItemSaved;
+  final Future<void> Function(String itemId, LibraryItem? updatedItem)
+  onItemSaved;
   final LibraryFilterData? filterData;
   final LibraryItemEditorTab initialTab;
 
   @override
-  ConsumerState<LibraryItemEditOverlay> createState() => _LibraryItemEditOverlayState();
+  ConsumerState<LibraryItemEditOverlay> createState() =>
+      _LibraryItemEditOverlayState();
 }
 
-class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay> {
+class _LibraryItemEditOverlayState
+    extends ConsumerState<LibraryItemEditOverlay> {
   var _isSaving = false;
   final Map<String, LibraryItem> _cachedItems = <String, LibraryItem>{};
-  final Map<String, Map<String, dynamic>> _metadataObjectsByItemId = <String, Map<String, dynamic>>{};
+  final Map<String, Map<String, dynamic>> _metadataObjectsByItemId =
+      <String, Map<String, dynamic>>{};
   final Set<String> _metadataLoadingItemIds = <String>{};
   final Set<String> _refreshingItemIds = <String>{};
   final Set<String> _encoderSeededItemIds = <String>{};
-  final Map<String, String?> _encoderCurrentEncodingHintsByItemId = <String, String?>{};
+  final Map<String, String?> _encoderCurrentEncodingHintsByItemId =
+      <String, String?>{};
 
   var _isEmbedding = false;
   var _isEncoding = false;
@@ -78,7 +83,8 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
   int get _currentIndex => widget.orderedItemIds.indexOf(widget.currentItemId);
 
   bool get _hasPrevious => _currentIndex > 0;
-  bool get _hasNext => _currentIndex >= 0 && _currentIndex < widget.orderedItemIds.length - 1;
+  bool get _hasNext =>
+      _currentIndex >= 0 && _currentIndex < widget.orderedItemIds.length - 1;
 
   @override
   void initState() {
@@ -125,7 +131,11 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
     return audioFiles.any((file) => file.exclude != true);
   }
 
-  List<LibraryItemEditorTab> _availableTabsForItem(LibraryItem? item, String? userType, bool canUseMatchTools) {
+  List<LibraryItemEditorTab> _availableTabsForItem(
+    LibraryItem? item,
+    String? userType,
+    bool canUseMatchTools,
+  ) {
     if (item == null) {
       return const <LibraryItemEditorTab>[LibraryItemEditorTab.details];
     }
@@ -155,7 +165,10 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
     }
   }
 
-  void _seedEncoderDefaultsIfNeeded({required String itemId, required List<AudioFile> audioFiles}) {
+  void _seedEncoderDefaultsIfNeeded({
+    required String itemId,
+    required List<AudioFile> audioFiles,
+  }) {
     if (_encoderSeededItemIds.contains(itemId) || audioFiles.isEmpty) {
       return;
     }
@@ -164,7 +177,9 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
         .map((file) => (file.codec ?? '').trim().toLowerCase())
         .where((value) => value.isNotEmpty)
         .toSet();
-    _encoderCurrentEncodingHintsByItemId[itemId] = describeCurrentEncoding(audioFiles);
+    _encoderCurrentEncodingHintsByItemId[itemId] = describeCurrentEncoding(
+      audioFiles,
+    );
 
     if (codecs.first == 'aac' || codecs.first == 'opus') {
       _encoderCodec = 'copy';
@@ -172,11 +187,18 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
       _encoderCodec = 'aac';
     }
 
-    final bitrates = audioFiles.map((file) => file.bitRate ?? 0).where((value) => value > 0).toList(growable: false);
+    final bitrates = audioFiles
+        .map((file) => file.bitRate ?? 0)
+        .where((value) => value > 0)
+        .toList(growable: false);
     if (bitrates.isNotEmpty) {
-      final averageKbps = bitrates.reduce((a, b) => a + b) / bitrates.length / 1000;
+      final averageKbps =
+          bitrates.reduce((a, b) => a + b) / bitrates.length / 1000;
       const bitrateCandidates = <int>[32, 64, 128, 192];
-      final selected = bitrateCandidates.firstWhere((value) => averageKbps <= value, orElse: () => 192);
+      final selected = bitrateCandidates.firstWhere(
+        (value) => averageKbps <= value,
+        orElse: () => 192,
+      );
       _encoderBitrate = '${selected}k';
     } else {
       _encoderBitrate = '128k';
@@ -191,7 +213,10 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
     _encoderSeededItemIds.add(itemId);
   }
 
-  Future<void> _loadMetadataObject(String itemId, {bool forceRefresh = false}) async {
+  Future<void> _loadMetadataObject(
+    String itemId, {
+    bool forceRefresh = false,
+  }) async {
     if (!forceRefresh && _metadataObjectsByItemId.containsKey(itemId)) {
       return;
     }
@@ -216,7 +241,9 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
     });
 
     try {
-      final response = await api.getLibraryItemApi().getLibraryItemMetadataObject(itemId);
+      final response = await api
+          .getLibraryItemApi()
+          .getLibraryItemMetadataObject(itemId);
       if (!mounted) {
         return;
       }
@@ -241,7 +268,8 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
       }
 
       setState(() {
-        _toolErrorMessage = 'Failed to load metadata object: ${_extractApiMessage(error)}';
+        _toolErrorMessage =
+            'Failed to load metadata object: ${_extractApiMessage(error)}';
       });
     } finally {
       if (mounted) {
@@ -282,7 +310,8 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
       }
 
       setState(() {
-        _toolErrorMessage = 'Failed to start embedding: ${_extractApiMessage(error)}';
+        _toolErrorMessage =
+            'Failed to start embedding: ${_extractApiMessage(error)}';
       });
     } finally {
       if (mounted) {
@@ -328,7 +357,8 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
       }
 
       setState(() {
-        _toolErrorMessage = 'Failed to start M4B encoding: ${_extractApiMessage(error)}';
+        _toolErrorMessage =
+            'Failed to start M4B encoding: ${_extractApiMessage(error)}';
       });
     } finally {
       if (mounted) {
@@ -365,7 +395,8 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
       }
 
       setState(() {
-        _toolErrorMessage = 'Failed to cancel encoding: ${_extractApiMessage(error)}';
+        _toolErrorMessage =
+            'Failed to cancel encoding: ${_extractApiMessage(error)}';
       });
     } finally {
       if (mounted) {
@@ -464,7 +495,9 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
 
     _refreshingItemIds.add(itemId);
     try {
-      final response = await api.getLibraryItemApi().getLibraryItem(itemId: itemId);
+      final response = await api.getLibraryItemApi().getLibraryItem(
+        itemId: itemId,
+      );
       final freshItem = response.data;
       if (freshItem == null || !mounted) {
         return;
@@ -476,7 +509,11 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
         _encoderCurrentEncodingHintsByItemId.remove(itemId);
       });
 
-      await processLibraryItemUpdate(container: ref.container, item: freshItem, source: 'editor.open.refresh');
+      await processLibraryItemUpdate(
+        container: ref.container,
+        item: freshItem,
+        source: 'editor.open.refresh',
+      );
     } catch (error, stackTrace) {
       logger(
         'Failed to refresh item from server on editor open. itemId=$itemId, error=$error',
@@ -501,7 +538,9 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
     final api = ref.read(absApiProvider);
     if (api == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No server connection available.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No server connection available.')),
+        );
       }
       return;
     }
@@ -517,7 +556,8 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
       );
       final payload = response.data;
 
-      if (payload == null || (!payload.updated && payload.libraryItem == null)) {
+      if (payload == null ||
+          (!payload.updated && payload.libraryItem == null)) {
         throw Exception('Update request failed.');
       }
 
@@ -526,9 +566,18 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
         _cachedItems[widget.currentItemId] = updatedItem;
         _encoderSeededItemIds.remove(widget.currentItemId);
         _encoderCurrentEncodingHintsByItemId.remove(widget.currentItemId);
-        await processLibraryItemUpdate(container: ref.container, item: updatedItem, source: 'editor.save');
+        await processLibraryItemUpdate(
+          container: ref.container,
+          item: updatedItem,
+          source: 'editor.save',
+        );
       } else {
-        unawaited(invalidateCachedLibraryItemEntries(container: ref.container, itemId: widget.currentItemId));
+        unawaited(
+          invalidateCachedLibraryItemEntries(
+            container: ref.container,
+            itemId: widget.currentItemId,
+          ),
+        );
       }
       await widget.onItemSaved(widget.currentItemId, updatedItem);
 
@@ -536,7 +585,8 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved item details.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Saved item details.')));
     } catch (error, stackTrace) {
       logger(
         'Could not save item details. itemId=${widget.currentItemId}, error=$error',
@@ -554,9 +604,12 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
       }
 
       final rawError = error.toString().trim();
-      final fallback = rawError.isEmpty ? 'Could not save item details.' : 'Could not save item details: $rawError';
+      final fallback = rawError.isEmpty
+          ? 'Could not save item details.'
+          : 'Could not save item details: $rawError';
       final message = listManagementErrorMessage(error, fallback: fallback);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -572,54 +625,84 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
     final currentUser = currentUserAsync.value;
     final currentUserType = currentUser?.type;
 
-    final watchedItemAsync = ref.watch(libraryItemProvider(widget.currentItemId));
+    final watchedItemAsync = ref.watch(
+      libraryItemProvider(widget.currentItemId),
+    );
     final watchedItem = watchedItemAsync.asData?.value;
     if (watchedItem != null) {
       _cachedItems[widget.currentItemId] = watchedItem;
     }
 
     final cachedItem = _cachedItems[widget.currentItemId];
-    final itemAsync = cachedItem != null ? AsyncValue.data(cachedItem) : watchedItemAsync;
+    final itemAsync = cachedItem != null
+        ? AsyncValue.data(cachedItem)
+        : watchedItemAsync;
     final activeItem = itemAsync.asData?.value;
 
     final serverTaskState = ref.watch(serverTasksProvider);
     final activeItemId = activeItem?.id;
     final itemTasks = activeItemId == null
         ? const <AbsTask>[]
-        : serverTaskState.tasks.where((task) => task.data?.libraryItemId == activeItemId).toList(growable: false);
+        : serverTaskState.tasks
+              .where((task) => task.data?.libraryItemId == activeItemId)
+              .toList(growable: false);
     final embedTask = _latestTaskForAction(itemTasks, 'embed-metadata');
     final encodeTask = _latestTaskForAction(itemTasks, 'encode-m4b');
-    final isEmbedTaskQueued = activeItemId != null && serverTaskState.queuedEmbedLibraryItemIds.contains(activeItemId);
+    final isEmbedTaskQueued =
+        activeItemId != null &&
+        serverTaskState.queuedEmbedLibraryItemIds.contains(activeItemId);
     final isEmbedTaskRunning = embedTask != null && !embedTask.isFinished;
     final isEncodeTaskRunning = encodeTask != null && !encodeTask.isFinished;
-    final taskProgressLabel = activeItemId == null ? null : serverTaskState.taskProgressByLibraryItem[activeItemId];
+    final taskProgressLabel = activeItemId == null
+        ? null
+        : serverTaskState.taskProgressByLibraryItem[activeItemId];
     final encodingProgressByIno = activeItemId == null
         ? const <String, String>{}
-        : serverTaskState.audioFilesEncoding[activeItemId] ?? const <String, String>{};
+        : serverTaskState.audioFilesEncoding[activeItemId] ??
+              const <String, String>{};
     final encodingFinishedByIno = activeItemId == null
         ? const <String, bool>{}
-        : serverTaskState.audioFilesFinished[activeItemId] ?? const <String, bool>{};
+        : serverTaskState.audioFilesFinished[activeItemId] ??
+              const <String, bool>{};
 
     final localErrorMessage = _toolErrorMessage?.trim();
 
-    final embeddingErrorMessage = (localErrorMessage != null && localErrorMessage.isNotEmpty)
+    final embeddingErrorMessage =
+        (localErrorMessage != null && localErrorMessage.isNotEmpty)
         ? localErrorMessage
         : _taskFailureMessage(embedTask, fallback: 'Embedding task failed.');
 
-    final encodingErrorMessage = (localErrorMessage != null && localErrorMessage.isNotEmpty)
+    final encodingErrorMessage =
+        (localErrorMessage != null && localErrorMessage.isNotEmpty)
         ? localErrorMessage
-        : _taskFailureMessage(encodeTask, fallback: 'M4B encoding task failed.');
+        : _taskFailureMessage(
+            encodeTask,
+            fallback: 'M4B encoding task failed.',
+          );
 
-    final managementPreferences = readServerManagementPreferences(ref, currentUser?.id);
-    final canEditItems = (currentUser?.permissions.update ?? false) && managementPreferences.editItemsEnabled;
-    final canUseMatchTools = canEditItems && managementPreferences.allowMatchesQuickMatchesEnabled;
+    final managementPreferences = readServerManagementPreferences(
+      ref,
+      currentUser?.id,
+    );
+    final canEditItems =
+        (currentUser?.permissions.update ?? false) &&
+        managementPreferences.editItemsEnabled;
+    final canUseMatchTools =
+        canEditItems && managementPreferences.allowMatchesQuickMatchesEnabled;
 
-    final availableTabs = _availableTabsForItem(activeItem, currentUserType, canUseMatchTools);
-    final selectedTab = availableTabs.contains(_selectedTab) ? _selectedTab : availableTabs.first;
+    final availableTabs = _availableTabsForItem(
+      activeItem,
+      currentUserType,
+      canUseMatchTools,
+    );
+    final selectedTab = availableTabs.contains(_selectedTab)
+        ? _selectedTab
+        : availableTabs.first;
 
     if (activeItem != null && selectedTab == LibraryItemEditorTab.embedding) {
       final shouldLoad =
-          !_metadataObjectsByItemId.containsKey(activeItem.id) && !_metadataLoadingItemIds.contains(activeItem.id);
+          !_metadataObjectsByItemId.containsKey(activeItem.id) &&
+          !_metadataLoadingItemIds.contains(activeItem.id);
       if (shouldLoad) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) {
@@ -630,20 +713,28 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
       }
     }
 
-    if (activeItem != null && availableTabs.contains(LibraryItemEditorTab.encoder)) {
-      final audioFiles = (activeItem.media?.bookMedia?.audioFiles ?? const <AudioFile>[])
-          .where((file) => file.exclude != true)
-          .toList(growable: false);
-      _seedEncoderDefaultsIfNeeded(itemId: activeItem.id, audioFiles: audioFiles);
+    if (activeItem != null &&
+        availableTabs.contains(LibraryItemEditorTab.encoder)) {
+      final audioFiles =
+          (activeItem.media?.bookMedia?.audioFiles ?? const <AudioFile>[])
+              .where((file) => file.exclude != true)
+              .toList(growable: false);
+      _seedEncoderDefaultsIfNeeded(
+        itemId: activeItem.id,
+        audioFiles: audioFiles,
+      );
     }
 
-    final currentEncodingHint = activeItem == null ? null : _encoderCurrentEncodingHintsByItemId[activeItem.id];
+    final currentEncodingHint = activeItem == null
+        ? null
+        : _encoderCurrentEncodingHintsByItemId[activeItem.id];
 
     return Positioned.fill(
       child: Focus(
         autofocus: true,
         onKeyEvent: (node, event) {
-          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.escape) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.escape) {
             widget.onClose();
             return KeyEventResult.handled;
           }
@@ -663,20 +754,30 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
                       : context.isTablet
                       ? constraints.maxWidth * 0.94
                       : constraints.maxWidth;
-                  final maxHeight = context.isDesktop ? constraints.maxHeight * 0.9 : constraints.maxHeight;
+                  final maxHeight = context.isDesktop
+                      ? constraints.maxHeight * 0.9
+                      : constraints.maxHeight;
 
                   return Center(
                     child: GestureDetector(
                       onTap: () {},
                       child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: maxHeight),
+                        constraints: BoxConstraints(
+                          maxWidth: maxWidth,
+                          maxHeight: maxHeight,
+                        ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(context.isMobile ? 18 : 24),
+                          borderRadius: BorderRadius.circular(
+                            context.isMobile ? 18 : 24,
+                          ),
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.surface,
                               border: Border.all(
-                                color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.8),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant
+                                    .withValues(alpha: 0.8),
                               ),
                             ),
                             child: Column(
@@ -691,18 +792,27 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
                                       _toolErrorMessage = null;
                                     });
 
-                                    if (tab == LibraryItemEditorTab.embedding && activeItem != null) {
-                                      unawaited(_loadMetadataObject(activeItem.id));
+                                    if (tab == LibraryItemEditorTab.embedding &&
+                                        activeItem != null) {
+                                      unawaited(
+                                        _loadMetadataObject(activeItem.id),
+                                      );
                                     }
                                   },
                                 ),
                                 Expanded(
                                   child: itemAsync.when(
                                     data: (item) {
-                                      final audioFiles = (item.media?.bookMedia?.audioFiles ?? const <AudioFile>[])
-                                          .where((file) => file.exclude != true)
-                                          .toList(growable: false);
-                                      final chapters = item.media?.bookMedia?.chapters ?? const <Chapter>[];
+                                      final audioFiles =
+                                          (item.media?.bookMedia?.audioFiles ??
+                                                  const <AudioFile>[])
+                                              .where(
+                                                (file) => file.exclude != true,
+                                              )
+                                              .toList(growable: false);
+                                      final chapters =
+                                          item.media?.bookMedia?.chapters ??
+                                          const <Chapter>[];
 
                                       switch (selectedTab) {
                                         case LibraryItemEditorTab.details:
@@ -722,43 +832,65 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
                                             isFullScreen: true,
                                             onMatched: (updated) async {
                                               if (updated) {
-                                                await widget.onItemSaved(item.id, null);
+                                                await widget.onItemSaved(
+                                                  item.id,
+                                                  null,
+                                                );
                                               }
                                               setState(() {
-                                                _selectedTab = LibraryItemEditorTab.details;
+                                                _selectedTab =
+                                                    LibraryItemEditorTab
+                                                        .details;
                                               });
                                             },
                                             onCancel: () {
                                               setState(() {
-                                                _selectedTab = LibraryItemEditorTab.details;
+                                                _selectedTab =
+                                                    LibraryItemEditorTab
+                                                        .details;
                                               });
                                             },
                                           );
                                         case LibraryItemEditorTab.embedding:
                                           return LibraryItemEmbeddingView(
-                                            key: ValueKey('${item.id}-embedding'),
+                                            key: ValueKey(
+                                              '${item.id}-embedding',
+                                            ),
                                             audioFiles: audioFiles,
                                             chapters: chapters,
-                                            metadataObject: _metadataObjectsByItemId[item.id],
-                                            isMetadataLoading: _metadataLoadingItemIds.contains(item.id),
+                                            metadataObject:
+                                                _metadataObjectsByItemId[item
+                                                    .id],
+                                            isMetadataLoading:
+                                                _metadataLoadingItemIds
+                                                    .contains(item.id),
                                             isRequestInFlight: _isEmbedding,
                                             isTaskRunning: isEmbedTaskRunning,
                                             isTaskQueued: isEmbedTaskQueued,
                                             backupAudioFiles: _backupAudioFiles,
-                                            forceEmbedChapters: _forceEmbedChapters,
+                                            forceEmbedChapters:
+                                                _forceEmbedChapters,
                                             onBackupAudioFilesChanged: (value) {
                                               setState(() {
                                                 _backupAudioFiles = value;
                                               });
                                             },
-                                            onForceEmbedChaptersChanged: (value) {
-                                              setState(() {
-                                                _forceEmbedChapters = value;
-                                              });
-                                            },
+                                            onForceEmbedChaptersChanged:
+                                                (value) {
+                                                  setState(() {
+                                                    _forceEmbedChapters = value;
+                                                  });
+                                                },
                                             onRefreshMetadataObject: () =>
-                                                unawaited(_loadMetadataObject(item.id, forceRefresh: true)),
-                                            onStartEmbedding: () => unawaited(_startEmbedding(item)),
+                                                unawaited(
+                                                  _loadMetadataObject(
+                                                    item.id,
+                                                    forceRefresh: true,
+                                                  ),
+                                                ),
+                                            onStartEmbedding: () => unawaited(
+                                              _startEmbedding(item),
+                                            ),
                                             errorMessage: embeddingErrorMessage,
                                           );
                                         case LibraryItemEditorTab.encoder:
@@ -772,9 +904,12 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
                                             isStarting: _isEncoding,
                                             isTaskRunning: isEncodeTaskRunning,
                                             isCanceling: _isCancelingEncode,
-                                            currentEncodingHint: currentEncodingHint,
-                                            encodingProgressByIno: encodingProgressByIno,
-                                            encodingFinishedByIno: encodingFinishedByIno,
+                                            currentEncodingHint:
+                                                currentEncodingHint,
+                                            encodingProgressByIno:
+                                                encodingProgressByIno,
+                                            encodingFinishedByIno:
+                                                encodingFinishedByIno,
                                             onAdvancedModeChanged: (value) {
                                               setState(() {
                                                 _encoderAdvancedMode = value;
@@ -795,15 +930,20 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
                                                 _encoderChannels = value;
                                               });
                                             },
-                                            onStartEncoding: () => unawaited(_startEncoding(item)),
-                                            onCancelEncoding: () => unawaited(_cancelEncoding(item)),
+                                            onStartEncoding: () =>
+                                                unawaited(_startEncoding(item)),
+                                            onCancelEncoding: () => unawaited(
+                                              _cancelEncoding(item),
+                                            ),
                                             progressLabel: taskProgressLabel,
 
                                             errorMessage: encodingErrorMessage,
                                           );
                                       }
                                     },
-                                    loading: () => const Center(child: CircularProgressIndicator()),
+                                    loading: () => const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
                                     error: (error, _) => Center(
                                       child: Padding(
                                         padding: const EdgeInsets.all(20),
@@ -847,7 +987,11 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
         for (final tab in tabs)
           Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: _OverlayTabChip(title: _tabTitle(tab), selected: selectedTab == tab, onTap: () => onSelectTab(tab)),
+            child: _OverlayTabChip(
+              title: _tabTitle(tab),
+              selected: selectedTab == tab,
+              onTap: () => onSelectTab(tab),
+            ),
           ),
       ];
 
@@ -863,13 +1007,17 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
 
       return SizedBox(
         height: 34,
-        child: ListView(scrollDirection: Axis.horizontal, children: tabChildren),
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: tabChildren,
+        ),
       );
     }
 
     final titleText = Text(
       'Edit item',
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: colorScheme.onPrimaryContainer),
+      style: Theme.of(context).textTheme.labelLarge
+          ?.copyWith(color: colorScheme.onPrimaryContainer),
     );
 
     return Container(
@@ -883,7 +1031,11 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
               width: 32,
               height: 32,
               child: IconButton.filledTonal(
-                onPressed: _hasPrevious ? () => widget.onSelectItem(widget.orderedItemIds[_currentIndex - 1]) : null,
+                onPressed: _hasPrevious
+                    ? () => widget.onSelectItem(
+                        widget.orderedItemIds[_currentIndex - 1],
+                      )
+                    : null,
                 tooltip: 'Previous item',
                 icon: const Icon(Icons.arrow_back_rounded, size: 16),
               ),
@@ -893,7 +1045,11 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
             child: isMobile
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [titleText, const SizedBox(height: 6), buildTabsRow(centered: false)],
+                    children: [
+                      titleText,
+                      const SizedBox(height: 6),
+                      buildTabsRow(centered: false),
+                    ],
                   )
                 : Stack(
                     alignment: Alignment.center,
@@ -915,7 +1071,11 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
               width: 32,
               height: 32,
               child: IconButton.filledTonal(
-                onPressed: _hasNext ? () => widget.onSelectItem(widget.orderedItemIds[_currentIndex + 1]) : null,
+                onPressed: _hasNext
+                    ? () => widget.onSelectItem(
+                        widget.orderedItemIds[_currentIndex + 1],
+                      )
+                    : null,
                 tooltip: 'Next item',
                 icon: const Icon(Icons.arrow_forward_rounded, size: 16),
               ),
@@ -937,7 +1097,11 @@ class _LibraryItemEditOverlayState extends ConsumerState<LibraryItemEditOverlay>
 }
 
 class _OverlayTabChip extends StatelessWidget {
-  const _OverlayTabChip({required this.title, required this.selected, required this.onTap});
+  const _OverlayTabChip({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String title;
   final bool selected;
@@ -950,7 +1114,9 @@ class _OverlayTabChip extends StatelessWidget {
     final selectedTextColor = theme.colorScheme.onPrimaryContainer;
 
     return Material(
-      color: selected ? selectedColor : theme.colorScheme.surfaceContainerHighest,
+      color: selected
+          ? selectedColor
+          : theme.colorScheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
@@ -962,7 +1128,9 @@ class _OverlayTabChip extends StatelessWidget {
               title,
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? selectedTextColor : theme.colorScheme.onSurfaceVariant,
+                color: selected
+                    ? selectedTextColor
+                    : theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ),

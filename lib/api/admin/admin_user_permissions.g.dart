@@ -6,7 +6,9 @@ part of 'admin_user_permissions.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_AdminUserPermissions _$AdminUserPermissionsFromJson(Map<String, dynamic> json) => _AdminUserPermissions(
+_AdminUserPermissions _$AdminUserPermissionsFromJson(
+  Map<String, dynamic> json,
+) => _AdminUserPermissions(
   download: json['download'] as bool? ?? true,
   update: json['update'] as bool? ?? false,
   delete: json['delete'] as bool? ?? false,
@@ -15,13 +17,23 @@ _AdminUserPermissions _$AdminUserPermissionsFromJson(Map<String, dynamic> json) 
   accessAllLibraries: json['accessAllLibraries'] as bool? ?? true,
   accessAllTags: json['accessAllTags'] as bool? ?? true,
   accessExplicitContent: json['accessExplicitContent'] as bool? ?? false,
-  selectedTagsNotAccessible: json['selectedTagsNotAccessible'] as bool? ?? false,
+  selectedTagsNotAccessible:
+      json['selectedTagsNotAccessible'] as bool? ?? false,
   librariesAccessible:
-      (json['librariesAccessible'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
-  itemTagsSelected: (json['itemTagsSelected'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
+      (json['librariesAccessible'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
+  itemTagsSelected:
+      (json['itemTagsSelected'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const <String>[],
 );
 
-Map<String, dynamic> _$AdminUserPermissionsToJson(_AdminUserPermissions instance) => <String, dynamic>{
+Map<String, dynamic> _$AdminUserPermissionsToJson(
+  _AdminUserPermissions instance,
+) => <String, dynamic>{
   'download': instance.download,
   'update': instance.update,
   'delete': instance.delete,

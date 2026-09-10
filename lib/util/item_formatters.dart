@@ -38,7 +38,9 @@ String formatBytes(int bytes) {
     unitIndex++;
   }
 
-  final formatted = size >= 100 ? size.toStringAsFixed(0) : size.toStringAsFixed(2);
+  final formatted = size >= 100
+      ? size.toStringAsFixed(0)
+      : size.toStringAsFixed(2);
   return '$formatted ${units[unitIndex]}';
 }
 

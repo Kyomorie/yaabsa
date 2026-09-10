@@ -17,10 +17,12 @@ class SubtitleReadingModeView extends ConsumerStatefulWidget {
   static const String routeName = '/subtitles/continuous';
 
   @override
-  ConsumerState<SubtitleReadingModeView> createState() => _SubtitleReadingModeViewState();
+  ConsumerState<SubtitleReadingModeView> createState() =>
+      _SubtitleReadingModeViewState();
 }
 
-class _SubtitleReadingModeViewState extends ConsumerState<SubtitleReadingModeView> {
+class _SubtitleReadingModeViewState
+    extends ConsumerState<SubtitleReadingModeView> {
   static const int _cueRenderRadius = 100;
   static const int _cueRenderHysteresis = 28;
 
@@ -56,15 +58,19 @@ class _SubtitleReadingModeViewState extends ConsumerState<SubtitleReadingModeVie
     final subtitlesEnabled = settingsManager.getUserSetting<bool>(
       userId,
       SettingKeys.subtitlesEnabled,
-      defaultValue: defaultSettings[SettingKeys.subtitlesEnabled] as bool? ?? false,
+      defaultValue:
+          defaultSettings[SettingKeys.subtitlesEnabled] as bool? ?? false,
     );
     final readAlongEnabled = settingsManager.getUserSetting<bool>(
       userId,
       SettingKeys.subtitleReadAlong,
-      defaultValue: defaultSettings[SettingKeys.subtitleReadAlong] as bool? ?? true,
+      defaultValue:
+          defaultSettings[SettingKeys.subtitleReadAlong] as bool? ?? true,
     );
     if (!subtitlesEnabled) {
-      return const Center(child: Text('Subtitles are disabled in player settings.'));
+      return const Center(
+        child: Text('Subtitles are disabled in player settings.'),
+      );
     }
 
     return StreamBuilder(
@@ -73,7 +79,11 @@ class _SubtitleReadingModeViewState extends ConsumerState<SubtitleReadingModeVie
       builder: (context, mediaSnapshot) {
         final media = mediaSnapshot.data;
         if (media == null) {
-          return const Center(child: Text('Start playback to use continuous subtitle reading mode.'));
+          return const Center(
+            child: Text(
+              'Start playback to use continuous subtitle reading mode.',
+            ),
+          );
         }
 
         final subtitleFuture = loadSubtitleDocumentForItem(
@@ -92,11 +102,15 @@ class _SubtitleReadingModeViewState extends ConsumerState<SubtitleReadingModeVie
 
             final loaded = subtitleSnapshot.data;
             if (loaded == null) {
-              return const Center(child: Text('No subtitles available for this title.'));
+              return const Center(
+                child: Text('No subtitles available for this title.'),
+              );
             }
 
             final document = loaded.document;
-            final paragraphLayout = _SubtitleParagraphLayoutCache.layoutFor(loaded);
+            final paragraphLayout = _SubtitleParagraphLayoutCache.layoutFor(
+              loaded,
+            );
 
             return StreamBuilder<Duration>(
               stream: audioHandler.subtitlePositionStream,
@@ -109,22 +123,44 @@ class _SubtitleReadingModeViewState extends ConsumerState<SubtitleReadingModeVie
                 }
 
                 if (cueIndex < 0 || cueIndex >= document.cues.length) {
-                  return const Center(child: Text('Waiting for subtitle cue...'));
+                  return const Center(
+                    child: Text('Waiting for subtitle cue...'),
+                  );
                 }
 
-                final activeParagraphIndex = paragraphLayout.cueToParagraphIndex[cueIndex];
-                final renderWindowKey = '${media.itemId}::${media.episodeId ?? ''}::${loaded.source.cacheKey}';
-                _updateRenderWindow(windowKey: renderWindowKey, cueIndex: cueIndex, cueCount: document.cues.length);
+                final activeParagraphIndex =
+                    paragraphLayout.cueToParagraphIndex[cueIndex];
+                final renderWindowKey =
+                    '${media.itemId}::${media.episodeId ?? ''}::${loaded.source.cacheKey}';
+                _updateRenderWindow(
+                  windowKey: renderWindowKey,
+                  cueIndex: cueIndex,
+                  cueCount: document.cues.length,
+                );
 
-                final renderStartCueIndex = _renderStartCueIndex.clamp(0, document.cues.length - 1);
-                final renderEndCueIndex = _renderEndCueIndex.clamp(renderStartCueIndex, document.cues.length - 1);
-                final renderStartParagraphIndex = paragraphLayout.cueToParagraphIndex[renderStartCueIndex];
-                final renderEndParagraphIndex = paragraphLayout.cueToParagraphIndex[renderEndCueIndex];
+                final renderStartCueIndex = _renderStartCueIndex.clamp(
+                  0,
+                  document.cues.length - 1,
+                );
+                final renderEndCueIndex = _renderEndCueIndex.clamp(
+                  renderStartCueIndex,
+                  document.cues.length - 1,
+                );
+                final renderStartParagraphIndex =
+                    paragraphLayout.cueToParagraphIndex[renderStartCueIndex];
+                final renderEndParagraphIndex =
+                    paragraphLayout.cueToParagraphIndex[renderEndCueIndex];
                 _currentRenderStartParagraphIndex = renderStartParagraphIndex;
-                _currentVisibleParagraphCount = renderEndParagraphIndex - renderStartParagraphIndex + 1;
+                _currentVisibleParagraphCount =
+                    renderEndParagraphIndex - renderStartParagraphIndex + 1;
 
-                _pruneParagraphKeys(renderStartParagraphIndex, renderEndParagraphIndex);
-                _scheduleParagraphCentering(paragraphIndex: activeParagraphIndex);
+                _pruneParagraphKeys(
+                  renderStartParagraphIndex,
+                  renderEndParagraphIndex,
+                );
+                _scheduleParagraphCentering(
+                  paragraphIndex: activeParagraphIndex,
+                );
 
                 return _ParagraphScroller(
                   scrollController: _scrollController,
@@ -150,7 +186,11 @@ class _SubtitleReadingModeViewState extends ConsumerState<SubtitleReadingModeVie
     return _paragraphKeys.putIfAbsent(paragraphIndex, () => GlobalKey());
   }
 
-  void _updateRenderWindow({required String windowKey, required int cueIndex, required int cueCount}) {
+  void _updateRenderWindow({
+    required String windowKey,
+    required int cueIndex,
+    required int cueCount,
+  }) {
     if (cueCount <= 0) {
       return;
     }
@@ -182,14 +222,21 @@ class _SubtitleReadingModeViewState extends ConsumerState<SubtitleReadingModeVie
     _renderEndCueIndex = min(cueCount - 1, cueIndex + _cueRenderRadius);
   }
 
-  void _pruneParagraphKeys(int renderStartParagraphIndex, int renderEndParagraphIndex) {
+  void _pruneParagraphKeys(
+    int renderStartParagraphIndex,
+    int renderEndParagraphIndex,
+  ) {
     final minKeep = renderStartParagraphIndex - 8;
     final maxKeep = renderEndParagraphIndex + 8;
-    _paragraphKeys.removeWhere((paragraphIndex, _) => paragraphIndex < minKeep || paragraphIndex > maxKeep);
+    _paragraphKeys.removeWhere(
+      (paragraphIndex, _) =>
+          paragraphIndex < minKeep || paragraphIndex > maxKeep,
+    );
   }
 
   void _scheduleParagraphCentering({required int paragraphIndex}) {
-    if (_lastCenteredParagraphIndex == paragraphIndex && _pendingCenteredParagraphIndex == null) {
+    if (_lastCenteredParagraphIndex == paragraphIndex &&
+        _pendingCenteredParagraphIndex == null) {
       return;
     }
 
@@ -232,8 +279,13 @@ class _SubtitleReadingModeViewState extends ConsumerState<SubtitleReadingModeVie
       return;
     }
 
-    if (!_hasAttemptedPreScrollForPendingCenter && _scrollController.hasClients && _currentVisibleParagraphCount > 1) {
-      final localIndex = max(0, paragraphIndex - _currentRenderStartParagraphIndex);
+    if (!_hasAttemptedPreScrollForPendingCenter &&
+        _scrollController.hasClients &&
+        _currentVisibleParagraphCount > 1) {
+      final localIndex = max(
+        0,
+        paragraphIndex - _currentRenderStartParagraphIndex,
+      );
       final ratio = localIndex / (_currentVisibleParagraphCount - 1);
       final maxExtent = _scrollController.position.maxScrollExtent;
       final targetOffset = (ratio * maxExtent).clamp(0.0, maxExtent);
@@ -288,12 +340,20 @@ class _ParagraphScroller extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleParagraphCount = max(0, renderEndParagraphIndex - renderStartParagraphIndex + 1);
+    final visibleParagraphCount = max(
+      0,
+      renderEndParagraphIndex - renderStartParagraphIndex + 1,
+    );
     final baseTextStyle =
-        Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.52) ?? const TextStyle(fontSize: 16, height: 1.52);
+        Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.52) ??
+        const TextStyle(fontSize: 16, height: 1.52);
     final colorScheme = Theme.of(context).colorScheme;
-    final inactiveParagraphStyle = baseTextStyle.copyWith(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.72));
-    final inactiveCueStyle = baseTextStyle.copyWith(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8));
+    final inactiveParagraphStyle = baseTextStyle.copyWith(
+      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.72),
+    );
+    final inactiveCueStyle = baseTextStyle.copyWith(
+      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+    );
     final activeCueStyle = baseTextStyle.copyWith(color: colorScheme.onSurface);
     final activeWordStyle = baseTextStyle.copyWith(
       color: colorScheme.primary,
@@ -302,12 +362,20 @@ class _ParagraphScroller extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final verticalPadding = (constraints.maxHeight * 0.46).clamp(96.0, 280.0);
+        final verticalPadding = (constraints.maxHeight * 0.46).clamp(
+          96.0,
+          280.0,
+        );
 
         return ListView.builder(
           controller: scrollController,
           physics: const ClampingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(16, verticalPadding, 16, verticalPadding),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            verticalPadding,
+            16,
+            verticalPadding,
+          ),
           itemCount: visibleParagraphCount,
           itemBuilder: (context, localIndex) {
             final paragraphIndex = renderStartParagraphIndex + localIndex;
@@ -325,12 +393,20 @@ class _ParagraphScroller extends StatelessWidget {
                     activeCueStyle: activeCueStyle,
                     activeWordStyle: activeWordStyle,
                   )
-                : <InlineSpan>[TextSpan(text: paragraph.text, style: inactiveParagraphStyle)];
+                : <InlineSpan>[
+                    TextSpan(
+                      text: paragraph.text,
+                      style: inactiveParagraphStyle,
+                    ),
+                  ];
 
             return KeyedSubtree(
               key: paragraphKeyBuilder(paragraphIndex),
               child: Padding(
-                padding: EdgeInsets.only(top: paragraph.startsAfterParagraphBreak ? 20 : 8, bottom: 8),
+                padding: EdgeInsets.only(
+                  top: paragraph.startsAfterParagraphBreak ? 20 : 8,
+                  bottom: 8,
+                ),
                 child: Text.rich(
                   TextSpan(style: inactiveParagraphStyle, children: spans),
                   textAlign: TextAlign.left,
@@ -359,7 +435,12 @@ class _ParagraphScroller extends StatelessWidget {
     for (var index = 0; index < paragraph.cues.length; index++) {
       final cue = paragraph.cues[index];
       if (index > 0) {
-        spans.add(TextSpan(text: cue.startsNewLine == true ? '\n' : ' ', style: inactiveCueStyle));
+        spans.add(
+          TextSpan(
+            text: cue.startsNewLine == true ? '\n' : ' ',
+            style: inactiveCueStyle,
+          ),
+        );
       }
 
       final cueData = document.cues[cue.cueIndex];
@@ -399,7 +480,8 @@ class _ParagraphScroller extends StatelessWidget {
     final spans = <InlineSpan>[];
 
     for (final segment in cueData.segments) {
-      final isActiveWord = currentPosition >= segment.start && currentPosition < segment.end;
+      final isActiveWord =
+          currentPosition >= segment.start && currentPosition < segment.end;
       spans.addAll(
         buildSubtitleSegmentSpans(
           text: segment.text,
@@ -415,7 +497,10 @@ class _ParagraphScroller extends StatelessWidget {
 }
 
 class _SubtitleParagraphLayout {
-  const _SubtitleParagraphLayout({required this.paragraphs, required this.cueToParagraphIndex});
+  const _SubtitleParagraphLayout({
+    required this.paragraphs,
+    required this.cueToParagraphIndex,
+  });
 
   final List<_SubtitleParagraph> paragraphs;
   final List<int> cueToParagraphIndex;
@@ -438,7 +523,11 @@ class _SubtitleParagraph {
 }
 
 class _SubtitleParagraphCue {
-  const _SubtitleParagraphCue({required this.cueIndex, required this.text, this.startsNewLine = false});
+  const _SubtitleParagraphCue({
+    required this.cueIndex,
+    required this.text,
+    this.startsNewLine = false,
+  });
 
   final int cueIndex;
   final String text;
@@ -468,7 +557,10 @@ class _SubtitleParagraphLayoutCache {
   static _SubtitleParagraphLayout _build(ParsedSubtitleDocument document) {
     final cues = document.cues;
     if (cues.isEmpty) {
-      return const _SubtitleParagraphLayout(paragraphs: <_SubtitleParagraph>[], cueToParagraphIndex: <int>[]);
+      return const _SubtitleParagraphLayout(
+        paragraphs: <_SubtitleParagraph>[],
+        cueToParagraphIndex: <int>[],
+      );
     }
 
     const lineBreakThreshold = Duration(milliseconds: 500);
@@ -492,7 +584,11 @@ class _SubtitleParagraphLayoutCache {
         );
         final paragraphIndex = paragraphs.length;
         paragraphs.add(paragraph);
-        for (var cueIndex = paragraph.startCueIndex; cueIndex <= paragraph.endCueIndex; cueIndex++) {
+        for (
+          var cueIndex = paragraph.startCueIndex;
+          cueIndex <= paragraph.endCueIndex;
+          cueIndex++
+        ) {
           cueToParagraph[cueIndex] = paragraphIndex;
         }
         paragraphStartCue = index;
@@ -510,11 +606,18 @@ class _SubtitleParagraphLayoutCache {
     );
     final tailParagraphIndex = paragraphs.length;
     paragraphs.add(tailParagraph);
-    for (var cueIndex = tailParagraph.startCueIndex; cueIndex <= tailParagraph.endCueIndex; cueIndex++) {
+    for (
+      var cueIndex = tailParagraph.startCueIndex;
+      cueIndex <= tailParagraph.endCueIndex;
+      cueIndex++
+    ) {
       cueToParagraph[cueIndex] = tailParagraphIndex;
     }
 
-    return _SubtitleParagraphLayout(paragraphs: paragraphs, cueToParagraphIndex: cueToParagraph);
+    return _SubtitleParagraphLayout(
+      paragraphs: paragraphs,
+      cueToParagraphIndex: cueToParagraph,
+    );
   }
 
   static _SubtitleParagraph _buildParagraph(
@@ -529,12 +632,20 @@ class _SubtitleParagraphLayoutCache {
     final paragraphCues = <_SubtitleParagraphCue>[];
 
     for (var index = startCueIndex; index <= endCueIndex; index++) {
-      final cueText = _normalizeInlineWhitespace(cues[index].text.replaceAll('\n', ' '));
+      final cueText = _normalizeInlineWhitespace(
+        cues[index].text.replaceAll('\n', ' '),
+      );
       final startsNewLine =
           index > startCueIndex &&
           (cues[index].start - cues[index - 1].end) >= lineBreakThreshold &&
           (cues[index].start - cues[index - 1].end) <= paragraphBreakThreshold;
-      paragraphCues.add(_SubtitleParagraphCue(cueIndex: index, text: cueText, startsNewLine: startsNewLine));
+      paragraphCues.add(
+        _SubtitleParagraphCue(
+          cueIndex: index,
+          text: cueText,
+          startsNewLine: startsNewLine,
+        ),
+      );
 
       if (cueText.isEmpty) {
         continue;

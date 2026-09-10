@@ -3,7 +3,11 @@ import 'package:yaabsa/components/common/local_cover_image.dart';
 import 'package:yaabsa/models/internal_download.dart';
 
 class DownloadCoverThumbnail extends StatelessWidget {
-  const DownloadCoverThumbnail({super.key, required this.download, this.size = 44});
+  const DownloadCoverThumbnail({
+    super.key,
+    required this.download,
+    this.size = 44,
+  });
 
   final InternalDownload download;
   final double size;
@@ -15,11 +19,14 @@ class DownloadCoverThumbnail extends StatelessWidget {
     final placeholder = Container(
       color: colorScheme.surfaceContainerHighest,
       child: Icon(
-        download.isPodcast ? Icons.podcasts_rounded : Icons.library_books_outlined,
+        download.isPodcast
+            ? Icons.podcasts_rounded
+            : Icons.library_books_outlined,
         color: colorScheme.onSurfaceVariant,
       ),
     );
-    final itemId = download.item?.id ?? download.episode?.libraryItemId ?? 'unknown';
+    final itemId =
+        download.item?.id ?? download.episode?.libraryItemId ?? 'unknown';
     final episodeId = download.episode?.id ?? 'item';
 
     return ClipRRect(
@@ -29,7 +36,11 @@ class DownloadCoverThumbnail extends StatelessWidget {
         height: size,
         child: coverPath == null || coverPath.isEmpty
             ? placeholder
-            : LocalCoverImage(coverPath: coverPath, cacheKey: 'download:$itemId:$episodeId', placeholder: placeholder),
+            : LocalCoverImage(
+                coverPath: coverPath,
+                cacheKey: 'download:$itemId:$episodeId',
+                placeholder: placeholder,
+              ),
       ),
     );
   }

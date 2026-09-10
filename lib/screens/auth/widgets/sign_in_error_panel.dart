@@ -2,13 +2,19 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 class SignInErrorPanel extends StatelessWidget {
-  const SignInErrorPanel({super.key, required this.message, this.stackTraceDetails, this.onRetry});
+  const SignInErrorPanel({
+    super.key,
+    required this.message,
+    this.stackTraceDetails,
+    this.onRetry,
+  });
 
   final String message;
   final String? stackTraceDetails;
   final VoidCallback? onRetry;
 
-  bool get _canCopyDetails => stackTraceDetails != null && stackTraceDetails!.trim().isNotEmpty;
+  bool get _canCopyDetails =>
+      stackTraceDetails != null && stackTraceDetails!.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +34,19 @@ class SignInErrorPanel extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.error_outline_rounded, size: 18, color: colorScheme.error),
+              Icon(
+                Icons.error_outline_rounded,
+                size: 18,
+                color: colorScheme.error,
+              ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(message, style: textTheme.bodyMedium?.copyWith(color: colorScheme.error)),
+                child: Text(
+                  message,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.error,
+                  ),
+                ),
               ),
             ],
           ),
@@ -70,6 +85,7 @@ class SignInErrorPanel extends StatelessWidget {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Copied')));
   }
 }

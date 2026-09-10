@@ -20,10 +20,12 @@ class AdminItemMetadataUtilsView extends ConsumerStatefulWidget {
   const AdminItemMetadataUtilsView({super.key});
 
   @override
-  ConsumerState<AdminItemMetadataUtilsView> createState() => _AdminItemMetadataUtilsViewState();
+  ConsumerState<AdminItemMetadataUtilsView> createState() =>
+      _AdminItemMetadataUtilsViewState();
 }
 
-class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUtilsView> {
+class _AdminItemMetadataUtilsViewState
+    extends ConsumerState<AdminItemMetadataUtilsView> {
   String? _activeUserId;
   bool _isLoading = true;
   String? _errorMessage;
@@ -44,14 +46,20 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
         .toSet()
         .toList(growable: false);
 
-    sortedTerms.sort((first, second) => first.toLowerCase().compareTo(second.toLowerCase()));
+    sortedTerms.sort(
+      (first, second) => first.toLowerCase().compareTo(second.toLowerCase()),
+    );
     return sortedTerms;
   }
 
-  List<CustomMetadataProvider> _sortedProviders(List<CustomMetadataProvider> providers) {
+  List<CustomMetadataProvider> _sortedProviders(
+    List<CustomMetadataProvider> providers,
+  ) {
     final sortedProviders = List<CustomMetadataProvider>.from(providers);
     sortedProviders.sort((first, second) {
-      final byName = first.name.toLowerCase().compareTo(second.name.toLowerCase());
+      final byName = first.name.toLowerCase().compareTo(
+        second.name.toLowerCase(),
+      );
       if (byName != 0) {
         return byName;
       }
@@ -84,7 +92,9 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
       setState(() {
         _tags = _sortedTerms(tagsResponse.data?.tags ?? const <String>[]);
         _genres = _sortedTerms(genresResponse.data?.genres ?? const <String>[]);
-        _providers = _sortedProviders(providersResponse.data?.providers ?? const <CustomMetadataProvider>[]);
+        _providers = _sortedProviders(
+          providersResponse.data?.providers ?? const <CustomMetadataProvider>[],
+        );
         _errorMessage = null;
       });
     } catch (error) {
@@ -148,7 +158,9 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
     }
 
     setState(() {
-      _providers = _sortedProviders(response.data?.providers ?? const <CustomMetadataProvider>[]);
+      _providers = _sortedProviders(
+        response.data?.providers ?? const <CustomMetadataProvider>[],
+      );
     });
   }
 
@@ -176,7 +188,10 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
     return response.data ?? const MetadataTermUpdateResponse();
   }
 
-  Future<MetadataTermUpdateResponse> _deleteTerm({required _MetadataTermType termType, required String term}) async {
+  Future<MetadataTermUpdateResponse> _deleteTerm({
+    required _MetadataTermType termType,
+    required String term,
+  }) async {
     final api = ref.read(absApiProvider);
     if (api == null) {
       throw StateError('No active API client.');
@@ -196,13 +211,17 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
     return response.data ?? const MetadataTermUpdateResponse();
   }
 
-  Future<CustomMetadataProvider?> _createProvider(CreateCustomMetadataProviderRequest payload) async {
+  Future<CustomMetadataProvider?> _createProvider(
+    CreateCustomMetadataProviderRequest payload,
+  ) async {
     final api = ref.read(absApiProvider);
     if (api == null) {
       throw StateError('No active API client.');
     }
 
-    final response = await api.getAdminApi().createCustomMetadataProvider(payload: payload);
+    final response = await api.getAdminApi().createCustomMetadataProvider(
+      payload: payload,
+    );
     final createdProvider = response.data?.provider;
     await _refreshProviders();
     return createdProvider;
@@ -214,7 +233,9 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
       throw StateError('No active API client.');
     }
 
-    final deleted = await api.getAdminApi().deleteCustomMetadataProvider(provider.id);
+    final deleted = await api.getAdminApi().deleteCustomMetadataProvider(
+      provider.id,
+    );
     if (!deleted) {
       throw Exception('Delete request failed.');
     }
@@ -231,7 +252,9 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
         if (currentUser == null) {
           return const Padding(
             padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
-            child: Text('No active user. Sign in to manage item metadata utilities.'),
+            child: Text(
+              'No active user. Sign in to manage item metadata utilities.',
+            ),
           );
         }
 
@@ -255,12 +278,23 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
         ref.watch(userSettingsWatcherProvider);
         final forceMetadataRefreshEnabled = ref
             .read(settingsManagerProvider.notifier)
-            .getUserSetting<bool>(currentUser.id, SettingKeys.toolsForceMetadataRefresh, defaultValue: false);
+            .getUserSetting<bool>(
+              currentUser.id,
+              SettingKeys.toolsForceMetadataRefresh,
+              defaultValue: false,
+            );
         final splitGenresTagsEnabled = ref
             .read(settingsManagerProvider.notifier)
-            .getUserSetting<bool>(currentUser.id, SettingKeys.toolsSplitGenresTags, defaultValue: false);
+            .getUserSetting<bool>(
+              currentUser.id,
+              SettingKeys.toolsSplitGenresTags,
+              defaultValue: false,
+            );
 
-        if (_isLoading && _tags.isEmpty && _genres.isEmpty && _providers.isEmpty) {
+        if (_isLoading &&
+            _tags.isEmpty &&
+            _genres.isEmpty &&
+            _providers.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(32),
             child: Center(child: CircularProgressIndicator()),
@@ -275,12 +309,17 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
               if (_errorMessage != null && _errorMessage!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
-                  child: _MetadataUtilsErrorCard(message: _errorMessage!, onRetry: _loadMetadataUtilsData),
+                  child: _MetadataUtilsErrorCard(
+                    message: _errorMessage!,
+                    onRetry: _loadMetadataUtilsData,
+                  ),
                 ),
               if (forceMetadataRefreshEnabled)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
-                  child: AdminForceMetadataRefreshTool(onCompleted: _loadMetadataUtilsData),
+                  child: AdminForceMetadataRefreshTool(
+                    onCompleted: _loadMetadataUtilsData,
+                  ),
                 ),
               const SizedBox(height: 12),
               Expanded(
@@ -310,7 +349,10 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
                                 currentTerm: currentTerm,
                                 newTerm: newTerm,
                               ),
-                              onDelete: (term) => _deleteTerm(termType: _MetadataTermType.tag, term: term),
+                              onDelete: (term) => _deleteTerm(
+                                termType: _MetadataTermType.tag,
+                                term: term,
+                              ),
                               toolbarAction: splitGenresTagsEnabled
                                   ? AdminSplitMetadataTermsTool(
                                       splitType: MetadataSplitType.tags,
@@ -328,7 +370,10 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
                                 currentTerm: currentTerm,
                                 newTerm: newTerm,
                               ),
-                              onDelete: (term) => _deleteTerm(termType: _MetadataTermType.genre, term: term),
+                              onDelete: (term) => _deleteTerm(
+                                termType: _MetadataTermType.genre,
+                                term: term,
+                              ),
                               toolbarAction: splitGenresTagsEnabled
                                   ? AdminSplitMetadataTermsTool(
                                       splitType: MetadataSplitType.genres,
@@ -359,7 +404,10 @@ class _AdminItemMetadataUtilsViewState extends ConsumerState<AdminItemMetadataUt
       ),
       error: (error, stackTrace) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          'Failed to load user data: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       ),
     );
   }
@@ -374,16 +422,23 @@ class _MetadataUtilsErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
+      color: Theme.of(context).colorScheme.errorContainer
+          .withValues(alpha: 0.45),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error_outline,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(width: 10),
             Expanded(child: Text(message)),
             const SizedBox(width: 10),
-            TextButton(onPressed: () => unawaited(onRetry()), child: const Text('Retry')),
+            TextButton(
+              onPressed: () => unawaited(onRetry()),
+              child: const Text('Retry'),
+            ),
           ],
         ),
       ),

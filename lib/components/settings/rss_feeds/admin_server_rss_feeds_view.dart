@@ -14,10 +14,12 @@ class AdminServerRssFeedsView extends ConsumerStatefulWidget {
   const AdminServerRssFeedsView({super.key});
 
   @override
-  ConsumerState<AdminServerRssFeedsView> createState() => _AdminServerRssFeedsViewState();
+  ConsumerState<AdminServerRssFeedsView> createState() =>
+      _AdminServerRssFeedsViewState();
 }
 
-class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsView> {
+class _AdminServerRssFeedsViewState
+    extends ConsumerState<AdminServerRssFeedsView> {
   final TextEditingController _searchController = TextEditingController();
 
   String? _activeUserId;
@@ -118,7 +120,10 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
       }
 
       setState(() {
-        _errorMessage = listManagementErrorMessage(error, fallback: 'Failed to load RSS feeds.');
+        _errorMessage = listManagementErrorMessage(
+          error,
+          fallback: 'Failed to load RSS feeds.',
+        );
       });
     } finally {
       if (mounted) {
@@ -129,7 +134,10 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
     }
   }
 
-  String _resolvedTitle(AdminRssFeed feed, Map<String, AdminRssFeedMinified> minifiedById) {
+  String _resolvedTitle(
+    AdminRssFeed feed,
+    Map<String, AdminRssFeedMinified> minifiedById,
+  ) {
     final minifiedTitle = minifiedById[feed.id]?.meta?.title?.trim();
     if (minifiedTitle != null && minifiedTitle.isNotEmpty) {
       return minifiedTitle;
@@ -137,7 +145,10 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
     return feed.resolvedTitle;
   }
 
-  String? _resolvedDescription(AdminRssFeed feed, Map<String, AdminRssFeedMinified> minifiedById) {
+  String? _resolvedDescription(
+    AdminRssFeed feed,
+    Map<String, AdminRssFeedMinified> minifiedById,
+  ) {
     final primary = feed.meta?.description?.trim();
     if (primary != null && primary.isNotEmpty) {
       return primary;
@@ -189,12 +200,19 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
       return parsedBase.resolve(trimmedValue).toString();
     }
 
-    final normalizedBase = trimmedBase.endsWith('/') ? trimmedBase.substring(0, trimmedBase.length - 1) : trimmedBase;
-    final normalizedPath = trimmedValue.startsWith('/') ? trimmedValue : '/$trimmedValue';
+    final normalizedBase = trimmedBase.endsWith('/')
+        ? trimmedBase.substring(0, trimmedBase.length - 1)
+        : trimmedBase;
+    final normalizedPath = trimmedValue.startsWith('/')
+        ? trimmedValue
+        : '/$trimmedValue';
     return '$normalizedBase$normalizedPath';
   }
 
-  String? _resolvedFeedUrl(AdminRssFeed feed, Map<String, AdminRssFeedMinified> minifiedById) {
+  String? _resolvedFeedUrl(
+    AdminRssFeed feed,
+    Map<String, AdminRssFeedMinified> minifiedById,
+  ) {
     final minified = minifiedById[feed.id];
     final feedUrl =
         feed.feedUrl?.trim() ??
@@ -205,10 +223,17 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
     return _resolveUrl(baseUrl: feed.serverAddress, value: feedUrl);
   }
 
-  String? _resolvedCoverImageUrl(AdminRssFeed feed, Map<String, AdminRssFeedMinified> minifiedById) {
+  String? _resolvedCoverImageUrl(
+    AdminRssFeed feed,
+    Map<String, AdminRssFeedMinified> minifiedById,
+  ) {
     final minified = minifiedById[feed.id];
-    final imageUrl = feed.meta?.imageUrl?.trim() ?? minified?.meta?.imageUrl?.trim();
-    final resolvedImage = _resolveUrl(baseUrl: feed.serverAddress, value: imageUrl);
+    final imageUrl =
+        feed.meta?.imageUrl?.trim() ?? minified?.meta?.imageUrl?.trim();
+    final resolvedImage = _resolveUrl(
+      baseUrl: feed.serverAddress,
+      value: imageUrl,
+    );
     if (resolvedImage != null && resolvedImage.isNotEmpty) {
       return resolvedImage;
     }
@@ -218,7 +243,9 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
       return null;
     }
 
-    final normalized = feedUrl.endsWith('/') ? feedUrl.substring(0, feedUrl.length - 1) : feedUrl;
+    final normalized = feedUrl.endsWith('/')
+        ? feedUrl.substring(0, feedUrl.length - 1)
+        : feedUrl;
     return '$normalized/cover';
   }
 
@@ -236,7 +263,9 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
     return '$year-$month-$day $hour:$minute';
   }
 
-  List<AdminRssFeed> _filteredFeeds(Map<String, AdminRssFeedMinified> minifiedById) {
+  List<AdminRssFeed> _filteredFeeds(
+    Map<String, AdminRssFeedMinified> minifiedById,
+  ) {
     final normalizedQuery = _searchQuery.trim().toLowerCase();
     if (normalizedQuery.isEmpty) {
       return _feeds;
@@ -249,9 +278,12 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
           final entityType = _entityLabel(feed.entityType);
           final feedUrl = _resolvedFeedUrl(feed, minifiedById) ?? '';
           final slug = feed.slug ?? '';
-          final author = feed.meta?.author ?? minifiedById[feed.id]?.meta?.author ?? '';
+          final author =
+              feed.meta?.author ?? minifiedById[feed.id]?.meta?.author ?? '';
 
-          final searchable = '$title $description $entityType $feedUrl $slug $author ${feed.id}'.toLowerCase();
+          final searchable =
+              '$title $description $entityType $feedUrl $slug $author ${feed.id}'
+                  .toLowerCase();
           return searchable.contains(normalizedQuery);
         })
         .toList(growable: false);
@@ -267,7 +299,10 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
     });
   }
 
-  Future<void> _showDetails(AdminRssFeed feed, Map<String, AdminRssFeedMinified> minifiedById) async {
+  Future<void> _showDetails(
+    AdminRssFeed feed,
+    Map<String, AdminRssFeedMinified> minifiedById,
+  ) async {
     await showAdminRssFeedDetailsDialog(
       context: context,
       feed: feed,
@@ -312,14 +347,23 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
       }
 
       setState(() {
-        _feeds = _feeds.where((entry) => entry.id != feed.id).toList(growable: false);
-        _minifiedFeeds = _minifiedFeeds.where((entry) => entry.id != feed.id).toList(growable: false);
+        _feeds = _feeds
+            .where((entry) => entry.id != feed.id)
+            .toList(growable: false);
+        _minifiedFeeds = _minifiedFeeds
+            .where((entry) => entry.id != feed.id)
+            .toList(growable: false);
       });
 
       _showMessage('RSS feed closed.');
       unawaited(_loadFeeds(showLoading: false));
     } catch (error) {
-      _showMessage(listManagementErrorMessage(error, fallback: 'Failed to close RSS feed.'));
+      _showMessage(
+        listManagementErrorMessage(
+          error,
+          fallback: 'Failed to close RSS feed.',
+        ),
+      );
     } finally {
       if (mounted) {
         _setBusy(feed.id, false);
@@ -327,7 +371,10 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
     }
   }
 
-  Widget _buildFeedCover(AdminRssFeed feed, Map<String, AdminRssFeedMinified> minifiedById) {
+  Widget _buildFeedCover(
+    AdminRssFeed feed,
+    Map<String, AdminRssFeedMinified> minifiedById,
+  ) {
     final imageUrl = _resolvedCoverImageUrl(feed, minifiedById);
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -335,8 +382,14 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
       return Container(
         width: 52,
         height: 52,
-        decoration: BoxDecoration(color: colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(10)),
-        child: Icon(Icons.rss_feed_rounded, color: colorScheme.onSurfaceVariant),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.rss_feed_rounded,
+          color: colorScheme.onSurfaceVariant,
+        ),
       );
     }
 
@@ -355,14 +408,20 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
               color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(Icons.rss_feed_rounded, color: colorScheme.onSurfaceVariant),
+            child: Icon(
+              Icons.rss_feed_rounded,
+              color: colorScheme.onSurfaceVariant,
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _buildFeedTitleCell(AdminRssFeed feed, Map<String, AdminRssFeedMinified> minifiedById) {
+  Widget _buildFeedTitleCell(
+    AdminRssFeed feed,
+    Map<String, AdminRssFeedMinified> minifiedById,
+  ) {
     final title = _resolvedTitle(feed, minifiedById);
     final description = _resolvedDescription(feed, minifiedById);
 
@@ -381,8 +440,9 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
                   description,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ),
@@ -391,7 +451,9 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
     );
   }
 
-  List<ExpressiveTableColumn<AdminRssFeed>> _tableColumns(Map<String, AdminRssFeedMinified> minifiedById) {
+  List<ExpressiveTableColumn<AdminRssFeed>> _tableColumns(
+    Map<String, AdminRssFeedMinified> minifiedById,
+  ) {
     return [
       ExpressiveTableColumn<AdminRssFeed>(
         id: 'feed',
@@ -411,8 +473,9 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
                   description,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           );
@@ -423,8 +486,11 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
         id: 'entity',
         label: 'Entity',
         width: 100,
-        cellBuilder: (context, feed) =>
-            Text(_entityLabel(feed.entityType), maxLines: 1, overflow: TextOverflow.ellipsis),
+        cellBuilder: (context, feed) => Text(
+          _entityLabel(feed.entityType),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       ExpressiveTableColumn<AdminRssFeed>(
         id: 'episodes',
@@ -437,8 +503,12 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
         label: 'Author',
         width: 160,
         cellBuilder: (context, feed) {
-          final author = feed.meta?.author?.trim() ?? minifiedById[feed.id]?.meta?.author?.trim();
-          final resolved = author == null || author.isEmpty ? 'Unknown' : author;
+          final author =
+              feed.meta?.author?.trim() ??
+              minifiedById[feed.id]?.meta?.author?.trim();
+          final resolved = author == null || author.isEmpty
+              ? 'Unknown'
+              : author;
           return Text(resolved, maxLines: 1, overflow: TextOverflow.ellipsis);
         },
       ),
@@ -453,8 +523,14 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
     ];
   }
 
-  Widget _buildToolbar({required bool compact, required int totalCount, required int filteredCount}) {
-    final summaryText = filteredCount == totalCount ? '$totalCount feeds' : '$filteredCount of $totalCount feeds';
+  Widget _buildToolbar({
+    required bool compact,
+    required int totalCount,
+    required int filteredCount,
+  }) {
+    final summaryText = filteredCount == totalCount
+        ? '$totalCount feeds'
+        : '$filteredCount of $totalCount feeds';
 
     if (compact) {
       return Column(
@@ -478,13 +554,16 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
               Expanded(
                 child: Text(
                   summaryText,
-                  style: Theme.of(context).textTheme.bodySmall
-                      ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
               IconButton.filledTonal(
                 tooltip: 'Refresh',
-                onPressed: _isLoading ? null : () => unawaited(_loadFeeds(showLoading: true)),
+                onPressed: _isLoading
+                    ? null
+                    : () => unawaited(_loadFeeds(showLoading: true)),
                 icon: const Icon(Icons.refresh_rounded),
               ),
             ],
@@ -517,7 +596,9 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
         ),
         const SizedBox(width: 12),
         OutlinedButton.icon(
-          onPressed: _isLoading ? null : () => unawaited(_loadFeeds(showLoading: true)),
+          onPressed: _isLoading
+              ? null
+              : () => unawaited(_loadFeeds(showLoading: true)),
           icon: const Icon(Icons.refresh_rounded),
           label: const Text('Refresh'),
         ),
@@ -532,17 +613,24 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
     }
 
     return Card(
-      color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.45),
+      color: Theme.of(context).colorScheme.errorContainer
+          .withValues(alpha: 0.45),
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Row(
           children: [
-            Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error_outline_rounded,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(width: 10),
             Expanded(child: Text(message)),
             const SizedBox(width: 10),
-            TextButton(onPressed: () => unawaited(_loadFeeds(showLoading: true)), child: const Text('Retry')),
+            TextButton(
+              onPressed: () => unawaited(_loadFeeds(showLoading: true)),
+              child: const Text('Retry'),
+            ),
           ],
         ),
       ),
@@ -613,7 +701,9 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
                         onPressed: _closeFeed,
                       ),
                     ],
-                    emptyTitle: _searchQuery.trim().isEmpty ? 'No RSS feeds found' : 'No matches for your search',
+                    emptyTitle: _searchQuery.trim().isEmpty
+                        ? 'No RSS feeds found'
+                        : 'No matches for your search',
                     emptySubtitle: _searchQuery.trim().isEmpty
                         ? 'Feeds will appear here.'
                         : 'Try a different title, URL, or author filter.',
@@ -637,7 +727,10 @@ class _AdminServerRssFeedsViewState extends ConsumerState<AdminServerRssFeedsVie
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-        child: Text('Failed to load user data: $error', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(
+          'Failed to load user data: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
       ),
     );
   }

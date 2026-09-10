@@ -20,7 +20,10 @@ List<SessionUserSummary> sessionUserSummaryListFromDynamic(dynamic value) {
     return const <SessionUserSummary>[];
   }
 
-  return value.map(sessionUserSummaryFromDynamic).whereType<SessionUserSummary>().toList(growable: false);
+  return value
+      .map(sessionUserSummaryFromDynamic)
+      .whereType<SessionUserSummary>()
+      .toList(growable: false);
 }
 
 @freezed
@@ -31,5 +34,6 @@ abstract class SessionUserSummary with _$SessionUserSummary {
     @JsonKey(name: 'type') String? type,
   }) = _SessionUserSummary;
 
-  factory SessionUserSummary.fromJson(Map<String, dynamic> json) => _$SessionUserSummaryFromJson(json);
+  factory SessionUserSummary.fromJson(Map<String, dynamic> json) =>
+      _$SessionUserSummaryFromJson(json);
 }

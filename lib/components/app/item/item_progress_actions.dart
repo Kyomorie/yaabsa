@@ -25,9 +25,15 @@ bool canAddLibraryItemToPlaylist(LibraryItem item, String? currentUserId) {
       currentUserId.isNotEmpty;
 }
 
-bool canAddLibraryItemToCollection(LibraryItem item, {required bool canUpdate}) {
+bool canAddLibraryItemToCollection(
+  LibraryItem item, {
+  required bool canUpdate,
+}) {
   final libraryId = item.libraryId;
-  return supportsFinishedProgressUpdates(item) && libraryId != null && libraryId.isNotEmpty && canUpdate;
+  return supportsFinishedProgressUpdates(item) &&
+      libraryId != null &&
+      libraryId.isNotEmpty &&
+      canUpdate;
 }
 
 Future<void> addLibraryItemToPlaylist({
@@ -69,7 +75,10 @@ Future<void> addLibraryItemToCollection({
   );
 }
 
-bool isLibraryItemFinished(LibraryItem item, Map<String, MediaProgress> progressByKey) {
+bool isLibraryItemFinished(
+  LibraryItem item,
+  Map<String, MediaProgress> progressByKey,
+) {
   if (!supportsFinishedProgressUpdates(item)) {
     return false;
   }
@@ -84,10 +93,14 @@ bool isPodcastEpisodeFinished({
   if (!supportsPodcastEpisodeFinishedProgressUpdates(item)) {
     return false;
   }
-  return progressByKey[mediaProgressKey(item.id, episode.id)]?.isFinished ?? false;
+  return progressByKey[mediaProgressKey(item.id, episode.id)]?.isFinished ??
+      false;
 }
 
-bool areAllSupportedLibraryItemsFinished(List<LibraryItem> items, Map<String, MediaProgress> progressByKey) {
+bool areAllSupportedLibraryItemsFinished(
+  List<LibraryItem> items,
+  Map<String, MediaProgress> progressByKey,
+) {
   var hasSupportedItems = false;
   for (final item in items) {
     if (!supportsFinishedProgressUpdates(item)) {
@@ -112,8 +125,13 @@ Future<void> _setLibraryItemFinishedState({
   final stateLabel = isFinished ? 'finished' : 'unfinished';
 
   if (!supportsFinishedProgressUpdates(item)) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Progress updates are currently available for books only.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Progress updates are currently available for books only.',
+        ),
+      ),
+    );
     return;
   }
 
@@ -125,8 +143,13 @@ Future<void> _setLibraryItemFinishedState({
         throw Exception('API not available');
       }
 
-      await api.getMeApi().patchMediaProgress(item.id, updatePayload: <String, dynamic>{'isFinished': isFinished});
-      await ref.read(mediaProgressProvider.notifier).fetchOrRefreshIndividualProgress(item.id);
+      await api.getMeApi().patchMediaProgress(
+        item.id,
+        updatePayload: <String, dynamic>{'isFinished': isFinished},
+      );
+      await ref
+          .read(mediaProgressProvider.notifier)
+          .fetchOrRefreshIndividualProgress(item.id);
     },
     successMessage: 'Marked "${item.title}" as $stateLabel.',
     errorFallback: 'Could not mark item as $stateLabel.',
@@ -138,7 +161,12 @@ Future<void> markLibraryItemAsFinished({
   required WidgetRef ref,
   required LibraryItem item,
 }) async {
-  return _setLibraryItemFinishedState(context: context, ref: ref, item: item, isFinished: true);
+  return _setLibraryItemFinishedState(
+    context: context,
+    ref: ref,
+    item: item,
+    isFinished: true,
+  );
 }
 
 Future<void> markLibraryItemAsUnfinished({
@@ -146,7 +174,12 @@ Future<void> markLibraryItemAsUnfinished({
   required WidgetRef ref,
   required LibraryItem item,
 }) async {
-  return _setLibraryItemFinishedState(context: context, ref: ref, item: item, isFinished: false);
+  return _setLibraryItemFinishedState(
+    context: context,
+    ref: ref,
+    item: item,
+    isFinished: false,
+  );
 }
 
 Future<void> _setPodcastEpisodeFinishedState({
@@ -160,13 +193,19 @@ Future<void> _setPodcastEpisodeFinishedState({
 
   if (!supportsPodcastEpisodeFinishedProgressUpdates(item)) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Progress updates are currently available for podcast episodes only.')),
+      const SnackBar(
+        content: Text(
+          'Progress updates are currently available for podcast episodes only.',
+        ),
+      ),
     );
     return;
   }
 
   final rawTitle = episode.title?.trim();
-  final episodeTitle = (rawTitle == null || rawTitle.isEmpty) ? 'Episode' : rawTitle;
+  final episodeTitle = (rawTitle == null || rawTitle.isEmpty)
+      ? 'Episode'
+      : rawTitle;
 
   await runManagedListMutation(
     context: context,
@@ -181,7 +220,9 @@ Future<void> _setPodcastEpisodeFinishedState({
         episodeId: episode.id,
         updatePayload: <String, dynamic>{'isFinished': isFinished},
       );
-      await ref.read(mediaProgressProvider.notifier).fetchOrRefreshIndividualProgress(item.id, episodeId: episode.id);
+      await ref
+          .read(mediaProgressProvider.notifier)
+          .fetchOrRefreshIndividualProgress(item.id, episodeId: episode.id);
     },
     successMessage: 'Marked "$episodeTitle" as $stateLabel.',
     errorFallback: 'Could not mark episode as $stateLabel.',
@@ -194,7 +235,13 @@ Future<void> markPodcastEpisodeAsFinished({
   required LibraryItem item,
   required Episode episode,
 }) async {
-  return _setPodcastEpisodeFinishedState(context: context, ref: ref, item: item, episode: episode, isFinished: true);
+  return _setPodcastEpisodeFinishedState(
+    context: context,
+    ref: ref,
+    item: item,
+    episode: episode,
+    isFinished: true,
+  );
 }
 
 Future<void> markPodcastEpisodeAsUnfinished({
@@ -203,7 +250,13 @@ Future<void> markPodcastEpisodeAsUnfinished({
   required LibraryItem item,
   required Episode episode,
 }) async {
-  return _setPodcastEpisodeFinishedState(context: context, ref: ref, item: item, episode: episode, isFinished: false);
+  return _setPodcastEpisodeFinishedState(
+    context: context,
+    ref: ref,
+    item: item,
+    episode: episode,
+    isFinished: false,
+  );
 }
 
 Future<void> _setLibraryItemsFinishedState({
@@ -226,7 +279,9 @@ Future<void> _setLibraryItemsFinishedState({
   }
 
   if (selectedBookIds.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No selected books can be updated.')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No selected books can be updated.')),
+    );
     return;
   }
 
@@ -239,13 +294,21 @@ Future<void> _setLibraryItemsFinishedState({
       }
 
       final payloads = selectedBookIds
-          .map((id) => <String, dynamic>{'libraryItemId': id, 'isFinished': isFinished})
+          .map(
+            (id) => <String, dynamic>{
+              'libraryItemId': id,
+              'isFinished': isFinished,
+            },
+          )
           .toList(growable: false);
 
       await api.getMeApi().batchUpdateMediaProgress(payloads);
-      ref.read(mediaProgressProvider.notifier).refreshAllProgress(clearBefore: false);
+      ref
+          .read(mediaProgressProvider.notifier)
+          .refreshAllProgress(clearBefore: false);
     },
-    successMessage: 'Marked ${selectedBookIds.length} selected item(s) as $stateLabel.',
+    successMessage:
+        'Marked ${selectedBookIds.length} selected item(s) as $stateLabel.',
     errorFallback: 'Could not mark selected items as $stateLabel.',
     onSuccess: onSuccess,
   );

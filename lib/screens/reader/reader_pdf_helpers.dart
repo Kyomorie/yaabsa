@@ -10,7 +10,9 @@ extension _ReaderPdfHelpers on _ReaderState {
     double? thickness,
     bool toggleIfExisting = true,
   }) async {
-    final nonEmptyRanges = ranges.where((range) => range.start < range.end).toList();
+    final nonEmptyRanges = ranges
+        .where((range) => range.start < range.end)
+        .toList();
     if (nonEmptyRanges.isEmpty) {
       _showSnackBar('Please select some text first');
       return false;
@@ -31,7 +33,9 @@ extension _ReaderPdfHelpers on _ReaderState {
         .toList(growable: false);
 
     final existingIds = _pdfAnnotations.map((entry) => entry.cfi).toSet();
-    final allAlreadyPresent = entries.every((entry) => existingIds.contains(entry.cfi));
+    final allAlreadyPresent = entries.every(
+      (entry) => existingIds.contains(entry.cfi),
+    );
 
     if (!mounted) {
       return false;
@@ -42,9 +46,13 @@ extension _ReaderPdfHelpers on _ReaderState {
       if (toggleIfExisting && allAlreadyPresent) {
         final removeIds = entries.map((entry) => entry.cfi).toSet();
         final previousLength = _pdfAnnotations.length;
-        _pdfAnnotations = _pdfAnnotations.where((entry) => !removeIds.contains(entry.cfi)).toList(growable: false);
+        _pdfAnnotations = _pdfAnnotations
+            .where((entry) => !removeIds.contains(entry.cfi))
+            .toList(growable: false);
         didChange = _pdfAnnotations.length != previousLength;
-        if (didChange && _hoveredPdfAnnotationCfi != null && removeIds.contains(_hoveredPdfAnnotationCfi)) {
+        if (didChange &&
+            _hoveredPdfAnnotationCfi != null &&
+            removeIds.contains(_hoveredPdfAnnotationCfi)) {
           _hoveredPdfAnnotationCfi = null;
         }
         return;
@@ -52,7 +60,9 @@ extension _ReaderPdfHelpers on _ReaderState {
 
       final updated = List<PdfAnnotationEntry>.from(_pdfAnnotations);
       for (final entry in entries) {
-        final index = updated.indexWhere((candidate) => candidate.cfi == entry.cfi);
+        final index = updated.indexWhere(
+          (candidate) => candidate.cfi == entry.cfi,
+        );
         if (index >= 0) {
           if (updated[index] != entry) {
             updated[index] = entry;
@@ -93,7 +103,10 @@ extension _ReaderPdfHelpers on _ReaderState {
     }
   }
 
-  void _customizePdfContextMenuItems(PdfViewerContextMenuBuilderParams params, List<ContextMenuButtonItem> items) {
+  void _customizePdfContextMenuItems(
+    PdfViewerContextMenuBuilderParams params,
+    List<ContextMenuButtonItem> items,
+  ) {
     if (!params.isTextSelectionEnabled) {
       return;
     }
@@ -153,7 +166,9 @@ extension _ReaderPdfHelpers on _ReaderState {
     bool didChange = false;
     _readerSetState(() {
       final previousLength = _pdfAnnotations.length;
-      _pdfAnnotations = _pdfAnnotations.where((annotation) => annotation.cfi != cfi).toList(growable: false);
+      _pdfAnnotations = _pdfAnnotations
+          .where((annotation) => annotation.cfi != cfi)
+          .toList(growable: false);
       didChange = _pdfAnnotations.length != previousLength;
 
       if (_hoveredPdfAnnotationCfi == cfi) {
@@ -166,21 +181,30 @@ extension _ReaderPdfHelpers on _ReaderState {
     }
   }
 
-  Future<void> _editPdfAnnotation(PdfAnnotationEntry annotation, {String? noteText, String? color}) async {
+  Future<void> _editPdfAnnotation(
+    PdfAnnotationEntry annotation, {
+    String? noteText,
+    String? color,
+  }) async {
     bool didChange = false;
     _readerSetState(() {
-      final index = _pdfAnnotations.indexWhere((entry) => entry.cfi == annotation.cfi);
+      final index = _pdfAnnotations.indexWhere(
+        (entry) => entry.cfi == annotation.cfi,
+      );
       if (index < 0) {
         return;
       }
 
       final previous = _pdfAnnotations[index];
       final merged = previous.copyWith(
-        noteText: noteText != null ? (noteText.trim().isNotEmpty ? noteText.trim() : null) : previous.noteText,
+        noteText: noteText != null
+            ? (noteText.trim().isNotEmpty ? noteText.trim() : null)
+            : previous.noteText,
         color: color ?? previous.color,
       );
 
-      if (previous.noteText == merged.noteText && previous.color == merged.color) {
+      if (previous.noteText == merged.noteText &&
+          previous.color == merged.color) {
         return;
       }
 
@@ -196,14 +220,20 @@ extension _ReaderPdfHelpers on _ReaderState {
   }
 
   void _showPdfAnnotationEditSheet(PdfAnnotationEntry annotation) {
-    final noteController = TextEditingController(text: annotation.noteText ?? '');
+    final noteController = TextEditingController(
+      text: annotation.noteText ?? '',
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
       builder: (bottomSheetContext) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+        ),
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -214,29 +244,45 @@ extension _ReaderPdfHelpers on _ReaderState {
                   controller: noteController,
                   maxLines: 3,
                   minLines: 1,
-                  decoration: const InputDecoration(labelText: 'Note', hintText: 'Add an optional note'),
+                  decoration: const InputDecoration(
+                    labelText: 'Note',
+                    hintText: 'Add an optional note',
+                  ),
                 ),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [Colors.yellow, Colors.green, Colors.blue, Colors.pink, Colors.purple].map((c) {
-                  final hex = _colorToHex(c);
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.pop(bottomSheetContext);
-                      unawaited(_editPdfAnnotation(annotation, noteText: noteController.text, color: hex));
-                    },
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: c,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                children:
+                    [
+                      Colors.yellow,
+                      Colors.green,
+                      Colors.blue,
+                      Colors.pink,
+                      Colors.purple,
+                    ].map((c) {
+                      final hex = _colorToHex(c);
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pop(bottomSheetContext);
+                          unawaited(
+                            _editPdfAnnotation(
+                              annotation,
+                              noteText: noteController.text,
+                              color: hex,
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: c,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      );
+                    }).toList(),
               ),
               const SizedBox(height: 16),
               Row(
@@ -251,7 +297,12 @@ extension _ReaderPdfHelpers on _ReaderState {
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pop(bottomSheetContext);
-                      unawaited(_editPdfAnnotation(annotation, noteText: noteController.text));
+                      unawaited(
+                        _editPdfAnnotation(
+                          annotation,
+                          noteText: noteController.text,
+                        ),
+                      );
                     },
                     child: const Text('Save'),
                   ),
@@ -273,15 +324,25 @@ extension _ReaderPdfHelpers on _ReaderState {
     );
   }
 
-  List<Rect> _annotationRectsInLocalPage(PdfAnnotationEntry annotation, PdfPage page, Rect pageRectInViewer) {
+  List<Rect> _annotationRectsInLocalPage(
+    PdfAnnotationEntry annotation,
+    PdfPage page,
+    Rect pageRectInViewer,
+  ) {
     return annotation.rects
-        .map((pdfRect) => pdfRect.toRectInDocument(page: page, pageRect: pageRectInViewer))
+        .map(
+          (pdfRect) =>
+              pdfRect.toRectInDocument(page: page, pageRect: pageRectInViewer),
+        )
         .where((rect) => rect.isFinite && !rect.isEmpty)
         .map((rect) => rect.shift(-pageRectInViewer.topLeft))
         .toList(growable: false);
   }
 
-  Widget _buildPdfAnnotationMarker({required PdfAnnotationEntry annotation, required bool isHovered}) {
+  Widget _buildPdfAnnotationMarker({
+    required PdfAnnotationEntry annotation,
+    required bool isHovered,
+  }) {
     final fallback = switch (annotation.type) {
       AnnotationType.highlight => Colors.yellow,
       AnnotationType.underline => Colors.blue,
@@ -292,12 +353,22 @@ extension _ReaderPdfHelpers on _ReaderState {
     final Widget marker = switch (annotation.type) {
       AnnotationType.highlight => DecoratedBox(
         decoration: BoxDecoration(
-          color: _applyOpacity(baseColor, (annotation.opacity + (isHovered ? 0.22 : 0.0)).clamp(0.0, 1.0).toDouble()),
+          color: _applyOpacity(
+            baseColor,
+            (annotation.opacity + (isHovered ? 0.22 : 0.0))
+                .clamp(0.0, 1.0)
+                .toDouble(),
+          ),
         ),
       ),
       AnnotationType.bookmark => DecoratedBox(
         decoration: BoxDecoration(
-          color: _applyOpacity(baseColor, (annotation.opacity + (isHovered ? 0.25 : 0.0)).clamp(0.0, 1.0).toDouble()),
+          color: _applyOpacity(
+            baseColor,
+            (annotation.opacity + (isHovered ? 0.25 : 0.0))
+                .clamp(0.0, 1.0)
+                .toDouble(),
+          ),
         ),
       ),
       AnnotationType.underline => Align(
@@ -325,7 +396,10 @@ extension _ReaderPdfHelpers on _ReaderState {
       return Tooltip(
         message: noteText,
         waitDuration: const Duration(milliseconds: 220),
-        decoration: BoxDecoration(color: Colors.black.withAlpha(230), borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          color: Colors.black.withAlpha(230),
+          borderRadius: BorderRadius.circular(8),
+        ),
         textStyle: const TextStyle(color: Colors.white),
         child: interactiveMarker,
       );
@@ -333,12 +407,22 @@ extension _ReaderPdfHelpers on _ReaderState {
     return interactiveMarker;
   }
 
-  List<Widget> _buildPdfPageOverlays(BuildContext context, Rect pageRectInViewer, PdfPage page) {
+  List<Widget> _buildPdfPageOverlays(
+    BuildContext context,
+    Rect pageRectInViewer,
+    PdfPage page,
+  ) {
     final overlays = <Widget>[];
-    final annotationsForPage = _pdfAnnotations.where((annotation) => annotation.pageNumber == page.pageNumber);
+    final annotationsForPage = _pdfAnnotations.where(
+      (annotation) => annotation.pageNumber == page.pageNumber,
+    );
 
     for (final annotation in annotationsForPage) {
-      final localRects = _annotationRectsInLocalPage(annotation, page, pageRectInViewer);
+      final localRects = _annotationRectsInLocalPage(
+        annotation,
+        page,
+        pageRectInViewer,
+      );
       if (localRects.isEmpty) {
         continue;
       }
@@ -354,7 +438,10 @@ extension _ReaderPdfHelpers on _ReaderState {
             top: localRect.top,
             width: localRect.width,
             height: localRect.height,
-            child: _buildPdfAnnotationMarker(annotation: annotation, isHovered: isHovered),
+            child: _buildPdfAnnotationMarker(
+              annotation: annotation,
+              isHovered: isHovered,
+            ),
           ),
         );
       }

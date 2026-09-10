@@ -1,7 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:yaabsa/components/settings/settings_navigation_section.dart';
-import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:yaabsa/screens/settings/player/player_settings_general.dart';
 import 'package:yaabsa/screens/settings/player/player_settings_compatibility.dart';
 import 'package:yaabsa/screens/settings/player/player_settings_equalizer.dart';
@@ -33,7 +34,8 @@ class PlayerSettings extends StatelessWidget {
             SettingsNavigationItem(
               icon: Icons.tune_rounded,
               title: 'General',
-              subtitle: 'Timeline mode, seek intervals, and auto queue behavior',
+              subtitle:
+                  'Timeline mode, seek intervals, and auto queue behavior',
               onTap: () => context.push(PlayerSettingsGeneral.routeName),
             ),
             SettingsNavigationItem(
@@ -45,7 +47,8 @@ class PlayerSettings extends StatelessWidget {
             SettingsNavigationItem(
               icon: Icons.bedtime_outlined,
               title: 'Sleep timer',
-              subtitle: 'Choose timer end behavior and optional automatic restart',
+              subtitle:
+                  'Choose timer end behavior and optional automatic restart',
               onTap: () => context.push(PlayerSettingsSleepTimer.routeName),
             ),
             if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android)
@@ -72,15 +75,20 @@ class PlayerSettings extends StatelessWidget {
               subtitle: supportsShakeActions
                   ? 'Configure shake gestures and sensitivity'
                   : 'Available on devices with motion sensors',
-              disabledReason: supportsShakeActions ? null : 'This device does not support shake controls',
+              disabledReason: supportsShakeActions
+                  ? null
+                  : 'This device does not support shake controls',
               enabled: supportsShakeActions,
-              onTap: supportsShakeActions ? () => context.push(PlayerSettingsShakeControls.routeName) : null,
+              onTap: supportsShakeActions
+                  ? () => context.push(PlayerSettingsShakeControls.routeName)
+                  : null,
             ),
             if (PlayerSettingsCompatibility.isSupported)
               SettingsNavigationItem(
                 icon: Icons.build_outlined,
                 title: 'Compatibility',
-                onTap: () => context.push(PlayerSettingsCompatibility.routeName),
+                onTap: () =>
+                    context.push(PlayerSettingsCompatibility.routeName),
               ),
           ],
         ),

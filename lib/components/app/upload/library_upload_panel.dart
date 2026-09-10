@@ -23,7 +23,12 @@ import 'package:yaabsa/util/player_utils.dart';
 import 'package:yaabsa/util/file_formats.dart';
 
 class LibraryUploadPanel extends ConsumerStatefulWidget {
-  const LibraryUploadPanel({super.key, required this.selectedLibrary, required this.onClose, this.onUploadingChanged});
+  const LibraryUploadPanel({
+    super.key,
+    required this.selectedLibrary,
+    required this.onClose,
+    this.onUploadingChanged,
+  });
 
   final Library selectedLibrary;
   final VoidCallback onClose;
@@ -58,7 +63,8 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
   final TextEditingController _bulkAuthorController = TextEditingController();
   final TextEditingController _bulkSeriesController = TextEditingController();
   final Map<int, CancelToken> _cancelTokens = <int, CancelToken>{};
-  final Map<int, _UploadProgressSample> _progressSamples = <int, _UploadProgressSample>{};
+  final Map<int, _UploadProgressSample> _progressSamples =
+      <int, _UploadProgressSample>{};
 
   int _nextItemId = 1;
   List<UploadItemDraft> _items = const [];
@@ -79,7 +85,8 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
 
   bool get _isBookLibrary => widget.selectedLibrary.mediaType == 'book';
 
-  List<LibraryFolder> get _folders => widget.selectedLibrary.folders ?? const <LibraryFolder>[];
+  List<LibraryFolder> get _folders =>
+      widget.selectedLibrary.folders ?? const <LibraryFolder>[];
 
   LibraryFolder? get _selectedFolder {
     if (_selectedFolderId == null) {
@@ -101,7 +108,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     }
 
     return switch (defaultTargetPlatform) {
-      TargetPlatform.windows || TargetPlatform.linux || TargetPlatform.macOS => true,
+      TargetPlatform.windows ||
+      TargetPlatform.linux ||
+      TargetPlatform.macOS => true,
       _ => false,
     };
   }
@@ -147,7 +156,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
 
   void _resetSelectionsForLibrary() {
     _selectedFolderId = _folders.isEmpty ? null : _folders.first.id;
-    _selectedProvider = widget.selectedLibrary.provider.trim().isEmpty ? null : widget.selectedLibrary.provider.trim();
+    _selectedProvider = widget.selectedLibrary.provider.trim().isEmpty
+        ? null
+        : widget.selectedLibrary.provider.trim();
   }
 
   bool _isAdminType(String? userType) {
@@ -176,12 +187,17 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     return value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 
-  Future<void> _refreshFolderAutocompleteSuggestions({bool force = false}) async {
+  Future<void> _refreshFolderAutocompleteSuggestions({
+    bool force = false,
+  }) async {
     final currentUser = ref.read(currentUserProvider).value;
     final isAdmin = _isAdminType(currentUser?.type);
     final folderPath = _selectedFolder?.fullPath.trim();
 
-    if (!_autocompleteSeriesAndAuthors || !isAdmin || folderPath == null || folderPath.isEmpty) {
+    if (!_autocompleteSeriesAndAuthors ||
+        !isAdmin ||
+        folderPath == null ||
+        folderPath.isEmpty) {
       if (!mounted) {
         return;
       }
@@ -212,9 +228,14 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
 
     try {
       final uploadApi = api.getUploadApi();
-      final authorResponse = await uploadApi.getFilesystemPaths(path: folderPath, level: 0);
+      final authorResponse = await uploadApi.getFilesystemPaths(
+        path: folderPath,
+        level: 0,
+      );
       final authorDirectories = authorResponse.data?.directories ?? const [];
-      final authorSuggestions = _sortedUniqueNames(authorDirectories.map((entry) => entry.dirname));
+      final authorSuggestions = _sortedUniqueNames(
+        authorDirectories.map((entry) => entry.dirname),
+      );
       final authorPaths = <String, String>{};
       for (final directory in authorDirectories) {
         final name = directory.dirname.trim();
@@ -292,7 +313,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     }
 
     try {
-      final response = await api.getUploadApi().getFilesystemPaths(path: authorPath, level: 1);
+      final response = await api.getUploadApi().getFilesystemPaths(
+        path: authorPath,
+        level: 1,
+      );
       final seriesSuggestions = _sortedUniqueNames(
         (response.data?.directories ?? const []).map((entry) => entry.dirname),
       );
@@ -344,29 +368,45 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     _progressSamples.clear();
   }
 
-  void _updateItem(int itemId, UploadItemDraft Function(UploadItemDraft current) transform) {
+  void _updateItem(
+    int itemId,
+    UploadItemDraft Function(UploadItemDraft current) transform,
+  ) {
     if (!mounted) {
       return;
     }
 
     setState(() {
-      _items = _items.map((item) => item.id == itemId ? transform(item) : item).toList(growable: false);
+      _items = _items
+          .map((item) => item.id == itemId ? transform(item) : item)
+          .toList(growable: false);
     });
   }
 
-  UploadPickedFile _classifyFile({required String absolutePath, required String relativePath}) {
+  UploadPickedFile _classifyFile({
+    required String absolutePath,
+    required String relativePath,
+  }) {
     final fileName = p.basename(absolutePath);
     final extension = p.extension(fileName).toLowerCase().replaceFirst('.', '');
 
     final isItem = _isBookLibrary
-        ? (_audioExtensions.contains(extension) || _ebookExtensions.contains(extension))
+        ? (_audioExtensions.contains(extension) ||
+              _ebookExtensions.contains(extension))
         : _audioExtensions.contains(extension);
 
     final kind = isItem
         ? UploadFileKind.item
-        : (_otherSupportedExtensions.contains(extension) ? UploadFileKind.other : UploadFileKind.ignored);
+        : (_otherSupportedExtensions.contains(extension)
+              ? UploadFileKind.other
+              : UploadFileKind.ignored);
 
-    return UploadPickedFile(absolutePath: absolutePath, relativePath: relativePath, fileName: fileName, kind: kind);
+    return UploadPickedFile(
+      absolutePath: absolutePath,
+      relativePath: relativePath,
+      fileName: fileName,
+      kind: kind,
+    );
   }
 
   bool _isPlainTextFile(UploadPickedFile file) {
@@ -374,7 +414,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
   }
 
   String _cleanSegment(String value) {
-    final cleaned = value.replaceAll(RegExp(r'[_\.]+'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final cleaned = value
+        .replaceAll(RegExp(r'[_\.]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
     return cleaned.isEmpty ? value : cleaned;
   }
 
@@ -412,10 +455,18 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     return item;
   }
 
-  List<UploadItemDraft> _buildDirectFileItems(List<UploadPickedFile> directFiles) {
-    final itemFiles = directFiles.where((file) => file.kind == UploadFileKind.item).toList(growable: false);
-    final otherFiles = directFiles.where((file) => file.kind == UploadFileKind.other).toList(growable: false);
-    final ignoredFiles = directFiles.where((file) => file.kind == UploadFileKind.ignored).toList(growable: false);
+  List<UploadItemDraft> _buildDirectFileItems(
+    List<UploadPickedFile> directFiles,
+  ) {
+    final itemFiles = directFiles
+        .where((file) => file.kind == UploadFileKind.item)
+        .toList(growable: false);
+    final otherFiles = directFiles
+        .where((file) => file.kind == UploadFileKind.other)
+        .toList(growable: false);
+    final ignoredFiles = directFiles
+        .where((file) => file.kind == UploadFileKind.ignored)
+        .toList(growable: false);
 
     if (itemFiles.isEmpty) {
       return otherFiles
@@ -465,12 +516,17 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
         itemFiles: itemFiles,
         otherFiles: otherFiles,
         ignoredFiles: ignoredFiles,
-        sourceDescription: itemFiles.length == 1 ? itemFiles.first.relativePath : 'Direct file selection',
+        sourceDescription: itemFiles.length == 1
+            ? itemFiles.first.relativePath
+            : 'Direct file selection',
       ),
     ];
   }
 
-  Future<UploadItemDraft?> _buildFolderItem(String folderPath, Set<String> existingAbsolutePaths) async {
+  Future<UploadItemDraft?> _buildFolderItem(
+    String folderPath,
+    Set<String> existingAbsolutePaths,
+  ) async {
     final rootDirectory = Directory(folderPath);
     if (!await rootDirectory.exists()) {
       return null;
@@ -479,7 +535,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     final byDirectory = <String, List<UploadPickedFile>>{};
     final allFiles = <UploadPickedFile>[];
 
-    await for (final entity in rootDirectory.list(recursive: true, followLinks: false)) {
+    await for (final entity in rootDirectory.list(
+      recursive: true,
+      followLinks: false,
+    )) {
       if (entity is! File) {
         continue;
       }
@@ -490,12 +549,20 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
       }
 
       final relativeToRoot = p.relative(absolutePath, from: folderPath);
-      final displayRelativePath = p.join(p.basename(folderPath), relativeToRoot);
-      final pickedFile = _classifyFile(absolutePath: absolutePath, relativePath: displayRelativePath);
+      final displayRelativePath = p.join(
+        p.basename(folderPath),
+        relativeToRoot,
+      );
+      final pickedFile = _classifyFile(
+        absolutePath: absolutePath,
+        relativePath: displayRelativePath,
+      );
       allFiles.add(pickedFile);
 
       final directoryPath = p.dirname(absolutePath);
-      byDirectory.putIfAbsent(directoryPath, () => <UploadPickedFile>[]).add(pickedFile);
+      byDirectory
+          .putIfAbsent(directoryPath, () => <UploadPickedFile>[])
+          .add(pickedFile);
     }
 
     if (allFiles.isEmpty) {
@@ -503,13 +570,20 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     }
 
     String? targetDirectory;
-    final rootItemFiles = byDirectory[folderPath]?.where((file) => file.kind == UploadFileKind.item) ?? const [];
+    final rootItemFiles =
+        byDirectory[folderPath]?.where(
+          (file) => file.kind == UploadFileKind.item,
+        ) ??
+        const [];
     if (rootItemFiles.isNotEmpty) {
       targetDirectory = folderPath;
     } else {
       final candidateDirectories =
           byDirectory.entries
-              .where((entry) => entry.value.any((file) => file.kind == UploadFileKind.item))
+              .where(
+                (entry) =>
+                    entry.value.any((file) => file.kind == UploadFileKind.item),
+              )
               .map((entry) => entry.key)
               .toList(growable: false)
             ..sort();
@@ -530,27 +604,39 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     final scopedFiles = allFiles
         .where((file) {
           final fileDirectory = p.dirname(file.absolutePath);
-          return fileDirectory == targetDirectoryPath || p.isWithin(targetDirectoryPath, fileDirectory);
+          return fileDirectory == targetDirectoryPath ||
+              p.isWithin(targetDirectoryPath, fileDirectory);
         })
         .toList(growable: false);
 
-    final itemFiles = scopedFiles.where((file) => file.kind == UploadFileKind.item).toList(growable: false);
-    final otherFiles = scopedFiles.where((file) => file.kind == UploadFileKind.other).toList(growable: false);
-    final ignoredFiles = scopedFiles.where((file) => file.kind == UploadFileKind.ignored).toList(growable: false);
+    final itemFiles = scopedFiles
+        .where((file) => file.kind == UploadFileKind.item)
+        .toList(growable: false);
+    final otherFiles = scopedFiles
+        .where((file) => file.kind == UploadFileKind.other)
+        .toList(growable: false);
+    final ignoredFiles = scopedFiles
+        .where((file) => file.kind == UploadFileKind.ignored)
+        .toList(growable: false);
 
     if (itemFiles.isEmpty) {
       return null;
     }
 
     final rootParent = p.dirname(folderPath);
-    final targetRelativeToParent = p.relative(targetDirectoryPath, from: rootParent);
+    final targetRelativeToParent = p.relative(
+      targetDirectoryPath,
+      from: rootParent,
+    );
     final segments = p
         .split(targetRelativeToParent)
         .where((segment) => segment.trim().isNotEmpty && segment.trim() != '.')
         .map(_cleanSegment)
         .toList(growable: false);
 
-    final title = segments.isNotEmpty ? segments.last : _cleanSegment(p.basename(targetDirectoryPath));
+    final title = segments.isNotEmpty
+        ? segments.last
+        : _cleanSegment(p.basename(targetDirectoryPath));
     final author = segments.length >= 2 ? segments.first : '';
     final series = segments.length >= 3 ? segments[segments.length - 2] : '';
 
@@ -567,9 +653,12 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
 
   Future<void> _appendInputPaths(List<String> rawPaths) async {
     final existingAbsolutePaths = <String>{
-      for (final item in _items) ...item.itemFiles.map((file) => file.absolutePath),
-      for (final item in _items) ...item.otherFiles.map((file) => file.absolutePath),
-      for (final item in _items) ...item.ignoredFiles.map((file) => file.absolutePath),
+      for (final item in _items)
+        ...item.itemFiles.map((file) => file.absolutePath),
+      for (final item in _items)
+        ...item.otherFiles.map((file) => file.absolutePath),
+      for (final item in _items)
+        ...item.ignoredFiles.map((file) => file.absolutePath),
     };
 
     final directFiles = <UploadPickedFile>[];
@@ -585,7 +674,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
       if (entityType == FileSystemEntityType.directory) {
         folders.add(path);
       } else if (entityType == FileSystemEntityType.file) {
-        directFiles.add(_classifyFile(absolutePath: path, relativePath: p.basename(path)));
+        directFiles.add(
+          _classifyFile(absolutePath: path, relativePath: p.basename(path)),
+        );
       }
     }
 
@@ -613,7 +704,8 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     }
 
     setState(() {
-      _panelMessage = 'Added ${createdItems.length} upload item${createdItems.length == 1 ? '' : 's'}.';
+      _panelMessage =
+          'Added ${createdItems.length} upload item${createdItems.length == 1 ? '' : 's'}.';
       _items = <UploadItemDraft>[..._items, ...createdItems];
     });
 
@@ -633,7 +725,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     }
 
     final result = await FilePicker.pickFiles();
-    final paths = result.map((file) => file.path).whereType<String>().toList(growable: false);
+    final paths = result
+        .map((file) => file.path)
+        .whereType<String>()
+        .toList(growable: false);
     await _appendInputPaths(paths);
   }
 
@@ -710,7 +805,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Some items have destination conflicts or path-check errors. Continue anyway?'),
+                const Text(
+                  'Some items have destination conflicts or path-check errors. Continue anyway?',
+                ),
                 const SizedBox(height: 8),
                 Flexible(
                   child: ListView.builder(
@@ -719,7 +816,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                     itemBuilder: (context, index) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Text('- ${conflicts[index]}', style: Theme.of(context).textTheme.bodySmall),
+                        child: Text(
+                          '- ${conflicts[index]}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       );
                     },
                   ),
@@ -728,8 +828,14 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel upload')),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Continue anyway')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel upload'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Continue anyway'),
+            ),
           ],
         );
       },
@@ -738,7 +844,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     return result == true;
   }
 
-  Future<void> _fetchMetadataForItem(int itemId, {bool silentNoResults = false}) async {
+  Future<void> _fetchMetadataForItem(
+    int itemId, {
+    bool silentNoResults = false,
+  }) async {
     final api = ref.read(absApiProvider);
     if (api == null) {
       return;
@@ -767,8 +876,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
         if (!silentNoResults) {
           _updateItem(
             itemId,
-            (current) =>
-                current.copyWith(status: UploadItemStatus.ready, message: 'No metadata result found for this item.'),
+            (current) => current.copyWith(
+              status: UploadItemStatus.ready,
+              message: 'No metadata result found for this item.',
+            ),
           );
         }
         return;
@@ -777,7 +888,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
       final resolvedTitle = (firstResult['title'] as String?)?.trim();
       final resolvedAuthor = _extractAuthor(firstResult) ?? item.author;
       final resolvedSeries = _extractSeries(firstResult) ?? item.series;
-      final suggestedTitle = resolvedTitle != null && resolvedTitle.isNotEmpty ? resolvedTitle : item.title;
+      final suggestedTitle = resolvedTitle != null && resolvedTitle.isNotEmpty
+          ? resolvedTitle
+          : item.title;
 
       if (_autoAcceptMetadata) {
         _updateItem(
@@ -807,11 +920,18 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
         );
       }
     } catch (error, stackTrace) {
-      logger('Failed metadata lookup: $error\n$stackTrace', tag: 'LibraryUploadPanel', level: InfoLevel.warning);
+      logger(
+        'Failed metadata lookup: $error\n$stackTrace',
+        tag: 'LibraryUploadPanel',
+        level: InfoLevel.warning,
+      );
       if (!silentNoResults) {
         _updateItem(
           itemId,
-          (current) => current.copyWith(status: UploadItemStatus.ready, message: 'Metadata lookup failed.'),
+          (current) => current.copyWith(
+            status: UploadItemStatus.ready,
+            message: 'Metadata lookup failed.',
+          ),
         );
       }
     }
@@ -833,7 +953,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
         message: 'Metadata suggestion accepted.',
       );
     });
-    final acceptedAuthor = _items.where((entry) => entry.id == itemId).firstOrNull?.author;
+    final acceptedAuthor = _items
+        .where((entry) => entry.id == itemId)
+        .firstOrNull
+        ?.author;
     if (acceptedAuthor != null) {
       unawaited(_loadSeriesSuggestionsForAuthor(acceptedAuthor));
     }
@@ -936,12 +1059,16 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     return null;
   }
 
-  bool _shouldRetryUpload(DioException error, {required bool payloadUploadComplete}) {
+  bool _shouldRetryUpload(
+    DioException error, {
+    required bool payloadUploadComplete,
+  }) {
     if (CancelToken.isCancel(error)) {
       return false;
     }
 
-    if (payloadUploadComplete && error.type == DioExceptionType.receiveTimeout) {
+    if (payloadUploadComplete &&
+        error.type == DioExceptionType.receiveTimeout) {
       return false;
     }
 
@@ -959,15 +1086,28 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     return statusCode >= 500;
   }
 
-  Future<FormData> _buildUploadFormData(UploadItemDraft item, LibraryFolder folder) async {
+  Future<FormData> _buildUploadFormData(
+    UploadItemDraft item,
+    LibraryFolder folder,
+  ) async {
     final entries = <MapEntry<String, MultipartFile>>[];
     for (var index = 0; index < item.uploadFiles.length; index++) {
       final file = item.uploadFiles[index];
-      entries.add(MapEntry('$index', await MultipartFile.fromFile(file.absolutePath, filename: file.fileName)));
+      entries.add(
+        MapEntry(
+          '$index',
+          await MultipartFile.fromFile(
+            file.absolutePath,
+            filename: file.fileName,
+          ),
+        ),
+      );
     }
 
     final map = <String, dynamic>{
-      'title': item.title.trim().isEmpty ? 'Untitled Upload' : item.title.trim(),
+      'title': item.title.trim().isEmpty
+          ? 'Untitled Upload'
+          : item.title.trim(),
       'author': item.author.trim(),
       'series': item.series.trim(),
       'library': widget.selectedLibrary.id,
@@ -978,10 +1118,19 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     return FormData.fromMap(map);
   }
 
-  Future<UploadItemStatus> _uploadSingleItem(UploadItemDraft item, LibraryFolder folder) async {
+  Future<UploadItemStatus> _uploadSingleItem(
+    UploadItemDraft item,
+    LibraryFolder folder,
+  ) async {
     final api = ref.read(absApiProvider);
     if (api == null) {
-      _updateItem(item.id, (current) => current.copyWith(status: UploadItemStatus.failed, message: 'No API session.'));
+      _updateItem(
+        item.id,
+        (current) => current.copyWith(
+          status: UploadItemStatus.failed,
+          message: 'No API session.',
+        ),
+      );
       return UploadItemStatus.failed;
     }
 
@@ -1003,7 +1152,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
           uploadSpeedBytesPerSecond: 0,
           uploadedBytes: 0,
           totalBytes: 0,
-          message: attempt == 1 ? 'Uploading...' : 'Retrying upload ($attempt/$maxAttempts)...',
+          message: attempt == 1
+              ? 'Uploading...'
+              : 'Retrying upload ($attempt/$maxAttempts)...',
         ),
       );
 
@@ -1037,20 +1188,33 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
               return;
             }
 
-            final deltaMs = now.difference(previous.lastUpdateAt).inMilliseconds;
+            final deltaMs = now
+                .difference(previous.lastUpdateAt)
+                .inMilliseconds;
             final deltaSeconds = deltaMs <= 0 ? 0.0 : deltaMs / 1000;
-            final instantRate = deltaSeconds > 0 ? (sent - previous.sentBytes) / deltaSeconds : 0.0;
+            final instantRate = deltaSeconds > 0
+                ? (sent - previous.sentBytes) / deltaSeconds
+                : 0.0;
 
             final smoothedRate = previous.smoothedBytesPerSecond <= 0
                 ? instantRate
-                : (previous.smoothedBytesPerSecond * 0.75) + (instantRate * 0.25);
+                : (previous.smoothedBytesPerSecond * 0.75) +
+                      (instantRate * 0.25);
 
-            final totalElapsedMs = now.difference(previous.startedAt).inMilliseconds;
-            final totalElapsedSeconds = totalElapsedMs <= 0 ? 0.0 : totalElapsedMs / 1000;
-            final averageRate = totalElapsedSeconds > 0 ? sent / totalElapsedSeconds : 0.0;
+            final totalElapsedMs = now
+                .difference(previous.startedAt)
+                .inMilliseconds;
+            final totalElapsedSeconds = totalElapsedMs <= 0
+                ? 0.0
+                : totalElapsedMs / 1000;
+            final averageRate = totalElapsedSeconds > 0
+                ? sent / totalElapsedSeconds
+                : 0.0;
             final blendedRate = (averageRate * 0.7) + (smoothedRate * 0.3);
 
-            final shouldUpdateUi = now.difference(previous.lastUiUpdateAt).inMilliseconds >= 180 || sent >= total;
+            final shouldUpdateUi =
+                now.difference(previous.lastUiUpdateAt).inMilliseconds >= 180 ||
+                sent >= total;
 
             _progressSamples[item.id] = _UploadProgressSample(
               sentBytes: sent,
@@ -1071,7 +1235,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                 uploadSpeedBytesPerSecond: blendedRate,
                 uploadedBytes: sent,
                 totalBytes: total,
-                message: sent >= total ? 'Upload complete. Waiting for server processing...' : null,
+                message: sent >= total
+                    ? 'Upload complete. Waiting for server processing...'
+                    : null,
               ),
             );
           },
@@ -1079,7 +1245,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
 
         if (mounted) {
           setState(() {
-            _items = _items.where((entry) => entry.id != item.id).toList(growable: false);
+            _items = _items
+                .where((entry) => entry.id != item.id)
+                .toList(growable: false);
           });
         }
         return UploadItemStatus.success;
@@ -1087,21 +1255,30 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
         if (CancelToken.isCancel(error)) {
           _updateItem(
             item.id,
-            (current) => current.copyWith(status: UploadItemStatus.canceled, message: 'Upload canceled.'),
+            (current) => current.copyWith(
+              status: UploadItemStatus.canceled,
+              message: 'Upload canceled.',
+            ),
           );
           return UploadItemStatus.canceled;
         }
 
         final isPayloadUploadComplete =
-            payloadUploadComplete || (latestTotalBytes > 0 && latestSentBytes >= latestTotalBytes);
+            payloadUploadComplete ||
+            (latestTotalBytes > 0 && latestSentBytes >= latestTotalBytes);
         final canRetry =
-            attempt < maxAttempts && _shouldRetryUpload(error, payloadUploadComplete: isPayloadUploadComplete);
+            attempt < maxAttempts &&
+            _shouldRetryUpload(
+              error,
+              payloadUploadComplete: isPayloadUploadComplete,
+            );
         if (!canRetry) {
           _updateItem(
             item.id,
             (current) => current.copyWith(
               status: UploadItemStatus.failed,
-              message: 'Upload failed: ${error.message ?? 'Unknown network error'}',
+              message:
+                  'Upload failed: ${error.message ?? 'Unknown network error'}',
             ),
           );
           return UploadItemStatus.failed;
@@ -1127,7 +1304,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
       } catch (error) {
         _updateItem(
           item.id,
-          (current) => current.copyWith(status: UploadItemStatus.failed, message: 'Upload failed: $error'),
+          (current) => current.copyWith(
+            status: UploadItemStatus.failed,
+            message: 'Upload failed: $error',
+          ),
         );
         return UploadItemStatus.failed;
       } finally {
@@ -1191,7 +1371,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
       final identityLabel = _itemIdentityLabel(item);
       try {
         final itemPath = _buildRemoteItemPath(item);
-        final response = await api.getUploadApi().checkPathExists(directory: itemPath, folderPath: folder.fullPath);
+        final response = await api.getUploadApi().checkPathExists(
+          directory: itemPath,
+          folderPath: folder.fullPath,
+        );
         if (response.data?.exists == true) {
           final existingTitle = response.data?.libraryItemTitle;
           conflicts.add(
@@ -1244,7 +1427,8 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
       final status = await _uploadSingleItem(item, folder);
       if (status == UploadItemStatus.success) {
         uploaded += 1;
-      } else if (status == UploadItemStatus.failed || status == UploadItemStatus.canceled) {
+      } else if (status == UploadItemStatus.failed ||
+          status == UploadItemStatus.canceled) {
         failed += 1;
       }
     }
@@ -1255,7 +1439,8 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
 
     _setUploading(false);
     setState(() {
-      _panelMessage = 'Upload finished. Success: $uploaded, failed/canceled: $failed.';
+      _panelMessage =
+          'Upload finished. Success: $uploaded, failed/canceled: $failed.';
     });
   }
 
@@ -1266,7 +1451,11 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     }
 
     setState(() {
-      _items = _items.map((item) => item.copyWith(author: author, clearPendingMetadata: true)).toList(growable: false);
+      _items = _items
+          .map(
+            (item) => item.copyWith(author: author, clearPendingMetadata: true),
+          )
+          .toList(growable: false);
       _panelMessage = 'Applied author "$author" to all queued items.';
     });
   }
@@ -1278,15 +1467,22 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
     }
 
     setState(() {
-      _items = _items.map((item) => item.copyWith(series: series, clearPendingMetadata: true)).toList(growable: false);
+      _items = _items
+          .map(
+            (item) => item.copyWith(series: series, clearPendingMetadata: true),
+          )
+          .toList(growable: false);
       _panelMessage = 'Applied series "$series" to all queued items.';
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final metadataProvidersAsync = ref.watch(uploadMetadataProvidersProvider(widget.selectedLibrary.mediaType));
-    final metadataProviders = metadataProvidersAsync.value ?? const <SearchProviderOption>[];
+    final metadataProvidersAsync = ref.watch(
+      uploadMetadataProvidersProvider(widget.selectedLibrary.mediaType),
+    );
+    final metadataProviders =
+        metadataProvidersAsync.value ?? const <SearchProviderOption>[];
 
     if (_selectedProvider == null && metadataProviders.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1358,7 +1554,8 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                           Expanded(
                             child: Text(
                               'Upload to ${widget.selectedLibrary.name}',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                         ],
@@ -1380,15 +1577,23 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                                       : (value) {
                                           setState(() {
                                             _selectedFolderId = value;
-                                            _loadedAutocompleteFolderPath = null;
+                                            _loadedAutocompleteFolderPath =
+                                                null;
                                           });
-                                          unawaited(_refreshFolderAutocompleteSuggestions(force: true));
+                                          unawaited(
+                                            _refreshFolderAutocompleteSuggestions(
+                                              force: true,
+                                            ),
+                                          );
                                         },
                                   items: _folders
                                       .map(
                                         (folder) => DropdownMenuItem<String>(
                                           value: folder.id,
-                                          child: Text(folder.fullPath, overflow: TextOverflow.ellipsis),
+                                          child: Text(
+                                            folder.fullPath,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                       )
                                       .toList(growable: false),
@@ -1409,7 +1614,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                                   items: [
                                     if (_selectedProvider != null &&
                                         _selectedProvider!.isNotEmpty &&
-                                        !metadataProviders.any((option) => option.value == _selectedProvider))
+                                        !metadataProviders.any(
+                                          (option) =>
+                                              option.value == _selectedProvider,
+                                        ))
                                       DropdownMenuItem<String>(
                                         value: _selectedProvider,
                                         child: Text(_selectedProvider!),
@@ -1417,7 +1625,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                                     ...metadataProviders.map(
                                       (option) => DropdownMenuItem<String>(
                                         value: option.value,
-                                        child: Text(option.text, overflow: TextOverflow.ellipsis),
+                                        child: Text(
+                                          option.text,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1430,34 +1641,58 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                             color: colorScheme.surfaceContainerLowest,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
+                              side: BorderSide(
+                                color: colorScheme.outlineVariant.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
                             ),
                             clipBehavior: Clip.antiAlias,
                             child: Theme(
-                              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                              data: Theme.of(context)
+                                  .copyWith(dividerColor: Colors.transparent),
                               child: ExpansionTile(
-                                tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                                childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                                tilePadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 0,
+                                ),
+                                childrenPadding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  0,
+                                  12,
+                                  10,
+                                ),
                                 title: const Text('Advanced options'),
                                 children: [
                                   LayoutBuilder(
                                     builder: (context, advancedConstraints) {
-                                      final canShowSideBySide = advancedConstraints.maxWidth > 840;
+                                      final canShowSideBySide =
+                                          advancedConstraints.maxWidth > 840;
 
                                       final settingsCard = Container(
                                         decoration: BoxDecoration(
                                           color: colorScheme.surfaceContainer,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.34)),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: colorScheme.outlineVariant
+                                                .withValues(alpha: 0.34),
+                                          ),
                                         ),
                                         padding: const EdgeInsets.all(10),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               'Settings',
-                                              style: Theme.of(context).textTheme.titleSmall
-                                                  ?.copyWith(fontWeight: FontWeight.w600),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                             ),
                                             const SizedBox(height: 4),
                                             SettingsToggleRow(
@@ -1471,7 +1706,8 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                                               },
                                             ),
                                             Divider(
-                                              color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+                                              color: colorScheme.outlineVariant
+                                                  .withValues(alpha: 0.35),
                                               height: 1,
                                             ),
                                             const SizedBox(height: 4),
@@ -1481,38 +1717,55 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                                               enabled: !_isUploading,
                                               onChanged: (selected) {
                                                 setState(() {
-                                                  _autoAcceptMetadata = selected;
+                                                  _autoAcceptMetadata =
+                                                      selected;
                                                 });
                                               },
                                             ),
                                             Divider(
-                                              color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+                                              color: colorScheme.outlineVariant
+                                                  .withValues(alpha: 0.35),
                                               height: 1,
                                             ),
                                             const SizedBox(height: 4),
                                             SettingsToggleRow(
                                               label: 'Autocomplete series and authors',
                                               value: canUseAutocomplete,
-                                              enabled: isAdminUser && !_isUploading,
+                                              enabled:
+                                                  isAdminUser && !_isUploading,
                                               onChanged: (selected) {
                                                 setState(() {
-                                                  _autocompleteSeriesAndAuthors = selected;
-                                                  _loadedAutocompleteFolderPath = null;
+                                                  _autocompleteSeriesAndAuthors =
+                                                      selected;
+                                                  _loadedAutocompleteFolderPath =
+                                                      null;
                                                 });
-                                                unawaited(_refreshFolderAutocompleteSuggestions(force: true));
+                                                unawaited(
+                                                  _refreshFolderAutocompleteSuggestions(
+                                                    force: true,
+                                                  ),
+                                                );
                                               },
                                             ),
                                             if (!isAdminUser) ...[
                                               const SizedBox(height: 6),
                                               Text(
                                                 'Requires admin role.',
-                                                style: Theme.of(context).textTheme.bodySmall
-                                                    ?.copyWith(color: colorScheme.onSurfaceVariant),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.copyWith(
+                                                      color: colorScheme
+                                                          .onSurfaceVariant,
+                                                    ),
                                               ),
                                             ],
-                                            if (canUseAutocomplete && _isLoadingAutocompleteSuggestions) ...[
+                                            if (canUseAutocomplete &&
+                                                _isLoadingAutocompleteSuggestions) ...[
                                               const SizedBox(height: 8),
-                                              const LinearProgressIndicator(minHeight: 2),
+                                              const LinearProgressIndicator(
+                                                minHeight: 2,
+                                              ),
                                             ],
                                           ],
                                         ),
@@ -1521,72 +1774,122 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                                       final bulkCard = Container(
                                         decoration: BoxDecoration(
                                           color: colorScheme.surfaceContainer,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.34)),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: colorScheme.outlineVariant
+                                                .withValues(alpha: 0.34),
+                                          ),
                                         ),
                                         padding: const EdgeInsets.all(10),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               'Bulk update queue metadata',
-                                              style: Theme.of(context).textTheme.titleSmall
-                                                  ?.copyWith(fontWeight: FontWeight.w600),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleSmall
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                             ),
                                             const SizedBox(height: 8),
                                             LayoutBuilder(
                                               builder: (context, bulkConstraints) {
-                                                final compactBulk = bulkConstraints.maxWidth < 700;
+                                                final compactBulk =
+                                                    bulkConstraints.maxWidth <
+                                                    700;
 
                                                 if (compactBulk) {
                                                   return Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
                                                       Row(
-                                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
                                                         children: [
                                                           Expanded(
                                                             child: StyledTextField(
                                                               label: 'Author for all items',
-                                                              controller: _bulkAuthorController,
-                                                              enabled: !_isUploading,
+                                                              controller:
+                                                                  _bulkAuthorController,
+                                                              enabled:
+                                                                  !_isUploading,
                                                             ),
                                                           ),
-                                                          const SizedBox(width: 8),
+                                                          const SizedBox(
+                                                            width: 8,
+                                                          ),
                                                           SizedBox(
                                                             height: 32,
                                                             child: FilledButton.tonal(
                                                               style: FilledButton.styleFrom(
-                                                                visualDensity: VisualDensity.compact,
-                                                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                                                visualDensity:
+                                                                    VisualDensity
+                                                                        .compact,
+                                                                padding:
+                                                                    const EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          10,
+                                                                    ),
                                                               ),
-                                                              onPressed: canApplyBulk ? _applyBulkAuthor : null,
-                                                              child: const Text('Apply author'),
+                                                              onPressed:
+                                                                  canApplyBulk
+                                                                  ? _applyBulkAuthor
+                                                                  : null,
+                                                              child: const Text(
+                                                                'Apply author',
+                                                              ),
                                                             ),
                                                           ),
                                                         ],
                                                       ),
-                                                      const SizedBox(height: 10),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
                                                       Row(
-                                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
                                                         children: [
                                                           Expanded(
                                                             child: StyledTextField(
                                                               label: 'Series for all items',
-                                                              controller: _bulkSeriesController,
-                                                              enabled: !_isUploading,
+                                                              controller:
+                                                                  _bulkSeriesController,
+                                                              enabled:
+                                                                  !_isUploading,
                                                             ),
                                                           ),
-                                                          const SizedBox(width: 8),
+                                                          const SizedBox(
+                                                            width: 8,
+                                                          ),
                                                           SizedBox(
                                                             height: 32,
                                                             child: FilledButton.tonal(
                                                               style: FilledButton.styleFrom(
-                                                                visualDensity: VisualDensity.compact,
-                                                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                                                visualDensity:
+                                                                    VisualDensity
+                                                                        .compact,
+                                                                padding:
+                                                                    const EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          10,
+                                                                    ),
                                                               ),
-                                                              onPressed: canApplyBulk ? _applyBulkSeries : null,
-                                                              child: const Text('Apply series'),
+                                                              onPressed:
+                                                                  canApplyBulk
+                                                                  ? _applyBulkSeries
+                                                                  : null,
+                                                              child: const Text(
+                                                                'Apply series',
+                                                              ),
                                                             ),
                                                           ),
                                                         ],
@@ -1596,55 +1899,90 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                                                 }
 
                                                 return Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
                                                   children: [
                                                     Row(
-                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center,
                                                       children: [
                                                         Expanded(
                                                           child: StyledTextField(
                                                             label: 'Author for all items',
-                                                            controller: _bulkAuthorController,
-                                                            enabled: !_isUploading,
+                                                            controller:
+                                                                _bulkAuthorController,
+                                                            enabled:
+                                                                !_isUploading,
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 8),
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
                                                         SizedBox(
                                                           width: 115,
                                                           height: 32,
                                                           child: FilledButton.tonal(
                                                             style: FilledButton.styleFrom(
-                                                              visualDensity: VisualDensity.compact,
-                                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                              visualDensity:
+                                                                  VisualDensity
+                                                                      .compact,
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        8,
+                                                                  ),
                                                             ),
-                                                            onPressed: canApplyBulk ? _applyBulkAuthor : null,
-                                                            child: const Text('Apply author'),
+                                                            onPressed:
+                                                                canApplyBulk
+                                                                ? _applyBulkAuthor
+                                                                : null,
+                                                            child: const Text(
+                                                              'Apply author',
+                                                            ),
                                                           ),
                                                         ),
                                                       ],
                                                     ),
                                                     const SizedBox(height: 10),
                                                     Row(
-                                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center,
                                                       children: [
                                                         Expanded(
                                                           child: StyledTextField(
                                                             label: 'Series for all items',
-                                                            controller: _bulkSeriesController,
-                                                            enabled: !_isUploading,
+                                                            controller:
+                                                                _bulkSeriesController,
+                                                            enabled:
+                                                                !_isUploading,
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 8),
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
                                                         SizedBox(
                                                           width: 115,
                                                           height: 32,
                                                           child: FilledButton.tonal(
                                                             style: FilledButton.styleFrom(
-                                                              visualDensity: VisualDensity.compact,
-                                                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                              visualDensity:
+                                                                  VisualDensity
+                                                                      .compact,
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        8,
+                                                                  ),
                                                             ),
-                                                            onPressed: canApplyBulk ? _applyBulkSeries : null,
-                                                            child: const Text('Apply series'),
+                                                            onPressed:
+                                                                canApplyBulk
+                                                                ? _applyBulkSeries
+                                                                : null,
+                                                            child: const Text(
+                                                              'Apply series',
+                                                            ),
                                                           ),
                                                         ),
                                                       ],
@@ -1659,15 +1997,24 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
 
                                       if (!canShowSideBySide) {
                                         return Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [settingsCard, const SizedBox(height: 10), bulkCard],
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            settingsCard,
+                                            const SizedBox(height: 10),
+                                            bulkCard,
+                                          ],
                                         );
                                       }
 
                                       return Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          SizedBox(width: 300, child: settingsCard),
+                                          SizedBox(
+                                            width: 300,
+                                            child: settingsCard,
+                                          ),
                                           const SizedBox(width: 10),
                                           Expanded(child: bulkCard),
                                         ],
@@ -1679,7 +2026,13 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                             ),
                           );
 
-                          return Column(children: [dropdownRow, const SizedBox(height: 8), advancedBulkSection]);
+                          return Column(
+                            children: [
+                              dropdownRow,
+                              const SizedBox(height: 8),
+                              advancedBulkSection,
+                            ],
+                          );
                         },
                       ),
                       const SizedBox(height: 10),
@@ -1709,14 +2062,17 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                                   _cancelAllUploads('Upload canceled by user.');
                                   _setUploading(false);
                                   setState(() {
-                                    _panelMessage = 'Upload cancellation requested.';
+                                    _panelMessage =
+                                        'Upload cancellation requested.';
                                   });
                                 },
                                 icon: const Icon(Icons.stop_circle_outlined),
                                 label: const Text('Cancel uploads'),
                               ),
                             FilledButton.icon(
-                              onPressed: (!_isUploading && hasQueuedItems) ? _startUpload : null,
+                              onPressed: (!_isUploading && hasQueuedItems)
+                                  ? _startUpload
+                                  : null,
                               icon: const Icon(Icons.cloud_upload_rounded),
                               label: const Text('Start upload'),
                             ),
@@ -1744,7 +2100,8 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                                   _cancelAllUploads('Upload canceled by user.');
                                   _setUploading(false);
                                   setState(() {
-                                    _panelMessage = 'Upload cancellation requested.';
+                                    _panelMessage =
+                                        'Upload cancellation requested.';
                                   });
                                 },
                                 icon: const Icon(Icons.stop_circle_outlined),
@@ -1753,7 +2110,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                             ],
                             const Spacer(),
                             FilledButton.icon(
-                              onPressed: (!_isUploading && hasQueuedItems) ? _startUpload : null,
+                              onPressed: (!_isUploading && hasQueuedItems)
+                                  ? _startUpload
+                                  : null,
                               icon: const Icon(Icons.cloud_upload_rounded),
                               label: const Text('Start upload'),
                             ),
@@ -1761,7 +2120,10 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                         ),
                       if (_panelMessage != null) ...[
                         const SizedBox(height: 8),
-                        Text(_panelMessage!, style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          _panelMessage!,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ],
                       const SizedBox(height: 10),
                       if (_items.isEmpty)
@@ -1777,45 +2139,68 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
                         )
                       else
                         ScrollConfiguration(
-                          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+                          behavior: ScrollConfiguration.of(context)
+                              .copyWith(scrollbars: false),
                           child: ListView.separated(
                             shrinkWrap: true,
                             primary: false,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: _items.length,
-                            separatorBuilder: (_, _) => const SizedBox(height: 8),
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 8),
                             itemBuilder: (context, index) {
                               final item = _items[index];
-                              final normalizedAuthor = item.author.trim().toLowerCase();
+                              final normalizedAuthor = item.author
+                                  .trim()
+                                  .toLowerCase();
                               if (canUseAutocomplete &&
                                   normalizedAuthor.isNotEmpty &&
-                                  _authorDirectoryPathsByName.containsKey(normalizedAuthor) &&
-                                  !_seriesAutocompleteByAuthor.containsKey(normalizedAuthor)) {
-                                unawaited(_loadSeriesSuggestionsForAuthor(item.author));
+                                  _authorDirectoryPathsByName.containsKey(
+                                    normalizedAuthor,
+                                  ) &&
+                                  !_seriesAutocompleteByAuthor.containsKey(
+                                    normalizedAuthor,
+                                  )) {
+                                unawaited(
+                                  _loadSeriesSuggestionsForAuthor(item.author),
+                                );
                               }
 
                               return LibraryUploadItemCard(
                                 item: item,
                                 enabled: !_isUploading,
                                 canFetchMetadata: !_isUploading,
-                                authorSuggestions: canUseAutocomplete ? _authorAutocompleteOptions : const <String>[],
+                                authorSuggestions: canUseAutocomplete
+                                    ? _authorAutocompleteOptions
+                                    : const <String>[],
                                 seriesSuggestions: canUseAutocomplete
                                     ? _seriesSuggestionsForAuthor(item.author)
                                     : const <String>[],
                                 onChanged: (updatedItem) {
                                   _updateItem(item.id, (_) => updatedItem);
-                                  if (canUseAutocomplete && item.author.trim() != updatedItem.author.trim()) {
-                                    unawaited(_loadSeriesSuggestionsForAuthor(updatedItem.author));
+                                  if (canUseAutocomplete &&
+                                      item.author.trim() !=
+                                          updatedItem.author.trim()) {
+                                    unawaited(
+                                      _loadSeriesSuggestionsForAuthor(
+                                        updatedItem.author,
+                                      ),
+                                    );
                                   }
                                 },
                                 onRemove: () {
                                   setState(() {
-                                    _items = _items.where((entry) => entry.id != item.id).toList(growable: false);
+                                    _items = _items
+                                        .where((entry) => entry.id != item.id)
+                                        .toList(growable: false);
                                   });
                                 },
-                                onFetchMetadata: () => _fetchMetadataForItem(item.id),
-                                onAcceptPendingMetadata: () => _acceptPendingMetadata(item.id),
-                                onRejectPendingMetadata: () => _rejectPendingMetadata(item.id),
+                                onFetchMetadata: () =>
+                                    _fetchMetadataForItem(item.id),
+                                onAcceptPendingMetadata: () =>
+                                    _acceptPendingMetadata(item.id),
+                                onRejectPendingMetadata: () =>
+                                    _rejectPendingMetadata(item.id),
                               );
                             },
                           ),
@@ -1842,7 +2227,9 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _isDropHovering ? colorScheme.primary : colorScheme.outlineVariant.withValues(alpha: 0.6),
+          color: _isDropHovering
+              ? colorScheme.primary
+              : colorScheme.outlineVariant.withValues(alpha: 0.6),
           width: _isDropHovering ? 1.6 : 1,
         ),
         color: _isDropHovering
@@ -1852,10 +2239,17 @@ class _LibraryUploadPanelState extends ConsumerState<LibraryUploadPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(_isDropHovering ? Icons.move_to_inbox_rounded : Icons.upload_file_rounded, size: 26),
+          Icon(
+            _isDropHovering
+                ? Icons.move_to_inbox_rounded
+                : Icons.upload_file_rounded,
+            size: 26,
+          ),
           const SizedBox(height: 8),
           Text(
-            _supportsDragDrop ? 'Drop files or folders here, or choose them below.' : 'Choose files or a folder below.',
+            _supportsDragDrop
+                ? 'Drop files or folders here, or choose them below.'
+                : 'Choose files or a folder below.',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),

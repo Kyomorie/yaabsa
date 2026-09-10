@@ -53,7 +53,10 @@ Future<bool> showQuickMatchPreviewDialog({
     builder: (context) {
       return Dialog(
         clipBehavior: Clip.antiAlias,
-        child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 1020, maxHeight: 780), child: preview),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1020, maxHeight: 780),
+          child: preview,
+        ),
       );
     },
   );
@@ -78,10 +81,12 @@ class QuickMatchPreviewDialog extends ConsumerStatefulWidget {
   final bool overrideDetails;
 
   @override
-  ConsumerState<QuickMatchPreviewDialog> createState() => _QuickMatchPreviewDialogState();
+  ConsumerState<QuickMatchPreviewDialog> createState() =>
+      _QuickMatchPreviewDialogState();
 }
 
-class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialog> {
+class _QuickMatchPreviewDialogState
+    extends ConsumerState<QuickMatchPreviewDialog> {
   List<QuickMatchPreviewEntry>? _entries;
   int _completedCount = 0;
   bool _isLoading = true;
@@ -126,17 +131,25 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
       return;
     }
 
-    _entries = widget.items.map((item) => QuickMatchPreviewEntry(item: item, isLoading: true)).toList();
+    _entries = widget.items
+        .map((item) => QuickMatchPreviewEntry(item: item, isLoading: true))
+        .toList();
     _completedCount = 0;
     _isLoading = true;
     _loadingError = null;
 
     final uploadApi = api.getUploadApi();
     final libraryItemApi = api.getLibraryItemApi();
-    final normalizedMediaType = widget.mediaType == 'podcast' ? 'podcast' : 'book';
+    final normalizedMediaType = widget.mediaType == 'podcast'
+        ? 'podcast'
+        : 'book';
 
     final providers =
-        ref.read(uploadMetadataProvidersProvider(widget.mediaType)).asData?.value ?? const <SearchProviderOption>[];
+        ref
+            .read(uploadMetadataProvidersProvider(widget.mediaType))
+            .asData
+            ?.value ??
+        const <SearchProviderOption>[];
     String getProviderLabel(String providerValue) {
       for (final provider in providers) {
         if (provider.value == providerValue) {
@@ -186,14 +199,20 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
         } else {
           _markEntryCompleted(
             entryIndex,
-            QuickMatchPreviewEntry(item: item, error: 'Could not load current item metadata.'),
+            QuickMatchPreviewEntry(
+              item: item,
+              error: 'Could not load current item metadata.',
+            ),
           );
           return;
         }
       } catch (error) {
         _markEntryCompleted(
           entryIndex,
-          QuickMatchPreviewEntry(item: item, error: 'Could not load current item metadata: $error'),
+          QuickMatchPreviewEntry(
+            item: item,
+            error: 'Could not load current item metadata: $error',
+          ),
         );
         return;
       }
@@ -205,17 +224,22 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
     final providerLabel = getProviderLabel(providerValue);
 
     final metadata = currentItem.media?.bookMedia?.metadata;
-    final rawTitle = trimmedOrNull(metadata?.title) ?? trimmedOrNull(currentItem.title);
+    final rawTitle =
+        trimmedOrNull(metadata?.title) ?? trimmedOrNull(currentItem.title);
     if (rawTitle == null) {
       _markEntryCompleted(
         entryIndex,
-        QuickMatchPreviewEntry(item: currentItem, error: 'No title available for search.'),
+        QuickMatchPreviewEntry(
+          item: currentItem,
+          error: 'No title available for search.',
+        ),
       );
       return;
     }
     final title = _cleanTitle(rawTitle);
 
-    final rawAuthor = (metadata?.authors != null && metadata!.authors!.isNotEmpty)
+    final rawAuthor =
+        (metadata?.authors != null && metadata!.authors!.isNotEmpty)
         ? metadata.authors!.first.name
         : currentItem.authorString;
     final author = _cleanAuthor(rawAuthor);
@@ -234,7 +258,11 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
       ManualMatchResult? bestResult;
 
       for (final rawResult in rawResults) {
-        final result = ManualMatchResult.fromMap(rawResult, providerValue: providerValue, providerLabel: providerLabel);
+        final result = ManualMatchResult.fromMap(
+          rawResult,
+          providerValue: providerValue,
+          providerLabel: providerLabel,
+        );
         if (result.hasMeaningfulData) {
           bestResult = result;
           break;
@@ -242,7 +270,10 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
       }
 
       if (bestResult != null) {
-        _markEntryCompleted(entryIndex, QuickMatchPreviewEntry(item: currentItem, result: bestResult));
+        _markEntryCompleted(
+          entryIndex,
+          QuickMatchPreviewEntry(item: currentItem, result: bestResult),
+        );
       } else {
         _handleNoMatchOrError(
           uploadApi: uploadApi,
@@ -296,7 +327,9 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
         entryIndex,
         QuickMatchPreviewEntry(
           item: item,
-          error: widget.providerValues.length > 1 ? 'No results found with any provider.' : errorMsg,
+          error: widget.providerValues.length > 1
+              ? 'No results found with any provider.'
+              : errorMsg,
         ),
       );
     }
@@ -311,7 +344,10 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
       _completedCount++;
       if (_completedCount == widget.items.length) {
         _isLoading = false;
-        _selectedItemIds = _entries!.where(_canSelectEntry).map((e) => e.item.id).toSet();
+        _selectedItemIds = _entries!
+            .where(_canSelectEntry)
+            .map((e) => e.item.id)
+            .toSet();
       }
     });
   }
@@ -330,7 +366,10 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
 
   void _selectAllMatching(List<QuickMatchPreviewEntry> entries) {
     setState(() {
-      _selectedItemIds = entries.where(_canSelectEntry).map((entry) => entry.item.id).toSet();
+      _selectedItemIds = entries
+          .where(_canSelectEntry)
+          .map((entry) => entry.item.id)
+          .toSet();
     });
   }
 
@@ -341,7 +380,13 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
   }
 
   int _selectedApplicableCount(List<QuickMatchPreviewEntry> entries) {
-    return entries.where((entry) => _selectedItemIds.contains(entry.item.id) && _canSelectEntry(entry)).length;
+    return entries
+        .where(
+          (entry) =>
+              _selectedItemIds.contains(entry.item.id) &&
+              _canSelectEntry(entry),
+        )
+        .length;
   }
 
   Future<void> _applySelected(List<QuickMatchPreviewEntry> entries) async {
@@ -350,12 +395,21 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
     }
 
     final selectedEntries = entries
-        .where((entry) => _selectedItemIds.contains(entry.item.id) && _canSelectEntry(entry))
+        .where(
+          (entry) =>
+              _selectedItemIds.contains(entry.item.id) &&
+              _canSelectEntry(entry),
+        )
         .toList(growable: false);
     if (selectedEntries.isEmpty) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Select at least one matched item with changes to apply.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Select at least one matched item with changes to apply.',
+            ),
+          ),
+        );
       }
       return;
     }
@@ -363,7 +417,9 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
     final api = ref.read(absApiProvider);
     if (api == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No API session available.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No API session available.')),
+        );
       }
       return;
     }
@@ -384,7 +440,10 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
       }
 
       try {
-        final response = await api.getLibraryItemApi().updateLibraryItemMedia(entry.item.id, request: request);
+        final response = await api.getLibraryItemApi().updateLibraryItemMedia(
+          entry.item.id,
+          request: request,
+        );
         final updated = response.data?.updated ?? false;
         if (updated) {
           updatedCount++;
@@ -417,22 +476,33 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
     });
 
     final parts = <String>[];
-    parts.add(updatedCount == 1 ? 'Updated 1 item.' : 'Updated $updatedCount items.');
+    parts.add(
+      updatedCount == 1 ? 'Updated 1 item.' : 'Updated $updatedCount items.',
+    );
     if (unchangedCount > 0) {
-      parts.add(unchangedCount == 1 ? '1 item had no changes.' : '$unchangedCount items had no changes.');
+      parts.add(
+        unchangedCount == 1
+            ? '1 item had no changes.'
+            : '$unchangedCount items had no changes.',
+      );
     }
     if (failedCount > 0) {
-      parts.add(failedCount == 1 ? '1 item failed.' : '$failedCount items failed.');
+      parts.add(
+        failedCount == 1 ? '1 item failed.' : '$failedCount items failed.',
+      );
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(parts.join(' '))));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(parts.join(' '))));
 
     if (updatedCount > 0 || unchangedCount > 0) {
       Navigator.of(context).pop(true);
     }
   }
 
-  UpdateLibraryItemMediaRequest? _buildUpdateRequest(QuickMatchPreviewEntry entry) {
+  UpdateLibraryItemMediaRequest? _buildUpdateRequest(
+    QuickMatchPreviewEntry entry,
+  ) {
     final result = entry.result;
     if (result == null) {
       return null;
@@ -467,8 +537,13 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
       metadata = patch.toJson().isEmpty ? null : patch;
     }
 
-    final coverUrl = widget.overrideCover ? trimmedOrNull(result.coverUrl) : null;
-    final request = UpdateLibraryItemMediaRequest(metadata: metadata, url: coverUrl);
+    final coverUrl = widget.overrideCover
+        ? trimmedOrNull(result.coverUrl)
+        : null;
+    final request = UpdateLibraryItemMediaRequest(
+      metadata: metadata,
+      url: coverUrl,
+    );
     if (request.toJson().isEmpty) {
       return null;
     }
@@ -483,7 +558,10 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
     return authors
         .asMap()
         .entries
-        .map((entry) => Author(id: _generatedId('author', entry.key), name: entry.value))
+        .map(
+          (entry) =>
+              Author(id: _generatedId('author', entry.key), name: entry.value),
+        )
         .toList(growable: false);
   }
 
@@ -496,7 +574,13 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
         continue;
       }
 
-      series.add(Series(id: _generatedId('series', index), name: name, sequence: trimmedOrNull(entry.sequence)));
+      series.add(
+        Series(
+          id: _generatedId('series', index),
+          name: name,
+          sequence: trimmedOrNull(entry.sequence),
+        ),
+      );
     }
     return series;
   }
@@ -517,7 +601,9 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
               if (_loadingError != null) {
                 return Column(
                   children: [
-                    Expanded(child: QuickMatchPreviewFailure(error: _loadingError!)),
+                    Expanded(
+                      child: QuickMatchPreviewFailure(error: _loadingError!),
+                    ),
                     const Divider(height: 1),
                     QuickMatchPreviewActionRow(
                       applying: _applying,
@@ -533,7 +619,10 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
                 return Column(
                   children: [
                     Expanded(
-                      child: QuickMatchPreviewLoading(completed: _completedCount, total: widget.items.length),
+                      child: QuickMatchPreviewLoading(
+                        completed: _completedCount,
+                        total: widget.items.length,
+                      ),
                     ),
                     const Divider(height: 1),
                     QuickMatchPreviewActionRow(
@@ -555,8 +644,12 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
                   QuickMatchPreviewSummary(
                     changedCount: changedCount,
                     totalCount: entries.length,
-                    onSelectAll: changedCount == 0 ? null : () => _selectAllMatching(entries),
-                    onClearSelection: selectedCount == 0 ? null : _clearSelection,
+                    onSelectAll: changedCount == 0
+                        ? null
+                        : () => _selectAllMatching(entries),
+                    onClearSelection: selectedCount == 0
+                        ? null
+                        : _clearSelection,
                   ),
                   const Divider(height: 1),
                   Expanded(
@@ -570,7 +663,10 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
                         final result = entry.result;
 
                         if (result == null) {
-                          return QuickMatchPreviewNoResultCard(item: item, error: entry.error);
+                          return QuickMatchPreviewNoResultCard(
+                            item: item,
+                            error: entry.error,
+                          );
                         }
 
                         final changedRows = buildQuickMatchComparisonRows(
@@ -590,8 +686,10 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
                           overrideCover: widget.overrideCover,
                           selectable: selectable,
                           selected: selected,
-                          onSelectionChanged: (value) => _setEntrySelected(item.id, value),
-                          buildCurrentCover: () => _buildCurrentCoverPreview(context, item),
+                          onSelectionChanged: (value) =>
+                              _setEntrySelected(item.id, value),
+                          buildCurrentCover: () =>
+                              _buildCurrentCoverPreview(context, item),
                         );
                       },
                     ),
@@ -601,7 +699,9 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
                     applying: _applying,
                     selectedCount: selectedCount,
                     onClose: () => Navigator.of(context).pop(),
-                    onApply: selectedCount == 0 ? null : () => _applySelected(entries),
+                    onApply: selectedCount == 0
+                        ? null
+                        : () => _applySelected(entries),
                   ),
                 ],
               );
@@ -615,7 +715,10 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
   Widget _buildCurrentCoverPreview(BuildContext context, LibraryItem item) {
     final api = ref.read(absApiProvider);
     if (api == null) {
-      return quickMatchFallbackCoverPlaceholder(context, icon: Icons.menu_book_rounded);
+      return quickMatchFallbackCoverPlaceholder(
+        context,
+        icon: Icons.menu_book_rounded,
+      );
     }
 
     return ClipRRect(
@@ -665,7 +768,9 @@ class _QuickMatchPreviewDialogState extends ConsumerState<QuickMatchPreviewDialo
       return null;
     }
 
-    final parts = trimmed.split(RegExp(r',\s*|&\s*|\band\b\s*', caseSensitive: false));
+    final parts = trimmed.split(
+      RegExp(r',\s*|&\s*|\band\b\s*', caseSensitive: false),
+    );
     if (parts.isEmpty) {
       return trimmed;
     }
