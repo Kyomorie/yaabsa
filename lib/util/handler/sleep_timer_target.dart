@@ -42,6 +42,16 @@ ChapterSleepTarget? resolveChapterSleepTarget({
     final end = chapter.end;
 
     if (!start.isFinite || !end.isFinite) {
+      // Fail closed only when the finite side of malformed metadata shows that
+      // the interval could contain the current position. Malformed entries
+      // that are demonstrably elsewhere must not disable otherwise valid
+      // chapter metadata for the whole book.
+      final couldContainCurrent =
+          (start.isFinite && start <= positionSeconds && !end.isFinite) ||
+          (!start.isFinite && end.isFinite && positionSeconds < end);
+      if (couldContainCurrent) {
+        return null;
+      }
       continue;
     }
     if (positionSeconds < start || positionSeconds >= end) {
