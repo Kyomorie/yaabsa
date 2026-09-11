@@ -1,0 +1,37 @@
+name: Temporary fix chapter sleep hardening v3
+
+on:
+  push:
+    branches:
+      - feat/chapter-end-sleep-timer
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+      - name: Fix rewind matcher and remove fixer
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/temp-harden-chapter-sleep-v3.yml')
+          text = path.read_text()
+          old = 'if (newPosition.isNegative)'
+          new = 'if (newPosition < Duration.zero)'
+          count = text.count(old)
+          if count != 2:
+              raise SystemExit(f'expected 2 rewind matcher occurrences, found {count}')
+          path.write_text(text.replace(old, new))
+          PY
+          rm -f .github/workflows/temp-fix-v3.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/temp-harden-chapter-sleep-v3.yml .github/workflows/temp-fix-v3.yml
+          git commit -m "Fix chapter sleep hardening matcher"
+          git push origin HEAD:feat/chapter-end-sleep-timer
