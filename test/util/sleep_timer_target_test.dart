@@ -147,11 +147,32 @@ void main() {
       expect(outOfBoundsTarget, isNull);
     });
 
-    test('does not reject unrelated malformed chapters elsewhere in the book', () {
+    test('rejects double-non-finite intervals because overlap cannot be excluded', () {
+      const malformedIntervals = [
+        InternalChapter(start: double.nan, end: double.nan, title: 'NaN/NaN'),
+        InternalChapter(start: double.negativeInfinity, end: double.infinity, title: '-Inf/+Inf'),
+        InternalChapter(start: double.infinity, end: double.negativeInfinity, title: '+Inf/-Inf'),
+      ];
+
+      for (final malformed in malformedIntervals) {
+        final target = resolveChapterSleepTarget(
+          chapters: [const InternalChapter(start: 0, end: 10, title: 'Chapter 1'), malformed],
+          mediaDuration: const Duration(seconds: 30),
+          position: const Duration(seconds: 5),
+          itemId: 'book-1',
+          episodeId: null,
+        );
+
+        expect(target, isNull, reason: malformed.title);
+      }
+    });
+
+    test('does not reject malformed chapters proven to be elsewhere in the book', () {
       final target = resolveChapterSleepTarget(
         chapters: const [
           InternalChapter(start: 0, end: 10, title: 'Chapter 1'),
-          InternalChapter(start: double.nan, end: double.infinity, title: 'Broken elsewhere'),
+          InternalChapter(start: double.nan, end: 2, title: 'Broken earlier'),
+          InternalChapter(start: 20, end: double.infinity, title: 'Broken later'),
         ],
         mediaDuration: const Duration(seconds: 30),
         position: const Duration(seconds: 5),
