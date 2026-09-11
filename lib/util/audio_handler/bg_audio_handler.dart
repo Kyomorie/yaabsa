@@ -275,7 +275,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       rightItemId: media.itemId,
       rightEpisodeId: media.episodeId,
     );
-    clearSleepTimerCompletionGate();
+    if (matches) {
+      clearSleepTimerCompletionGate();
+    }
     return matches;
   }
 
