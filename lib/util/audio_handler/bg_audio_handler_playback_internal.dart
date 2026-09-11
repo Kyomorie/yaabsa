@@ -284,7 +284,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
     unawaited(
       _player.play().catchError((error, stackTrace) {
-        logger('Failed to start player playback: $error\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);
+        logger('Failed to start player playback: $error\\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);
       }),
     );
   }
