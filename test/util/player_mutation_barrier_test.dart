@@ -48,11 +48,27 @@ void main() {
       });
 
       expect(secondIssued, isFalse);
+      expect(first.isInvalidated, isTrue);
+      await expectLater(first.invalidated, completes);
 
       blocker.complete();
       await firstRun;
       await secondRun;
       expect(secondIssued, isTrue);
+    });
+
+    test('explicit invalidation wakes lease waiters exactly once', () async {
+      final barrier = PlayerMutationBarrier();
+      final lease = barrier.acquire();
+      var wakeups = 0;
+      lease.invalidated.then((_) => wakeups += 1);
+
+      expect(barrier.invalidate(lease), isTrue);
+      expect(barrier.invalidate(lease), isFalse);
+      await lease.invalidated;
+
+      expect(lease.isInvalidated, isTrue);
+      expect(wakeups, 1);
     });
 
     test('failed mutations do not poison the drain chain', () async {

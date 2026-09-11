@@ -4,6 +4,16 @@ class PlayerMutationLease {
   PlayerMutationLease._(this._id);
 
   final int _id;
+  final Completer<void> _invalidated = Completer<void>();
+
+  Future<void> get invalidated => _invalidated.future;
+  bool get isInvalidated => _invalidated.isCompleted;
+
+  void _markInvalidated() {
+    if (!_invalidated.isCompleted) {
+      _invalidated.complete();
+    }
+  }
 
   @override
   String toString() => 'PlayerMutationLease($_id)';
@@ -15,18 +25,21 @@ class PlayerMutationBarrier {
   Future<void> _tail = Future<void>.value();
 
   PlayerMutationLease acquire() {
+    _currentLease?._markInvalidated();
     final lease = PlayerMutationLease._(++_sequence);
     _currentLease = lease;
     return lease;
   }
 
-  bool isCurrent(PlayerMutationLease lease) => identical(_currentLease, lease);
+  bool isCurrent(PlayerMutationLease lease) => identical(_currentLease, lease) && !lease.isInvalidated;
 
   bool invalidate(PlayerMutationLease lease) {
-    if (!isCurrent(lease)) {
+    if (!identical(_currentLease, lease)) {
+      lease._markInvalidated();
       return false;
     }
 
+    lease._markInvalidated();
     _currentLease = null;
     return true;
   }
