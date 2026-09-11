@@ -85,7 +85,8 @@ extension _BGAudioHandlerSource on BGAudioHandler {
           tag: 'AudioHandler',
           level: InfoLevel.warning,
         );
-        await _safePlayerStop();
+        final lease = _playerMutationBarrier.acquire();
+        await _safePlayerStop(lease);
         await Future<void>.delayed(delay);
         if (!identical(_currentMediaItem, loadingMedia) || _isDisposing || isCastControlActive) {
           throw PlayerInterruptedException('Transcoded stream loading interrupted');
