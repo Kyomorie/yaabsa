@@ -42,4 +42,4 @@ runs:
 
     - name: Check if errors are present
       shell: bash
-      run: flutter analyze lib
+      run: flutter analyze lib | grep "No issues found!" || (echo "Analyzer found issues in yaabsa sources. Please fix them and commit the changes." && exit 1)
