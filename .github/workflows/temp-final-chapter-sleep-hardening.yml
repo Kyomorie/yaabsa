@@ -28,24 +28,39 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Preserve completion gate on stale completion events
+      - name: Harden Cast transition and queue-skip races
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          path = Path('lib/util/audio_handler/bg_audio_handler.dart')
-          text = path.read_text()
-          old = "    clearSleepTimerCompletionGate();\n    return matches;"
-          new = "    if (matches) {\n      clearSleepTimerCompletionGate();\n    }\n    return matches;"
-          count = text.count(old)
-          if count != 1:
-              raise SystemExit(f'completion gate matcher: expected one match, found {count}')
-          path.write_text(text.replace(old, new, 1))
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, found {count}')
+              p.write_text(text.replace(old, new, 1))
+
+          sleep = 'lib/util/handler/sleep_timer_handler.dart'
+          replace_once(sleep, "  StreamSubscription<Duration>? _positionSubscription;\n  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;\n", "  StreamSubscription<Duration>? _positionSubscription;\n  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;\n  StreamSubscription<bool>? _castControlSubscription;\n", 'cast subscription field')
+          replace_once(sleep, "    _attachPositionListener();\n    _attachUserSeekNavigationListener();\n", "    _attachPositionListener();\n    _attachUserSeekNavigationListener();\n    _attachCastControlListener();\n", 'cast listener attach')
+          replace_once(sleep, "      _userSeekNavigationSubscription?.cancel();\n      _userSeekNavigationSubscription = null;\n", "      _userSeekNavigationSubscription?.cancel();\n      _userSeekNavigationSubscription = null;\n      _castControlSubscription?.cancel();\n      _castControlSubscription = null;\n", 'cast listener dispose')
+          marker = "  void _handlePlayerStateChanged(PlayerState playerState) {\n"
+          insertion = "  void _attachCastControlListener() {\n    try {\n      _castControlSubscription = audioHandler.castControlActiveStream.listen(_handleCastControlChanged);\n    } catch (e) {\n      logger('Failed to attach sleep timer Cast listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);\n    }\n  }\n\n  void _handleCastControlChanged(bool isActive) {\n    if (isActive && state.isActive && state.mode == SleepTimerMode.chapterEnd) {\n      _cancelChapterTimerForContextChange('Cast control became active');\n    }\n  }\n\n"
+          replace_once(sleep, marker, insertion + marker, 'cast listener methods')
+
+          audio = 'lib/util/audio_handler/bg_audio_handler.dart'
+          old = "      if (queueList.isNotEmpty) {\n        _forceQueueSwitchOnNextPlay = true;\n        _ignoreProgressOnNextPlay = isLoopOn;\n        await play();\n      } else {\n"
+          new = "      if (queueList.isNotEmpty) {\n        final operationId = _beginUserSeekNavigation();\n        var navigationSucceeded = false;\n        try {\n          _forceQueueSwitchOnNextPlay = true;\n          _ignoreProgressOnNextPlay = isLoopOn;\n          await play();\n          navigationSucceeded = true;\n        } finally {\n          _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);\n        }\n      } else {\n"
+          replace_once(audio, old, new, 'queue skip navigation lifecycle')
           PY
 
-      - name: Format touched Dart files
+      - name: Format and regenerate
         run: |
-          dart format lib/util/audio_handler/bg_audio_handler.dart lib/components/player/common/sleep_timer_button.dart lib/util/handler/sleep_timer_target.dart test/util/sleep_timer_target_test.dart
+          dart format lib/util/audio_handler/bg_audio_handler.dart lib/util/handler/sleep_timer_handler.dart
+          dart run build_runner build --delete-conflicting-outputs
+          dart format lib/util/handler/sleep_timer_handler.g.dart
           git diff --check
 
       - name: Validate diff scope
@@ -56,7 +71,7 @@ jobs:
           printf '  %s\n' "${CHANGED[@]}"
           for file in "${CHANGED[@]}"; do
             case "$file" in
-              lib/util/audio_handler/bg_audio_handler.dart|lib/components/player/common/sleep_timer_button.dart|lib/util/handler/sleep_timer_target.dart|test/util/sleep_timer_target_test.dart) ;;
+              lib/util/audio_handler/bg_audio_handler.dart|lib/util/handler/sleep_timer_handler.dart|lib/util/handler/sleep_timer_handler.g.dart) ;;
               *) echo "ERROR: unexpected changed file: $file"; exit 1 ;;
             esac
           done
@@ -76,6 +91,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/util/audio_handler/bg_audio_handler.dart lib/components/player/common/sleep_timer_button.dart lib/util/handler/sleep_timer_target.dart test/util/sleep_timer_target_test.dart
-          git commit -m "Harden chapter sleep completion identity"
+          git add lib/util/audio_handler/bg_audio_handler.dart lib/util/handler/sleep_timer_handler.dart lib/util/handler/sleep_timer_handler.g.dart
+          git commit -m "Harden chapter sleep navigation transitions"
           git push origin HEAD:feat/chapter-end-sleep-timer
