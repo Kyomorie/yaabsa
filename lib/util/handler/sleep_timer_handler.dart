@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:yaabsa/database/settings_manager.dart';
+import 'package:yaabsa/models/internal_media.dart';
 import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
 import 'package:yaabsa/util/audio_handler/player_history_handler.dart';
 import 'package:yaabsa/util/globals.dart';
@@ -155,6 +156,8 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   StreamSubscription<PlayerState>? _playerStateSubscription;
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;
+  StreamSubscription<bool>? _castControlSubscription;
+  StreamSubscription<InternalMedia?>? _mediaItemSubscription;
   bool _wasPlaybackRunning = false;
   bool _pauseTriggeredByPlayback = false;
   double? _fadeBaseVolume;
@@ -171,6 +174,8 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _attachPlaybackStateListener();
     _attachPositionListener();
     _attachUserSeekNavigationListener();
+    _attachCastControlListener();
+    _attachMediaItemListener();
 
     ref.onDispose(() {
       _timer?.cancel();
@@ -190,6 +195,10 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       _positionSubscription = null;
       _userSeekNavigationSubscription?.cancel();
       _userSeekNavigationSubscription = null;
+      _castControlSubscription?.cancel();
+      _castControlSubscription = null;
+      _mediaItemSubscription?.cancel();
+      _mediaItemSubscription = null;
 
       unawaited(_restoreFadeVolumeIfNeeded());
     });
@@ -230,6 +239,38 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       _userSeekNavigationSubscription = audioHandler.userSeekNavigationStream.listen(_handleUserSeekNavigation);
     } catch (e) {
       logger('Failed to attach sleep timer user-seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  void _attachCastControlListener() {
+    try {
+      _castControlSubscription = audioHandler.castControlActiveStream.listen(_handleCastControlChanged);
+    } catch (e) {
+      logger('Failed to attach sleep timer Cast listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  void _attachMediaItemListener() {
+    try {
+      _mediaItemSubscription = audioHandler.mediaItemStream.listen(_handleMediaItemChanged);
+    } catch (e) {
+      logger('Failed to attach sleep timer media listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  void _handleCastControlChanged(bool isActive) {
+    if (isActive && state.isActive && state.mode == SleepTimerMode.chapterEnd) {
+      _cancelChapterTimerForContextChange('Cast control became active');
+    }
+  }
+
+  void _handleMediaItemChanged(InternalMedia? media) {
+    if (!state.isActive || state.mode != SleepTimerMode.chapterEnd) {
+      return;
+    }
+    final target = state.chapterTarget;
+    if (target == null || media == null || !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
+      _cancelChapterTimerForContextChange('playback media changed');
     }
   }
 
@@ -894,6 +935,11 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       showMarkerPin: false,
       showMarkerRange: false,
     );
+    final activeNavigationOperations = audioHandler.activeUserSeekNavigationOperations;
+    if (activeNavigationOperations.isNotEmpty) {
+      _chapterUserSeekOperations.addAll(activeNavigationOperations);
+      _chapterExpiryCheckGeneration += 1;
+    }
     _syncSleepTimerCompletionGate(target);
     unawaited(_persistMarker(marker));
     if (audioHandler.playerControlState.playing) {

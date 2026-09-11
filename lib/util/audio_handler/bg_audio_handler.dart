@@ -170,6 +170,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   final StreamController<UserSeekNavigationEvent> _userSeekNavigationController =
       StreamController<UserSeekNavigationEvent>.broadcast(sync: true);
   int _userSeekNavigationSequence = 0;
+  final UserSeekNavigationLedger _userSeekNavigationLedger = UserSeekNavigationLedger();
   bool _chapterNotificationEnabled = false;
   Duration _chapterNotificationOffset = Duration.zero;
   Duration _chapterNotificationDuration = Duration.zero;
@@ -246,6 +247,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   Stream<bool> get castControlActiveStream => _castControlActiveSubject.stream.distinct();
   bool get isCastControlActive => _castControlActiveSubject.value;
   Stream<UserSeekNavigationEvent> get userSeekNavigationStream => _userSeekNavigationController.stream;
+  Set<int> get activeUserSeekNavigationOperations => _userSeekNavigationLedger.activeSnapshot;
+  bool get hasActiveUserSeekNavigation => _userSeekNavigationLedger.hasActive;
 
   bool get _supportsCastPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
@@ -1338,9 +1341,28 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       }
 
       if (queueList.isNotEmpty) {
-        _forceQueueSwitchOnNextPlay = true;
-        _ignoreProgressOnNextPlay = isLoopOn;
-        await play();
+        final operationId = _beginUserSeekNavigation();
+        final beforeMedia = _currentMediaItem;
+        final beforePosition = position;
+        var navigationSucceeded = false;
+        try {
+          _forceQueueSwitchOnNextPlay = true;
+          _ignoreProgressOnNextPlay = isLoopOn;
+          await play();
+          final afterMedia = _currentMediaItem;
+          navigationSucceeded =
+              afterMedia != null &&
+              (beforeMedia == null ||
+                  !_queueItemsMatch(
+                    leftItemId: beforeMedia.itemId,
+                    leftEpisodeId: beforeMedia.episodeId,
+                    rightItemId: afterMedia.itemId,
+                    rightEpisodeId: afterMedia.episodeId,
+                  ) ||
+                  position != beforePosition);
+        } finally {
+          _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+        }
       } else {
         logger(
           'No next chapter and queue is empty, ignoring skip-to-next',
@@ -1586,6 +1608,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   int _beginUserSeekNavigation() {
     final operationId = ++_userSeekNavigationSequence;
+    if (!_userSeekNavigationLedger.begin(operationId)) {
+      throw StateError('Duplicate user navigation operation id: $operationId');
+    }
     if (!_userSeekNavigationController.isClosed) {
       _userSeekNavigationController.add(
         UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),
@@ -1595,6 +1620,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   void _settleUserSeekNavigation(int operationId, {required bool shouldRetarget}) {
+    if (!_userSeekNavigationLedger.settle(operationId)) {
+      return;
+    }
     if (!_userSeekNavigationController.isClosed) {
       _userSeekNavigationController.add(
         UserSeekNavigationEvent(

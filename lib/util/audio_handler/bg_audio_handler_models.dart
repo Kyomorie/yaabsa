@@ -12,6 +12,18 @@ class UserSeekNavigationEvent {
   final bool shouldRetarget;
 }
 
+class UserSeekNavigationLedger {
+  final Set<int> _activeOperations = <int>{};
+
+  bool begin(int operationId) => _activeOperations.add(operationId);
+
+  bool settle(int operationId) => _activeOperations.remove(operationId);
+
+  bool get hasActive => _activeOperations.isNotEmpty;
+
+  Set<int> get activeSnapshot => Set<int>.unmodifiable(_activeOperations);
+}
+
 class QueueDisplayInfo {
   const QueueDisplayInfo({this.title, this.subtitle, this.author});
 

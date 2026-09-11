@@ -19,8 +19,20 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
           )
         : null;
 
-    setQueueFromPodcastEpisode(item, episode);
-    await play();
+    final operationId = _beginUserSeekNavigation();
+    var navigationSucceeded = false;
+    try {
+      setQueueFromPodcastEpisode(item, episode);
+      await play();
+      navigationSucceeded = _queueItemsMatch(
+        leftItemId: _currentMediaItem?.itemId ?? '',
+        leftEpisodeId: _currentMediaItem?.episodeId,
+        rightItemId: item.id,
+        rightEpisodeId: episode.id,
+      );
+    } finally {
+      _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+    }
 
     if (!_isAutoQueueEnabled) {
       return;
@@ -130,8 +142,20 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       level: InfoLevel.debug,
     );
 
-    setQueueFromLibraryItem(item);
-    await play();
+    final operationId = _beginUserSeekNavigation();
+    var navigationSucceeded = false;
+    try {
+      setQueueFromLibraryItem(item);
+      await play();
+      navigationSucceeded = _queueItemsMatch(
+        leftItemId: _currentMediaItem?.itemId ?? '',
+        leftEpisodeId: _currentMediaItem?.episodeId,
+        rightItemId: item.id,
+        rightEpisodeId: null,
+      );
+    } finally {
+      _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+    }
 
     final libraryId = item.libraryId ?? await _resolveLibraryId(item);
     final activeUserId = _ref.read(currentUserProvider).value?.id;
