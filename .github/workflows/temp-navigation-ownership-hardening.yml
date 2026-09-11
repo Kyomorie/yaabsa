@@ -8,73 +8,34 @@ on:
       - .github/workflows/temp-navigation-ownership-hardening.yml
 
 permissions:
-  actions: read
   contents: write
 
 jobs:
   harden:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 30
     steps:
       - name: Checkout exact branch
         uses: actions/checkout@v6
         with:
           ref: feat/chapter-end-sleep-timer
-          fetch-depth: 2
+          fetch-depth: 3
           submodules: recursive
 
-      - name: Verify one-shot head
+      - name: Verify one-shot ancestry and scope
         shell: bash
         run: |
-          expected_parent='a5cb3e01011601840a4ca7d3fae9546933a7a42c'
+          green_base='a5cb3e01011601840a4ca7d3fae9546933a7a42c'
+          invalid_runner='ce885910dffef002891cc10a62d3f383986e3aef'
           workflow='.github/workflows/temp-navigation-ownership-hardening.yml'
           parent="$(git rev-parse HEAD^ 2>/dev/null)" || { echo 'Cannot resolve parent'; exit 1; }
-          [ "$parent" = "$expected_parent" ] || { echo "Unexpected parent: $parent"; exit 1; }
-          changed="$(git diff --name-only HEAD^ HEAD)" || { echo 'Cannot inspect one-shot commit'; exit 1; }
-          [ "$changed" = "$workflow" ] || { echo "Unexpected files in one-shot commit: $changed"; exit 1; }
+          grandparent="$(git rev-parse HEAD^^ 2>/dev/null)" || { echo 'Cannot resolve grandparent'; exit 1; }
+          [ "$parent" = "$invalid_runner" ] || { echo "Unexpected parent: $parent"; exit 1; }
+          [ "$grandparent" = "$green_base" ] || { echo "Unexpected green base: $grandparent"; exit 1; }
+          changed="$(git diff --name-only "$green_base" HEAD)" || { echo 'Cannot inspect runner-only delta'; exit 1; }
+          [ "$changed" = "$workflow" ] || { echo "Unexpected files since green base: $changed"; exit 1; }
           echo "ONE_SHOT_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-
-      - name: Wait for regular PR build of this exact head
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json
-          import os
-          import time
-          import urllib.request
-
-          repo = os.environ['GITHUB_REPOSITORY']
-          head = os.environ['ONE_SHOT_HEAD']
-          token = os.environ['GH_TOKEN']
-          url = (
-              f'https://api.github.com/repos/{repo}/actions/workflows/pr-build.yml/runs'
-              f'?event=pull_request&head_sha={head}&per_page=20'
-          )
-          headers = {
-              'Accept': 'application/vnd.github+json',
-              'Authorization': f'Bearer {token}',
-              'X-GitHub-Api-Version': '2022-11-28',
-          }
-          for _ in range(180):
-              request = urllib.request.Request(url, headers=headers)
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  payload = json.load(response)
-              runs = payload.get('workflow_runs', [])
-              if runs:
-                  run = max(runs, key=lambda entry: entry.get('run_number', 0))
-                  status = run.get('status')
-                  conclusion = run.get('conclusion')
-                  print(f"PR build #{run.get('run_number')}: {status}/{conclusion}")
-                  if status == 'completed':
-                      if conclusion != 'success':
-                          raise SystemExit(f'Exact-head PR build did not succeed: {conclusion}')
-                      raise SystemExit(0)
-              time.sleep(5)
-          raise SystemExit('Timed out waiting for exact-head PR build')
-          PY
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -90,413 +51,279 @@ jobs:
       - name: Apply navigation ownership hardening
         shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
+          cat > /tmp/navigation-ownership.patch <<'PATCH'
+          diff --git a/lib/util/audio_handler/bg_audio_handler_models.dart b/lib/util/audio_handler/bg_audio_handler_models.dart
+          --- a/lib/util/audio_handler/bg_audio_handler_models.dart
+          +++ b/lib/util/audio_handler/bg_audio_handler_models.dart
+          @@ -11,6 +11,18 @@ class UserSeekNavigationEvent {
+             final bool shouldRetarget;
+           }
+          +
+          +class UserSeekNavigationLedger {
+          +  final Set<int> _activeOperations = <int>{};
+          +
+          +  bool begin(int operationId) => _activeOperations.add(operationId);
+          +
+          +  bool settle(int operationId) => _activeOperations.remove(operationId);
+          +
+          +  bool get hasActive => _activeOperations.isNotEmpty;
+          +
+          +  Set<int> get activeSnapshot => Set<int>.unmodifiable(_activeOperations);
+          +}
+           
+           class QueueDisplayInfo {
+             const QueueDisplayInfo({this.title, this.subtitle, this.author});
+          diff --git a/lib/util/audio_handler/bg_audio_handler.dart b/lib/util/audio_handler/bg_audio_handler.dart
+          --- a/lib/util/audio_handler/bg_audio_handler.dart
+          +++ b/lib/util/audio_handler/bg_audio_handler.dart
+          @@ -151,6 +151,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+             final StreamController<UserSeekNavigationEvent> _userSeekNavigationController =
+                 StreamController<UserSeekNavigationEvent>.broadcast(sync: true);
+             int _userSeekNavigationSequence = 0;
+          +  final UserSeekNavigationLedger _userSeekNavigationLedger = UserSeekNavigationLedger();
+             bool _chapterNotificationEnabled = false;
+             Duration _chapterNotificationOffset = Duration.zero;
+             Duration _chapterNotificationDuration = Duration.zero;
+          @@ -247,6 +248,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+             Stream<bool> get castControlActiveStream => _castControlActiveSubject.stream.distinct();
+             bool get isCastControlActive => _castControlActiveSubject.value;
+             Stream<UserSeekNavigationEvent> get userSeekNavigationStream => _userSeekNavigationController.stream;
+          +  Set<int> get activeUserSeekNavigationOperations => _userSeekNavigationLedger.activeSnapshot;
+          +  bool get hasActiveUserSeekNavigation => _userSeekNavigationLedger.hasActive;
+           
+             bool get _supportsCastPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+          @@ -1288,10 +1291,29 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+               }
+           
+               if (queueList.isNotEmpty) {
+          -      _forceQueueSwitchOnNextPlay = true;
+          -      _ignoreProgressOnNextPlay = isLoopOn;
+          -      await play();
+          +      final operationId = _beginUserSeekNavigation();
+          +      final beforeMedia = _currentMediaItem;
+          +      final beforePosition = position;
+          +      var navigationSucceeded = false;
+          +      try {
+          +        _forceQueueSwitchOnNextPlay = true;
+          +        _ignoreProgressOnNextPlay = isLoopOn;
+          +        await play();
+          +        final afterMedia = _currentMediaItem;
+          +        navigationSucceeded =
+          +            afterMedia != null &&
+          +            (beforeMedia == null ||
+          +                !_queueItemsMatch(
+          +                  leftItemId: beforeMedia.itemId,
+          +                  leftEpisodeId: beforeMedia.episodeId,
+          +                  rightItemId: afterMedia.itemId,
+          +                  rightEpisodeId: afterMedia.episodeId,
+          +                ) ||
+          +                position != beforePosition);
+          +      } finally {
+          +        _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+          +      }
+               } else {
+                 logger(
+                   'No next chapter and queue is empty, ignoring skip-to-next',
+          @@ -1620,6 +1642,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+           
+             int _beginUserSeekNavigation() {
+               final operationId = ++_userSeekNavigationSequence;
+          +    if (!_userSeekNavigationLedger.begin(operationId)) {
+          +      throw StateError('Duplicate user navigation operation id: $operationId');
+          +    }
+               if (!_userSeekNavigationController.isClosed) {
+                 _userSeekNavigationController.add(
+                   UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),
+          @@ -1629,6 +1654,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+             }
+           
+             void _settleUserSeekNavigation(int operationId, {required bool shouldRetarget}) {
+          +    if (!_userSeekNavigationLedger.settle(operationId)) {
+          +      return;
+          +    }
+               if (!_userSeekNavigationController.isClosed) {
+                 _userSeekNavigationController.add(
+                   UserSeekNavigationEvent(
+          diff --git a/lib/util/audio_handler/bg_audio_handler_playback_internal.dart b/lib/util/audio_handler/bg_audio_handler_playback_internal.dart
+          --- a/lib/util/audio_handler/bg_audio_handler_playback_internal.dart
+          +++ b/lib/util/audio_handler/bg_audio_handler_playback_internal.dart
+          @@ -18,8 +18,20 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
+               : null;
+           
+          -  setQueueFromPodcastEpisode(item, episode);
+          -  await play();
+          +  final operationId = _beginUserSeekNavigation();
+          +  var navigationSucceeded = false;
+          +  try {
+          +    setQueueFromPodcastEpisode(item, episode);
+          +    await play();
+          +    navigationSucceeded = _queueItemsMatch(
+          +      leftItemId: _currentMediaItem?.itemId ?? '',
+          +      leftEpisodeId: _currentMediaItem?.episodeId,
+          +      rightItemId: item.id,
+          +      rightEpisodeId: episode.id,
+          +    );
+          +  } finally {
+          +    _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+          +  }
+           
+             if (!_isAutoQueueEnabled) {
+               return;
+          @@ -128,8 +140,20 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
+               level: InfoLevel.debug,
+             );
+           
+          -  setQueueFromLibraryItem(item);
+          -  await play();
+          +  final operationId = _beginUserSeekNavigation();
+          +  var navigationSucceeded = false;
+          +  try {
+          +    setQueueFromLibraryItem(item);
+          +    await play();
+          +    navigationSucceeded = _queueItemsMatch(
+          +      leftItemId: _currentMediaItem?.itemId ?? '',
+          +      leftEpisodeId: _currentMediaItem?.episodeId,
+          +      rightItemId: item.id,
+          +      rightEpisodeId: null,
+          +    );
+          +  } finally {
+          +    _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+          +  }
+           
+             final libraryId = item.libraryId ?? await _resolveLibraryId(item);
+             final activeUserId = _ref.read(currentUserProvider).value?.id;
+          diff --git a/lib/util/handler/sleep_timer_handler.dart b/lib/util/handler/sleep_timer_handler.dart
+          --- a/lib/util/handler/sleep_timer_handler.dart
+          +++ b/lib/util/handler/sleep_timer_handler.dart
+          @@ -4,6 +4,7 @@ import 'dart:convert';
+           import 'dart:math' as math;
+           
+           import 'package:yaabsa/database/settings_manager.dart';
+          +import 'package:yaabsa/models/internal_media.dart';
+           import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
+           import 'package:yaabsa/util/audio_handler/player_history_handler.dart';
+           import 'package:yaabsa/util/globals.dart';
+          @@ -151,6 +152,8 @@ class SleepTimerHandler extends _$SleepTimerHandler {
+             StreamSubscription<PlayerState>? _playerStateSubscription;
+             StreamSubscription<Duration>? _positionSubscription;
+             StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;
+          +  StreamSubscription<bool>? _castControlSubscription;
+          +  StreamSubscription<InternalMedia?>? _mediaItemSubscription;
+             bool _wasPlaybackRunning = false;
+             bool _pauseTriggeredByPlayback = false;
+             double? _fadeBaseVolume;
+          @@ -165,6 +168,8 @@ class SleepTimerHandler extends _$SleepTimerHandler {
+               _attachPlaybackStateListener();
+               _attachPositionListener();
+               _attachUserSeekNavigationListener();
+          +    _attachCastControlListener();
+          +    _attachMediaItemListener();
+           
+               ref.onDispose(() {
+                 _timer?.cancel();
+          @@ -190,6 +195,10 @@ class SleepTimerHandler extends _$SleepTimerHandler {
+                 _positionSubscription = null;
+                 _userSeekNavigationSubscription?.cancel();
+                 _userSeekNavigationSubscription = null;
+          +      _castControlSubscription?.cancel();
+          +      _castControlSubscription = null;
+          +      _mediaItemSubscription?.cancel();
+          +      _mediaItemSubscription = null;
+           
+                 unawaited(_restoreFadeVolumeIfNeeded());
+               });
+          @@ -230,6 +239,40 @@ class SleepTimerHandler extends _$SleepTimerHandler {
+               }
+             }
+           
+          +  void _attachCastControlListener() {
+          +    try {
+          +      _castControlSubscription = audioHandler.castControlActiveStream.listen(_handleCastControlChanged);
+          +    } catch (e) {
+          +      logger('Failed to attach sleep timer Cast listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+          +    }
+          +  }
+          +
+          +  void _attachMediaItemListener() {
+          +    try {
+          +      _mediaItemSubscription = audioHandler.mediaItemStream.listen(_handleMediaItemChanged);
+          +    } catch (e) {
+          +      logger('Failed to attach sleep timer media listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+          +    }
+          +  }
+          +
+          +  void _handleCastControlChanged(bool isActive) {
+          +    if (isActive && state.isActive && state.mode == SleepTimerMode.chapterEnd) {
+          +      _cancelChapterTimerForContextChange('Cast control became active');
+          +    }
+          +  }
+          +
+          +  void _handleMediaItemChanged(InternalMedia? media) {
+          +    if (!state.isActive || state.mode != SleepTimerMode.chapterEnd) {
+          +      return;
+          +    }
+          +    final target = state.chapterTarget;
+          +    if (target == null ||
+          +        media == null ||
+          +        !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
+          +      _cancelChapterTimerForContextChange('playback media changed');
+          +    }
+          +  }
+          +
+             void _handlePlayerStateChanged(PlayerState playerState) {
+               final isRunning = playerState.playing;
+               final wasRunning = _wasPlaybackRunning;
+          @@ -891,6 +934,11 @@ class SleepTimerHandler extends _$SleepTimerHandler {
+               showMarkerPin: false,
+               showMarkerRange: false,
+             );
+          +  final activeNavigationOperations = audioHandler.activeUserSeekNavigationOperations;
+          +  if (activeNavigationOperations.isNotEmpty) {
+          +    _chapterUserSeekOperations.addAll(activeNavigationOperations);
+          +    _chapterExpiryCheckGeneration += 1;
+          +  }
+             _syncSleepTimerCompletionGate(target);
+             unawaited(_persistMarker(marker));
+             if (audioHandler.playerControlState.playing) {
+          PATCH
 
-          def replace_once(path, old, new, label):
-              p = Path(path)
-              text = p.read_text()
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{label}: expected one match, found {count}')
-              p.write_text(text.replace(old, new, 1))
+          git apply --check /tmp/navigation-ownership.patch || { echo 'navigation ownership patch does not apply cleanly'; exit 1; }
+          git apply /tmp/navigation-ownership.patch || { echo 'navigation ownership patch failed'; exit 1; }
 
-          models = 'lib/util/audio_handler/bg_audio_handler_models.dart'
-          replace_once(
-              models,
-              """class UserSeekNavigationEvent {
-  const UserSeekNavigationEvent({required this.operationId, required this.phase, this.shouldRetarget = false});
+          cat > test/util/user_seek_navigation_ledger_test.dart <<'TEST'
+          import 'package:flutter_test/flutter_test.dart';
+          import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
 
-  final int operationId;
-  final UserSeekNavigationPhase phase;
-  final bool shouldRetarget;
-}
+          void main() {
+            group('UserSeekNavigationLedger', () {
+              test('tracks active operations and returns stable snapshots', () {
+                final ledger = UserSeekNavigationLedger();
 
-class QueueDisplayInfo {
-""",
-              """class UserSeekNavigationEvent {
-  const UserSeekNavigationEvent({required this.operationId, required this.phase, this.shouldRetarget = false});
+                expect(ledger.hasActive, isFalse);
+                expect(ledger.begin(1), isTrue);
+                final firstSnapshot = ledger.activeSnapshot;
+                expect(firstSnapshot, <int>{1});
 
-  final int operationId;
-  final UserSeekNavigationPhase phase;
-  final bool shouldRetarget;
-}
+                expect(ledger.begin(2), isTrue);
+                expect(ledger.activeSnapshot, <int>{1, 2});
+                expect(firstSnapshot, <int>{1});
+                expect(ledger.hasActive, isTrue);
+              });
 
-class UserSeekNavigationLedger {
-  final Set<int> _activeOperations = <int>{};
+              test('settlement is idempotent and only removes owned operations', () {
+                final ledger = UserSeekNavigationLedger();
+                expect(ledger.begin(7), isTrue);
+                expect(ledger.settle(7), isTrue);
+                expect(ledger.settle(7), isFalse);
+                expect(ledger.settle(99), isFalse);
+                expect(ledger.hasActive, isFalse);
+                expect(ledger.activeSnapshot, isEmpty);
+              });
+            });
+          }
+          TEST
 
-  bool begin(int operationId) => _activeOperations.add(operationId);
-
-  bool settle(int operationId) => _activeOperations.remove(operationId);
-
-  bool get hasActive => _activeOperations.isNotEmpty;
-
-  Set<int> get activeSnapshot => Set<int>.unmodifiable(_activeOperations);
-}
-
-class QueueDisplayInfo {
-""",
-              'navigation ledger model',
-          )
-
-          audio = 'lib/util/audio_handler/bg_audio_handler.dart'
-          replace_once(
-              audio,
-              """  int _userSeekNavigationSequence = 0;
-  bool _chapterNotificationEnabled = false;
-""",
-              """  int _userSeekNavigationSequence = 0;
-  final UserSeekNavigationLedger _userSeekNavigationLedger = UserSeekNavigationLedger();
-  bool _chapterNotificationEnabled = false;
-""",
-              'navigation ledger field',
-          )
-          replace_once(
-              audio,
-              """  Stream<UserSeekNavigationEvent> get userSeekNavigationStream => _userSeekNavigationController.stream;
-
-  bool get _supportsCastPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-""",
-              """  Stream<UserSeekNavigationEvent> get userSeekNavigationStream => _userSeekNavigationController.stream;
-  Set<int> get activeUserSeekNavigationOperations => _userSeekNavigationLedger.activeSnapshot;
-  bool get hasActiveUserSeekNavigation => _userSeekNavigationLedger.hasActive;
-
-  bool get _supportsCastPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
-""",
-              'navigation ledger getters',
-          )
-          replace_once(
-              audio,
-              """  int _beginUserSeekNavigation() {
-    final operationId = ++_userSeekNavigationSequence;
-    if (!_userSeekNavigationController.isClosed) {
-      _userSeekNavigationController.add(
-        UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),
-      );
-    }
-    return operationId;
-  }
-
-  void _settleUserSeekNavigation(int operationId, {required bool shouldRetarget}) {
-    if (!_userSeekNavigationController.isClosed) {
-      _userSeekNavigationController.add(
-        UserSeekNavigationEvent(
-          operationId: operationId,
-          phase: UserSeekNavigationPhase.settled,
-          shouldRetarget: shouldRetarget,
-        ),
-      );
-    }
-  }
-""",
-              """  int _beginUserSeekNavigation() {
-    final operationId = ++_userSeekNavigationSequence;
-    if (!_userSeekNavigationLedger.begin(operationId)) {
-      throw StateError('Duplicate user navigation operation id: $operationId');
-    }
-    if (!_userSeekNavigationController.isClosed) {
-      _userSeekNavigationController.add(
-        UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),
-      );
-    }
-    return operationId;
-  }
-
-  void _settleUserSeekNavigation(int operationId, {required bool shouldRetarget}) {
-    if (!_userSeekNavigationLedger.settle(operationId)) {
-      return;
-    }
-    if (!_userSeekNavigationController.isClosed) {
-      _userSeekNavigationController.add(
-        UserSeekNavigationEvent(
-          operationId: operationId,
-          phase: UserSeekNavigationPhase.settled,
-          shouldRetarget: shouldRetarget,
-        ),
-      );
-    }
-  }
-""",
-              'navigation lifecycle ownership',
-          )
-          replace_once(
-              audio,
-              """      if (queueList.isNotEmpty) {
-        _forceQueueSwitchOnNextPlay = true;
-        _ignoreProgressOnNextPlay = isLoopOn;
-        await play();
-      } else {
-""",
-              """      if (queueList.isNotEmpty) {
-        final operationId = _beginUserSeekNavigation();
-        final beforeMedia = _currentMediaItem;
-        final beforePosition = position;
-        var navigationSucceeded = false;
-        try {
-          _forceQueueSwitchOnNextPlay = true;
-          _ignoreProgressOnNextPlay = isLoopOn;
-          await play();
-          final afterMedia = _currentMediaItem;
-          navigationSucceeded =
-              afterMedia != null &&
-              (beforeMedia == null ||
-                  !_queueItemsMatch(
-                    leftItemId: beforeMedia.itemId,
-                    leftEpisodeId: beforeMedia.episodeId,
-                    rightItemId: afterMedia.itemId,
-                    rightEpisodeId: afterMedia.episodeId,
-                  ) ||
-                  position != beforePosition);
-        } finally {
-          _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
-        }
-      } else {
-""",
-              'explicit queue skip navigation lifecycle',
-          )
-
-          playback = 'lib/util/audio_handler/bg_audio_handler_playback_internal.dart'
-          replace_once(
-              playback,
-              """    setQueueFromPodcastEpisode(item, episode);
-    await play();
-
-    if (!_isAutoQueueEnabled) {
-""",
-              """    final operationId = _beginUserSeekNavigation();
-    var navigationSucceeded = false;
-    try {
-      setQueueFromPodcastEpisode(item, episode);
-      await play();
-      navigationSucceeded = _queueItemsMatch(
-        leftItemId: _currentMediaItem?.itemId ?? '',
-        leftEpisodeId: _currentMediaItem?.episodeId,
-        rightItemId: item.id,
-        rightEpisodeId: episode.id,
-      );
-    } finally {
-      _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
-    }
-
-    if (!_isAutoQueueEnabled) {
-""",
-              'podcast playback navigation lifecycle',
-          )
-          replace_once(
-              playback,
-              """    setQueueFromLibraryItem(item);
-    await play();
-
-    final libraryId = item.libraryId ?? await _resolveLibraryId(item);
-""",
-              """    final operationId = _beginUserSeekNavigation();
-    var navigationSucceeded = false;
-    try {
-      setQueueFromLibraryItem(item);
-      await play();
-      navigationSucceeded = _queueItemsMatch(
-        leftItemId: _currentMediaItem?.itemId ?? '',
-        leftEpisodeId: _currentMediaItem?.episodeId,
-        rightItemId: item.id,
-        rightEpisodeId: null,
-      );
-    } finally {
-      _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
-    }
-
-    final libraryId = item.libraryId ?? await _resolveLibraryId(item);
-""",
-              'library playback navigation lifecycle',
-          )
-
-          sleep = 'lib/util/handler/sleep_timer_handler.dart'
-          replace_once(
-              sleep,
-              """import 'package:yaabsa/database/settings_manager.dart';
-import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
-""",
-              """import 'package:yaabsa/database/settings_manager.dart';
-import 'package:yaabsa/models/internal_media.dart';
-import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
-""",
-              'sleep timer media import',
-          )
-          replace_once(
-              sleep,
-              """  StreamSubscription<Duration>? _positionSubscription;
-  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;
-  bool _wasPlaybackRunning = false;
-""",
-              """  StreamSubscription<Duration>? _positionSubscription;
-  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;
-  StreamSubscription<bool>? _castControlSubscription;
-  StreamSubscription<InternalMedia?>? _mediaItemSubscription;
-  bool _wasPlaybackRunning = false;
-""",
-              'sleep timer context subscription fields',
-          )
-          replace_once(
-              sleep,
-              """    _attachPlaybackStateListener();
-    _attachPositionListener();
-    _attachUserSeekNavigationListener();
-
-    ref.onDispose(() {
-""",
-              """    _attachPlaybackStateListener();
-    _attachPositionListener();
-    _attachUserSeekNavigationListener();
-    _attachCastControlListener();
-    _attachMediaItemListener();
-
-    ref.onDispose(() {
-""",
-              'sleep timer context listener attach',
-          )
-          replace_once(
-              sleep,
-              """      _userSeekNavigationSubscription?.cancel();
-      _userSeekNavigationSubscription = null;
-
-      unawaited(_restoreFadeVolumeIfNeeded());
-""",
-              """      _userSeekNavigationSubscription?.cancel();
-      _userSeekNavigationSubscription = null;
-      _castControlSubscription?.cancel();
-      _castControlSubscription = null;
-      _mediaItemSubscription?.cancel();
-      _mediaItemSubscription = null;
-
-      unawaited(_restoreFadeVolumeIfNeeded());
-""",
-              'sleep timer context listener dispose',
-          )
-          replace_once(
-              sleep,
-              """  void _attachUserSeekNavigationListener() {
-    try {
-      _userSeekNavigationSubscription = audioHandler.userSeekNavigationStream.listen(_handleUserSeekNavigation);
-    } catch (e) {
-      logger('Failed to attach sleep timer user-seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
-    }
-  }
-
-  void _handlePlayerStateChanged(PlayerState playerState) {
-""",
-              """  void _attachUserSeekNavigationListener() {
-    try {
-      _userSeekNavigationSubscription = audioHandler.userSeekNavigationStream.listen(_handleUserSeekNavigation);
-    } catch (e) {
-      logger('Failed to attach sleep timer user-seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
-    }
-  }
-
-  void _attachCastControlListener() {
-    try {
-      _castControlSubscription = audioHandler.castControlActiveStream.listen(_handleCastControlChanged);
-    } catch (e) {
-      logger('Failed to attach sleep timer Cast listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
-    }
-  }
-
-  void _attachMediaItemListener() {
-    try {
-      _mediaItemSubscription = audioHandler.mediaItemStream.listen(_handleMediaItemChanged);
-    } catch (e) {
-      logger('Failed to attach sleep timer media listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
-    }
-  }
-
-  void _handleCastControlChanged(bool isActive) {
-    if (isActive && state.isActive && state.mode == SleepTimerMode.chapterEnd) {
-      _cancelChapterTimerForContextChange('Cast control became active');
-    }
-  }
-
-  void _handleMediaItemChanged(InternalMedia? media) {
-    if (!state.isActive || state.mode != SleepTimerMode.chapterEnd) {
-      return;
-    }
-    final target = state.chapterTarget;
-    if (target == null ||
-        media == null ||
-        !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
-      _cancelChapterTimerForContextChange('playback media changed');
-    }
-  }
-
-  void _handlePlayerStateChanged(PlayerState playerState) {
-""",
-              'sleep timer context listener methods',
-          )
-          replace_once(
-              sleep,
-              """    state = SleepTimerData(
-      remainingTime: remaining,
-      state: SleepTimerState.running,
-      mode: SleepTimerMode.chapterEnd,
-      chapterTarget: target,
-      marker: marker,
-      showMarkerPin: false,
-      showMarkerRange: false,
-    );
-    _syncSleepTimerCompletionGate(target);
-""",
-              """    state = SleepTimerData(
-      remainingTime: remaining,
-      state: SleepTimerState.running,
-      mode: SleepTimerMode.chapterEnd,
-      chapterTarget: target,
-      marker: marker,
-      showMarkerPin: false,
-      showMarkerRange: false,
-    );
-    final activeNavigationOperations = audioHandler.activeUserSeekNavigationOperations;
-    if (activeNavigationOperations.isNotEmpty) {
-      _chapterUserSeekOperations.addAll(activeNavigationOperations);
-      _chapterExpiryCheckGeneration += 1;
-    }
-    _syncSleepTimerCompletionGate(target);
-""",
-              'chapter timer adopts active navigation',
-          )
-
-          test = Path('test/util/user_seek_navigation_ledger_test.dart')
-          test.write_text("""import 'package:flutter_test/flutter_test.dart';
-import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
-
-void main() {
-  group('UserSeekNavigationLedger', () {
-    test('tracks active operations and returns stable snapshots', () {
-      final ledger = UserSeekNavigationLedger();
-
-      expect(ledger.hasActive, isFalse);
-      expect(ledger.begin(1), isTrue);
-      final firstSnapshot = ledger.activeSnapshot;
-      expect(firstSnapshot, <int>{1});
-
-      expect(ledger.begin(2), isTrue);
-      expect(ledger.activeSnapshot, <int>{1, 2});
-      expect(firstSnapshot, <int>{1});
-      expect(ledger.hasActive, isTrue);
-    });
-
-    test('settlement is idempotent and only removes owned operations', () {
-      final ledger = UserSeekNavigationLedger();
-      expect(ledger.begin(7), isTrue);
-      expect(ledger.settle(7), isTrue);
-      expect(ledger.settle(7), isFalse);
-      expect(ledger.settle(99), isFalse);
-      expect(ledger.hasActive, isFalse);
-      expect(ledger.activeSnapshot, isEmpty);
-    });
-  });
-}
-""")
-
-          workflow = Path('.github/workflows/temp-navigation-ownership-hardening.yml')
-          workflow.unlink()
-          PY
+          rm -f .github/workflows/temp-navigation-ownership-hardening.yml || { echo 'could not remove one-shot workflow'; exit 1; }
 
       - name: Format and regenerate provider
         shell: bash
