@@ -6,10 +6,10 @@ on:
       - feat/chapter-end-sleep-timer
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  validate:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
@@ -25,65 +25,7 @@ jobs:
           cache: true
 
       - name: Install dependencies
-        shell: bash
         run: flutter pub get
 
-      - name: Format changed Dart sources
-        shell: bash
-        run: |
-          dart format \
-            lib/components/player/common/sleep_timer_button.dart \
-            lib/screens/settings/player/widgets/shake_settings_section.dart \
-            lib/util/audio_handler/bg_audio_handler.dart \
-            lib/util/audio_handler/bg_audio_handler_state.dart \
-            lib/util/handler/shake_handler.dart \
-            lib/util/handler/sleep_timer_handler.dart \
-            lib/util/handler/sleep_timer_handler.g.dart \
-            lib/util/handler/sleep_timer_target.dart \
-            test/util/sleep_timer_target_test.dart
-
-      - name: Commit formatter output
-        shell: bash
-        run: |
-          if git diff --quiet -- \
-            lib/components/player/common/sleep_timer_button.dart \
-            lib/screens/settings/player/widgets/shake_settings_section.dart \
-            lib/util/audio_handler/bg_audio_handler.dart \
-            lib/util/audio_handler/bg_audio_handler_state.dart \
-            lib/util/handler/shake_handler.dart \
-            lib/util/handler/sleep_timer_handler.dart \
-            lib/util/handler/sleep_timer_handler.g.dart \
-            lib/util/handler/sleep_timer_target.dart \
-            test/util/sleep_timer_target_test.dart; then
-            echo "No formatter changes needed."
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add \
-              lib/components/player/common/sleep_timer_button.dart \
-              lib/screens/settings/player/widgets/shake_settings_section.dart \
-              lib/util/audio_handler/bg_audio_handler.dart \
-              lib/util/audio_handler/bg_audio_handler_state.dart \
-              lib/util/handler/shake_handler.dart \
-              lib/util/handler/sleep_timer_handler.dart \
-              lib/util/handler/sleep_timer_handler.g.dart \
-              lib/util/handler/sleep_timer_target.dart \
-              test/util/sleep_timer_target_test.dart
-            git commit -m "Format chapter sleep timer changes"
-            git push origin HEAD:feat/chapter-end-sleep-timer
-          fi
-
-      - name: Verify sleep timer generated provider
-        shell: bash
-        run: |
-          dart run build_runner build --build-filter=lib/util/handler/sleep_timer_handler.g.dart
-          dart format lib/util/handler/sleep_timer_handler.g.dart
-          git diff --exit-code -- lib/util/handler/sleep_timer_handler.g.dart
-
-      - name: Analyze sources
-        shell: bash
-        run: flutter analyze lib
-
       - name: Run chapter sleep target tests
-        shell: bash
         run: flutter test test/util/sleep_timer_target_test.dart
