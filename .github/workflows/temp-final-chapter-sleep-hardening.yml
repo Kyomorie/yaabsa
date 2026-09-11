@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Harden Cast transition and queue-skip races
+      - name: Apply final chapter sleep race hardening
         shell: bash
         run: |
           python - <<'PY'
@@ -43,23 +43,165 @@ jobs:
               p.write_text(text.replace(old, new, 1))
 
           sleep = 'lib/util/handler/sleep_timer_handler.dart'
-          replace_once(sleep, "  StreamSubscription<Duration>? _positionSubscription;\n  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;\n", "  StreamSubscription<Duration>? _positionSubscription;\n  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;\n  StreamSubscription<bool>? _castControlSubscription;\n", 'cast subscription field')
-          replace_once(sleep, "    _attachPositionListener();\n    _attachUserSeekNavigationListener();\n", "    _attachPositionListener();\n    _attachUserSeekNavigationListener();\n    _attachCastControlListener();\n", 'cast listener attach')
-          replace_once(sleep, "      _userSeekNavigationSubscription?.cancel();\n      _userSeekNavigationSubscription = null;\n", "      _userSeekNavigationSubscription?.cancel();\n      _userSeekNavigationSubscription = null;\n      _castControlSubscription?.cancel();\n      _castControlSubscription = null;\n", 'cast listener dispose')
+          replace_once(
+              sleep,
+              "  StreamSubscription<Duration>? _positionSubscription;\n  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;\n",
+              "  StreamSubscription<Duration>? _positionSubscription;\n  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;\n  StreamSubscription<bool>? _castControlSubscription;\n",
+              'cast subscription field',
+          )
+          replace_once(
+              sleep,
+              "    _attachPositionListener();\n    _attachUserSeekNavigationListener();\n",
+              "    _attachPositionListener();\n    _attachUserSeekNavigationListener();\n    _attachCastControlListener();\n",
+              'cast listener attach',
+          )
+          replace_once(
+              sleep,
+              "      _userSeekNavigationSubscription?.cancel();\n      _userSeekNavigationSubscription = null;\n",
+              "      _userSeekNavigationSubscription?.cancel();\n      _userSeekNavigationSubscription = null;\n      _castControlSubscription?.cancel();\n      _castControlSubscription = null;\n",
+              'cast listener dispose',
+          )
           marker = "  void _handlePlayerStateChanged(PlayerState playerState) {\n"
-          insertion = "  void _attachCastControlListener() {\n    try {\n      _castControlSubscription = audioHandler.castControlActiveStream.listen(_handleCastControlChanged);\n    } catch (e) {\n      logger('Failed to attach sleep timer Cast listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);\n    }\n  }\n\n  void _handleCastControlChanged(bool isActive) {\n    if (isActive && state.isActive && state.mode == SleepTimerMode.chapterEnd) {\n      _cancelChapterTimerForContextChange('Cast control became active');\n    }\n  }\n\n"
+          insertion = """  void _attachCastControlListener() {
+    try {
+      _castControlSubscription = audioHandler.castControlActiveStream.listen(_handleCastControlChanged);
+    } catch (e) {
+      logger('Failed to attach sleep timer Cast listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  void _handleCastControlChanged(bool isActive) {
+    if (isActive && state.isActive && state.mode == SleepTimerMode.chapterEnd) {
+      _cancelChapterTimerForContextChange('Cast control became active');
+    }
+  }
+
+"""
           replace_once(sleep, marker, insertion + marker, 'cast listener methods')
 
           audio = 'lib/util/audio_handler/bg_audio_handler.dart'
-          old = "      if (queueList.isNotEmpty) {\n        _forceQueueSwitchOnNextPlay = true;\n        _ignoreProgressOnNextPlay = isLoopOn;\n        await play();\n      } else {\n"
-          new = "      if (queueList.isNotEmpty) {\n        final operationId = _beginUserSeekNavigation();\n        var navigationSucceeded = false;\n        try {\n          _forceQueueSwitchOnNextPlay = true;\n          _ignoreProgressOnNextPlay = isLoopOn;\n          await play();\n          navigationSucceeded = true;\n        } finally {\n          _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);\n        }\n      } else {\n"
-          replace_once(audio, old, new, 'queue skip navigation lifecycle')
+          replace_once(
+              audio,
+              "  int _userSeekNavigationSequence = 0;\n  bool _chapterNotificationEnabled = false;\n",
+              "  int _userSeekNavigationSequence = 0;\n  final Set<int> _activeUserSeekNavigationOperations = <int>{};\n  bool _chapterNotificationEnabled = false;\n",
+              'active user navigation set',
+          )
+          replace_once(
+              audio,
+              """  int _beginUserSeekNavigation() {
+    final operationId = ++_userSeekNavigationSequence;
+    if (!_userSeekNavigationController.isClosed) {
+      _userSeekNavigationController.add(
+        UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),
+      );
+    }
+    return operationId;
+  }
+
+  void _settleUserSeekNavigation(int operationId, {required bool shouldRetarget}) {
+    if (!_userSeekNavigationController.isClosed) {
+      _userSeekNavigationController.add(
+        UserSeekNavigationEvent(
+          operationId: operationId,
+          phase: UserSeekNavigationPhase.settled,
+          shouldRetarget: shouldRetarget,
+        ),
+      );
+    }
+  }
+""",
+              """  int _beginUserSeekNavigation() {
+    final operationId = ++_userSeekNavigationSequence;
+    _activeUserSeekNavigationOperations.add(operationId);
+    if (!_userSeekNavigationController.isClosed) {
+      _userSeekNavigationController.add(
+        UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),
+      );
+    }
+    return operationId;
+  }
+
+  void _settleUserSeekNavigation(int operationId, {required bool shouldRetarget}) {
+    try {
+      if (!_userSeekNavigationController.isClosed) {
+        _userSeekNavigationController.add(
+          UserSeekNavigationEvent(
+            operationId: operationId,
+            phase: UserSeekNavigationPhase.settled,
+            shouldRetarget: shouldRetarget,
+          ),
+        );
+      }
+    } finally {
+      _activeUserSeekNavigationOperations.remove(operationId);
+    }
+  }
+""",
+              'user navigation lifecycle tracking',
+          )
+          replace_once(
+              audio,
+              """      if (queueList.isNotEmpty) {
+        _forceQueueSwitchOnNextPlay = true;
+        _ignoreProgressOnNextPlay = isLoopOn;
+        await play();
+      } else {
+""",
+              """      if (queueList.isNotEmpty) {
+        final operationId = _beginUserSeekNavigation();
+        var navigationSucceeded = false;
+        try {
+          _forceQueueSwitchOnNextPlay = true;
+          _ignoreProgressOnNextPlay = isLoopOn;
+          await play();
+          navigationSucceeded = true;
+        } finally {
+          _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+        }
+      } else {
+""",
+              'queue skip navigation lifecycle',
+          )
+          replace_once(
+              audio,
+              """        if (suppressAutoAdvanceForSleepTimer) {
+          logger(
+            'Suppressing queue auto-advance because the sleep timer targets media completion',
+            tag: 'AudioHandler',
+            level: InfoLevel.info,
+          );
+          await pause();
+        } else {
+""",
+              """        if (suppressAutoAdvanceForSleepTimer) {
+          logger(
+            'Suppressing queue auto-advance because the sleep timer targets media completion',
+            tag: 'AudioHandler',
+            level: InfoLevel.info,
+          );
+          final completionStillCurrent =
+              _activeUserSeekNavigationOperations.isEmpty &&
+              identical(_currentMediaItem, finishedMedia) &&
+              _player.playerState.processingState == ProcessingState.completed;
+          if (completionStillCurrent) {
+            await pause();
+          } else {
+            logger(
+              'Skipping sleep-timer completion pause because playback context changed',
+              tag: 'AudioHandler',
+              level: InfoLevel.debug,
+            );
+          }
+        } else {
+""",
+              'stale completion pause guard',
+          )
           PY
 
-      - name: Format and regenerate
+      - name: Format and regenerate only the sleep timer provider
         run: |
           dart format lib/util/audio_handler/bg_audio_handler.dart lib/util/handler/sleep_timer_handler.dart
-          dart run build_runner build --delete-conflicting-outputs
+          dart run build_runner build --build-filter=lib/util/handler/sleep_timer_handler.g.dart
           dart format lib/util/handler/sleep_timer_handler.g.dart
           git diff --check
 
@@ -92,5 +234,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add lib/util/audio_handler/bg_audio_handler.dart lib/util/handler/sleep_timer_handler.dart lib/util/handler/sleep_timer_handler.g.dart
-          git commit -m "Harden chapter sleep navigation transitions"
+          git commit -m "Harden chapter sleep navigation races"
           git push origin HEAD:feat/chapter-end-sleep-timer
