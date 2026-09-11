@@ -597,6 +597,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       logger('Failed to persist queue intent: $e\n$s', tag: 'AudioHandler', level: InfoLevel.warning);
     }
   }
+
   Future<void> _restoreQueueIntent(String userId) async {
     if (_isDisposing || queueList.isNotEmpty || _currentMediaItem != null) {
       return;
@@ -2084,6 +2085,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
     _emitQueueState();
     _emitShouldShowPlayer();
+
     if (!kIsWeb && Platform.isAndroid) {
       _skipSilenceSubscription = _ref
           .read(appDatabaseProvider)
