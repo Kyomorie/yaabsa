@@ -239,6 +239,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
   }
 
   Future<void> _prepareForQueuedItemTransition() async {
+    final lease = _playerMutationBarrier.acquire();
     final transitionPosition = position;
     _setQueueTransitionTargetItem(null);
     _setQueueTransitionLoading(true);
@@ -252,7 +253,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       logger('Error preparing queued transition: $e', tag: 'AudioHandler', level: InfoLevel.error);
     }
 
-    await _safePlayerStop();
+    await _safePlayerStop(lease);
   }
 
   Future<void> _syncedPlay({bool restoreProgress = false, bool skipResumeProgressReconcile = false}) async {
@@ -283,7 +284,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
     unawaited(
       _player.play().catchError((error, stackTrace) {
-        logger('Failed to start player playback: $error\\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);
+        logger('Failed to start player playback: $error\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);
       }),
     );
   }
