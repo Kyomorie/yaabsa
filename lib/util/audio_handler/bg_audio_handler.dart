@@ -597,7 +597,6 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       logger('Failed to persist queue intent: $e\n$s', tag: 'AudioHandler', level: InfoLevel.warning);
     }
   }
-
   Future<void> _restoreQueueIntent(String userId) async {
     if (_isDisposing || queueList.isNotEmpty || _currentMediaItem != null) {
       return;
@@ -1587,10 +1586,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         if (!correctionReady) {
           return;
         }
-        await _playerMutationBarrier.run<void>(
-          lease,
-          () => _player.seek(relativeTrackPosition, index: newTrackIndex),
-        );
+        await _playerMutationBarrier.run<void>(lease, () => _player.seek(relativeTrackPosition, index: newTrackIndex));
         if (!_isSeekOwnershipCurrent(lease, seekGeneration, mediaKey)) {
           return;
         }
@@ -1649,16 +1645,11 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           .map((state) => state.processingState == ProcessingState.ready)
           .take(1),
       _player.errorStream.map((_) => false).take(1),
-      mediaItemStream
-          .where((media) => media == null || _mediaKey(media) != mediaKey)
-          .map((_) => false)
-          .take(1),
+      mediaItemStream.where((media) => media == null || _mediaKey(media) != mediaKey).map((_) => false).take(1),
       lease.invalidated.asStream().map((_) => false).take(1),
     ]).first;
 
-    return outcome &&
-        _isSeekOwnershipCurrent(lease, seekGeneration, mediaKey) &&
-        _currentTrackIndex == trackIndex;
+    return outcome && _isSeekOwnershipCurrent(lease, seekGeneration, mediaKey) && _currentTrackIndex == trackIndex;
   }
 
   void _recordManualSeekIfNeeded(Duration fromPosition, Duration toPosition) {
@@ -1778,11 +1769,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     }
   }
 
-  Future<void> _seekInternal(
-    Duration position, {
-    bool userNavigation = false,
-    PlayerMutationLease? mutationLease,
-  }) {
+  Future<void> _seekInternal(Duration position, {bool userNavigation = false, PlayerMutationLease? mutationLease}) {
     return _seekResolved(
       position,
       positionIsAbsolute: true,
@@ -2097,7 +2084,6 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
     _emitQueueState();
     _emitShouldShowPlayer();
-
     if (!kIsWeb && Platform.isAndroid) {
       _skipSilenceSubscription = _ref
           .read(appDatabaseProvider)
