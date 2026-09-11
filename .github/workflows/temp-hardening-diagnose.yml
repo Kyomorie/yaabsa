@@ -1,0 +1,65 @@
+name: Temporary chapter sleep hardening diagnostics
+
+on:
+  push:
+    branches:
+      - feat/chapter-end-sleep-timer
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+      - name: Record matcher counts
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          checks = {
+            'models_auto_queue_const': ('lib/util/audio_handler/bg_audio_handler_models.dart', 'const int _autoQueuePageSize = 20;\n'),
+            'audio_internal_guard_field': ('lib/util/audio_handler/bg_audio_handler.dart', '  int _internalSeekGuardDepth = 0;\n  bool _chapterNotificationEnabled = false;\n'),
+            'audio_cast_getter': ('lib/util/audio_handler/bg_audio_handler.dart', '  bool get isCastControlActive => _castControlActiveSubject.value;\n\n  bool get _supportsCastPlatform'),
+            'audio_play_item_signature': ('lib/util/audio_handler/bg_audio_handler.dart', '  Future<bool> playItemFromPosition({\n    required String itemId,\n    String? episodeId,\n    required Duration position,\n    bool preserveQueue = false,\n  }) async {'),
+            'audio_auto_restart_seek': ('lib/util/audio_handler/bg_audio_handler.dart', '        await seek(Duration.zero);'),
+            'audio_new_position_seek': ('lib/util/audio_handler/bg_audio_handler.dart', 'await _seekInternal(newPosition);'),
+            'audio_rewind_zero_seek': ('lib/util/audio_handler/bg_audio_handler.dart', '      await _seekInternal(Duration.zero);'),
+            'audio_public_seek_header': ('lib/util/audio_handler/bg_audio_handler.dart', '  @override\n  Future<void> seek(Duration position) async {\n    if (_currentMediaItem == null) return Future.value();\n\n    final fromPosition = this.position;\n'),
+            'audio_public_seek_tail': ('lib/util/audio_handler/bg_audio_handler.dart', '    _refreshChapterNotificationState(customPosition: boundedPosition);\n    _updateMediaItemForChapterNotification(customPosition: boundedPosition);\n    unawaited(_updatePlaybackState());\n    _recordManualSeekIfNeeded(fromPosition, boundedPosition);\n    return Future.value();\n  }\n\n  void _recordManualSeekIfNeeded'),
+            'audio_seek_internal_block': ('lib/util/audio_handler/bg_audio_handler.dart', '  Future<void> _seekInternal(Duration position) async {\n    _isInternalSeek = true;'),
+            'audio_dispose_tail': ('lib/util/audio_handler/bg_audio_handler.dart', '    await _lastPlayedMiniPlayerSnapshotSubject.close();\n  }\n'),
+            'resume_play_item_block': ('lib/util/audio_handler/bg_audio_handler_resume.dart', '        preserveQueue: canPreserveRestoredManualQueue,\n      );'),
+            'sleep_discontinuity_subscription': ('lib/util/handler/sleep_timer_handler.dart', '  StreamSubscription<PositionDiscontinuity>? _positionDiscontinuitySubscription;'),
+            'sleep_settle_timer_field': ('lib/util/handler/sleep_timer_handler.dart', '  Timer? _chapterSeekSettleTimer;'),
+            'sleep_attach_discontinuity': ('lib/util/handler/sleep_timer_handler.dart', '    _attachPositionDiscontinuityListener();'),
+            'sleep_dispose_discontinuity': ('lib/util/handler/sleep_timer_handler.dart', '      _positionDiscontinuitySubscription?.cancel();'),
+            'sleep_listener_method': ('lib/util/handler/sleep_timer_handler.dart', '  void _attachPositionDiscontinuityListener() {'),
+            'sleep_inactive_playback_block': ('lib/util/handler/sleep_timer_handler.dart', '    if (!wasRunning && isRunning) {\n      if (!state.isActive) {\n        audioHandler.clearSleepTimerCompletionGate();\n      }'),
+            'sleep_position_settle_guard': ('lib/util/handler/sleep_timer_handler.dart', '    if (_chapterSeekSettleTimer != null) {\n      return;\n    }'),
+            'sleep_discontinuity_handler': ('lib/util/handler/sleep_timer_handler.dart', '  void _handlePositionDiscontinuity(PositionDiscontinuity discontinuity) {'),
+            'sleep_expiry_settle_guard': ('lib/util/handler/sleep_timer_handler.dart', '          _chapterSeekSettleTimer != null ||'),
+            'sleep_invalidate_settle_timer': ('lib/util/handler/sleep_timer_handler.dart', '    _chapterSeekSettleTimer?.cancel();\n    _chapterSeekSettleTimer = null;'),
+            'sleep_can_reset_guard': ('lib/util/handler/sleep_timer_handler.dart', '    if (!state.isRunning || audioHandler.isCastControlActive || _chapterSeekSettleTimer != null) {'),
+            'sleep_final_restore_block': ('lib/util/handler/sleep_timer_handler.dart', '        await _restoreFadeVolumeIfNeeded();\n      }\n    }\n  }\n}\n'),
+          }
+          lines = []
+          for label, (path, needle) in checks.items():
+              text = Path(path).read_text()
+              lines.append(f'{label}={text.count(needle)}')
+          Path('hardening_diag.txt').write_text('\n'.join(lines) + '\n')
+          PY
+      - name: Commit diagnostics
+        shell: bash
+        run: |
+          if git diff --quiet -- hardening_diag.txt && git ls-files --error-unmatch hardening_diag.txt >/dev/null 2>&1; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add hardening_diag.txt
+          git commit -m "Record temporary hardening diagnostics"
+          git push origin HEAD:feat/chapter-end-sleep-timer
