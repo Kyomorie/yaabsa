@@ -154,13 +154,14 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   Duration? _countdownRunDuration;
   StreamSubscription<PlayerState>? _playerStateSubscription;
   StreamSubscription<Duration>? _positionSubscription;
-  StreamSubscription<PositionDiscontinuity>? _positionDiscontinuitySubscription;
+  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;
   bool _wasPlaybackRunning = false;
   bool _pauseTriggeredByPlayback = false;
   double? _fadeBaseVolume;
   Timer? _markerPinHideTimer;
   Timer? _markerRangeHideTimer;
-  Timer? _chapterSeekSettleTimer;
+  final Set<int> _chapterUserSeekOperations = <int>{};
+  bool _chapterUserSeekShouldRetarget = false;
   int _chapterRunGeneration = 0;
   int _chapterExpiryCheckGeneration = 0;
   bool _chapterExpiryClaimed = false;
@@ -169,7 +170,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   SleepTimerData build() {
     _attachPlaybackStateListener();
     _attachPositionListener();
-    _attachPositionDiscontinuityListener();
+    _attachUserSeekNavigationListener();
 
     ref.onDispose(() {
       _timer?.cancel();
@@ -187,8 +188,8 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       _playerStateSubscription = null;
       _positionSubscription?.cancel();
       _positionSubscription = null;
-      _positionDiscontinuitySubscription?.cancel();
-      _positionDiscontinuitySubscription = null;
+      _userSeekNavigationSubscription?.cancel();
+      _userSeekNavigationSubscription = null;
 
       unawaited(_restoreFadeVolumeIfNeeded());
     });
@@ -224,13 +225,11 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     }
   }
 
-  void _attachPositionDiscontinuityListener() {
+  void _attachUserSeekNavigationListener() {
     try {
-      _positionDiscontinuitySubscription = audioHandler.player.positionDiscontinuityStream.listen(
-        _handlePositionDiscontinuity,
-      );
+      _userSeekNavigationSubscription = audioHandler.userSeekNavigationStream.listen(_handleUserSeekNavigation);
     } catch (e) {
-      logger('Failed to attach sleep timer seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+      logger('Failed to attach sleep timer user-seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
@@ -260,6 +259,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     if (!wasRunning && isRunning) {
       if (!state.isActive) {
+        if (_chapterExpiryClaimed) {
+          _invalidateChapterRun();
+        }
         audioHandler.clearSleepTimerCompletionGate();
       }
       if (_pauseTriggeredByPlayback && state.state == SleepTimerState.paused && state.mode == SleepTimerMode.duration) {
@@ -290,7 +292,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       return;
     }
 
-    if (_chapterSeekSettleTimer != null) {
+    if (_chapterUserSeekOperations.isNotEmpty) {
       return;
     }
 
@@ -305,36 +307,44 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     }
   }
 
-  void _handlePositionDiscontinuity(PositionDiscontinuity discontinuity) {
-    if (discontinuity.reason != PositionDiscontinuityReason.seek ||
-        !state.isRunning ||
-        state.mode != SleepTimerMode.chapterEnd ||
-        audioHandler.isCastControlActive) {
+  void _handleUserSeekNavigation(UserSeekNavigationEvent event) {
+    if (event.phase == UserSeekNavigationPhase.began) {
+      if (_chapterExpiryClaimed) {
+        if (!state.isActive) {
+          _invalidateChapterRun();
+          audioHandler.clearSleepTimerCompletionGate();
+        }
+        return;
+      }
+
+      if (!state.isRunning || state.mode != SleepTimerMode.chapterEnd || audioHandler.isCastControlActive) {
+        return;
+      }
+
+      _chapterUserSeekOperations.add(event.operationId);
+      _chapterExpiryCheckGeneration += 1;
       return;
     }
 
-    // Smart rewind and resume reconciliation already use the existing guarded
-    // internal-seek scope. They may change the distance to the target, but must
-    // not retarget the chapter timer as a user navigation would.
-    if (audioHandler.hasGuardedInternalSeek) {
+    final removed = _chapterUserSeekOperations.remove(event.operationId);
+    if (!removed) {
+      return;
+    }
+    _chapterUserSeekShouldRetarget = _chapterUserSeekShouldRetarget || event.shouldRetarget;
+    if (_chapterUserSeekOperations.isNotEmpty) {
       return;
     }
 
-    final media = audioHandler.currentMediaItem;
-    if (media != null && audioHandler.position >= media.totalDuration) {
-      audioHandler.armSleepTimerCompletionGate(itemId: media.itemId, episodeId: media.episodeId);
+    final shouldRetarget = _chapterUserSeekShouldRetarget;
+    _chapterUserSeekShouldRetarget = false;
+    if (!state.isRunning || state.mode != SleepTimerMode.chapterEnd || audioHandler.isCastControlActive) {
+      return;
     }
 
-    _chapterExpiryCheckGeneration += 1;
-    final runGeneration = _chapterRunGeneration;
-    _chapterSeekSettleTimer?.cancel();
-    _chapterSeekSettleTimer = Timer(Duration.zero, () {
-      _chapterSeekSettleTimer = null;
-      _retargetChapterTimerAfterSeek(runGeneration);
-    });
+    _resolveChapterTimerAfterUserNavigation(_chapterRunGeneration, shouldRetarget: shouldRetarget);
   }
 
-  void _retargetChapterTimerAfterSeek(int runGeneration) {
+  void _resolveChapterTimerAfterUserNavigation(int runGeneration, {required bool shouldRetarget}) {
     if (!_isChapterRunCurrent(runGeneration) ||
         !state.isRunning ||
         state.mode != SleepTimerMode.chapterEnd ||
@@ -352,9 +362,17 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     }
 
     final position = audioHandler.position;
+    if (!shouldRetarget) {
+      if (position >= previousTarget.endPosition) {
+        _claimChapterExpiry(runGeneration);
+        return;
+      }
+      state = state.copyWith(remainingTime: previousTarget.remainingAt(position));
+      return;
+    }
+
     if (position >= media.totalDuration) {
-      audioHandler.armSleepTimerCompletionGate(itemId: media.itemId, episodeId: media.episodeId);
-      _claimChapterExpiry(runGeneration);
+      _cancelChapterTimerForContextChange('seek landed at media end');
       return;
     }
 
@@ -376,7 +394,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     if (nextTarget.endPosition != previousTarget.endPosition) {
       logger(
-        'Chapter sleep timer retargeted to ${nextTarget.endPosition.inSeconds}s after seek',
+        'Chapter sleep timer retargeted to ${nextTarget.endPosition.inSeconds}s after user navigation',
         tag: 'SleepTimer',
         level: InfoLevel.info,
       );
@@ -388,7 +406,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     scheduleMicrotask(() {
       if (checkGeneration != _chapterExpiryCheckGeneration ||
           !_isChapterRunCurrent(runGeneration) ||
-          _chapterSeekSettleTimer != null ||
+          _chapterUserSeekOperations.isNotEmpty ||
           !state.isRunning ||
           state.mode != SleepTimerMode.chapterEnd) {
         return;
@@ -422,8 +440,8 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _chapterRunGeneration += 1;
     _chapterExpiryCheckGeneration += 1;
     _chapterExpiryClaimed = false;
-    _chapterSeekSettleTimer?.cancel();
-    _chapterSeekSettleTimer = null;
+    _chapterUserSeekOperations.clear();
+    _chapterUserSeekShouldRetarget = false;
   }
 
   bool _isChapterRunCurrent(int generation) {
@@ -564,6 +582,16 @@ class SleepTimerHandler extends _$SleepTimerHandler {
           .setGlobalSetting<int>(SettingKeys.sleepTimerLastDurationMinutes, minutes);
     } catch (e) {
       logger('Failed to persist last sleep timer duration: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  Future<void> _persistLastMode(SleepTimerMode mode) async {
+    try {
+      await ref
+          .read(settingsManagerProvider.notifier)
+          .setGlobalSetting<String>(SettingKeys.sleepTimerLastMode, mode.name);
+    } catch (e) {
+      logger('Failed to persist last sleep timer mode: $e', tag: 'SleepTimer', level: InfoLevel.warning);
     }
   }
 
@@ -735,30 +763,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     audioHandler.clearSleepTimerCompletionGate();
   }
 
-  bool get canReset {
-    if (!state.isActive) {
-      return false;
-    }
-    if (state.mode == SleepTimerMode.duration) {
-      return true;
-    }
-    if (!state.isRunning || audioHandler.isCastControlActive || _chapterSeekSettleTimer != null) {
-      return false;
-    }
-
-    final target = state.chapterTarget;
-    final media = audioHandler.currentMediaItem;
-    if (target == null || media == null || !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
-      return false;
-    }
-
-    return resolveFollowingChapterSleepTarget(
-          chapters: media.chapters,
-          mediaDuration: media.totalDuration,
-          currentTarget: target,
-        ) !=
-        null;
-  }
+  bool get canReset => state.isActive && state.mode == SleepTimerMode.duration;
 
   Future<void> _tryAutoRestartSleepTimerOnPlaybackStart() async {
     if (state.isActive) {
@@ -774,6 +779,19 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     final autoRestartSuppressed = settingManager.getGlobalSetting<bool>(SettingKeys.sleepTimerAutoRestartSuppressed);
     if (autoRestartSuppressed) {
       logger('Sleep timer auto-restart is suppressed after manual stop', tag: 'SleepTimer', level: InfoLevel.debug);
+      return;
+    }
+
+    final lastMode = settingManager.getGlobalSetting<String>(
+      SettingKeys.sleepTimerLastMode,
+      defaultValue: SleepTimerMode.duration.name,
+    );
+    if (lastMode != SleepTimerMode.duration.name) {
+      logger(
+        'Sleep timer auto-restart skipped because the last timer mode was not duration',
+        tag: 'SleepTimer',
+        level: InfoLevel.debug,
+      );
       return;
     }
 
@@ -810,6 +828,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     unawaited(_setAutoRestartSuppressed(false));
     unawaited(_persistLastDuration(duration));
+    unawaited(_persistLastMode(SleepTimerMode.duration));
 
     logger('Sleep timer started for ${duration.inMinutes} minutes', tag: 'SleepTimer', level: InfoLevel.info);
 
@@ -858,10 +877,10 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _cancelMarkerVisibilityTimers();
     unawaited(_restoreFadeVolumeIfNeeded());
 
-    // Chapter timers deliberately do not auto-restart in PR 1. Keeping the
-    // existing suppression bit set also prevents a stale duration from being
-    // revived after chapter expiry.
-    unawaited(_setAutoRestartSuppressed(true));
+    // Chapter timers deliberately do not auto-restart in PR 1. Persist the
+    // mode separately so the manual-stop suppression bit keeps its original meaning.
+    unawaited(_setAutoRestartSuppressed(false));
+    unawaited(_persistLastMode(SleepTimerMode.chapterEnd));
 
     final marker = _createMarker();
     final position = audioHandler.position;
@@ -1027,7 +1046,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
       return false;
     }
     if (state.mode == SleepTimerMode.chapterEnd) {
-      return _extendChapterTimerByOneChapter();
+      return false;
     }
 
     final totalDuration = state.totalDuration ?? state.remainingTime;
@@ -1080,56 +1099,6 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     _startTimer(totalDuration);
     unawaited(_setAutoRestartSuppressed(false));
     unawaited(_persistLastDuration(totalDuration));
-    return true;
-  }
-
-  bool _extendChapterTimerByOneChapter() {
-    if (!state.isRunning ||
-        state.mode != SleepTimerMode.chapterEnd ||
-        audioHandler.isCastControlActive ||
-        _chapterSeekSettleTimer != null) {
-      return false;
-    }
-
-    final currentTarget = state.chapterTarget;
-    final media = audioHandler.currentMediaItem;
-    if (currentTarget == null ||
-        media == null ||
-        !currentTarget.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
-      return false;
-    }
-
-    final nextTarget = resolveFollowingChapterSleepTarget(
-      chapters: media.chapters,
-      mediaDuration: media.totalDuration,
-      currentTarget: currentTarget,
-    );
-    if (nextTarget == null) {
-      return false;
-    }
-
-    _chapterExpiryCheckGeneration += 1;
-    final position = audioHandler.position;
-    final remaining = nextTarget.remainingAt(position);
-    state = state.copyWith(remainingTime: remaining, chapterTarget: nextTarget, clearTotalDuration: true);
-    _syncSleepTimerCompletionGate(nextTarget);
-
-    logger(
-      'Chapter sleep timer extended to next chapter target ${nextTarget.endPosition.inSeconds}s',
-      tag: 'SleepTimer',
-      level: InfoLevel.info,
-    );
-    unawaited(
-      PlayerHistoryHandler.addPlayerHistory(
-        PlayerHistoryType.sleepTimerExtended,
-        details: <String, Object?>{
-          'mode': SleepTimerMode.chapterEnd.name,
-          'additionalChapters': 1,
-          'targetPositionSeconds': nextTarget.endPosition.inSeconds,
-          'remainingSeconds': remaining.inSeconds,
-        },
-      ),
-    );
     return true;
   }
 
@@ -1272,6 +1241,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     } finally {
       if (_isChapterRunCurrent(generation)) {
         await _restoreFadeVolumeIfNeeded();
+        _chapterExpiryClaimed = false;
       }
     }
   }

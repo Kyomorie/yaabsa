@@ -125,6 +125,7 @@ extension _BGAudioHandlerResume on BGAudioHandler {
         episodeId: lastPlayedItem.episodeId,
         position: resumePosition,
         preserveQueue: canPreserveRestoredManualQueue,
+        userNavigation: false,
       );
 
       return _currentMediaItem != null;

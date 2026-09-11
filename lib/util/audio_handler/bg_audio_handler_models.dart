@@ -2,6 +2,16 @@ part of 'bg_audio_handler.dart';
 
 const int _autoQueuePageSize = 20;
 
+enum UserSeekNavigationPhase { began, settled }
+
+class UserSeekNavigationEvent {
+  const UserSeekNavigationEvent({required this.operationId, required this.phase, this.shouldRetarget = false});
+
+  final int operationId;
+  final UserSeekNavigationPhase phase;
+  final bool shouldRetarget;
+}
+
 class QueueDisplayInfo {
   const QueueDisplayInfo({this.title, this.subtitle, this.author});
 

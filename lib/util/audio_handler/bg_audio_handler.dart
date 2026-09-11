@@ -167,10 +167,12 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   Future<bool>? _transcodeFallbackFuture;
   Completer<PlayerException>? _sourceLoadErrorCompleter;
   int _internalSeekGuardDepth = 0;
+  final StreamController<UserSeekNavigationEvent> _userSeekNavigationController =
+      StreamController<UserSeekNavigationEvent>.broadcast(sync: true);
+  int _userSeekNavigationSequence = 0;
   bool _chapterNotificationEnabled = false;
   Duration _chapterNotificationOffset = Duration.zero;
   Duration _chapterNotificationDuration = Duration.zero;
-  bool _isInternalSeek = false;
   bool _historyWasPlayingReady = false;
   bool _historyWasCompleted = false;
   bool _hasFiredCompleted = false;
@@ -243,6 +245,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   PlayerState get playerControlState => _playerControlStateSubject.value;
   Stream<bool> get castControlActiveStream => _castControlActiveSubject.stream.distinct();
   bool get isCastControlActive => _castControlActiveSubject.value;
+  Stream<UserSeekNavigationEvent> get userSeekNavigationStream => _userSeekNavigationController.stream;
 
   bool get _supportsCastPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
@@ -984,7 +987,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       }
 
       if (_player.playerState.processingState == ProcessingState.completed || forceRestart) {
-        await seek(Duration.zero);
+        await _seekInternal(Duration.zero);
       }
 
       final skipResumeProgressReconcile = _consumePausedManualSeekMarkerForCurrentItem();
@@ -1104,13 +1107,30 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     String? episodeId,
     required Duration position,
     bool preserveQueue = false,
+    bool userNavigation = true,
   }) async {
-    return _playItemFromPositionInternal(
-      itemId: itemId,
-      episodeId: episodeId,
-      position: position,
-      preserveQueue: preserveQueue,
-    );
+    if (!userNavigation) {
+      return _playItemFromPositionInternal(
+        itemId: itemId,
+        episodeId: episodeId,
+        position: position,
+        preserveQueue: preserveQueue,
+      );
+    }
+
+    final operationId = _beginUserSeekNavigation();
+    var succeeded = false;
+    try {
+      succeeded = await _playItemFromPositionInternal(
+        itemId: itemId,
+        episodeId: episodeId,
+        position: position,
+        preserveQueue: preserveQueue,
+      );
+      return succeeded;
+    } finally {
+      _settleUserSeekNavigation(operationId, shouldRetarget: succeeded);
+    }
   }
 
   @override
@@ -1233,7 +1253,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     final skipTime = _skipDurationForKey(SettingKeys.fastForwardInterval);
     final fromPosition = position;
     final newPosition = fromPosition + skipTime;
-    await _seekInternal(newPosition);
+    await _seekInternal(newPosition, userNavigation: true);
     unawaited(
       PlayerHistoryHandler.addPlayerHistory(
         PlayerHistoryType.skipForward,
@@ -1250,9 +1270,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     final newPosition = fromPosition - skipTime;
     if (newPosition < Duration.zero) {
       logger('Rewind position is negative, resetting to zero', tag: 'AudioHandler', level: InfoLevel.debug);
-      await _seekInternal(Duration.zero);
+      await _seekInternal(Duration.zero, userNavigation: true);
     } else {
-      await _seekInternal(newPosition);
+      await _seekInternal(newPosition, userNavigation: true);
     }
     unawaited(
       PlayerHistoryHandler.addPlayerHistory(
@@ -1284,7 +1304,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           tag: 'AudioHandler',
           level: InfoLevel.debug,
         );
-        await _seekInternal(newPosition);
+        await _seekInternal(newPosition, userNavigation: true);
         unawaited(
           PlayerHistoryHandler.addPlayerHistory(
             PlayerHistoryType.skipForward,
@@ -1351,7 +1371,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           tag: 'AudioHandler',
           level: InfoLevel.debug,
         );
-        await _seekInternal(newPosition);
+        await _seekInternal(newPosition, userNavigation: true);
         unawaited(
           PlayerHistoryHandler.addPlayerHistory(
             PlayerHistoryType.skipBackward,
@@ -1374,83 +1394,110 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   @override
-  Future<void> seek(Duration position) async {
-    if (_currentMediaItem == null) return Future.value();
+  Future<void> seek(Duration position) {
+    return _seekResolved(position, positionIsAbsolute: false, userNavigation: true, recordManualSeek: true);
+  }
 
-    final fromPosition = this.position;
-
-    Duration resolvedPosition = position;
-    if (_chapterNotificationEnabled && !_isInternalSeek) {
-      resolvedPosition = _chapterNotificationOffset + position;
+  Future<void> _seekResolved(
+    Duration requestedPosition, {
+    required bool positionIsAbsolute,
+    required bool userNavigation,
+    required bool recordManualSeek,
+  }) async {
+    final media = _currentMediaItem;
+    if (media == null) {
+      return;
     }
 
-    final maxPosition = _currentMediaItem!.totalDuration;
+    final fromPosition = position;
+    var resolvedPosition = requestedPosition;
+    if (_chapterNotificationEnabled && !positionIsAbsolute) {
+      resolvedPosition = _chapterNotificationOffset + requestedPosition;
+    }
+
+    final maxPosition = media.totalDuration;
     final boundedPosition = resolvedPosition < Duration.zero
         ? Duration.zero
         : (resolvedPosition > maxPosition ? maxPosition : resolvedPosition);
+    final shouldRetarget = boundedPosition != fromPosition;
+    final operationId = userNavigation ? _beginUserSeekNavigation() : null;
+    var navigationSucceeded = false;
 
-    if (!_isInternalSeek && (boundedPosition - fromPosition).abs() >= const Duration(seconds: 1)) {
-      _syncService.markProgressDirty();
-    }
+    try {
+      if (recordManualSeek && (boundedPosition - fromPosition).abs() >= const Duration(seconds: 1)) {
+        _syncService.markProgressDirty();
+      }
 
-    final shouldRecordPausedManualSeek =
-        _internalSeekGuardDepth == 0 &&
-        !playerControlState.playing &&
-        (playerControlState.processingState == ProcessingState.ready ||
-            playerControlState.processingState == ProcessingState.completed);
-    if (shouldRecordPausedManualSeek) {
-      _markPausedManualSeek(boundedPosition);
-    }
+      final shouldRecordPausedManualSeek =
+          _internalSeekGuardDepth == 0 &&
+          !playerControlState.playing &&
+          (playerControlState.processingState == ProcessingState.ready ||
+              playerControlState.processingState == ProcessingState.completed);
+      if (shouldRecordPausedManualSeek) {
+        _markPausedManualSeek(boundedPosition);
+      }
 
-    if (isCastControlActive) {
-      final relativePosition = _absoluteToCastRelativePosition(boundedPosition);
-      await GoogleCastRemoteMediaClient.instance.seek(GoogleCastMediaSeekOption(position: relativePosition));
-      _refreshPlayerControlState();
+      if (isCastControlActive) {
+        final relativePosition = _absoluteToCastRelativePosition(boundedPosition);
+        await GoogleCastRemoteMediaClient.instance.seek(GoogleCastMediaSeekOption(position: relativePosition));
+        navigationSucceeded = true;
+        _refreshPlayerControlState();
+        _refreshChapterNotificationState(customPosition: boundedPosition);
+        _updateMediaItemForChapterNotification(customPosition: boundedPosition);
+        await _updatePlaybackState();
+        if (recordManualSeek) {
+          _recordManualSeekIfNeeded(fromPosition, boundedPosition);
+        }
+        return;
+      }
+
+      final newTrackIndex = media.getIndexForDuration(boundedPosition);
+      if (newTrackIndex < 0) {
+        logger(
+          'Ignoring seek with invalid track index for position: $boundedPosition',
+          tag: 'AudioHandler',
+          level: InfoLevel.warning,
+        );
+        return;
+      }
+      logger(
+        'Seeking to position: $boundedPosition, track index: $newTrackIndex',
+        tag: 'AudioHandler',
+        level: InfoLevel.debug,
+      );
+      final relativeTrackPosition = boundedPosition - media.startDurationForTrack(newTrackIndex);
+
+      if (newTrackIndex != _currentTrackIndex) {
+        _currentTrackIndex = newTrackIndex;
+        await _player.seek(relativeTrackPosition, index: _currentTrackIndex);
+        if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+          // Bugfix for Windows as it doesn't seek correctly if the index changed
+          _player.playerStateStream.firstWhere((state) => state.processingState == ProcessingState.ready).then((
+            _,
+          ) async {
+            await _player.seek(relativeTrackPosition, index: _currentTrackIndex);
+          });
+        }
+      } else {
+        await _player.seek(relativeTrackPosition, index: _currentTrackIndex);
+      }
+      navigationSucceeded = true;
+
       _refreshChapterNotificationState(customPosition: boundedPosition);
       _updateMediaItemForChapterNotification(customPosition: boundedPosition);
-      await _updatePlaybackState();
-      _recordManualSeekIfNeeded(fromPosition, boundedPosition);
-      return Future.value();
-    }
-
-    final newTrackIndex = _currentMediaItem!.getIndexForDuration(boundedPosition);
-    if (newTrackIndex < 0) {
-      logger(
-        'Ignoring seek with invalid track index for position: $boundedPosition',
-        tag: 'AudioHandler',
-        level: InfoLevel.warning,
-      );
-      return Future.value();
-    }
-    logger(
-      'Seeking to position: $boundedPosition, track index: $newTrackIndex',
-      tag: 'AudioHandler',
-      level: InfoLevel.debug,
-    );
-    final relativeTrackPosition = boundedPosition - _currentMediaItem!.startDurationForTrack(newTrackIndex);
-
-    if (newTrackIndex != _currentTrackIndex) {
-      _currentTrackIndex = newTrackIndex;
-      await _player.seek(relativeTrackPosition, index: _currentTrackIndex);
-      if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
-        // Bugfix for Windows as it doesn't seek correctly if the index changed
-        _player.playerStateStream.firstWhere((state) => state.processingState == ProcessingState.ready).then((_) async {
-          await _player.seek(relativeTrackPosition, index: _currentTrackIndex);
-        });
+      unawaited(_updatePlaybackState());
+      if (recordManualSeek) {
+        _recordManualSeekIfNeeded(fromPosition, boundedPosition);
       }
-    } else {
-      await _player.seek(relativeTrackPosition, index: _currentTrackIndex);
+    } finally {
+      if (operationId != null) {
+        _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded && shouldRetarget);
+      }
     }
-
-    _refreshChapterNotificationState(customPosition: boundedPosition);
-    _updateMediaItemForChapterNotification(customPosition: boundedPosition);
-    unawaited(_updatePlaybackState());
-    _recordManualSeekIfNeeded(fromPosition, boundedPosition);
-    return Future.value();
   }
 
   void _recordManualSeekIfNeeded(Duration fromPosition, Duration toPosition) {
-    if (_isInternalSeek || (toPosition - fromPosition).abs() < const Duration(seconds: 1)) {
+    if ((toPosition - fromPosition).abs() < const Duration(seconds: 1)) {
       return;
     }
 
@@ -1535,16 +1582,33 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         current.artUri == next.artUri;
   }
 
-  Future<void> _seekInternal(Duration position) async {
-    _isInternalSeek = true;
-    try {
-      await seek(position);
-    } finally {
-      _isInternalSeek = false;
+  int _beginUserSeekNavigation() {
+    final operationId = ++_userSeekNavigationSequence;
+    if (!_userSeekNavigationController.isClosed) {
+      _userSeekNavigationController.add(
+        UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),
+      );
+    }
+    return operationId;
+  }
+
+  void _settleUserSeekNavigation(int operationId, {required bool shouldRetarget}) {
+    if (!_userSeekNavigationController.isClosed) {
+      _userSeekNavigationController.add(
+        UserSeekNavigationEvent(
+          operationId: operationId,
+          phase: UserSeekNavigationPhase.settled,
+          shouldRetarget: shouldRetarget,
+        ),
+      );
     }
   }
 
-  Future<void> seekAbsolute(Duration position) => _seekInternal(position);
+  Future<void> _seekInternal(Duration position, {bool userNavigation = false}) {
+    return _seekResolved(position, positionIsAbsolute: true, userNavigation: userNavigation, recordManualSeek: false);
+  }
+
+  Future<void> seekAbsolute(Duration position) => _seekInternal(position, userNavigation: true);
 
   Duration _clampDuration(Duration value, Duration min, Duration max) {
     if (value < min) return min;
@@ -2291,6 +2355,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     await _queueTransitionLoadingSubject.close();
     await _showPlayerSubject.close();
     await _lastPlayedMiniPlayerSnapshotSubject.close();
+    await _userSeekNavigationController.close();
   }
 
   Map<int, double> _parseEqualizerBandGains(String? jsonString) {
