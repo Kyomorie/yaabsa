@@ -1,0 +1,108 @@
+name: Temporary final chapter sleep hardening
+
+on:
+  push:
+    branches:
+      - feat/chapter-end-sleep-timer
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Preserve completion gate on stale completion events
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/util/audio_handler/bg_audio_handler.dart')
+          text = path.read_text()
+          old = '''    final matches = _queueItemsMatch(
+      leftItemId: gateItemId,
+      leftEpisodeId: _sleepTimerCompletionGateEpisodeId,
+      rightItemId: media.itemId,
+      rightEpisodeId: media.episodeId,
+    );
+    clearSleepTimerCompletionGate();
+    return matches;
+'''
+          new = '''    final matches = _queueItemsMatch(
+      leftItemId: gateItemId,
+      leftEpisodeId: _sleepTimerCompletionGateEpisodeId,
+      rightItemId: media.itemId,
+      rightEpisodeId: media.episodeId,
+    );
+    if (matches) {
+      clearSleepTimerCompletionGate();
+    }
+    return matches;
+'''
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'completion gate matcher: expected one match, found {count}')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Format touched Dart files
+        run: |
+          dart format \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/components/player/common/sleep_timer_button.dart \
+            lib/util/handler/sleep_timer_target.dart \
+            test/util/sleep_timer_target_test.dart
+          git diff --check
+
+      - name: Validate diff scope
+        shell: bash
+        run: |
+          mapfile -t CHANGED < <(git diff --name-only)
+          printf 'Changed files after hardening:\n'
+          printf '  %s\n' "${CHANGED[@]}"
+          for file in "${CHANGED[@]}"; do
+            case "$file" in
+              lib/util/audio_handler/bg_audio_handler.dart|lib/components/player/common/sleep_timer_button.dart|lib/util/handler/sleep_timer_target.dart|test/util/sleep_timer_target_test.dart) ;;
+              *) echo "ERROR: unexpected changed file: $file"; exit 1 ;;
+            esac
+          done
+
+      - name: Analyze library
+        run: flutter analyze lib
+
+      - name: Run chapter target tests
+        run: flutter test test/util/sleep_timer_target_test.dart
+
+      - name: Commit validated hardening
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/components/player/common/sleep_timer_button.dart \
+            lib/util/handler/sleep_timer_target.dart \
+            test/util/sleep_timer_target_test.dart
+          git commit -m "Harden chapter sleep completion identity"
+          git push origin HEAD:feat/chapter-end-sleep-timer
