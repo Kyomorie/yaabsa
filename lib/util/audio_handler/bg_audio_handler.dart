@@ -283,13 +283,12 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   SleepTimerCompletionGateClaim? _claimSleepTimerCompletionGate(InternalMedia media) {
     return _sleepTimerCompletionGate.claimWhere(
-      (itemId, episodeId) =>
-          _queueItemsMatch(
-            leftItemId: itemId,
-            leftEpisodeId: episodeId,
-            rightItemId: media.itemId,
-            rightEpisodeId: media.episodeId,
-          ),
+      (itemId, episodeId) => _queueItemsMatch(
+        leftItemId: itemId,
+        leftEpisodeId: episodeId,
+        rightItemId: media.itemId,
+        rightEpisodeId: media.episodeId,
+      ),
     );
   }
 
