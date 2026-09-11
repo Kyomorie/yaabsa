@@ -205,10 +205,17 @@ jobs:
           replace_once(audio, old_completion, new_completion, 'stale completion pause guard')
           PY
 
-      - name: Format and regenerate only the sleep timer provider
+      - name: Format and regenerate sleep timer provider
+        shell: bash
         run: |
           dart format lib/util/audio_handler/bg_audio_handler.dart lib/util/handler/sleep_timer_handler.dart
           dart run build_runner build --build-filter=lib/util/handler/sleep_timer_handler.g.dart
+          while IFS= read -r file; do
+            case "$file" in
+              lib/util/audio_handler/bg_audio_handler.dart|lib/util/handler/sleep_timer_handler.dart|lib/util/handler/sleep_timer_handler.g.dart) ;;
+              *) git restore -- "$file" ;;
+            esac
+          done < <(git diff --name-only)
           dart format lib/util/handler/sleep_timer_handler.g.dart
           git diff --check
 
@@ -224,6 +231,11 @@ jobs:
               *) echo "ERROR: unexpected changed file: $file"; exit 1 ;;
             esac
           done
+          if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            echo 'ERROR: unexpected untracked files remain after generation'
+            git ls-files --others --exclude-standard
+            exit 1
+          fi
 
       - name: Analyze library
         run: flutter analyze lib
