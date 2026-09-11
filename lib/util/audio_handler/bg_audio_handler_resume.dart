@@ -1,9 +1,12 @@
 part of 'bg_audio_handler.dart';
 
 extension _BGAudioHandlerResume on BGAudioHandler {
-  Future<void> _applySleepTimerAutoRewindNowInternal() async {
+  Future<bool> _applySleepTimerAutoRewindNowInternal({PlayerMutationLease? mutationLease}) async {
     if (_currentMediaItem == null) {
-      return;
+      return false;
+    }
+    if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
+      return false;
     }
 
     final rewindMinutes = _ref
@@ -11,17 +14,20 @@ extension _BGAudioHandlerResume on BGAudioHandler {
         .getGlobalSetting<int>(SettingKeys.sleepTimerAutoRewindMinutes);
 
     if (rewindMinutes <= 0) {
-      return;
+      return true;
     }
 
     final rewindBy = Duration(minutes: rewindMinutes);
     final currentPosition = position;
     final targetPosition = _rewindPosition(currentPosition, rewindBy);
     if (targetPosition >= currentPosition) {
-      return;
+      return true;
     }
 
-    await _seekInternal(targetPosition);
+    await _seekInternal(targetPosition, mutationLease: mutationLease);
+    if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
+      return false;
+    }
 
     final currentPositionSeconds = targetPosition.inMicroseconds / Duration.microsecondsPerSecond;
     final canReachServer = _ref.read(serverReachabilityProvider);
@@ -34,11 +40,16 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       logger('Failed to sync sleep timer rewind before stop: $e', tag: 'AudioHandler', level: InfoLevel.warning);
     }
 
+    if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
+      return false;
+    }
+
     logger(
       'Applied sleep timer auto-rewind (${rewindBy.inMinutes} min) before stop at ${targetPosition.inSeconds}s.',
       tag: 'AudioHandler',
       level: InfoLevel.debug,
     );
+    return true;
   }
 
   Future<bool> _playLastPlayedInternal({
