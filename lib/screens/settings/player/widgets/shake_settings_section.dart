@@ -48,7 +48,7 @@ class _ShakeSettingsSectionState extends State<ShakeSettingsSection> {
           settings: [
             SettingSwitchTile(
               label: 'Shake to reset sleep timer',
-              subtitle: 'Reset a duration timer to its full length or extend a chapter timer by one chapter',
+              subtitle: 'Reset an active duration timer back to its full length',
               settingKey: SettingKeys.shakeToResetSleepTimer,
               enabled: supportsShakeActions,
               disabledReason: shakeUnsupportedReason,
