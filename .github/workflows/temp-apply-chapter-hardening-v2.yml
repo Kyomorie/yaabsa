@@ -1,0 +1,236 @@
+name: Temporary apply chapter sleep hardening v2
+
+on:
+  push:
+    branches:
+      - feat/chapter-end-sleep-timer
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+          submodules: recursive
+
+      - name: Apply explicit user-seek lifecycle hardening
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, found {count}')
+              p.write_text(text.replace(old, new, 1))
+
+          def replace_all(path, old, new, expected, label):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f'{label}: expected {expected} matches, found {count}')
+              p.write_text(text.replace(old, new))
+
+          models = 'lib/util/audio_handler/bg_audio_handler_models.dart'
+          replace_once(
+              models,
+              'const int _autoQueuePageSize = 20;\n',
+              '''const int _autoQueuePageSize = 20;\n\nenum UserSeekNavigationPhase { began, settled }\n\nclass UserSeekNavigationEvent {\n  const UserSeekNavigationEvent({required this.operationId, required this.phase});\n\n  final int operationId;\n  final UserSeekNavigationPhase phase;\n}\n''',
+              'navigation model',
+          )
+
+          audio = 'lib/util/audio_handler/bg_audio_handler.dart'
+          replace_once(
+              audio,
+              '''  int _internalSeekGuardDepth = 0;\n  bool _chapterNotificationEnabled = false;\n''',
+              '''  int _internalSeekGuardDepth = 0;\n  final StreamController<UserSeekNavigationEvent> _userSeekNavigationController =\n      StreamController<UserSeekNavigationEvent>.broadcast(sync: true);\n  int _userSeekNavigationSequence = 0;\n  bool _chapterNotificationEnabled = false;\n''',
+              'navigation stream fields',
+          )
+          replace_once(
+              audio,
+              '''  bool get isCastControlActive => _castControlActiveSubject.value;\n\n  bool get _supportsCastPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);\n''',
+              '''  bool get isCastControlActive => _castControlActiveSubject.value;\n  Stream<UserSeekNavigationEvent> get userSeekNavigationStream => _userSeekNavigationController.stream;\n\n  bool get _supportsCastPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);\n''',
+              'navigation stream getter',
+          )
+          replace_once(
+              audio,
+              '''  Future<bool> playItemFromPosition({\n    required String itemId,\n    String? episodeId,\n    required Duration position,\n    bool preserveQueue = false,\n  }) async {\n    return _playItemFromPositionInternal(\n      itemId: itemId,\n      episodeId: episodeId,\n      position: position,\n      preserveQueue: preserveQueue,\n    );\n  }\n''',
+              '''  Future<bool> playItemFromPosition({\n    required String itemId,\n    String? episodeId,\n    required Duration position,\n    bool preserveQueue = false,\n    bool userNavigation = true,\n  }) async {\n    Future<bool> playFromPosition() => _playItemFromPositionInternal(\n      itemId: itemId,\n      episodeId: episodeId,\n      position: position,\n      preserveQueue: preserveQueue,\n    );\n\n    if (!userNavigation) {\n      return playFromPosition();\n    }\n    return _runUserSeekNavigation(playFromPosition);\n  }\n''',
+              'playItemFromPosition lifecycle',
+          )
+          replace_once(
+              audio,
+              '''    if (newPosition < Duration.zero) {\n      logger('Rewind position is negative, resetting to zero', tag: 'AudioHandler', level: InfoLevel.debug);\n      await _seekInternal(Duration.zero);\n    } else {\n      await _seekInternal(newPosition);\n    }\n''',
+              '''    if (newPosition < Duration.zero) {\n      logger('Rewind position is negative, resetting to zero', tag: 'AudioHandler', level: InfoLevel.debug);\n      await _seekInternal(Duration.zero, userNavigation: true);\n    } else {\n      await _seekInternal(newPosition, userNavigation: true);\n    }\n''',
+              'rewind lifecycle',
+          )
+          replace_all(
+              audio,
+              'await _seekInternal(newPosition);',
+              'await _seekInternal(newPosition, userNavigation: true);',
+              3,
+              'other user seek lifecycle',
+          )
+          replace_once(
+              audio,
+              '        await seek(Duration.zero);',
+              '        await _seekInternal(Duration.zero);',
+              'automatic completion restart seek',
+          )
+          replace_once(
+              audio,
+              '''  @override\n  Future<void> seek(Duration position) async {\n    if (_currentMediaItem == null) return Future.value();\n\n    final fromPosition = this.position;\n''',
+              '''  @override\n  Future<void> seek(Duration position) async {\n    if (_currentMediaItem == null) return Future.value();\n\n    final userNavigationOperationId = !_isInternalSeek ? _beginUserSeekNavigation() : null;\n    try {\n      final fromPosition = this.position;\n''',
+              'public seek begin lifecycle',
+          )
+          replace_once(
+              audio,
+              '''    _refreshChapterNotificationState(customPosition: boundedPosition);\n    _updateMediaItemForChapterNotification(customPosition: boundedPosition);\n    unawaited(_updatePlaybackState());\n    _recordManualSeekIfNeeded(fromPosition, boundedPosition);\n    return Future.value();\n  }\n\n  void _recordManualSeekIfNeeded(Duration fromPosition, Duration toPosition) {\n''',
+              '''      _refreshChapterNotificationState(customPosition: boundedPosition);\n      _updateMediaItemForChapterNotification(customPosition: boundedPosition);\n      unawaited(_updatePlaybackState());\n      _recordManualSeekIfNeeded(fromPosition, boundedPosition);\n      return Future.value();\n    } finally {\n      if (userNavigationOperationId != null) {\n        _settleUserSeekNavigation(userNavigationOperationId);\n      }\n    }\n  }\n\n  void _recordManualSeekIfNeeded(Duration fromPosition, Duration toPosition) {\n''',
+              'public seek settle lifecycle',
+          )
+          replace_once(
+              audio,
+              '''  Future<void> _seekInternal(Duration position) async {\n    _isInternalSeek = true;\n    try {\n      await seek(position);\n    } finally {\n      _isInternalSeek = false;\n    }\n  }\n\n  Future<void> seekAbsolute(Duration position) => _seekInternal(position);\n''',
+              '''  int _beginUserSeekNavigation() {\n    final operationId = ++_userSeekNavigationSequence;\n    if (!_userSeekNavigationController.isClosed) {\n      _userSeekNavigationController.add(\n        UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),\n      );\n    }\n    return operationId;\n  }\n\n  void _settleUserSeekNavigation(int operationId) {\n    if (!_userSeekNavigationController.isClosed) {\n      _userSeekNavigationController.add(\n        UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.settled),\n      );\n    }\n  }\n\n  Future<T> _runUserSeekNavigation<T>(Future<T> Function() action) async {\n    final operationId = _beginUserSeekNavigation();\n    try {\n      return await action();\n    } finally {\n      _settleUserSeekNavigation(operationId);\n    }\n  }\n\n  Future<void> _seekInternal(Duration position, {bool userNavigation = false}) async {\n    if (userNavigation) {\n      return _runUserSeekNavigation(() => _seekInternal(position));\n    }\n\n    _isInternalSeek = true;\n    try {\n      await seek(position);\n    } finally {\n      _isInternalSeek = false;\n    }\n  }\n\n  Future<void> seekAbsolute(Duration position) => _seekInternal(position, userNavigation: true);\n''',
+              'navigation lifecycle helpers',
+          )
+          replace_once(
+              audio,
+              '''    await _lastPlayedMiniPlayerSnapshotSubject.close();\n  }\n''',
+              '''    await _lastPlayedMiniPlayerSnapshotSubject.close();\n    await _userSeekNavigationController.close();\n  }\n''',
+              'navigation stream disposal',
+          )
+
+          resume = 'lib/util/audio_handler/bg_audio_handler_resume.dart'
+          replace_once(
+              resume,
+              '''      await playItemFromPosition(\n        itemId: lastPlayedItem.itemId,\n        episodeId: lastPlayedItem.episodeId,\n        position: resumePosition,\n        preserveQueue: canPreserveRestoredManualQueue,\n      );\n''',
+              '''      await playItemFromPosition(\n        itemId: lastPlayedItem.itemId,\n        episodeId: lastPlayedItem.episodeId,\n        position: resumePosition,\n        preserveQueue: canPreserveRestoredManualQueue,\n        userNavigation: false,\n      );\n''',
+              'internal last-played resume',
+          )
+
+          sleep = 'lib/util/handler/sleep_timer_handler.dart'
+          replace_once(sleep, "import 'package:just_audio/just_audio.dart';\n", '', 'remove obsolete just_audio import')
+          replace_once(
+              sleep,
+              '''  StreamSubscription<Duration>? _positionSubscription;\n  StreamSubscription<PositionDiscontinuity>? _positionDiscontinuitySubscription;\n''',
+              '''  StreamSubscription<Duration>? _positionSubscription;\n  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;\n''',
+              'navigation subscription',
+          )
+          replace_once(
+              sleep,
+              '''  Timer? _markerRangeHideTimer;\n  Timer? _chapterSeekSettleTimer;\n  int _chapterRunGeneration = 0;\n''',
+              '''  Timer? _markerRangeHideTimer;\n  final Set<int> _chapterUserSeekOperations = <int>{};\n  int _chapterRunGeneration = 0;\n''',
+              'pending navigation state',
+          )
+          replace_once(
+              sleep,
+              '''    _attachPlaybackStateListener();\n    _attachPositionListener();\n    _attachPositionDiscontinuityListener();\n''',
+              '''    _attachPlaybackStateListener();\n    _attachPositionListener();\n    _attachUserSeekNavigationListener();\n''',
+              'attach navigation listener',
+          )
+          replace_once(
+              sleep,
+              '''      _positionSubscription?.cancel();\n      _positionSubscription = null;\n      _positionDiscontinuitySubscription?.cancel();\n      _positionDiscontinuitySubscription = null;\n''',
+              '''      _positionSubscription?.cancel();\n      _positionSubscription = null;\n      _userSeekNavigationSubscription?.cancel();\n      _userSeekNavigationSubscription = null;\n''',
+              'dispose navigation listener',
+          )
+          replace_once(
+              sleep,
+              '''  void _attachPositionDiscontinuityListener() {\n    try {\n      _positionDiscontinuitySubscription = audioHandler.player.positionDiscontinuityStream.listen(\n        _handlePositionDiscontinuity,\n      );\n    } catch (e) {\n      logger('Failed to attach sleep timer seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);\n    }\n  }\n''',
+              '''  void _attachUserSeekNavigationListener() {\n    try {\n      _userSeekNavigationSubscription = audioHandler.userSeekNavigationStream.listen(_handleUserSeekNavigation);\n    } catch (e) {\n      logger('Failed to attach sleep timer user-seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);\n    }\n  }\n''',
+              'navigation listener method',
+          )
+          replace_once(
+              sleep,
+              '''    if (!wasRunning && isRunning) {\n      if (!state.isActive) {\n        audioHandler.clearSleepTimerCompletionGate();\n      }\n''',
+              '''    if (!wasRunning && isRunning) {\n      if (!state.isActive) {\n        if (_chapterExpiryClaimed) {\n          _invalidateChapterRun();\n        }\n        audioHandler.clearSleepTimerCompletionGate();\n      }\n''',
+              'manual resume stale expiry guard',
+          )
+          replace_once(
+              sleep,
+              '''    if (_chapterSeekSettleTimer != null) {\n      return;\n    }\n''',
+              '''    if (_chapterUserSeekOperations.isNotEmpty) {\n      return;\n    }\n''',
+              'position pending-navigation guard',
+          )
+          replace_once(
+              sleep,
+              '''  void _handlePositionDiscontinuity(PositionDiscontinuity discontinuity) {\n    if (discontinuity.reason != PositionDiscontinuityReason.seek ||\n        !state.isRunning ||\n        state.mode != SleepTimerMode.chapterEnd ||\n        audioHandler.isCastControlActive) {\n      return;\n    }\n\n    // Smart rewind and resume reconciliation already use the existing guarded\n    // internal-seek scope. They may change the distance to the target, but must\n    // not retarget the chapter timer as a user navigation would.\n    if (audioHandler.hasGuardedInternalSeek) {\n      return;\n    }\n\n    final media = audioHandler.currentMediaItem;\n    if (media != null && audioHandler.position >= media.totalDuration) {\n      audioHandler.armSleepTimerCompletionGate(itemId: media.itemId, episodeId: media.episodeId);\n    }\n\n    _chapterExpiryCheckGeneration += 1;\n    final runGeneration = _chapterRunGeneration;\n    _chapterSeekSettleTimer?.cancel();\n    _chapterSeekSettleTimer = Timer(Duration.zero, () {\n      _chapterSeekSettleTimer = null;\n      _retargetChapterTimerAfterSeek(runGeneration);\n    });\n  }\n''',
+              '''  void _handleUserSeekNavigation(UserSeekNavigationEvent event) {\n    if (event.phase == UserSeekNavigationPhase.began) {\n      if (_chapterExpiryClaimed && !state.isActive) {\n        _invalidateChapterRun();\n        audioHandler.clearSleepTimerCompletionGate();\n        return;\n      }\n\n      if (!state.isRunning || state.mode != SleepTimerMode.chapterEnd || audioHandler.isCastControlActive) {\n        return;\n      }\n\n      _chapterUserSeekOperations.add(event.operationId);\n      _chapterExpiryCheckGeneration += 1;\n      return;\n    }\n\n    final removed = _chapterUserSeekOperations.remove(event.operationId);\n    if (!removed || _chapterUserSeekOperations.isNotEmpty) {\n      return;\n    }\n\n    if (!state.isRunning || state.mode != SleepTimerMode.chapterEnd || audioHandler.isCastControlActive) {\n      return;\n    }\n\n    _retargetChapterTimerAfterSeek(_chapterRunGeneration);\n  }\n''',
+              'explicit navigation handler',
+          )
+          replace_once(
+              sleep,
+              '''          !_isChapterRunCurrent(runGeneration) ||\n          _chapterSeekSettleTimer != null ||\n          !state.isRunning ||\n''',
+              '''          !_isChapterRunCurrent(runGeneration) ||\n          _chapterUserSeekOperations.isNotEmpty ||\n          !state.isRunning ||\n''',
+              'expiry pending-navigation guard',
+          )
+          replace_once(
+              sleep,
+              '''    _chapterExpiryClaimed = false;\n    _chapterSeekSettleTimer?.cancel();\n    _chapterSeekSettleTimer = null;\n''',
+              '''    _chapterExpiryClaimed = false;\n    _chapterUserSeekOperations.clear();\n''',
+              'invalidate navigation state',
+          )
+          replace_once(
+              sleep,
+              '''    if (!state.isRunning || audioHandler.isCastControlActive || _chapterSeekSettleTimer != null) {\n''',
+              '''    if (!state.isRunning || audioHandler.isCastControlActive || _chapterUserSeekOperations.isNotEmpty) {\n''',
+              'chapter reset pending-navigation guard',
+          )
+          replace_once(
+              sleep,
+              '''      if (_isChapterRunCurrent(generation)) {\n        await _restoreFadeVolumeIfNeeded();\n      }\n''',
+              '''      if (_isChapterRunCurrent(generation)) {\n        await _restoreFadeVolumeIfNeeded();\n        _chapterExpiryClaimed = false;\n      }\n''',
+              'expiry claim cleanup',
+          )
+          PY
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Format touched Dart files
+        run: |
+          dart format \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_models.dart \
+            lib/util/audio_handler/bg_audio_handler_resume.dart \
+            lib/util/handler/sleep_timer_handler.dart
+
+      - name: Check diff whitespace
+        run: git diff --check
+
+      - name: Analyze sources
+        run: flutter analyze lib
+
+      - name: Run chapter target tests
+        run: flutter test test/util/sleep_timer_target_test.dart
+
+      - name: Commit hardened implementation
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_models.dart \
+            lib/util/audio_handler/bg_audio_handler_resume.dart \
+            lib/util/handler/sleep_timer_handler.dart
+          git commit -m "Harden chapter sleep timer seek races"
+          git push origin HEAD:feat/chapter-end-sleep-timer
