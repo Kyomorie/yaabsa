@@ -1,0 +1,167 @@
+name: Finalize chapter navigation ownership hardening
+
+on:
+  push:
+    branches:
+      - feat/chapter-end-sleep-timer
+    paths:
+      - .github/workflows/temp-navigation-ownership-finalize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Verify exact parent and wrapper-only commit
+        shell: bash
+        run: |
+          expected_parent='1a11ca11de53a34f24597f88d76e1725876e3c10'
+          wrapper='.github/workflows/temp-navigation-ownership-finalize.yml'
+          parent="$(git rev-parse HEAD^ 2>/dev/null)" || { echo 'Cannot resolve parent'; exit 1; }
+          [ "$parent" = "$expected_parent" ] || { echo "Unexpected parent: $parent"; exit 1; }
+          changed="$(git diff --name-only HEAD^ HEAD)" || { echo 'Cannot inspect wrapper commit'; exit 1; }
+          [ "$changed" = "$wrapper" ] || { echo "Unexpected wrapper commit scope: $changed"; exit 1; }
+          [ -f .github/workflows/temp-navigation-ownership-hardening.yml ] || { echo 'Source hardening workflow missing'; exit 1; }
+          echo "ONE_SHOT_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          flutter pub get || { echo 'flutter pub get failed'; exit 1; }
+
+      - name: Extract and run verified transform
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          import textwrap
+
+          workflow = Path('.github/workflows/temp-navigation-ownership-hardening.yml')
+          lines = workflow.read_text().splitlines()
+          starts = [i for i, line in enumerate(lines) if line.strip() == "python - <<'PY'"]
+          if len(starts) != 1:
+              raise SystemExit(f'Expected one transform heredoc, found {len(starts)}')
+          start = starts[0]
+          end = next((i for i in range(start + 1, len(lines)) if lines[i].strip() == 'PY'), None)
+          if end is None:
+              raise SystemExit('Transform heredoc terminator missing')
+          script = textwrap.dedent('\n'.join(lines[start + 1:end])) + '\n'
+          target = Path('/tmp/navigation_transform.py')
+          target.write_text(script)
+          subprocess.run(['python', str(target)], check=True)
+          PY
+          rm -f .github/workflows/temp-navigation-ownership-finalize.yml || { echo 'Could not remove finalizer workflow'; exit 1; }
+
+      - name: Format and regenerate provider
+        shell: bash
+        run: |
+          dart format \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_models.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/handler/sleep_timer_handler.dart \
+            test/util/user_seek_navigation_ledger_test.dart || { echo 'dart format failed'; exit 1; }
+          dart run build_runner build --build-filter=lib/util/handler/sleep_timer_handler.g.dart || { echo 'provider generation failed'; exit 1; }
+
+          for i in 1 2 3; do
+            if pgrep -x git >/dev/null 2>&1; then
+              sleep 1
+              continue
+            fi
+            sleep 1
+          done
+
+          while IFS= read -r file; do
+            case "$file" in
+              .github/workflows/temp-navigation-ownership-hardening.yml|.github/workflows/temp-navigation-ownership-finalize.yml|lib/util/audio_handler/bg_audio_handler.dart|lib/util/audio_handler/bg_audio_handler_models.dart|lib/util/audio_handler/bg_audio_handler_playback_internal.dart|lib/util/handler/sleep_timer_handler.dart|lib/util/handler/sleep_timer_handler.g.dart|test/util/user_seek_navigation_ledger_test.dart) ;;
+              *)
+                git show "HEAD:$file" > "$file" || { echo "Could not restore unrelated generated file read-only: $file"; exit 1; }
+                ;;
+            esac
+          done < <(git diff --name-only)
+
+          if [ -f lib/util/handler/sleep_timer_handler.g.dart ]; then
+            dart format lib/util/handler/sleep_timer_handler.g.dart || { echo 'generated provider format failed'; exit 1; }
+          fi
+          git diff --check || { echo 'git diff --check failed'; exit 1; }
+
+      - name: Validate exact diff scope
+        shell: bash
+        run: |
+          actual="$(git status --short | awk '{print $2}' | sort)"
+          expected="$(printf '%s\n' \
+            .github/workflows/temp-navigation-ownership-finalize.yml \
+            .github/workflows/temp-navigation-ownership-hardening.yml \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_models.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/handler/sleep_timer_handler.dart \
+            lib/util/handler/sleep_timer_handler.g.dart \
+            test/util/user_seek_navigation_ledger_test.dart | sort)"
+          [ "$actual" = "$expected" ] || {
+            echo 'Unexpected diff scope'
+            echo '--- actual ---'
+            printf '%s\n' "$actual"
+            echo '--- expected ---'
+            printf '%s\n' "$expected"
+            exit 1
+          }
+
+      - name: Analyze library
+        shell: bash
+        run: |
+          flutter analyze lib || { echo 'flutter analyze lib failed'; exit 1; }
+
+      - name: Run focused ownership tests
+        shell: bash
+        run: |
+          flutter test \
+            test/util/sleep_timer_target_test.dart \
+            test/util/user_seek_navigation_ledger_test.dart || { echo 'focused tests failed'; exit 1; }
+
+      - name: Verify remote head and commit validated hardening
+        shell: bash
+        run: |
+          git fetch origin feat/chapter-end-sleep-timer --depth=1 || { echo 'remote refresh failed'; exit 1; }
+          local_head="$(git rev-parse HEAD)" || { echo 'cannot read local head'; exit 1; }
+          remote_head="$(git rev-parse origin/feat/chapter-end-sleep-timer)" || { echo 'cannot read remote head'; exit 1; }
+          [ "$local_head" = "$ONE_SHOT_HEAD" ] || { echo "Local head changed: $local_head"; exit 1; }
+          [ "$remote_head" = "$ONE_SHOT_HEAD" ] || { echo "Remote head changed: $remote_head"; exit 1; }
+
+          i=0
+          while pgrep -x git >/dev/null 2>&1 && [ "$i" -lt 20 ]; do
+            i=$((i + 1))
+            sleep 1
+          done
+          if pgrep -x git >/dev/null 2>&1; then
+            echo 'A git process is still running before commit'
+            exit 1
+          fi
+          if [ -e .git/index.lock ]; then
+            echo 'Removing stale index lock after confirming no git process is running'
+            rm -f .git/index.lock || { echo 'Could not remove stale index lock'; exit 1; }
+          fi
+
+          git config user.name 'github-actions[bot]' || { echo 'git user config failed'; exit 1; }
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com' || { echo 'git email config failed'; exit 1; }
+          git add -A || { echo 'git add failed'; exit 1; }
+          git commit -m 'Harden chapter navigation ownership' || { echo 'git commit failed'; exit 1; }
+          git push origin HEAD:feat/chapter-end-sleep-timer || { echo 'git push failed'; exit 1; }
