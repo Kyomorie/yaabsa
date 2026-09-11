@@ -74,7 +74,7 @@ jobs:
               audio,
               'await _seekInternal(newPosition);',
               'await _seekInternal(newPosition, userNavigation: true);',
-              5,
+              4,
           )
           replace_once(
               audio,
