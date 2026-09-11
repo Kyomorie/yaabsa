@@ -1,0 +1,584 @@
+name: One-shot chapter navigation ownership hardening
+
+on:
+  push:
+    branches:
+      - feat/chapter-end-sleep-timer
+    paths:
+      - .github/workflows/temp-navigation-ownership-hardening.yml
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  harden:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Verify one-shot head
+        shell: bash
+        run: |
+          expected_parent='a5cb3e01011601840a4ca7d3fae9546933a7a42c'
+          workflow='.github/workflows/temp-navigation-ownership-hardening.yml'
+          parent="$(git rev-parse HEAD^ 2>/dev/null)" || { echo 'Cannot resolve parent'; exit 1; }
+          [ "$parent" = "$expected_parent" ] || { echo "Unexpected parent: $parent"; exit 1; }
+          changed="$(git diff --name-only HEAD^ HEAD)" || { echo 'Cannot inspect one-shot commit'; exit 1; }
+          [ "$changed" = "$workflow" ] || { echo "Unexpected files in one-shot commit: $changed"; exit 1; }
+          echo "ONE_SHOT_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Wait for regular PR build of this exact head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import time
+          import urllib.request
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          head = os.environ['ONE_SHOT_HEAD']
+          token = os.environ['GH_TOKEN']
+          url = (
+              f'https://api.github.com/repos/{repo}/actions/workflows/pr-build.yml/runs'
+              f'?event=pull_request&head_sha={head}&per_page=20'
+          )
+          headers = {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': f'Bearer {token}',
+              'X-GitHub-Api-Version': '2022-11-28',
+          }
+          for _ in range(180):
+              request = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  payload = json.load(response)
+              runs = payload.get('workflow_runs', [])
+              if runs:
+                  run = max(runs, key=lambda entry: entry.get('run_number', 0))
+                  status = run.get('status')
+                  conclusion = run.get('conclusion')
+                  print(f"PR build #{run.get('run_number')}: {status}/{conclusion}")
+                  if status == 'completed':
+                      if conclusion != 'success':
+                          raise SystemExit(f'Exact-head PR build did not succeed: {conclusion}')
+                      raise SystemExit(0)
+              time.sleep(5)
+          raise SystemExit('Timed out waiting for exact-head PR build')
+          PY
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          flutter pub get || { echo 'flutter pub get failed'; exit 1; }
+
+      - name: Apply navigation ownership hardening
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected one match, found {count}')
+              p.write_text(text.replace(old, new, 1))
+
+          models = 'lib/util/audio_handler/bg_audio_handler_models.dart'
+          replace_once(
+              models,
+              """class UserSeekNavigationEvent {
+  const UserSeekNavigationEvent({required this.operationId, required this.phase, this.shouldRetarget = false});
+
+  final int operationId;
+  final UserSeekNavigationPhase phase;
+  final bool shouldRetarget;
+}
+
+class QueueDisplayInfo {
+""",
+              """class UserSeekNavigationEvent {
+  const UserSeekNavigationEvent({required this.operationId, required this.phase, this.shouldRetarget = false});
+
+  final int operationId;
+  final UserSeekNavigationPhase phase;
+  final bool shouldRetarget;
+}
+
+class UserSeekNavigationLedger {
+  final Set<int> _activeOperations = <int>{};
+
+  bool begin(int operationId) => _activeOperations.add(operationId);
+
+  bool settle(int operationId) => _activeOperations.remove(operationId);
+
+  bool get hasActive => _activeOperations.isNotEmpty;
+
+  Set<int> get activeSnapshot => Set<int>.unmodifiable(_activeOperations);
+}
+
+class QueueDisplayInfo {
+""",
+              'navigation ledger model',
+          )
+
+          audio = 'lib/util/audio_handler/bg_audio_handler.dart'
+          replace_once(
+              audio,
+              """  int _userSeekNavigationSequence = 0;
+  bool _chapterNotificationEnabled = false;
+""",
+              """  int _userSeekNavigationSequence = 0;
+  final UserSeekNavigationLedger _userSeekNavigationLedger = UserSeekNavigationLedger();
+  bool _chapterNotificationEnabled = false;
+""",
+              'navigation ledger field',
+          )
+          replace_once(
+              audio,
+              """  Stream<UserSeekNavigationEvent> get userSeekNavigationStream => _userSeekNavigationController.stream;
+
+  bool get _supportsCastPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+""",
+              """  Stream<UserSeekNavigationEvent> get userSeekNavigationStream => _userSeekNavigationController.stream;
+  Set<int> get activeUserSeekNavigationOperations => _userSeekNavigationLedger.activeSnapshot;
+  bool get hasActiveUserSeekNavigation => _userSeekNavigationLedger.hasActive;
+
+  bool get _supportsCastPlatform => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+""",
+              'navigation ledger getters',
+          )
+          replace_once(
+              audio,
+              """  int _beginUserSeekNavigation() {
+    final operationId = ++_userSeekNavigationSequence;
+    if (!_userSeekNavigationController.isClosed) {
+      _userSeekNavigationController.add(
+        UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),
+      );
+    }
+    return operationId;
+  }
+
+  void _settleUserSeekNavigation(int operationId, {required bool shouldRetarget}) {
+    if (!_userSeekNavigationController.isClosed) {
+      _userSeekNavigationController.add(
+        UserSeekNavigationEvent(
+          operationId: operationId,
+          phase: UserSeekNavigationPhase.settled,
+          shouldRetarget: shouldRetarget,
+        ),
+      );
+    }
+  }
+""",
+              """  int _beginUserSeekNavigation() {
+    final operationId = ++_userSeekNavigationSequence;
+    if (!_userSeekNavigationLedger.begin(operationId)) {
+      throw StateError('Duplicate user navigation operation id: $operationId');
+    }
+    if (!_userSeekNavigationController.isClosed) {
+      _userSeekNavigationController.add(
+        UserSeekNavigationEvent(operationId: operationId, phase: UserSeekNavigationPhase.began),
+      );
+    }
+    return operationId;
+  }
+
+  void _settleUserSeekNavigation(int operationId, {required bool shouldRetarget}) {
+    if (!_userSeekNavigationLedger.settle(operationId)) {
+      return;
+    }
+    if (!_userSeekNavigationController.isClosed) {
+      _userSeekNavigationController.add(
+        UserSeekNavigationEvent(
+          operationId: operationId,
+          phase: UserSeekNavigationPhase.settled,
+          shouldRetarget: shouldRetarget,
+        ),
+      );
+    }
+  }
+""",
+              'navigation lifecycle ownership',
+          )
+          replace_once(
+              audio,
+              """      if (queueList.isNotEmpty) {
+        _forceQueueSwitchOnNextPlay = true;
+        _ignoreProgressOnNextPlay = isLoopOn;
+        await play();
+      } else {
+""",
+              """      if (queueList.isNotEmpty) {
+        final operationId = _beginUserSeekNavigation();
+        final beforeMedia = _currentMediaItem;
+        final beforePosition = position;
+        var navigationSucceeded = false;
+        try {
+          _forceQueueSwitchOnNextPlay = true;
+          _ignoreProgressOnNextPlay = isLoopOn;
+          await play();
+          final afterMedia = _currentMediaItem;
+          navigationSucceeded =
+              afterMedia != null &&
+              (beforeMedia == null ||
+                  !_queueItemsMatch(
+                    leftItemId: beforeMedia.itemId,
+                    leftEpisodeId: beforeMedia.episodeId,
+                    rightItemId: afterMedia.itemId,
+                    rightEpisodeId: afterMedia.episodeId,
+                  ) ||
+                  position != beforePosition);
+        } finally {
+          _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+        }
+      } else {
+""",
+              'explicit queue skip navigation lifecycle',
+          )
+
+          playback = 'lib/util/audio_handler/bg_audio_handler_playback_internal.dart'
+          replace_once(
+              playback,
+              """    setQueueFromPodcastEpisode(item, episode);
+    await play();
+
+    if (!_isAutoQueueEnabled) {
+""",
+              """    final operationId = _beginUserSeekNavigation();
+    var navigationSucceeded = false;
+    try {
+      setQueueFromPodcastEpisode(item, episode);
+      await play();
+      navigationSucceeded = _queueItemsMatch(
+        leftItemId: _currentMediaItem?.itemId ?? '',
+        leftEpisodeId: _currentMediaItem?.episodeId,
+        rightItemId: item.id,
+        rightEpisodeId: episode.id,
+      );
+    } finally {
+      _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+    }
+
+    if (!_isAutoQueueEnabled) {
+""",
+              'podcast playback navigation lifecycle',
+          )
+          replace_once(
+              playback,
+              """    setQueueFromLibraryItem(item);
+    await play();
+
+    final libraryId = item.libraryId ?? await _resolveLibraryId(item);
+""",
+              """    final operationId = _beginUserSeekNavigation();
+    var navigationSucceeded = false;
+    try {
+      setQueueFromLibraryItem(item);
+      await play();
+      navigationSucceeded = _queueItemsMatch(
+        leftItemId: _currentMediaItem?.itemId ?? '',
+        leftEpisodeId: _currentMediaItem?.episodeId,
+        rightItemId: item.id,
+        rightEpisodeId: null,
+      );
+    } finally {
+      _settleUserSeekNavigation(operationId, shouldRetarget: navigationSucceeded);
+    }
+
+    final libraryId = item.libraryId ?? await _resolveLibraryId(item);
+""",
+              'library playback navigation lifecycle',
+          )
+
+          sleep = 'lib/util/handler/sleep_timer_handler.dart'
+          replace_once(
+              sleep,
+              """import 'package:yaabsa/database/settings_manager.dart';
+import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
+""",
+              """import 'package:yaabsa/database/settings_manager.dart';
+import 'package:yaabsa/models/internal_media.dart';
+import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
+""",
+              'sleep timer media import',
+          )
+          replace_once(
+              sleep,
+              """  StreamSubscription<Duration>? _positionSubscription;
+  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;
+  bool _wasPlaybackRunning = false;
+""",
+              """  StreamSubscription<Duration>? _positionSubscription;
+  StreamSubscription<UserSeekNavigationEvent>? _userSeekNavigationSubscription;
+  StreamSubscription<bool>? _castControlSubscription;
+  StreamSubscription<InternalMedia?>? _mediaItemSubscription;
+  bool _wasPlaybackRunning = false;
+""",
+              'sleep timer context subscription fields',
+          )
+          replace_once(
+              sleep,
+              """    _attachPlaybackStateListener();
+    _attachPositionListener();
+    _attachUserSeekNavigationListener();
+
+    ref.onDispose(() {
+""",
+              """    _attachPlaybackStateListener();
+    _attachPositionListener();
+    _attachUserSeekNavigationListener();
+    _attachCastControlListener();
+    _attachMediaItemListener();
+
+    ref.onDispose(() {
+""",
+              'sleep timer context listener attach',
+          )
+          replace_once(
+              sleep,
+              """      _userSeekNavigationSubscription?.cancel();
+      _userSeekNavigationSubscription = null;
+
+      unawaited(_restoreFadeVolumeIfNeeded());
+""",
+              """      _userSeekNavigationSubscription?.cancel();
+      _userSeekNavigationSubscription = null;
+      _castControlSubscription?.cancel();
+      _castControlSubscription = null;
+      _mediaItemSubscription?.cancel();
+      _mediaItemSubscription = null;
+
+      unawaited(_restoreFadeVolumeIfNeeded());
+""",
+              'sleep timer context listener dispose',
+          )
+          replace_once(
+              sleep,
+              """  void _attachUserSeekNavigationListener() {
+    try {
+      _userSeekNavigationSubscription = audioHandler.userSeekNavigationStream.listen(_handleUserSeekNavigation);
+    } catch (e) {
+      logger('Failed to attach sleep timer user-seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  void _handlePlayerStateChanged(PlayerState playerState) {
+""",
+              """  void _attachUserSeekNavigationListener() {
+    try {
+      _userSeekNavigationSubscription = audioHandler.userSeekNavigationStream.listen(_handleUserSeekNavigation);
+    } catch (e) {
+      logger('Failed to attach sleep timer user-seek listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  void _attachCastControlListener() {
+    try {
+      _castControlSubscription = audioHandler.castControlActiveStream.listen(_handleCastControlChanged);
+    } catch (e) {
+      logger('Failed to attach sleep timer Cast listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  void _attachMediaItemListener() {
+    try {
+      _mediaItemSubscription = audioHandler.mediaItemStream.listen(_handleMediaItemChanged);
+    } catch (e) {
+      logger('Failed to attach sleep timer media listener: $e', tag: 'SleepTimer', level: InfoLevel.warning);
+    }
+  }
+
+  void _handleCastControlChanged(bool isActive) {
+    if (isActive && state.isActive && state.mode == SleepTimerMode.chapterEnd) {
+      _cancelChapterTimerForContextChange('Cast control became active');
+    }
+  }
+
+  void _handleMediaItemChanged(InternalMedia? media) {
+    if (!state.isActive || state.mode != SleepTimerMode.chapterEnd) {
+      return;
+    }
+    final target = state.chapterTarget;
+    if (target == null ||
+        media == null ||
+        !target.matchesMedia(itemId: media.itemId, episodeId: media.episodeId)) {
+      _cancelChapterTimerForContextChange('playback media changed');
+    }
+  }
+
+  void _handlePlayerStateChanged(PlayerState playerState) {
+""",
+              'sleep timer context listener methods',
+          )
+          replace_once(
+              sleep,
+              """    state = SleepTimerData(
+      remainingTime: remaining,
+      state: SleepTimerState.running,
+      mode: SleepTimerMode.chapterEnd,
+      chapterTarget: target,
+      marker: marker,
+      showMarkerPin: false,
+      showMarkerRange: false,
+    );
+    _syncSleepTimerCompletionGate(target);
+""",
+              """    state = SleepTimerData(
+      remainingTime: remaining,
+      state: SleepTimerState.running,
+      mode: SleepTimerMode.chapterEnd,
+      chapterTarget: target,
+      marker: marker,
+      showMarkerPin: false,
+      showMarkerRange: false,
+    );
+    final activeNavigationOperations = audioHandler.activeUserSeekNavigationOperations;
+    if (activeNavigationOperations.isNotEmpty) {
+      _chapterUserSeekOperations.addAll(activeNavigationOperations);
+      _chapterExpiryCheckGeneration += 1;
+    }
+    _syncSleepTimerCompletionGate(target);
+""",
+              'chapter timer adopts active navigation',
+          )
+
+          test = Path('test/util/user_seek_navigation_ledger_test.dart')
+          test.write_text("""import 'package:flutter_test/flutter_test.dart';
+import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
+
+void main() {
+  group('UserSeekNavigationLedger', () {
+    test('tracks active operations and returns stable snapshots', () {
+      final ledger = UserSeekNavigationLedger();
+
+      expect(ledger.hasActive, isFalse);
+      expect(ledger.begin(1), isTrue);
+      final firstSnapshot = ledger.activeSnapshot;
+      expect(firstSnapshot, <int>{1});
+
+      expect(ledger.begin(2), isTrue);
+      expect(ledger.activeSnapshot, <int>{1, 2});
+      expect(firstSnapshot, <int>{1});
+      expect(ledger.hasActive, isTrue);
+    });
+
+    test('settlement is idempotent and only removes owned operations', () {
+      final ledger = UserSeekNavigationLedger();
+      expect(ledger.begin(7), isTrue);
+      expect(ledger.settle(7), isTrue);
+      expect(ledger.settle(7), isFalse);
+      expect(ledger.settle(99), isFalse);
+      expect(ledger.hasActive, isFalse);
+      expect(ledger.activeSnapshot, isEmpty);
+    });
+  });
+}
+""")
+
+          workflow = Path('.github/workflows/temp-navigation-ownership-hardening.yml')
+          workflow.unlink()
+          PY
+
+      - name: Format and regenerate provider
+        shell: bash
+        run: |
+          dart format \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_models.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/handler/sleep_timer_handler.dart \
+            test/util/user_seek_navigation_ledger_test.dart || { echo 'dart format failed'; exit 1; }
+          dart run build_runner build --build-filter=lib/util/handler/sleep_timer_handler.g.dart || { echo 'provider generation failed'; exit 1; }
+
+          i=0
+          while [ -e .git/index.lock ] && [ "$i" -lt 20 ]; do
+            i=$((i + 1))
+            sleep 1
+          done
+          if [ -e .git/index.lock ]; then
+            if pgrep -x git >/dev/null 2>&1; then
+              echo 'git index lock is still owned by a running git process'
+              exit 1
+            fi
+            echo 'Removing stale git index lock left after generator completion'
+            rm -f .git/index.lock || { echo 'Could not remove stale index lock'; exit 1; }
+          fi
+
+          while IFS= read -r file; do
+            case "$file" in
+              .github/workflows/temp-navigation-ownership-hardening.yml|lib/util/audio_handler/bg_audio_handler.dart|lib/util/audio_handler/bg_audio_handler_models.dart|lib/util/audio_handler/bg_audio_handler_playback_internal.dart|lib/util/handler/sleep_timer_handler.dart|lib/util/handler/sleep_timer_handler.g.dart|test/util/user_seek_navigation_ledger_test.dart) ;;
+              *) git restore -- "$file" || { echo "Could not restore unrelated generated file: $file"; exit 1; } ;;
+            esac
+          done < <(git diff --name-only)
+
+          if [ -f lib/util/handler/sleep_timer_handler.g.dart ]; then
+            dart format lib/util/handler/sleep_timer_handler.g.dart || { echo 'generated provider format failed'; exit 1; }
+          fi
+          git diff --check || { echo 'git diff --check failed'; exit 1; }
+
+      - name: Validate exact diff scope
+        shell: bash
+        run: |
+          actual="$(git status --short | awk '{print $2}' | sort)"
+          expected="$(printf '%s\n' \
+            .github/workflows/temp-navigation-ownership-hardening.yml \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_models.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/handler/sleep_timer_handler.dart \
+            lib/util/handler/sleep_timer_handler.g.dart \
+            test/util/user_seek_navigation_ledger_test.dart | sort)"
+          [ "$actual" = "$expected" ] || {
+            echo 'Unexpected diff scope'
+            echo '--- actual ---'
+            printf '%s\n' "$actual"
+            echo '--- expected ---'
+            printf '%s\n' "$expected"
+            exit 1
+          }
+
+      - name: Analyze library
+        shell: bash
+        run: |
+          flutter analyze lib || { echo 'flutter analyze lib failed'; exit 1; }
+
+      - name: Run focused ownership tests
+        shell: bash
+        run: |
+          flutter test \
+            test/util/sleep_timer_target_test.dart \
+            test/util/user_seek_navigation_ledger_test.dart || { echo 'focused tests failed'; exit 1; }
+
+      - name: Verify remote head and commit validated hardening
+        shell: bash
+        run: |
+          git fetch origin feat/chapter-end-sleep-timer --depth=1 || { echo 'remote refresh failed'; exit 1; }
+          local_head="$(git rev-parse HEAD)" || { echo 'cannot read local head'; exit 1; }
+          remote_head="$(git rev-parse origin/feat/chapter-end-sleep-timer)" || { echo 'cannot read remote head'; exit 1; }
+          [ "$local_head" = "$ONE_SHOT_HEAD" ] || { echo "Local head changed: $local_head"; exit 1; }
+          [ "$remote_head" = "$ONE_SHOT_HEAD" ] || { echo "Remote head changed: $remote_head"; exit 1; }
+
+          git config user.name 'github-actions[bot]' || { echo 'git user config failed'; exit 1; }
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com' || { echo 'git email config failed'; exit 1; }
+          git add -A || { echo 'git add failed'; exit 1; }
+          git commit -m 'Harden chapter navigation ownership' || { echo 'git commit failed'; exit 1; }
+          git push origin HEAD:feat/chapter-end-sleep-timer || { echo 'git push failed'; exit 1; }
