@@ -8,11 +8,7 @@ class SleepTimerCompletionGateToken {
 }
 
 class SleepTimerCompletionGateClaim {
-  const SleepTimerCompletionGateClaim({
-    required this.token,
-    required this.itemId,
-    required this.episodeId,
-  });
+  const SleepTimerCompletionGateClaim({required this.token, required this.itemId, required this.episodeId});
 
   final SleepTimerCompletionGateToken token;
   final String itemId;
@@ -23,16 +19,9 @@ class SleepTimerCompletionGateLedger {
   int _sequence = 0;
   SleepTimerCompletionGateClaim? _armedGate;
 
-  SleepTimerCompletionGateToken arm({
-    required String itemId,
-    String? episodeId,
-  }) {
+  SleepTimerCompletionGateToken arm({required String itemId, String? episodeId}) {
     final token = SleepTimerCompletionGateToken._(++_sequence);
-    _armedGate = SleepTimerCompletionGateClaim(
-      token: token,
-      itemId: itemId,
-      episodeId: episodeId,
-    );
+    _armedGate = SleepTimerCompletionGateClaim(token: token, itemId: itemId, episodeId: episodeId);
     return token;
   }
 
@@ -46,9 +35,7 @@ class SleepTimerCompletionGateLedger {
     return true;
   }
 
-  SleepTimerCompletionGateClaim? claimWhere(
-    bool Function(String itemId, String? episodeId) matches,
-  ) {
+  SleepTimerCompletionGateClaim? claimWhere(bool Function(String itemId, String? episodeId) matches) {
     final armedGate = _armedGate;
     if (armedGate == null || !matches(armedGate.itemId, armedGate.episodeId)) {
       return null;
