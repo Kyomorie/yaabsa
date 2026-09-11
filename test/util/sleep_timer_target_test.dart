@@ -162,6 +162,36 @@ void main() {
       expect(target?.endPosition, const Duration(seconds: 10));
     });
 
+    test('rejects a malformed interval that could overlap the valid current chapter', () {
+      final target = resolveChapterSleepTarget(
+        chapters: const [
+          InternalChapter(start: 0, end: 10, title: 'Chapter 1'),
+          InternalChapter(start: 2, end: double.infinity, title: 'Broken overlap'),
+        ],
+        mediaDuration: const Duration(seconds: 30),
+        position: const Duration(seconds: 5),
+        itemId: 'book-1',
+        episodeId: null,
+      );
+
+      expect(target, isNull);
+    });
+
+    test('ignores a malformed interval that starts after the current position', () {
+      final target = resolveChapterSleepTarget(
+        chapters: const [
+          InternalChapter(start: 0, end: 10, title: 'Chapter 1'),
+          InternalChapter(start: 20, end: double.infinity, title: 'Broken later'),
+        ],
+        mediaDuration: const Duration(seconds: 30),
+        position: const Duration(seconds: 5),
+        itemId: 'book-1',
+        episodeId: null,
+      );
+
+      expect(target?.endPosition, const Duration(seconds: 10));
+    });
+
     test('preserves podcast episode identity', () {
       final target = resolveChapterSleepTarget(
         chapters: const [InternalChapter(start: 0, end: 10, title: 'Episode chapter')],
