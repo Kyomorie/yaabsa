@@ -30,9 +30,7 @@ class AppUpdateCheckResult {
 
 class AppUpdateChecker {
   static const String latestReleaseUrl = 'https://api.github.com/repos/Vito0912/yaabsa/releases/latest';
-  static final RegExp _versionPattern = RegExp(
-    r'^[vV]?(\d+)\.(\d+)\.(\d+)(-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$',
-  );
+  static final RegExp _versionPattern = RegExp(r'^[vV]?(\d+)\.(\d+)\.(\d+)(-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$');
 
   final Dio? _injectedDio;
 
