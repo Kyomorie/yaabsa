@@ -2410,7 +2410,11 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         _currentMediaItem != null || queueList.isNotEmpty || _queueTransitionLoading || _restoredMediaItem != null;
     final castActive = isCastControlActive;
     final controlState = castActive ? playerControlState : _player.playerState;
-    final playPauseControl = controlState.playing ? MediaControl.pause : MediaControl.play;
+    final effectivePlaying = playbackStatePlayingForSleepTimerCompletion(
+      playerPlaying: controlState.playing,
+      suppressCompletedAutoAdvance: sleepTimerSuppressesCompletedAutoAdvance,
+    );
+    final playPauseControl = effectivePlaying ? MediaControl.pause : MediaControl.play;
     final rawPosition = position;
     final updatePosition = _chapterNotificationEnabled
         ? _clampDuration(rawPosition - _chapterNotificationOffset, Duration.zero, _chapterNotificationDuration)
@@ -2594,7 +2598,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             : (_currentMediaItem == null && _restoredMediaItem != null)
             ? AudioProcessingState.ready
             : _toAudioProcessingState(controlState.processingState),
-        playing: hasPlaybackContext && (isTransitionLoading ? true : controlState.playing),
+        playing: hasPlaybackContext && (isTransitionLoading ? true : effectivePlaying),
         updatePosition: hasPlaybackContext ? updatePosition : Duration.zero,
         bufferedPosition: hasPlaybackContext ? bufferedPosition : Duration.zero,
         speed: hasPlaybackContext ? effectiveSpeed : 1.0,

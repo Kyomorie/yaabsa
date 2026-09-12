@@ -2,6 +2,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaabsa/util/audio_handler/sleep_timer_completion_gate.dart';
 
 void main() {
+  group('playbackStatePlayingForSleepTimerCompletion', () {
+    test('suppressed final completion is published as not playing', () {
+      expect(
+        playbackStatePlayingForSleepTimerCompletion(playerPlaying: true, suppressCompletedAutoAdvance: true),
+        isFalse,
+      );
+    });
+
+    test('ordinary playback preserves the player playing state', () {
+      expect(
+        playbackStatePlayingForSleepTimerCompletion(playerPlaying: true, suppressCompletedAutoAdvance: false),
+        isTrue,
+      );
+    });
+
+    test('paused playback remains paused without suppression', () {
+      expect(
+        playbackStatePlayingForSleepTimerCompletion(playerPlaying: false, suppressCompletedAutoAdvance: false),
+        isFalse,
+      );
+    });
+  });
+
   group('SleepTimerCompletionGateLedger', () {
     test('only the current owner can clear an armed gate', () {
       final ledger = SleepTimerCompletionGateLedger();
@@ -18,9 +41,7 @@ void main() {
       final ledger = SleepTimerCompletionGateLedger();
       final token = ledger.arm(itemId: 'book-a', episodeId: 'episode-a');
 
-      final claim = ledger.claimWhere(
-        (itemId, episodeId) => itemId == 'book-a' && episodeId == 'episode-a',
-      );
+      final claim = ledger.claimWhere((itemId, episodeId) => itemId == 'book-a' && episodeId == 'episode-a');
 
       expect(claim, isNotNull);
       expect(claim!.token, same(token));
@@ -47,9 +68,7 @@ void main() {
       final ledger = SleepTimerCompletionGateLedger();
       final token = ledger.arm(itemId: 'book-a', episodeId: 'episode-a');
 
-      final claim = ledger.claimWhere(
-        (itemId, episodeId) => itemId == 'book-b' && episodeId == 'episode-a',
-      );
+      final claim = ledger.claimWhere((itemId, episodeId) => itemId == 'book-b' && episodeId == 'episode-a');
 
       expect(claim, isNull);
       expect(ledger.armedToken, same(token));

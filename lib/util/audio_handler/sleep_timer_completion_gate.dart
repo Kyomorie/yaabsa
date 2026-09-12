@@ -1,3 +1,10 @@
+bool playbackStatePlayingForSleepTimerCompletion({
+  required bool playerPlaying,
+  required bool suppressCompletedAutoAdvance,
+}) {
+  return playerPlaying && !suppressCompletedAutoAdvance;
+}
+
 class SleepTimerCompletionGateToken {
   SleepTimerCompletionGateToken._(this._id);
 
