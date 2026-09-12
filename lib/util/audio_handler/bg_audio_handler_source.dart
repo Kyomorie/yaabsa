@@ -16,7 +16,11 @@ extension _BGAudioHandlerSource on BGAudioHandler {
       throw PlayerInterruptedException('Source loading interrupted before it started');
     }
 
-    await _applyPreferredPlaybackSpeed(seedPerBookSpeedWhenMissing: true);
+    await _applyPreferredPlaybackSpeed(
+      seedPerBookSpeedWhenMissing: true,
+      mutationLease: lease,
+      isStillCurrent: ownsSourceLoad,
+    );
     if (!ownsSourceLoad()) {
       throw PlayerInterruptedException('Source loading interrupted while applying playback preferences');
     }
