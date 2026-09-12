@@ -61,6 +61,14 @@ class AppUpdateCoordinator {
     return result;
   }
 
+  bool shouldNotify(AppUpdateCheckResult result) {
+    final latestVersion = result.latestVersion;
+    return result.status == AppUpdateCheckStatus.success &&
+        result.isUpdateAvailable &&
+        latestVersion != null &&
+        !isSkippedVersion(latestVersion);
+  }
+
   bool isSkippedVersion(String latestVersion) {
     return _normalizeVersion(_stateStore.skippedVersion) == _normalizeVersion(latestVersion);
   }
