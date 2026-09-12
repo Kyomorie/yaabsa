@@ -607,7 +607,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     final anchor = _currentMediaItem == null
         ? sourceState == null
               ? null
-              : _playableRefFromKey(sourceState.context.currentItemReferenceKey)
+              : _playableRefFromKey(sourceState.currentItemReferenceKey)
         : PlayableRef(itemId: _currentMediaItem!.itemId, episodeId: _currentMediaItem!.episodeId);
 
     final snapshot = QueueIntentSnapshot(
