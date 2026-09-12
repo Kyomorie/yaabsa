@@ -104,5 +104,102 @@ void main() {
       expect(await barrier.run(second, () async => 7), 7);
       await barrier.drained;
     });
+
+    test('deferred guard requires the original lease and playback context', () {
+      final barrier = PlayerMutationBarrier();
+      final lease = barrier.acquire();
+      final guard = DeferredPlayerMutationGuard(
+        lease: lease,
+        playbackContextGeneration: 4,
+        seekGeneration: 7,
+        mediaKey: 'book-a:item',
+      );
+
+      expect(
+        guard.isCurrent(
+          barrier: barrier,
+          playbackContextGeneration: 4,
+          seekGeneration: 7,
+          mediaKey: 'book-a:item',
+        ),
+        isTrue,
+      );
+      expect(
+        guard.isCurrent(
+          barrier: barrier,
+          playbackContextGeneration: 5,
+          seekGeneration: 7,
+          mediaKey: 'book-a:item',
+        ),
+        isFalse,
+      );
+      expect(
+        guard.isCurrent(
+          barrier: barrier,
+          playbackContextGeneration: 4,
+          seekGeneration: 8,
+          mediaKey: 'book-a:item',
+        ),
+        isFalse,
+      );
+      expect(
+        guard.isCurrent(
+          barrier: barrier,
+          playbackContextGeneration: 4,
+          seekGeneration: 7,
+          mediaKey: 'book-b:item',
+        ),
+        isFalse,
+      );
+
+      final newer = barrier.acquire();
+      expect(
+        guard.isCurrent(
+          barrier: barrier,
+          playbackContextGeneration: 4,
+          seekGeneration: 7,
+          mediaKey: 'book-a:item',
+        ),
+        isFalse,
+      );
+      expect(barrier.currentLease, same(newer));
+    });
+
+    test('deferred work cannot reacquire authority after a newer command', () async {
+      final barrier = PlayerMutationBarrier();
+      final original = barrier.acquire();
+      final guard = DeferredPlayerMutationGuard(
+        lease: original,
+        playbackContextGeneration: 2,
+        seekGeneration: 3,
+        mediaKey: 'book-a:item',
+      );
+      final releaseDeferredWork = Completer<void>();
+      var staleMutationIssued = false;
+
+      final deferredWork = () async {
+        await releaseDeferredWork.future;
+        if (!guard.isCurrent(
+          barrier: barrier,
+          playbackContextGeneration: 2,
+          seekGeneration: 3,
+          mediaKey: 'book-a:item',
+        )) {
+          return;
+        }
+        await barrier.run<void>(guard.lease, () async {
+          staleMutationIssued = true;
+        });
+      }();
+
+      final newer = barrier.acquire();
+      releaseDeferredWork.complete();
+      await deferredWork;
+
+      expect(staleMutationIssued, isFalse);
+      expect(original.isInvalidated, isTrue);
+      expect(barrier.currentLease, same(newer));
+      expect(barrier.isCurrent(newer), isTrue);
+    });
   });
 }
