@@ -97,12 +97,24 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       return false;
     }
 
+    final requestGeneration = ++_playbackContextGeneration;
+    bool requestIsCurrent() => !_isDisposing && requestGeneration == _playbackContextGeneration;
+
     _setQueueTransitionLoading(true);
     await _updatePlaybackState();
+    if (!requestIsCurrent()) {
+      return false;
+    }
 
     try {
       final activeUserId = await _readActiveUserId();
+      if (!requestIsCurrent()) {
+        return false;
+      }
       final lastPlayedItem = await _readLastPlayedQueueItemForActiveUser(explicitUserId: activeUserId);
+      if (!requestIsCurrent()) {
+        return false;
+      }
       if (lastPlayedItem == null) {
         _setQueueTransitionLoading(false);
         return false;
@@ -116,6 +128,9 @@ extension _BGAudioHandlerResume on BGAudioHandler {
             episodeId: lastPlayedItem.episodeId,
             userId: activeUserId,
           );
+      if (!requestIsCurrent()) {
+        return false;
+      }
 
       if (progress?.isFinished ?? false) {
         logger(
@@ -130,8 +145,11 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       final resumePosition = Duration(
         microseconds: ((progress?.currentTime ?? 0) * Duration.microsecondsPerSecond).round(),
       );
+      if (!requestIsCurrent()) {
+        return false;
+      }
 
-      await playItemFromPosition(
+      final played = await playItemFromPosition(
         itemId: lastPlayedItem.itemId,
         episodeId: lastPlayedItem.episodeId,
         position: resumePosition,
@@ -139,8 +157,11 @@ extension _BGAudioHandlerResume on BGAudioHandler {
         userNavigation: false,
       );
 
-      return _currentMediaItem != null;
+      return played && _currentMediaItem != null;
     } catch (e, s) {
+      if (!requestIsCurrent()) {
+        return false;
+      }
       logger('Failed to resume last played item: $e\n$s', tag: 'AudioHandler', level: InfoLevel.error);
       _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
       PlayerUtils.disableWakelock(_ref);
