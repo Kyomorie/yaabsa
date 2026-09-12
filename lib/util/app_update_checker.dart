@@ -29,6 +29,9 @@ class AppUpdateCheckResult {
 
 class AppUpdateChecker {
   static const String latestReleaseUrl = 'https://api.github.com/repos/Vito0912/yaabsa/releases/latest';
+  static final RegExp _versionPattern = RegExp(
+    r'^[vV]?(\d+)\.(\d+)\.(\d+)(-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$',
+  );
 
   final Dio? _injectedDio;
 
@@ -122,20 +125,15 @@ class AppUpdateChecker {
   }
 
   static _ParsedVersion? _parseVersion(String value) {
-    var version = value.trim();
-    if (version.startsWith('v') || version.startsWith('V')) version = version.substring(1);
+    final match = _versionPattern.firstMatch(value.trim());
+    if (match == null) return null;
 
-    version = version.split('+').first;
-    final isPrerelease = version.contains('-');
-    final parts = version.split('-').first.split('.');
-    if (parts.length != 3) return null;
-
-    final major = int.tryParse(parts[0]);
-    final minor = int.tryParse(parts[1]);
-    final patch = int.tryParse(parts[2]);
+    final major = int.tryParse(match.group(1)!);
+    final minor = int.tryParse(match.group(2)!);
+    final patch = int.tryParse(match.group(3)!);
     if (major == null || minor == null || patch == null) return null;
 
-    return _ParsedVersion(major, minor, patch, isPrerelease);
+    return _ParsedVersion(major, minor, patch, match.group(4) != null);
   }
 
   static int _compareVersions(_ParsedVersion first, _ParsedVersion second) {
