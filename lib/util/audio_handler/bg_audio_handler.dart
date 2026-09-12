@@ -265,7 +265,10 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     return _applySleepTimerAutoRewindNowInternal(mutationLease: lease);
   }
 
-  PlayerMutationLease acquirePlayerMutationLease() => _playerMutationBarrier.acquire();
+  PlayerMutationLease acquirePlayerMutationLease() {
+    _playbackContextGeneration += 1;
+    return _playerMutationBarrier.acquire();
+  }
 
   bool isPlayerMutationLeaseCurrent(PlayerMutationLease lease) => _playerMutationBarrier.isCurrent(lease);
 
@@ -966,6 +969,11 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       await queueTransitionLoadingStream.firstWhere((isLoading) => !isLoading);
     }
 
+    var playContextGeneration = ++_playbackContextGeneration;
+    var playLease = _playerMutationBarrier.acquire();
+    bool playIntentIsCurrent() => playContextGeneration == _playbackContextGeneration && !_isDisposing;
+    bool ownsPlay() => playIntentIsCurrent() && _playerMutationBarrier.isCurrent(playLease);
+
     _resetStreamRecoveryState(clearWindow: true);
     PlayerUtils.enableWakelock(_ref);
 
@@ -985,7 +993,19 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     if (shouldSwitchToQueuedItem) {
       _forceQueueSwitchOnNextPlay = false;
       _clearSmartRewindPauseMarker();
-      await _prepareForQueuedItemTransition();
+      try {
+        await _prepareForQueuedItemTransition(playLease);
+      } on PlayerInterruptedException {
+        return;
+      }
+      if (!_playerMutationBarrier.isCurrent(playLease) || _isDisposing) {
+        return;
+      }
+      playContextGeneration = _playbackContextGeneration;
+    }
+
+    if (!ownsPlay()) {
+      return;
     }
 
     if (_currentMediaItem != null) {
@@ -1005,16 +1025,27 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       }
 
       if (_player.playerState.processingState == ProcessingState.completed || forceRestart) {
-        if (_player.playerState.processingState == ProcessingState.completed) {
-          _playbackContextGeneration += 1;
+        await _seekInternal(Duration.zero, mutationLease: playLease);
+        if (!ownsPlay()) {
+          return;
         }
-        await _seekInternal(Duration.zero);
       }
 
       final skipResumeProgressReconcile = _consumePausedManualSeekMarkerForCurrentItem();
       await _applySmartRewindOnResumeIfNeeded();
+      if (!playIntentIsCurrent()) {
+        return;
+      }
+      playLease = _playerMutationBarrier.acquire();
+      if (!ownsPlay()) {
+        return;
+      }
       _setQueueTransitionLoading(false);
-      await _syncedPlay(restoreProgress: !ignoreProgress, skipResumeProgressReconcile: skipResumeProgressReconcile);
+      await _syncedPlay(
+        restoreProgress: !ignoreProgress,
+        skipResumeProgressReconcile: skipResumeProgressReconcile,
+        mutationLease: playLease,
+      );
       return Future.value();
     }
 
@@ -1040,7 +1071,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
     if (nextEntry == null && _restoredMediaItem != null) {
       final resumed = await _playLastPlayedInternal(requireStartupSettingEnabled: false, resumeCurrentIfPaused: false);
-      if (!resumed) {
+      if (!resumed && playIntentIsCurrent()) {
         _setQueueTransitionLoading(false);
       }
       return Future.value();
@@ -1051,28 +1082,43 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     }
     if (nextItem == null) {
       final resumed = await _playLastPlayedInternal(requireStartupSettingEnabled: false, resumeCurrentIfPaused: false);
-      if (!resumed) {
+      if (!resumed && playIntentIsCurrent()) {
         _setQueueTransitionLoading(false);
       }
       return Future.value();
     }
 
+    if (!ownsPlay()) {
+      return;
+    }
     _setQueueTransitionTargetItem(nextItem);
     _setQueueTransitionLoading(true);
     _clearSmartRewindPauseMarker();
     _lastQueueItem = nextItem;
 
+    InternalMedia? openedMedia;
     try {
-      _currentMediaItem = await _ref
+      openedMedia = await _ref
           .read(sessionRepositoryProvider)
-          .openSession(nextItem.itemId, episodeId: nextItem.episodeId);
+          .openSession(nextItem.itemId, episodeId: nextItem.episodeId, isStillCurrent: ownsPlay);
     } catch (e, s) {
+      if (!ownsPlay()) {
+        return;
+      }
       logger(
         'Exception opening session for ID: ${nextItem.itemId} (${nextItem.episodeId ?? 'item'}): $e\n$s',
         tag: 'AudioHandler',
         level: InfoLevel.error,
       );
-      _currentMediaItem = null;
+    }
+
+    if (!ownsPlay()) {
+      return;
+    }
+    _currentMediaItem = openedMedia;
+    playContextGeneration = _playbackContextGeneration;
+    if (!ownsPlay()) {
+      return;
     }
 
     if (_currentMediaItem == null) {
@@ -1097,14 +1143,20 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       level: InfoLevel.debug,
     );
     try {
-      await _setSource(ignoreSavedProgress: ignoreProgress);
+      await _setSource(ignoreSavedProgress: ignoreProgress, mutationLease: playLease);
+      if (!ownsPlay()) {
+        return;
+      }
       logger(
         'Setting source for item: ${_currentMediaItem!.itemId} (${_currentMediaItem!.episodeId ?? 'item'})',
         tag: 'AudioHandler',
         level: InfoLevel.debug,
       );
       _setQueueTransitionLoading(false);
-      await _syncedPlay(restoreProgress: !ignoreProgress);
+      await _syncedPlay(restoreProgress: !ignoreProgress, mutationLease: playLease);
+      if (!ownsPlay()) {
+        return;
+      }
       if (nextEntry != null) {
         _markManualQueueItemPlayed(nextEntry);
       }
@@ -1112,6 +1164,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         unawaited(_setupAutoQueueOnResume(itemId: nextItem.itemId, episodeId: nextItem.episodeId));
       }
     } catch (e) {
+      if (!ownsPlay()) {
+        return;
+      }
       logger('Failed to start playback source: $e', tag: 'AudioHandler', level: InfoLevel.error);
       if (nextEntry != null && !nextEntry.autoQueued) {
         _clearManualQueueSessionPendingIfNeeded();
@@ -1119,7 +1174,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       PlayerUtils.disableWakelock(_ref);
       _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
     }
-    TrayManager.update();
+    if (ownsPlay()) {
+      TrayManager.update();
+    }
   }
 
   Future<bool> playItemFromPosition({
@@ -1258,6 +1315,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   @override
   Future<void> pause() async {
     final lease = _playerMutationBarrier.acquire();
+    _playbackContextGeneration += 1;
     await _pauseWithPlayerMutationLease(lease);
   }
 
@@ -1266,6 +1324,12 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   Future<bool> _pauseWithPlayerMutationLease(PlayerMutationLease lease) async {
+    if (!_playerMutationBarrier.isCurrent(lease)) {
+      return false;
+    }
+    if (_queueTransitionLoading) {
+      _setQueueTransitionLoading(false, emitMediaWhenEmpty: _currentMediaItem == null);
+    }
     PlayerUtils.disableWakelock(_ref);
     _resetStreamRecoveryState(clearWindow: true);
     if (isCastControlActive) {
