@@ -85,7 +85,6 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     _transcodeAttemptedFor = mediaKey;
 
     final resumePosition = initialPosition ?? position;
-    final shouldResume = resumePlayback && playerControlState.playing;
     final sourceSessionBinding = repository.currentSessionBinding;
     bool isCurrentRequest() =>
         !_isDisposing &&
@@ -130,7 +129,10 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
       _currentMediaItem = transcodedMedia;
       await _setSource(initialPosition: resumePosition, ignoreSavedProgress: true, mutationLease: mutationLease);
 
-      if (shouldResume && isCurrentRequest() && identical(_currentMediaItem, transcodedMedia)) {
+      if (resumePlayback &&
+          playerControlState.playing &&
+          isCurrentRequest() &&
+          identical(_currentMediaItem, transcodedMedia)) {
         await _syncedPlay(mutationLease: mutationLease);
       }
 
@@ -352,6 +354,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
           currentMedia == null ||
           isCastControlActive ||
           _streamRecoveryInFlight ||
+          !_player.playerState.playing ||
           !recoveryGuard.isCurrent(
             barrier: _playerMutationBarrier,
             playbackContextGeneration: _playbackContextGeneration,
