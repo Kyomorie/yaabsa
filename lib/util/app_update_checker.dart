@@ -18,13 +18,14 @@ class AppUpdateCheckResult {
     this.rateLimitResetMs,
   });
 
-  const AppUpdateCheckResult.failed({required String currentVersion})
-      : this(
-          status: AppUpdateCheckStatus.failed,
-          currentVersion: currentVersion,
-          latestVersion: null,
-          isUpdateAvailable: false,
-        );
+  static AppUpdateCheckResult failed({required String currentVersion}) {
+    return AppUpdateCheckResult(
+      status: AppUpdateCheckStatus.failed,
+      currentVersion: currentVersion,
+      latestVersion: null,
+      isUpdateAvailable: false,
+    );
+  }
 }
 
 class AppUpdateChecker {
