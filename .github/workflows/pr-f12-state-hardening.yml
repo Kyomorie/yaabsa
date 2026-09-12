@@ -26,7 +26,7 @@ jobs:
       - name: Verify expected parent and workflow-only trigger commit
         shell: bash
         run: |
-          expected_parent='ac778f735eadf6f63d91fe08b58ae5af12165e32'
+          expected_parent='a5eaca8ce9435b22af18559734bf55879704bfd3'
           actual_parent="$(git rev-parse HEAD^)"
           if [[ "$actual_parent" != "$expected_parent" ]]; then
             echo "Unexpected parent: $actual_parent" >&2
@@ -48,6 +48,8 @@ jobs:
       - name: Apply exact F12 source and regression-test fix
         shell: bash
         run: |
+          flutter pub get
+
           python3 - <<'PY'
           from pathlib import Path
 
@@ -156,6 +158,14 @@ jobs:
             exit 1
           fi
 
+          additions="$(git diff --numstat | awk '{sum += $1} END {print sum + 0}')"
+          deletions="$(git diff --numstat | awk '{sum += $2} END {print sum + 0}')"
+          if (( additions > 80 || deletions > 20 )); then
+            echo "Unexpectedly broad F12 diff: +$additions/-$deletions" >&2
+            git diff --stat >&2
+            exit 1
+          fi
+
       - name: Commit locally after exact diff gate
         shell: bash
         run: |
@@ -201,9 +211,9 @@ jobs:
             echo "Branch moved externally: $remote_head" >&2
             exit 1
           fi
-          git status --short
           if [[ -n "$(git status --porcelain)" ]]; then
             echo 'Working tree is not clean after validation' >&2
+            git status --short >&2
             exit 1
           fi
 
