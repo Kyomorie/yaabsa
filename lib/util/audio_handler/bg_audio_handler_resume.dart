@@ -65,16 +65,30 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       }
     }
 
+    if (_currentMediaItem != null) {
+      return _performPlayLastPlayed(resumeCurrentIfPaused: resumeCurrentIfPaused);
+    }
+
     final activePlayback = _lastPlayedPlaybackFuture;
-    if (activePlayback != null) {
+    final activeLease = _lastPlayedPlaybackLease;
+    final activeGeneration = _lastPlayedPlaybackGeneration;
+    if (activePlayback != null &&
+        activeLease != null &&
+        activeGeneration == _playbackContextGeneration &&
+        _playerMutationBarrier.isCurrent(activeLease)) {
       logger('Joining active last played playback request.', tag: 'AudioHandler', level: InfoLevel.debug);
       return activePlayback;
+    }
+    if (activePlayback != null) {
+      logger('Superseding stale last played playback request.', tag: 'AudioHandler', level: InfoLevel.debug);
     }
 
     late final Future<bool> playback;
     playback = _performPlayLastPlayed(resumeCurrentIfPaused: resumeCurrentIfPaused).whenComplete(() {
       if (identical(_lastPlayedPlaybackFuture, playback)) {
         _lastPlayedPlaybackFuture = null;
+        _lastPlayedPlaybackLease = null;
+        _lastPlayedPlaybackGeneration = null;
       }
     });
     _lastPlayedPlaybackFuture = playback;
@@ -99,6 +113,8 @@ extension _BGAudioHandlerResume on BGAudioHandler {
 
     final requestGeneration = ++_playbackContextGeneration;
     final requestLease = _playerMutationBarrier.acquire();
+    _lastPlayedPlaybackLease = requestLease;
+    _lastPlayedPlaybackGeneration = requestGeneration;
     bool requestIsCurrent() =>
         !_isDisposing &&
         requestGeneration == _playbackContextGeneration &&
@@ -483,8 +499,8 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     return Duration(seconds: longRewind);
   }
 
-  Future<void> _applySmartRewindOnResumeIfNeeded() async {
-    if (_currentMediaItem == null || playerControlState.playing) {
+  Future<void> _applySmartRewindOnResumeIfNeeded({required PlayerMutationLease mutationLease}) async {
+    if (!_playerMutationBarrier.isCurrent(mutationLease) || _currentMediaItem == null || playerControlState.playing) {
       return;
     }
 
@@ -518,7 +534,10 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     final targetPosition = _rewindPosition(currentPosition, rewindBy);
 
     if (targetPosition < currentPosition) {
-      await _seekWithoutPausedManualMarker(() => _seekInternal(targetPosition));
+      await _seekWithoutPausedManualMarker(() => _seekInternal(targetPosition, mutationLease: mutationLease));
+      if (!_playerMutationBarrier.isCurrent(mutationLease)) {
+        return;
+      }
       logger(
         'Applied smart rewind (${rewindBy.inSeconds}s) after pause (${pausedFor.inSeconds}s).',
         tag: 'AudioHandler',
@@ -526,7 +545,9 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       );
     }
 
-    _clearSmartRewindPauseMarker();
+    if (_playerMutationBarrier.isCurrent(mutationLease)) {
+      _clearSmartRewindPauseMarker();
+    }
   }
 
   Future<void> _persistLastPlayedQueueItem({required String itemId, String? episodeId}) async {
