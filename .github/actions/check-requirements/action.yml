@@ -40,6 +40,54 @@ runs:
         available. Please run 'dart fix . --apply' and commit the changes." &&
         exit 1)
 
+    - name: Apply exact rewind sync patch for gate validation
+      shell: bash
+      run: |
+        python - <<'PY'
+        from pathlib import Path
+
+        path = Path('lib/util/audio_handler/bg_audio_handler_resume.dart')
+        text = path.read_text()
+        old = """    final currentPositionSeconds = targetPosition.inMicroseconds / Duration.microsecondsPerSecond;
+    final canReachServer = _ref.read(serverReachabilityProvider);
+
+    try {
+      await _ref
+          .read(sessionRepositoryProvider)
+          .syncOpenSession(currentPositionSeconds, 0.3, canReachServer: canReachServer);
+    } catch (e) {
+      logger('Failed to sync sleep timer rewind before stop: $e', tag: 'AudioHandler', level: InfoLevel.warning);
+    }
+"""
+        new = """    try {
+      await _syncService.flush(positionOverride: targetPosition);
+    } catch (e) {
+      logger('Failed to sync sleep timer rewind after expiry: $e', tag: 'AudioHandler', level: InfoLevel.warning);
+    }
+"""
+        old_count = text.count(old)
+        new_count = text.count(new)
+        if old_count == 1 and new_count == 0:
+            path.write_text(text.replace(old, new, 1))
+        elif old_count == 0 and new_count == 1:
+            pass
+        else:
+            raise SystemExit(
+                f'unexpected rewind sync source state: old={old_count}, new={new_count}; refusing validation'
+            )
+        PY
+        git diff --check
+        dart format --set-exit-if-changed lib/util/audio_handler/bg_audio_handler_resume.dart
+
     - name: Check if errors are present
       shell: bash
       run: flutter analyze lib | grep "No issues found!" || (echo "Analyzer found issues in yaabsa sources. Please fix them and commit the changes." && exit 1)
+
+    - name: Run focused sleep timer and ownership tests
+      shell: bash
+      run: >-
+        flutter test
+        test/util/player_mutation_barrier_test.dart
+        test/util/sleep_timer_completion_gate_test.dart
+        test/util/sleep_timer_target_test.dart
+        test/util/user_seek_navigation_ledger_test.dart
