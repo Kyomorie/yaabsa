@@ -86,10 +86,12 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
 
     final resumePosition = initialPosition ?? position;
     final sourceSessionBinding = repository.currentSessionBinding;
+    var ownedMedia = media;
     bool isCurrentRequest() =>
         !_isDisposing &&
-        identical(_currentMediaItem, media) &&
+        identical(_currentMediaItem, ownedMedia) &&
         !isCastControlActive &&
+        (!resumePlayback || playerControlState.playing) &&
         _playerMutationBarrier.isCurrent(mutationLease);
 
     try {
@@ -127,16 +129,21 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
       }
 
       _currentMediaItem = transcodedMedia;
-      await _setSource(initialPosition: resumePosition, ignoreSavedProgress: true, mutationLease: mutationLease);
+      ownedMedia = transcodedMedia;
+      await _setSource(
+        initialPosition: resumePosition,
+        ignoreSavedProgress: true,
+        mutationLease: mutationLease,
+        isStillCurrent: isCurrentRequest,
+      );
 
-      if (resumePlayback &&
-          playerControlState.playing &&
-          isCurrentRequest() &&
-          identical(_currentMediaItem, transcodedMedia)) {
+      if (resumePlayback && isCurrentRequest()) {
         await _syncedPlay(mutationLease: mutationLease);
       }
 
       return true;
+    } on PlayerInterruptedException {
+      return false;
     } catch (e, s) {
       logger('Transcode fallback failed: $e\n$s', tag: 'AudioHandler', level: InfoLevel.error);
       return false;
