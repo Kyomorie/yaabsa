@@ -45,26 +45,27 @@ runs:
       run: |
         python - <<'PY'
         from pathlib import Path
-
         path = Path('lib/util/audio_handler/bg_audio_handler_resume.dart')
         text = path.read_text()
-        old = """    final currentPositionSeconds = targetPosition.inMicroseconds / Duration.microsecondsPerSecond;
-    final canReachServer = _ref.read(serverReachabilityProvider);
-
-    try {
-      await _ref
-          .read(sessionRepositoryProvider)
-          .syncOpenSession(currentPositionSeconds, 0.3, canReachServer: canReachServer);
-    } catch (e) {
-      logger('Failed to sync sleep timer rewind before stop: $e', tag: 'AudioHandler', level: InfoLevel.warning);
-    }
-"""
-        new = """    try {
-      await _syncService.flush(positionOverride: targetPosition);
-    } catch (e) {
-      logger('Failed to sync sleep timer rewind after expiry: $e', tag: 'AudioHandler', level: InfoLevel.warning);
-    }
-"""
+        old = (
+            "    final currentPositionSeconds = targetPosition.inMicroseconds / Duration.microsecondsPerSecond;\n"
+            "    final canReachServer = _ref.read(serverReachabilityProvider);\n"
+            "\n"
+            "    try {\n"
+            "      await _ref\n"
+            "          .read(sessionRepositoryProvider)\n"
+            "          .syncOpenSession(currentPositionSeconds, 0.3, canReachServer: canReachServer);\n"
+            "    } catch (e) {\n"
+            "      logger('Failed to sync sleep timer rewind before stop: $e', tag: 'AudioHandler', level: InfoLevel.warning);\n"
+            "    }\n"
+        )
+        new = (
+            "    try {\n"
+            "      await _syncService.flush(positionOverride: targetPosition);\n"
+            "    } catch (e) {\n"
+            "      logger('Failed to sync sleep timer rewind after expiry: $e', tag: 'AudioHandler', level: InfoLevel.warning);\n"
+            "    }\n"
+        )
         old_count = text.count(old)
         new_count = text.count(new)
         if old_count == 1 and new_count == 0:
