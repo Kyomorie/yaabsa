@@ -41,7 +41,6 @@ class SleepTimerCompletionGateLedger {
       return null;
     }
 
-    _armedGate = null;
     return armedGate;
   }
 
