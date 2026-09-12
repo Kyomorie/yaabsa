@@ -135,9 +135,13 @@ class PlaybackSyncService {
     return result;
   }
 
-  Future<bool> _stopSync({Duration? positionOverride, bool sessionClosing = false}) async {
+  Future<bool> _stopSync({
+    Duration? positionOverride,
+    bool sessionClosing = false,
+    String? expectedSessionId,
+  }) async {
     final repository = _ref.read(sessionRepositoryProvider);
-    final expectedSessionId = repository.currentSession?.id;
+    final sessionId = expectedSessionId ?? repository.currentSession?.id;
     final hadPlaybackSinceLastFlush = _hasPlaybackSinceLastFlush;
 
     _syncTimer?.cancel();
@@ -148,21 +152,25 @@ class PlaybackSyncService {
       return false;
     }
 
-    final sync = _enqueueSync(positionOverride: positionOverride, force: true, expectedSessionId: expectedSessionId);
+    final sync = _enqueueSync(positionOverride: positionOverride, force: true, expectedSessionId: sessionId);
     _hasPlaybackSinceLastFlush = false;
 
     final synced = await sync;
     if (!synced &&
-        expectedSessionId != null &&
-        repository.currentSession?.id == expectedSessionId &&
+        sessionId != null &&
+        repository.currentSession?.id == sessionId &&
         !_hasPlaybackSinceLastFlush) {
       _hasPlaybackSinceLastFlush = hadPlaybackSinceLastFlush;
     }
     return synced;
   }
 
-  Future<bool> flush({Duration? positionOverride, bool sessionClosing = false}) {
-    return _stopSync(positionOverride: positionOverride, sessionClosing: sessionClosing);
+  Future<bool> flush({Duration? positionOverride, bool sessionClosing = false, String? expectedSessionId}) {
+    return _stopSync(
+      positionOverride: positionOverride,
+      sessionClosing: sessionClosing,
+      expectedSessionId: expectedSessionId,
+    );
   }
 
   void markProgressDirty() {
