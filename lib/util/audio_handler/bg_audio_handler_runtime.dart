@@ -123,7 +123,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
       );
 
       if (shouldResume && isCurrentRequest() && identical(_currentMediaItem, transcodedMedia)) {
-        await _syncedPlay();
+        await _syncedPlay(mutationLease: mutationLease);
       }
 
       return true;
