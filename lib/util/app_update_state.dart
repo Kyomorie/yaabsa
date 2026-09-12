@@ -42,13 +42,19 @@ class AppUpdateCoordinator {
   final AppUpdateStateStore _stateStore;
   final int Function() _nowMs;
 
-  AppUpdateCoordinator({
+  factory AppUpdateCoordinator({
     required AppUpdateChecker checker,
     required AppUpdateStateStore stateStore,
     int Function()? nowMs,
-  }) : _checker = checker,
-       _stateStore = stateStore,
-       _nowMs = nowMs ?? (() => DateTime.now().millisecondsSinceEpoch);
+  }) {
+    return AppUpdateCoordinator._(
+      checker,
+      stateStore,
+      nowMs ?? (() => DateTime.now().millisecondsSinceEpoch),
+    );
+  }
+
+  AppUpdateCoordinator._(this._checker, this._stateStore, this._nowMs);
 
   Future<AppUpdateCheckResult?> checkIfDue(String currentVersion) async {
     final now = _nowMs();
