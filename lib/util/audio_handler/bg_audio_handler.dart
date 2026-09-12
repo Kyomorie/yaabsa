@@ -647,11 +647,13 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         type: MediaSourceType.playlist,
         sourceId: context.playlistId ?? '',
         libraryId: context.libraryId,
+        playlistId: context.playlistId,
       ),
       _AutoQueueSourceType.collection => MediaSourceDescriptor(
         type: MediaSourceType.collection,
         sourceId: context.collectionId ?? '',
         libraryId: context.libraryId,
+        collectionId: context.collectionId,
       ),
       _AutoQueueSourceType.podcast => MediaSourceDescriptor(
         type: MediaSourceType.podcast,
@@ -1540,10 +1542,10 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         }
         final relativePosition = _absoluteToCastRelativePosition(boundedPosition);
         await GoogleCastRemoteMediaClient.instance.seek(GoogleCastMediaSeekOption(position: relativePosition));
+        navigationSucceeded = true;
         if (!_playerMutationBarrier.isCurrent(lease) || seekGeneration != _seekGeneration) {
           return;
         }
-        navigationSucceeded = true;
         _refreshPlayerControlState();
         _refreshChapterNotificationState(customPosition: boundedPosition);
         _updateMediaItemForChapterNotification(customPosition: boundedPosition);
@@ -1570,9 +1572,16 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       );
       final relativeTrackPosition = boundedPosition - media.startDurationForTrack(newTrackIndex);
       final trackChanged = newTrackIndex != _currentTrackIndex;
-      _currentTrackIndex = newTrackIndex;
 
-      await _playerMutationBarrier.run<void>(lease, () => _player.seek(relativeTrackPosition, index: newTrackIndex));
+      final seekApplied = await _playerMutationBarrier.run<bool>(lease, () async {
+        await _player.seek(relativeTrackPosition, index: newTrackIndex);
+        return true;
+      });
+      if (seekApplied != true) {
+        return;
+      }
+      _currentTrackIndex = newTrackIndex;
+      navigationSucceeded = true;
       if (!_isSeekOwnershipCurrent(lease, seekGeneration, mediaKey)) {
         return;
       }
@@ -1593,7 +1602,6 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         }
       }
 
-      navigationSucceeded = true;
       _refreshChapterNotificationState(customPosition: boundedPosition);
       _updateMediaItemForChapterNotification(customPosition: boundedPosition);
       unawaited(_updatePlaybackState());
