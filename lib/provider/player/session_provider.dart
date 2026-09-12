@@ -29,6 +29,13 @@ part 'session_provider.g.dart';
 
 enum _StoredSyncReplayAction { synced, retryWithNewSession, keepLocal }
 
+class PlaybackSessionBinding {
+  const PlaybackSessionBinding({required this.sessionId, required this.isLocal});
+
+  final String sessionId;
+  final bool isLocal;
+}
+
 class SessionRepository {
   final Ref ref;
   SessionRepository(this.ref);
@@ -38,6 +45,13 @@ class SessionRepository {
   int _sessionMutationGeneration = 0;
 
   PlaybackSession? get currentSession => _currentSession;
+  PlaybackSessionBinding? get currentSessionBinding {
+    final currentSession = _currentSession;
+    if (currentSession == null) {
+      return null;
+    }
+    return PlaybackSessionBinding(sessionId: currentSession.id, isLocal: _isLocalSession);
+  }
 
   String? get _activeUserId {
     final currentUserId = ref.read(currentUserProvider).value?.id;
@@ -78,6 +92,42 @@ class SessionRepository {
 
   void _clearCurrentSessionIfOwned(int generation, String sessionId) {
     if (_isSessionMutationCurrent(generation) && _currentSession?.id == sessionId) {
+      _currentSession = null;
+    }
+  }
+
+  Future<void> closeSessionBinding(PlaybackSessionBinding binding) async {
+    if (binding.isLocal) {
+      if (_currentSession?.id == binding.sessionId) {
+        _currentSession = null;
+      }
+      return;
+    }
+
+    final ABSApi? api = ref.read(absApiProvider);
+    if (api == null) {
+      logger(
+        'No API available, closing bound session ${binding.sessionId} locally only.',
+        tag: 'SessionRepository',
+        level: InfoLevel.warning,
+      );
+      if (_currentSession?.id == binding.sessionId) {
+        _currentSession = null;
+      }
+      return;
+    }
+
+    try {
+      await api.getSessionApi().closeOpenSession(binding.sessionId);
+    } catch (e) {
+      logger(
+        'Failed to close bound session ${binding.sessionId}: $e',
+        tag: 'SessionRepository',
+        level: InfoLevel.warning,
+      );
+    }
+
+    if (_currentSession?.id == binding.sessionId) {
       _currentSession = null;
     }
   }
@@ -213,63 +263,76 @@ class SessionRepository {
       }
     }
 
+    final openedBinding = PlaybackSessionBinding(sessionId: openedSession.id, isLocal: openedSessionIsLocal);
     if (!operationIsCurrent()) {
-      return null;
-    }
-    _currentSession = openedSession;
-    _isLocalSession = openedSessionIsLocal;
-
-    final hasCoverPath =
-        (openedSession.coverPath?.isNotEmpty ?? false) || (openedSession.libraryItem?.hasCover ?? false);
-    final resolvedLocalCoverPath = await resolveDisplayCoverPath(
-      downloaded?.coverPath,
-      cacheKey: '$userId:$itemId:${episodeId ?? 'item'}',
-    );
-    if (!operationIsCurrent() || _currentSession?.id != openedSession.id) {
+      await closeSessionBinding(openedBinding);
       return null;
     }
 
-    final localCoverUri = _localCoverUriFromPath(resolvedLocalCoverPath ?? downloaded?.coverPath);
-    final remoteCoverUri = hasCoverPath && api != null
-        ? api.getLibraryItemApi().getCoverUri(
-            openedSession.libraryItemId,
-            item: openedSession.libraryItem,
-            width: playerCoverRequestDimension.toDouble(),
-            height: playerCoverRequestDimension.toDouble(),
-          )
-        : null;
-    final metadataNarrators = openedSession.mediaMetadata?.bookMetadata?.narrators
-        ?.map((entry) => entry.trim())
-        .where((entry) => entry.isNotEmpty)
-        .toList(growable: false);
-    final narrator =
-        openedSession.libraryItem?.narratorString ??
-        ((metadataNarrators == null || metadataNarrators.isEmpty) ? null : metadataNarrators.join(', '));
+    try {
+      final hasCoverPath =
+          (openedSession.coverPath?.isNotEmpty ?? false) || (openedSession.libraryItem?.hasCover ?? false);
+      final resolvedLocalCoverPath = await resolveDisplayCoverPath(
+        downloaded?.coverPath,
+        cacheKey: '$userId:$itemId:${episodeId ?? 'item'}',
+      );
+      if (!operationIsCurrent()) {
+        await closeSessionBinding(openedBinding);
+        return null;
+      }
 
-    final InternalMedia internalMedia = InternalMedia(
-      libraryId: openedSession.libraryId!,
-      itemId: openedSession.libraryItemId,
-      episodeId: openedSession.episodeId,
-      sessionId: openedSession.id,
-      title: openedSession.displayTitle ?? openedSession.libraryItem!.title,
-      subtitle: openedSession.episodeId == null ? openedSession.libraryItem?.subtitle : null,
-      series: openedSession.libraryItem?.seriesName,
-      seriesPosition: openedSession.libraryItem?.seriesPosition,
-      author: openedSession.libraryItem?.authorString,
-      narrator: narrator,
-      cover: localCoverUri ?? remoteCoverUri,
-      chapters: openedSession.chapters?.map((e) => e.toInternalChapter()).toList(),
-      tracks: downloaded != null
-          ? downloaded.tracks
-          : (openedSession.audioTracks ?? const <AudioTrack>[])
-                .map((e) => e.toInternalTrack(api!.basePathOverride, openedSession.id))
-                .toList(),
-      local: openedSessionIsLocal,
-      saf: downloaded?.saf ?? false,
-    );
+      final localCoverUri = _localCoverUriFromPath(resolvedLocalCoverPath ?? downloaded?.coverPath);
+      final remoteCoverUri = hasCoverPath && api != null
+          ? api.getLibraryItemApi().getCoverUri(
+              openedSession.libraryItemId,
+              item: openedSession.libraryItem,
+              width: playerCoverRequestDimension.toDouble(),
+              height: playerCoverRequestDimension.toDouble(),
+            )
+          : null;
+      final metadataNarrators = openedSession.mediaMetadata?.bookMetadata?.narrators
+          ?.map((entry) => entry.trim())
+          .where((entry) => entry.isNotEmpty)
+          .toList(growable: false);
+      final narrator =
+          openedSession.libraryItem?.narratorString ??
+          ((metadataNarrators == null || metadataNarrators.isEmpty) ? null : metadataNarrators.join(', '));
 
-    internalMedia.populateFields();
-    return internalMedia;
+      final InternalMedia internalMedia = InternalMedia(
+        libraryId: openedSession.libraryId!,
+        itemId: openedSession.libraryItemId,
+        episodeId: openedSession.episodeId,
+        sessionId: openedSession.id,
+        title: openedSession.displayTitle ?? openedSession.libraryItem!.title,
+        subtitle: openedSession.episodeId == null ? openedSession.libraryItem?.subtitle : null,
+        series: openedSession.libraryItem?.seriesName,
+        seriesPosition: openedSession.libraryItem?.seriesPosition,
+        author: openedSession.libraryItem?.authorString,
+        narrator: narrator,
+        cover: localCoverUri ?? remoteCoverUri,
+        chapters: openedSession.chapters?.map((e) => e.toInternalChapter()).toList(),
+        tracks: downloaded != null
+            ? downloaded.tracks
+            : (openedSession.audioTracks ?? const <AudioTrack>[])
+                  .map((e) => e.toInternalTrack(api!.basePathOverride, openedSession.id))
+                  .toList(),
+        local: openedSessionIsLocal,
+        saf: downloaded?.saf ?? false,
+      );
+
+      internalMedia.populateFields();
+      if (!operationIsCurrent()) {
+        await closeSessionBinding(openedBinding);
+        return null;
+      }
+
+      _currentSession = openedSession;
+      _isLocalSession = openedSessionIsLocal;
+      return internalMedia;
+    } catch (_) {
+      await closeSessionBinding(openedBinding);
+      rethrow;
+    }
   }
 
   Future<InternalMedia?> reopenSessionWithTranscode(String itemId, {String? episodeId}) async {
