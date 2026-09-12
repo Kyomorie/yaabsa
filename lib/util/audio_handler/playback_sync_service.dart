@@ -152,10 +152,7 @@ class PlaybackSyncService {
     _hasPlaybackSinceLastFlush = false;
 
     final synced = await sync;
-    if (!synced &&
-        sessionId != null &&
-        repository.currentSession?.id == sessionId &&
-        !_hasPlaybackSinceLastFlush) {
+    if (!synced && sessionId != null && repository.currentSession?.id == sessionId && !_hasPlaybackSinceLastFlush) {
       _hasPlaybackSinceLastFlush = hadPlaybackSinceLastFlush;
     }
     return synced;
