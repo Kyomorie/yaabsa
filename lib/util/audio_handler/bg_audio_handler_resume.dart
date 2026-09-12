@@ -98,25 +98,32 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     }
 
     final requestGeneration = ++_playbackContextGeneration;
-    bool requestIsCurrent() => !_isDisposing && requestGeneration == _playbackContextGeneration;
+    final requestLease = _playerMutationBarrier.acquire();
+    bool requestIsCurrent() =>
+        !_isDisposing &&
+        requestGeneration == _playbackContextGeneration &&
+        _playerMutationBarrier.isCurrent(requestLease);
 
-    _setQueueTransitionLoading(true);
+    _setOwnedQueueTransitionLoading(requestLease);
     await _updatePlaybackState();
     if (!requestIsCurrent()) {
+      _abandonQueueTransitionLoadingIfOwned(requestLease, emitMediaWhenEmpty: true);
       return false;
     }
 
     try {
       final activeUserId = await _readActiveUserId();
       if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(requestLease, emitMediaWhenEmpty: true);
         return false;
       }
       final lastPlayedItem = await _readLastPlayedQueueItemForActiveUser(explicitUserId: activeUserId);
       if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(requestLease, emitMediaWhenEmpty: true);
         return false;
       }
       if (lastPlayedItem == null) {
-        _setQueueTransitionLoading(false);
+        _clearQueueTransitionLoadingIfOwned(requestLease, emitMediaWhenEmpty: true);
         return false;
       }
       _setQueueTransitionTargetItem(lastPlayedItem);
@@ -129,6 +136,7 @@ extension _BGAudioHandlerResume on BGAudioHandler {
             userId: activeUserId,
           );
       if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(requestLease, emitMediaWhenEmpty: true);
         return false;
       }
 
@@ -138,7 +146,7 @@ extension _BGAudioHandlerResume on BGAudioHandler {
           tag: 'AudioHandler',
           level: InfoLevel.debug,
         );
-        _setQueueTransitionLoading(false);
+        _clearQueueTransitionLoadingIfOwned(requestLease, emitMediaWhenEmpty: true);
         return false;
       }
 
@@ -146,24 +154,26 @@ extension _BGAudioHandlerResume on BGAudioHandler {
         microseconds: ((progress?.currentTime ?? 0) * Duration.microsecondsPerSecond).round(),
       );
       if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(requestLease, emitMediaWhenEmpty: true);
         return false;
       }
 
-      final played = await playItemFromPosition(
+      final played = await _playItemFromPositionInternal(
         itemId: lastPlayedItem.itemId,
         episodeId: lastPlayedItem.episodeId,
         position: resumePosition,
         preserveQueue: canPreserveRestoredManualQueue,
-        userNavigation: false,
+        mutationLease: requestLease,
       );
 
       return played && _currentMediaItem != null;
     } catch (e, s) {
       if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(requestLease, emitMediaWhenEmpty: true);
         return false;
       }
       logger('Failed to resume last played item: $e\n$s', tag: 'AudioHandler', level: InfoLevel.error);
-      _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
+      _clearQueueTransitionLoadingIfOwned(requestLease, emitMediaWhenEmpty: true);
       PlayerUtils.disableWakelock(_ref);
       return false;
     }
