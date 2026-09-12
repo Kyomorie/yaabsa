@@ -19,7 +19,12 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     PlayerException error, {
     Duration? initialPosition,
     bool resumePlayback = true,
+    PlayerMutationLease? mutationLease,
   }) {
+    if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
+      return Future<bool>.value(false);
+    }
+
     final repository = _ref.read(sessionRepositoryProvider);
     if (repository.currentSession?.playMethod == 2) {
       return Future<bool>.value(false);
@@ -30,7 +35,12 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
       return activeFallback;
     }
 
-    final fallback = _performTranscodeFallback(error, initialPosition: initialPosition, resumePlayback: resumePlayback);
+    final fallback = _performTranscodeFallback(
+      error,
+      initialPosition: initialPosition,
+      resumePlayback: resumePlayback,
+      mutationLease: mutationLease,
+    );
     _transcodeFallbackFuture = fallback;
     unawaited(
       fallback.whenComplete(() {
@@ -46,9 +56,13 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     PlayerException error, {
     Duration? initialPosition,
     required bool resumePlayback,
+    PlayerMutationLease? mutationLease,
   }) async {
     final media = _currentMediaItem;
     if (_isDisposing || media == null || media.local || isCastControlActive) {
+      return false;
+    }
+    if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
       return false;
     }
 
@@ -67,7 +81,11 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
 
     final resumePosition = initialPosition ?? position;
     final shouldResume = resumePlayback && playerControlState.playing;
-    bool isCurrentRequest() => !_isDisposing && identical(_currentMediaItem, media) && !isCastControlActive;
+    bool isCurrentRequest() =>
+        !_isDisposing &&
+        identical(_currentMediaItem, media) &&
+        !isCastControlActive &&
+        (mutationLease == null || _playerMutationBarrier.isCurrent(mutationLease));
 
     try {
       logger(
@@ -90,9 +108,13 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
       }
 
       _currentMediaItem = transcodedMedia;
-      await _setSource(initialPosition: resumePosition, ignoreSavedProgress: true);
+      await _setSource(
+        initialPosition: resumePosition,
+        ignoreSavedProgress: true,
+        mutationLease: mutationLease,
+      );
 
-      if (shouldResume && identical(_currentMediaItem, transcodedMedia) && !_isDisposing && !isCastControlActive) {
+      if (shouldResume && isCurrentRequest() && identical(_currentMediaItem, transcodedMedia)) {
         await _syncedPlay();
       }
 
