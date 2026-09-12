@@ -2106,7 +2106,6 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             tag: 'AudioHandler',
             level: InfoLevel.info,
           );
-          await pause();
         } else {
           final loopMode = _ref
               .read(settingsManagerProvider.notifier)
@@ -2315,8 +2314,16 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       level: InfoLevel.debug,
     );
 
+    final currentMedia = _currentMediaItem;
+    final sleepTimerSuppressesCompletedAutoAdvance =
+        currentMedia != null &&
+        _player.processingState == ProcessingState.completed &&
+        _claimSleepTimerCompletionGate(currentMedia) != null;
     final isTransitionLoading =
-        _queueTransitionLoading || (_player.processingState == ProcessingState.completed && queueList.isNotEmpty);
+        _queueTransitionLoading ||
+        (!sleepTimerSuppressesCompletedAutoAdvance &&
+            _player.processingState == ProcessingState.completed &&
+            queueList.isNotEmpty);
     final hasPlaybackContext =
         _currentMediaItem != null || queueList.isNotEmpty || _queueTransitionLoading || _restoredMediaItem != null;
     final castActive = isCastControlActive;
