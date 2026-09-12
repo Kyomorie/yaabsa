@@ -1,0 +1,36 @@
+name: PR focused race tests
+
+on:
+  pull_request:
+    types:
+      - synchronize
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused-race-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Run repository checks
+        uses: ./.github/actions/check-requirements
+
+      - name: Run focused sleep timer and ownership tests
+        shell: bash
+        run: >-
+          flutter test
+          test/util/player_mutation_barrier_test.dart
+          test/util/sleep_timer_completion_gate_test.dart
+          test/util/sleep_timer_target_test.dart
+          test/util/user_seek_navigation_ledger_test.dart
