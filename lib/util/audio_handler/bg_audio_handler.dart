@@ -607,7 +607,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     final anchor = _currentMediaItem == null
         ? sourceState == null
               ? null
-              : _playableRefFromKey(sourceState.currentItemReferenceKey)
+              : _playableRefFromKey(sourceState.context.currentItemReferenceKey)
         : PlayableRef(itemId: _currentMediaItem!.itemId, episodeId: _currentMediaItem!.episodeId);
 
     final snapshot = QueueIntentSnapshot(
@@ -727,7 +727,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     final manager = _ref.read(settingsManagerProvider.notifier);
     final currentLoop = manager.getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
     String nextLoop = currentLoop == 'off' ? 'on' : 'off';
-    manager.setGlobalSetting<String>(SettingKeys.loopMode, nextMix);
+    manager.setGlobalSetting<String>(SettingKeys.loopMode, nextLoop);
   }
 
   Future<void> _refillMusicQueue(String libraryId, {String? filter}) async {
