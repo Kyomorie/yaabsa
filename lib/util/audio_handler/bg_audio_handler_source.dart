@@ -11,8 +11,7 @@ extension _BGAudioHandlerSource on BGAudioHandler {
     if (_currentMediaItem == null) return Future.value();
 
     final lease = mutationLease ?? _playerMutationBarrier.acquire();
-    bool ownsSourceLoad() =>
-        _playerMutationBarrier.isCurrent(lease) && (isStillCurrent == null || isStillCurrent());
+    bool ownsSourceLoad() => _playerMutationBarrier.isCurrent(lease) && (isStillCurrent == null || isStillCurrent());
     if (!ownsSourceLoad()) {
       throw PlayerInterruptedException('Source loading interrupted before it started');
     }
