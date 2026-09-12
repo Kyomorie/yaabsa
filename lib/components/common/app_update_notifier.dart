@@ -17,33 +17,30 @@ class AppUpdateStartupTrigger extends StatefulWidget {
 }
 
 class _AppUpdateStartupTriggerState extends State<AppUpdateStartupTrigger> {
-  static bool _checkScheduled = false;
+  static Future<({AppUpdateCoordinator coordinator, AppUpdateCheckResult? result})>? _pendingCheck;
+  static bool _resultHandled = false;
 
   @override
   void initState() {
     super.initState();
-    if (_checkScheduled) {
-      return;
-    }
-    _checkScheduled = true;
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        unawaited(_checkForUpdate());
+        unawaited(_handleUpdateCheck());
       }
     });
   }
 
-  Future<void> _checkForUpdate() async {
+  Future<void> _handleUpdateCheck() async {
     try {
-      final settingsManager = containerRef.read(settingsManagerProvider.notifier);
-      final coordinator = AppUpdateCoordinator(
-        checker: const AppUpdateChecker(),
-        stateStore: SettingsManagerAppUpdateStateStore(settingsManager),
-      );
-      final result = await coordinator.checkIfDue(packageInfo.version);
+      final pending = _pendingCheck ??= _startUpdateCheck();
+      final (:coordinator, :result) = await pending;
 
-      if (!mounted || result == null || !coordinator.shouldNotify(result)) {
+      if (!mounted || _resultHandled) {
+        return;
+      }
+      _resultHandled = true;
+
+      if (result == null || !coordinator.shouldNotify(result)) {
         return;
       }
 
@@ -68,6 +65,16 @@ class _AppUpdateStartupTriggerState extends State<AppUpdateStartupTrigger> {
         level: InfoLevel.warning,
       );
     }
+  }
+
+  static Future<({AppUpdateCoordinator coordinator, AppUpdateCheckResult? result})> _startUpdateCheck() async {
+    final settingsManager = containerRef.read(settingsManagerProvider.notifier);
+    final coordinator = AppUpdateCoordinator(
+      checker: const AppUpdateChecker(),
+      stateStore: SettingsManagerAppUpdateStateStore(settingsManager),
+    );
+    final result = await coordinator.checkIfDue(packageInfo.version);
+    return (coordinator: coordinator, result: result);
   }
 
   @override
