@@ -62,3 +62,29 @@ class PlayerMutationBarrier {
 
   Future<void> get drained => _tail;
 }
+
+class DeferredPlayerMutationGuard {
+  const DeferredPlayerMutationGuard({
+    required this.lease,
+    required this.playbackContextGeneration,
+    required this.seekGeneration,
+    required this.mediaKey,
+  });
+
+  final PlayerMutationLease lease;
+  final int playbackContextGeneration;
+  final int seekGeneration;
+  final String mediaKey;
+
+  bool isCurrent({
+    required PlayerMutationBarrier barrier,
+    required int playbackContextGeneration,
+    required int seekGeneration,
+    required String? mediaKey,
+  }) {
+    return barrier.isCurrent(lease) &&
+        this.playbackContextGeneration == playbackContextGeneration &&
+        this.seekGeneration == seekGeneration &&
+        this.mediaKey == mediaKey;
+  }
+}
