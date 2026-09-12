@@ -5,10 +5,19 @@ extension _BGAudioHandlerSource on BGAudioHandler {
     Duration initialPosition = Duration.zero,
     bool ignoreSavedProgress = false,
     int transcodeStartupAttempt = 0,
+    PlayerMutationLease? mutationLease,
   }) async {
     if (_currentMediaItem == null) return Future.value();
 
+    final lease = mutationLease ?? _playerMutationBarrier.acquire();
+    if (!_playerMutationBarrier.isCurrent(lease)) {
+      throw PlayerInterruptedException('Source loading interrupted before it started');
+    }
+
     await _applyPreferredPlaybackSpeed(seedPerBookSpeedWhenMissing: true);
+    if (!_playerMutationBarrier.isCurrent(lease)) {
+      throw PlayerInterruptedException('Source loading interrupted while applying playback preferences');
+    }
 
     final requestHeaders = _currentRequestHeadersInternal;
     final source = _currentMediaItem!.toAudioSources(headers: requestHeaders);
@@ -44,18 +53,20 @@ extension _BGAudioHandlerSource on BGAudioHandler {
     final relativeTrackInitialPosition = initialPosition > trackStartDuration
         ? initialPosition - trackStartDuration
         : Duration.zero;
-    _currentTrackIndex = trackIndex;
     final loadingMedia = _currentMediaItem;
 
     final setSourceStopwatch = Stopwatch()..start();
     final sourceLoadError = Completer<PlayerException>();
     _sourceLoadErrorCompleter = sourceLoadError;
     try {
-      final sourceLoad = player.setAudioSources(
-        source,
-        initialIndex: trackIndex,
-        initialPosition: relativeTrackInitialPosition,
-        preload: true,
+      final sourceLoad = _playerMutationBarrier.run<dynamic>(
+        lease,
+        () => player.setAudioSources(
+          source,
+          initialIndex: trackIndex,
+          initialPosition: relativeTrackInitialPosition,
+          preload: true,
+        ),
       );
       final loadResult = Future.any<dynamic>([
         sourceLoad,
@@ -69,7 +80,15 @@ extension _BGAudioHandlerSource on BGAudioHandler {
       } else {
         await loadResult;
       }
+      if (!_playerMutationBarrier.isCurrent(lease)) {
+        throw PlayerInterruptedException('Source loading superseded by a newer player command');
+      }
+      _currentTrackIndex = trackIndex;
     } on PlayerException catch (error) {
+      if (!_playerMutationBarrier.isCurrent(lease)) {
+        throw PlayerInterruptedException('Source loading superseded by a newer player command');
+      }
+
       final session = _ref.read(sessionRepositoryProvider).currentSession;
       if (identical(_currentMediaItem, loadingMedia) &&
           !_isDisposing &&
@@ -85,22 +104,38 @@ extension _BGAudioHandlerSource on BGAudioHandler {
           tag: 'AudioHandler',
           level: InfoLevel.warning,
         );
-        final lease = _playerMutationBarrier.acquire();
-        await _safePlayerStop(lease);
-        await Future<void>.delayed(delay);
-        if (!identical(_currentMediaItem, loadingMedia) || _isDisposing || isCastControlActive) {
+        final stopped = await _safePlayerStop(lease);
+        if (!stopped || !_playerMutationBarrier.isCurrent(lease)) {
+          throw PlayerInterruptedException('Transcoded stream retry superseded while stopping the old source');
+        }
+
+        final delayCompleted = await Future.any<bool>([
+          Future<bool>.delayed(delay, () => true),
+          lease.invalidated.then((_) => false),
+        ]);
+        if (!delayCompleted ||
+            !_playerMutationBarrier.isCurrent(lease) ||
+            !identical(_currentMediaItem, loadingMedia) ||
+            _isDisposing ||
+            isCastControlActive) {
           throw PlayerInterruptedException('Transcoded stream loading interrupted');
         }
         return await _setSource(
           initialPosition: initialPosition,
           ignoreSavedProgress: true,
           transcodeStartupAttempt: transcodeStartupAttempt + 1,
+          mutationLease: lease,
         );
       }
       if (identical(_currentMediaItem, loadingMedia) &&
           !_isDisposing &&
           classifyPlaybackError(error) == PlaybackFailureAction.transcode &&
-          await _attemptTranscodeFallback(error, initialPosition: initialPosition, resumePlayback: false)) {
+          await _attemptTranscodeFallback(
+            error,
+            initialPosition: initialPosition,
+            resumePlayback: false,
+            mutationLease: lease,
+          )) {
         return;
       }
 
