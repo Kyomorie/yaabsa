@@ -98,7 +98,15 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
       await _syncService.flush(positionOverride: resumePosition, sessionClosing: true);
       if (!isCurrentRequest()) return false;
 
-      final transcodedMedia = await repository.reopenSessionWithTranscode(media.itemId, episodeId: media.episodeId);
+      await repository.closeSession();
+      if (!isCurrentRequest()) return false;
+
+      final transcodedMedia = await repository.openSession(
+        media.itemId,
+        episodeId: media.episodeId,
+        forceTranscode: true,
+        isStillCurrent: isCurrentRequest,
+      );
       if (!isCurrentRequest() || transcodedMedia == null) {
         return false;
       }
