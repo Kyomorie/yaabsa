@@ -120,8 +120,7 @@ class SessionRepository {
     bool Function()? isStillCurrent,
   }) async {
     final generation = ++_sessionMutationGeneration;
-    bool operationIsCurrent() =>
-        _isSessionMutationCurrent(generation) && (isStillCurrent == null || isStillCurrent());
+    bool operationIsCurrent() => _isSessionMutationCurrent(generation) && (isStillCurrent == null || isStillCurrent());
 
     await ref.read(currentUserProvider.future);
     if (!operationIsCurrent()) {
@@ -175,7 +174,11 @@ class SessionRepository {
           try {
             await api.getSessionApi().closeOpenSession(session.id);
           } catch (e) {
-            logger('Failed to close superseded session ${session.id}: $e', tag: 'SessionRepository', level: InfoLevel.warning);
+            logger(
+              'Failed to close superseded session ${session.id}: $e',
+              tag: 'SessionRepository',
+              level: InfoLevel.warning,
+            );
           }
         }
         return null;
@@ -216,7 +219,8 @@ class SessionRepository {
     _currentSession = openedSession;
     _isLocalSession = openedSessionIsLocal;
 
-    final hasCoverPath = (openedSession.coverPath?.isNotEmpty ?? false) || (openedSession.libraryItem?.hasCover ?? false);
+    final hasCoverPath =
+        (openedSession.coverPath?.isNotEmpty ?? false) || (openedSession.libraryItem?.hasCover ?? false);
     final resolvedLocalCoverPath = await resolveDisplayCoverPath(
       downloaded?.coverPath,
       cacheKey: '$userId:$itemId:${episodeId ?? 'item'}',
@@ -313,13 +317,7 @@ class SessionRepository {
 
       logger('Session is local; storing sync locally', tag: 'SessionRepository', level: InfoLevel.debug);
 
-      return _addLocal(
-        currentTime,
-        timeListened,
-        updatedProgress,
-        session: updatedSession,
-        sessionLocal: true,
-      );
+      return _addLocal(currentTime, timeListened, updatedProgress, session: updatedSession, sessionLocal: true);
     }
 
     if (!canReachServer) {
@@ -333,13 +331,7 @@ class SessionRepository {
         level: InfoLevel.debug,
       );
 
-      return _addLocal(
-        currentTime,
-        timeListened,
-        updatedProgress,
-        session: currentSession,
-        sessionLocal: false,
-      );
+      return _addLocal(currentTime, timeListened, updatedProgress, session: currentSession, sessionLocal: false);
     }
 
     final ABSApi? api = ref.read(absApiProvider);
@@ -349,13 +341,7 @@ class SessionRepository {
           .updateMediaProgress(currentSession.libraryItemId, currentTime, currentSession);
 
       logger('No API available, storing sync locally.', tag: 'SessionRepository', level: InfoLevel.warning);
-      return _addLocal(
-        currentTime,
-        timeListened,
-        updatedProgress,
-        session: currentSession,
-        sessionLocal: false,
-      );
+      return _addLocal(currentTime, timeListened, updatedProgress, session: currentSession, sessionLocal: false);
     }
 
     try {
@@ -381,13 +367,7 @@ class SessionRepository {
           .read(mediaProgressProvider.notifier)
           .updateMediaProgress(currentSession.libraryItemId, currentTime, currentSession);
 
-      return _addLocal(
-        currentTime,
-        timeListened,
-        updatedProgress,
-        session: currentSession,
-        sessionLocal: false,
-      );
+      return _addLocal(currentTime, timeListened, updatedProgress, session: currentSession, sessionLocal: false);
     }
   }
 
