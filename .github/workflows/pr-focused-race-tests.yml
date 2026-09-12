@@ -12,42 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  repair-queue-anchor:
-    if: github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout source branch
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-
-      - name: Repair exact queue anchor reference
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('lib/util/audio_handler/bg_audio_handler.dart')
-          text = path.read_text()
-          old = '_playableRefFromKey(sourceState.context.currentItemReferenceKey)'
-          new = '_playableRefFromKey(sourceState.currentItemReferenceKey)'
-          if old not in text:
-              raise SystemExit('expected queue anchor typo not found; refusing to mutate')
-          if text.count(old) != 1:
-              raise SystemExit(f'expected exactly one queue anchor typo, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1))
-          PY
-          git diff --check
-          git diff -- lib/util/audio_handler/bg_audio_handler.dart
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add lib/util/audio_handler/bg_audio_handler.dart
-          git commit -m 'fix: restore queue intent anchor reference'
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
-
   focused-race-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 15
