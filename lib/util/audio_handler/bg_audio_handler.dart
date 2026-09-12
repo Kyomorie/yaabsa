@@ -1239,6 +1239,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     }
     final stopPosition = position;
     final stoppedMedia = _currentMediaItem;
+    final sessionRepository = _ref.read(sessionRepositoryProvider);
+    final stoppedSessionBinding = sessionRepository.currentSessionBinding;
     final shouldStopCastPlayback = isCastControlActive;
 
     if (stoppedMedia != null) {
@@ -1286,14 +1288,21 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       _emitQueueState();
       _persistQueueIntentSoon();
     }
-    try {
+    if (stoppedSessionBinding != null) {
       unawaited(
-        _syncService
-            .flush(positionOverride: stopPosition, sessionClosing: true)
-            .then((_) => _ref.read(sessionRepositoryProvider).closeSession()),
+        () async {
+          try {
+            await _syncService.flush(
+              positionOverride: stopPosition,
+              sessionClosing: true,
+              expectedSessionId: stoppedSessionBinding.sessionId,
+            );
+            await sessionRepository.closeSessionBinding(stoppedSessionBinding);
+          } catch (e) {
+            logger('Error closing stopped session: $e', tag: 'AudioHandler', level: InfoLevel.error);
+          }
+        }(),
       );
-    } catch (e) {
-      logger('Error closing session: $e', tag: 'AudioHandler', level: InfoLevel.error);
     }
     return _safePlayerStop(lease);
   }
