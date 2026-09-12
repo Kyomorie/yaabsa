@@ -91,3 +91,16 @@ runs:
         test/util/sleep_timer_completion_gate_test.dart
         test/util/sleep_timer_target_test.dart
         test/util/user_seek_navigation_ledger_test.dart
+
+    - name: Commit verified rewind sync fix when needed
+      shell: bash
+      run: |
+        if git diff --quiet -- lib/util/audio_handler/bg_audio_handler_resume.dart; then
+          echo "Verified rewind sync fix already committed."
+          exit 0
+        fi
+        git config user.name github-actions[bot]
+        git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+        git add lib/util/audio_handler/bg_audio_handler_resume.dart
+        git commit -m 'fix: serialize sleep timer rewind progress sync'
+        git push origin HEAD:"$GITHUB_HEAD_REF"
