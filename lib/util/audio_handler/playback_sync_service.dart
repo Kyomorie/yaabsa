@@ -135,11 +135,7 @@ class PlaybackSyncService {
     return result;
   }
 
-  Future<bool> _stopSync({
-    Duration? positionOverride,
-    bool sessionClosing = false,
-    String? expectedSessionId,
-  }) async {
+  Future<bool> _stopSync({Duration? positionOverride, bool sessionClosing = false, String? expectedSessionId}) async {
     final repository = _ref.read(sessionRepositoryProvider);
     final sessionId = expectedSessionId ?? repository.currentSession?.id;
     final hadPlaybackSinceLastFlush = _hasPlaybackSinceLastFlush;
