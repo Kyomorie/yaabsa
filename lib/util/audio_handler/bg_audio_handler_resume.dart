@@ -29,15 +29,10 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       return false;
     }
 
-    final currentPositionSeconds = targetPosition.inMicroseconds / Duration.microsecondsPerSecond;
-    final canReachServer = _ref.read(serverReachabilityProvider);
-
     try {
-      await _ref
-          .read(sessionRepositoryProvider)
-          .syncOpenSession(currentPositionSeconds, 0.3, canReachServer: canReachServer);
+      await _syncService.flush(positionOverride: targetPosition);
     } catch (e) {
-      logger('Failed to sync sleep timer rewind before stop: $e', tag: 'AudioHandler', level: InfoLevel.warning);
+      logger('Failed to sync sleep timer rewind after expiry: $e', tag: 'AudioHandler', level: InfoLevel.warning);
     }
 
     if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
