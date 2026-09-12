@@ -333,13 +333,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     );
 
     if (restoreProgress && !skipResumeProgressReconcile && !isCastControlActive) {
-      unawaited(
-        _reconcileResumeProgressInBackground(
-          resumeItem,
-          startPosition,
-          mutationLease: lease,
-        ),
-      );
+      unawaited(_reconcileResumeProgressInBackground(resumeItem, startPosition, mutationLease: lease));
     } else if (restoreProgress && skipResumeProgressReconcile) {
       logger(
         'Resume progress reconcile skipped because playback position was manually changed while paused.',
@@ -449,9 +443,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         level: InfoLevel.info,
       );
 
-      await _seekWithoutPausedManualMarker(
-        () => _seekInternal(remotePosition, mutationLease: mutationLease),
-      );
+      await _seekWithoutPausedManualMarker(() => _seekInternal(remotePosition, mutationLease: mutationLease));
     } catch (e) {
       logger('Background resume reconcile failed: $e', tag: 'AudioHandler', level: InfoLevel.warning);
     }
