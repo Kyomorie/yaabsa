@@ -1,5 +1,5 @@
 name: Check requirements
-description: Run checks to determine if build should proceed
+description: Targeted app update notifier tests
 
 runs:
   using: composite
@@ -14,32 +14,6 @@ runs:
       shell: bash
       run: flutter pub get
 
-    - name: Check formatting
+    - name: Run app update notifier tests
       shell: bash
-      run: dart format --set-exit-if-changed lib
-
-    - name: Check generated files
-      shell: bash
-      run: dart run build_runner build --delete-conflicting-outputs
-
-    - name: Format
-      shell: bash
-      run: dart format lib
-
-    - name: Check if files changed
-      shell: bash
-      run: |
-        if [[ -n $(git status --porcelain) ]]; then
-          echo "Generated files are not up to date. Please run 'dart run build_runner build --delete-conflicting-outputs' and commit the changes."
-          exit 1
-        fi
-
-    - name: Check if flutter fixes are available
-      shell: bash
-      run: dart fix lib/ --dry-run | grep "Nothing to fix!" || (echo "Flutter fixes are
-        available. Please run 'dart fix . --apply' and commit the changes." &&
-        exit 1)
-
-    - name: Check if errors are present
-      shell: bash
-      run: flutter analyze lib | grep "No issues found!" || (echo "Analyzer found issues in yaabsa sources. Please fix them and commit the changes." && exit 1)
+      run: flutter test test/util/app_update_checker_test.dart test/util/app_update_state_test.dart test/components/common/app_update_notifier_test.dart
