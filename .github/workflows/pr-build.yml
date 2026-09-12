@@ -116,10 +116,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-targets
     timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
           submodules: recursive
           
       - name: Run check
