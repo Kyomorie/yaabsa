@@ -24,6 +24,8 @@ class PlayerMutationBarrier {
   PlayerMutationLease? _currentLease;
   Future<void> _tail = Future<void>.value();
 
+  PlayerMutationLease? get currentLease => _currentLease;
+
   PlayerMutationLease acquire() {
     _currentLease?._markInvalidated();
     final lease = PlayerMutationLease._(++_sequence);
