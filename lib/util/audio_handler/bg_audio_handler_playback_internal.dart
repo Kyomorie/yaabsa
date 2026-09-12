@@ -76,23 +76,45 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       if (hasPlaybackToReplace) {
         await stop(clearQueue: !preserveQueue);
       }
+    }
 
+    final lease = _playerMutationBarrier.acquire();
+    bool ownsPlayback() => _playerMutationBarrier.isCurrent(lease) && !_isDisposing;
+
+    if (!isCurrentItem) {
       final targetItem = QueueItem(itemId: itemId, episodeId: episodeId);
       _setQueueTransitionTargetItem(targetItem);
       _setQueueTransitionLoading(true);
       await _updatePlaybackState();
+      if (!ownsPlayback()) {
+        return false;
+      }
       _lastQueueItem = targetItem;
 
       try {
-        _currentMediaItem = await _ref.read(sessionRepositoryProvider).openSession(itemId, episodeId: episodeId);
+        final openedMedia = await _ref.read(sessionRepositoryProvider).openSession(
+          itemId,
+          episodeId: episodeId,
+          isStillCurrent: ownsPlayback,
+        );
+        if (!ownsPlayback()) {
+          return false;
+        }
+        _currentMediaItem = openedMedia;
         if (_currentMediaItem == null) {
           logger('No media item found for ID: $itemId', tag: 'AudioHandler', level: InfoLevel.error);
           PlayerUtils.disableWakelock(_ref);
           _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
           return false;
         }
-        await _setSource(ignoreSavedProgress: true);
+        await _setSource(ignoreSavedProgress: true, mutationLease: lease);
+        if (!ownsPlayback()) {
+          return false;
+        }
       } catch (e, s) {
+        if (!ownsPlayback()) {
+          return false;
+        }
         logger('Failed to prepare item $itemId for playback: $e\n$s', tag: 'AudioHandler', level: InfoLevel.error);
         _currentMediaItem = null;
         PlayerUtils.disableWakelock(_ref);
@@ -102,13 +124,22 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     }
 
     try {
+      if (!ownsPlayback()) {
+        return false;
+      }
       _clearSmartRewindPauseMarker();
-      await _seekInternal(position);
+      await _seekInternal(position, mutationLease: lease);
+      if (!ownsPlayback()) {
+        return false;
+      }
       _setQueueTransitionLoading(false);
       if (isCastControlActive) {
         await play();
       } else {
-        await _syncedPlay();
+        await _syncedPlay(mutationLease: lease);
+      }
+      if (!ownsPlayback()) {
+        return false;
       }
       TrayManager.update();
       if (!isCurrentItem) {
@@ -117,6 +148,9 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       }
       return true;
     } catch (e, s) {
+      if (!ownsPlayback()) {
+        return false;
+      }
       logger(
         'Failed to start item $itemId from the requested position: $e\n$s',
         tag: 'AudioHandler',
@@ -238,8 +272,11 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     }
   }
 
-  Future<bool> _prepareForQueuedItemTransition() async {
-    final lease = _playerMutationBarrier.acquire();
+  Future<bool> _prepareForQueuedItemTransition(PlayerMutationLease lease) async {
+    if (!_playerMutationBarrier.isCurrent(lease)) {
+      return false;
+    }
+
     final transitionPosition = position;
     _setQueueTransitionTargetItem(null);
     _setQueueTransitionLoading(true);
@@ -248,8 +285,17 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
     try {
       await _syncService.flush(positionOverride: transitionPosition, sessionClosing: true);
+      if (!_playerMutationBarrier.isCurrent(lease)) {
+        return false;
+      }
       await _ref.read(sessionRepositoryProvider).closeSession();
+      if (!_playerMutationBarrier.isCurrent(lease)) {
+        return false;
+      }
     } catch (e) {
+      if (!_playerMutationBarrier.isCurrent(lease)) {
+        return false;
+      }
       logger('Error preparing queued transition: $e', tag: 'AudioHandler', level: InfoLevel.error);
     }
 
@@ -257,7 +303,15 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     return stopped && _playerMutationBarrier.isCurrent(lease);
   }
 
-  Future<void> _syncedPlay({bool restoreProgress = false, bool skipResumeProgressReconcile = false}) async {
+  Future<void> _syncedPlay({
+    bool restoreProgress = false,
+    bool skipResumeProgressReconcile = false,
+    PlayerMutationLease? mutationLease,
+  }) async {
+    if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
+      return;
+    }
+
     if (_chapterNotificationEnabled) {
       _updateMediaItemForChapterNotification();
     } else {
@@ -274,7 +328,13 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     );
 
     if (restoreProgress && !skipResumeProgressReconcile && !isCastControlActive) {
-      unawaited(_reconcileResumeProgressInBackground(resumeItem, startPosition));
+      unawaited(
+        _reconcileResumeProgressInBackground(
+          resumeItem,
+          startPosition,
+          mutationLease: mutationLease,
+        ),
+      );
     } else if (restoreProgress && skipResumeProgressReconcile) {
       logger(
         'Resume progress reconcile skipped because playback position was manually changed while paused.',
@@ -283,6 +343,9 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       );
     }
 
+    if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
+      return;
+    }
     unawaited(
       _player.play().catchError((error, stackTrace) {
         logger('Failed to start player playback: $error\\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);
@@ -290,7 +353,11 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     );
   }
 
-  Future<void> _reconcileResumeProgressInBackground(InternalMedia resumeItem, Duration startPosition) async {
+  Future<void> _reconcileResumeProgressInBackground(
+    InternalMedia resumeItem,
+    Duration startPosition, {
+    PlayerMutationLease? mutationLease,
+  }) async {
     final reconcilePlaybackContextGeneration = _playbackContextGeneration;
     final reconcileSeekGeneration = _seekGeneration;
     final activeUserId = _ref.read(currentUserProvider).value?.id;
@@ -318,7 +385,8 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
           .read(mediaProgressProvider.notifier)
           .fetchOrRefreshIndividualProgress(resumeItem.itemId, episodeId: resumeItem.episodeId);
 
-      if (reconcilePlaybackContextGeneration != _playbackContextGeneration ||
+      if ((mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) ||
+          reconcilePlaybackContextGeneration != _playbackContextGeneration ||
           reconcileSeekGeneration != _seekGeneration) {
         logger(
           'Background resume reconcile aborted because playback navigation changed while progress was loading.',
@@ -376,7 +444,9 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         level: InfoLevel.info,
       );
 
-      await _seekWithoutPausedManualMarker(() => _seekInternal(remotePosition));
+      await _seekWithoutPausedManualMarker(
+        () => _seekInternal(remotePosition, mutationLease: mutationLease),
+      );
     } catch (e) {
       logger('Background resume reconcile failed: $e', tag: 'AudioHandler', level: InfoLevel.warning);
     }
