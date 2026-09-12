@@ -128,11 +128,7 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
       }
 
       _currentMediaItem = transcodedMedia;
-      await _setSource(
-        initialPosition: resumePosition,
-        ignoreSavedProgress: true,
-        mutationLease: mutationLease,
-      );
+      await _setSource(initialPosition: resumePosition, ignoreSavedProgress: true, mutationLease: mutationLease);
 
       if (shouldResume && isCurrentRequest() && identical(_currentMediaItem, transcodedMedia)) {
         await _syncedPlay(mutationLease: mutationLease);
