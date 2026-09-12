@@ -647,13 +647,11 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         type: MediaSourceType.playlist,
         sourceId: context.playlistId ?? '',
         libraryId: context.libraryId,
-        playlistId: context.playlistId,
       ),
       _AutoQueueSourceType.collection => MediaSourceDescriptor(
         type: MediaSourceType.collection,
         sourceId: context.collectionId ?? '',
         libraryId: context.libraryId,
-        collectionId: context.collectionId,
       ),
       _AutoQueueSourceType.podcast => MediaSourceDescriptor(
         type: MediaSourceType.podcast,
