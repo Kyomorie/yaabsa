@@ -272,10 +272,15 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     }
   }
 
-  Future<bool> _prepareForQueuedItemTransition(PlayerMutationLease lease) async {
-    if (!_playerMutationBarrier.isCurrent(lease)) {
-      return false;
+  Future<void> _prepareForQueuedItemTransition([PlayerMutationLease? mutationLease]) async {
+    final lease = mutationLease ?? _playerMutationBarrier.acquire();
+    void ensureOwnership(String stage) {
+      if (!_playerMutationBarrier.isCurrent(lease)) {
+        throw PlayerInterruptedException('Queued item transition superseded $stage');
+      }
     }
+
+    ensureOwnership('before it started');
 
     final transitionPosition = position;
     _setQueueTransitionTargetItem(null);
@@ -285,22 +290,21 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
     try {
       await _syncService.flush(positionOverride: transitionPosition, sessionClosing: true);
-      if (!_playerMutationBarrier.isCurrent(lease)) {
-        return false;
-      }
+      ensureOwnership('while flushing playback progress');
       await _ref.read(sessionRepositoryProvider).closeSession();
-      if (!_playerMutationBarrier.isCurrent(lease)) {
-        return false;
-      }
+      ensureOwnership('while closing the previous session');
     } catch (e) {
       if (!_playerMutationBarrier.isCurrent(lease)) {
-        return false;
+        throw PlayerInterruptedException('Queued item transition superseded while preparing the previous session');
       }
       logger('Error preparing queued transition: $e', tag: 'AudioHandler', level: InfoLevel.error);
     }
 
     final stopped = await _safePlayerStop(lease);
-    return stopped && _playerMutationBarrier.isCurrent(lease);
+    if (!stopped) {
+      throw PlayerInterruptedException('Queued item transition superseded before the old player stopped');
+    }
+    ensureOwnership('while stopping the old player');
   }
 
   Future<void> _syncedPlay({
@@ -308,7 +312,8 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     bool skipResumeProgressReconcile = false,
     PlayerMutationLease? mutationLease,
   }) async {
-    if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
+    final lease = mutationLease ?? _playerMutationBarrier.acquire();
+    if (!_playerMutationBarrier.isCurrent(lease)) {
       return;
     }
 
@@ -332,7 +337,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         _reconcileResumeProgressInBackground(
           resumeItem,
           startPosition,
-          mutationLease: mutationLease,
+          mutationLease: lease,
         ),
       );
     } else if (restoreProgress && skipResumeProgressReconcile) {
@@ -343,7 +348,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       );
     }
 
-    if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
+    if (!_playerMutationBarrier.isCurrent(lease)) {
       return;
     }
     unawaited(
