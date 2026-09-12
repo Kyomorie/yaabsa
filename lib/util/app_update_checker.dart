@@ -19,12 +19,12 @@ class AppUpdateCheckResult {
   });
 
   const AppUpdateCheckResult.failed({required String currentVersion})
-    : this(
-        status: AppUpdateCheckStatus.failed,
-        currentVersion: currentVersion,
-        latestVersion: null,
-        isUpdateAvailable: false,
-      );
+      : this(
+          status: AppUpdateCheckStatus.failed,
+          currentVersion: currentVersion,
+          latestVersion: null,
+          isUpdateAvailable: false,
+        );
 }
 
 class AppUpdateChecker {
