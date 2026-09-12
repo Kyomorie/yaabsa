@@ -141,7 +141,7 @@ void main() {
         stateStore: store,
         nowMs: () => now,
       );
-      const failed = AppUpdateCheckResult.failed(currentVersion: '1.11.0');
+      final failed = AppUpdateCheckResult.failed(currentVersion: '1.11.0');
       const current = AppUpdateCheckResult(
         status: AppUpdateCheckStatus.success,
         currentVersion: '1.11.0',
