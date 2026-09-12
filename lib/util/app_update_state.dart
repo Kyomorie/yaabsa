@@ -46,13 +46,11 @@ class AppUpdateCoordinator {
     required AppUpdateChecker checker,
     required AppUpdateStateStore stateStore,
     int Function()? nowMs,
-  }) {
-    return AppUpdateCoordinator._(
-      checker,
-      stateStore,
-      nowMs ?? (() => DateTime.now().millisecondsSinceEpoch),
-    );
-  }
+  }) => AppUpdateCoordinator._(
+    checker,
+    stateStore,
+    nowMs ?? (() => DateTime.now().millisecondsSinceEpoch),
+  );
 
   AppUpdateCoordinator._(this._checker, this._stateStore, this._nowMs);
 
