@@ -57,7 +57,20 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     required String? episodeId,
     required Duration position,
     bool preserveQueue = false,
+    PlayerMutationLease? mutationLease,
   }) async {
+    late final PlayerMutationLease lease;
+    if (mutationLease != null) {
+      lease = mutationLease;
+    } else {
+      _playbackContextGeneration += 1;
+      lease = _playerMutationBarrier.acquire();
+    }
+    bool ownsPlayback() => _playerMutationBarrier.isCurrent(lease) && !_isDisposing;
+    if (!ownsPlayback()) {
+      return false;
+    }
+
     _activeMusicLibraryId = null;
     PlayerUtils.enableWakelock(_ref);
     _resetStreamRecoveryState(clearWindow: true);
@@ -74,19 +87,20 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       final hasPlaybackToReplace =
           _currentMediaItem != null || queueList.isNotEmpty || _player.processingState != ProcessingState.idle;
       if (hasPlaybackToReplace) {
-        await stop(clearQueue: !preserveQueue);
+        final stopped = await _stopWithPlayerMutationLease(lease, clearQueue: !preserveQueue);
+        if (!stopped || !ownsPlayback()) {
+          return false;
+        }
       }
     }
-
-    final lease = _playerMutationBarrier.acquire();
-    bool ownsPlayback() => _playerMutationBarrier.isCurrent(lease) && !_isDisposing;
 
     if (!isCurrentItem) {
       final targetItem = QueueItem(itemId: itemId, episodeId: episodeId);
       _setQueueTransitionTargetItem(targetItem);
-      _setQueueTransitionLoading(true);
+      _setOwnedQueueTransitionLoading(lease);
       await _updatePlaybackState();
       if (!ownsPlayback()) {
+        _abandonQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: _currentMediaItem == null);
         return false;
       }
       _lastQueueItem = targetItem;
@@ -96,41 +110,46 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
             .read(sessionRepositoryProvider)
             .openSession(itemId, episodeId: episodeId, isStillCurrent: ownsPlayback);
         if (!ownsPlayback()) {
+          _abandonQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: _currentMediaItem == null);
           return false;
         }
         _currentMediaItem = openedMedia;
         if (_currentMediaItem == null) {
           logger('No media item found for ID: $itemId', tag: 'AudioHandler', level: InfoLevel.error);
           PlayerUtils.disableWakelock(_ref);
-          _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
+          _clearQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: true);
           return false;
         }
         await _setSource(ignoreSavedProgress: true, mutationLease: lease);
         if (!ownsPlayback()) {
+          _abandonQueueTransitionLoadingIfOwned(lease);
           return false;
         }
       } catch (e, s) {
         if (!ownsPlayback()) {
+          _abandonQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: _currentMediaItem == null);
           return false;
         }
         logger('Failed to prepare item $itemId for playback: $e\n$s', tag: 'AudioHandler', level: InfoLevel.error);
         _currentMediaItem = null;
         PlayerUtils.disableWakelock(_ref);
-        _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
+        _clearQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: true);
         return false;
       }
     }
 
     try {
       if (!ownsPlayback()) {
+        _abandonQueueTransitionLoadingIfOwned(lease);
         return false;
       }
       _clearSmartRewindPauseMarker();
       await _seekInternal(position, mutationLease: lease);
       if (!ownsPlayback()) {
+        _abandonQueueTransitionLoadingIfOwned(lease);
         return false;
       }
-      _setQueueTransitionLoading(false);
+      _clearQueueTransitionLoadingIfOwned(lease);
       if (isCastControlActive) {
         await play();
       } else {
@@ -147,6 +166,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       return true;
     } catch (e, s) {
       if (!ownsPlayback()) {
+        _abandonQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: _currentMediaItem == null);
         return false;
       }
       logger(
@@ -155,7 +175,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         level: InfoLevel.error,
       );
       PlayerUtils.disableWakelock(_ref);
-      _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
+      _clearQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: true);
       return false;
     }
   }
@@ -274,6 +294,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     final lease = mutationLease ?? _playerMutationBarrier.acquire();
     void ensureOwnership(String stage) {
       if (!_playerMutationBarrier.isCurrent(lease)) {
+        _abandonQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: _currentMediaItem == null);
         throw PlayerInterruptedException('Queued item transition superseded $stage');
       }
     }
@@ -282,7 +303,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
     final transitionPosition = position;
     _setQueueTransitionTargetItem(null);
-    _setQueueTransitionLoading(true);
+    _setOwnedQueueTransitionLoading(lease);
     _currentMediaItem = null;
     _currentTrackIndex = 0;
 
@@ -293,6 +314,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       ensureOwnership('while closing the previous session');
     } catch (e) {
       if (!_playerMutationBarrier.isCurrent(lease)) {
+        _abandonQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: _currentMediaItem == null);
         throw PlayerInterruptedException('Queued item transition superseded while preparing the previous session');
       }
       logger('Error preparing queued transition: $e', tag: 'AudioHandler', level: InfoLevel.error);
@@ -300,6 +322,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
     final stopped = await _safePlayerStop(lease);
     if (!stopped) {
+      _abandonQueueTransitionLoadingIfOwned(lease, emitMediaWhenEmpty: _currentMediaItem == null);
       throw PlayerInterruptedException('Queued item transition superseded before the old player stopped');
     }
     ensureOwnership('while stopping the old player');
