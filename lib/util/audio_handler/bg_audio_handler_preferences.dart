@@ -178,14 +178,42 @@ extension _BGAudioHandlerPreferences on BGAudioHandler {
     await _applyVolume(targetVolume);
   }
 
-  Future<void> _applyPreferredPlaybackSpeed({bool seedPerBookSpeedWhenMissing = false}) async {
+  Future<void> _applyPreferredPlaybackSpeed({
+    bool seedPerBookSpeedWhenMissing = false,
+    PlayerMutationLease? mutationLease,
+    bool Function()? isStillCurrent,
+  }) async {
+    bool ownsPreferenceMutation() =>
+        (mutationLease == null || _playerMutationBarrier.isCurrent(mutationLease)) &&
+        (isStillCurrent == null || isStillCurrent());
+
     final targetSpeed = await _resolvePreferredPlaybackSpeed(seedPerBookSpeedWhenMissing: seedPerBookSpeedWhenMissing);
+    if (!ownsPreferenceMutation()) {
+      throw PlayerInterruptedException('Playback preference update superseded while resolving saved speed');
+    }
 
     if ((_player.speed - targetSpeed).abs() <= BGAudioHandler._playbackPreferenceEpsilon) {
       return;
     }
 
-    await _player.setSpeed(targetSpeed);
+    if (mutationLease == null) {
+      await _player.setSpeed(targetSpeed);
+    } else {
+      final applied = await _playerMutationBarrier.run<bool>(mutationLease, () async {
+        if (!ownsPreferenceMutation()) {
+          throw PlayerInterruptedException('Playback preference update superseded before player mutation');
+        }
+        await _player.setSpeed(targetSpeed);
+        return true;
+      });
+      if (applied != true || !ownsPreferenceMutation()) {
+        throw PlayerInterruptedException('Playback preference update superseded while applying saved speed');
+      }
+    }
+
+    if (!ownsPreferenceMutation()) {
+      throw PlayerInterruptedException('Playback preference update superseded before publishing state');
+    }
     await _updatePlaybackState();
   }
 

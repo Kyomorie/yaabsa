@@ -86,40 +86,10 @@ class PlaybackSyncService {
     logger('Playback sync timer running every ${intervalSeconds}s', tag: 'PlaybackSyncService', level: InfoLevel.debug);
   }
 
-  Future<bool> _enqueueSync({Duration? positionOverride, bool force = false}) async {
-    var result = false;
-
-    _syncQueue = _syncQueue.catchError((_) {}).then((_) async {
-      result = await _sync(positionOverride: positionOverride, force: force);
-    });
-
-    await _syncQueue;
-    return result;
-  }
-
-  Future<bool> _stopSync({Duration? positionOverride, bool sessionClosing = false}) async {
-    _syncTimer?.cancel();
-    _syncTimer = null;
-
-    if (sessionClosing) {
-      await _syncQueue.catchError((_) {});
-      if (!_hasPlaybackSinceLastFlush) {
-        return false;
-      }
-    }
-
-    final synced = await _enqueueSync(positionOverride: positionOverride, force: true);
-    if (synced) {
-      _hasPlaybackSinceLastFlush = false;
-    }
-    return synced;
-  }
-
-  Future<bool> _sync({Duration? positionOverride, bool force = false}) async {
-    final currentSession = _ref.read(sessionRepositoryProvider).currentSession;
-    if (currentSession == null) {
-      _currentSegmentStartTime = null;
-      _hasPlaybackSinceLastFlush = false;
+  Future<bool> _enqueueSync({Duration? positionOverride, bool force = false, String? expectedSessionId}) async {
+    final repository = _ref.read(sessionRepositoryProvider);
+    final sessionId = expectedSessionId ?? repository.currentSession?.id;
+    if (sessionId == null || repository.currentSession?.id != sessionId) {
       return false;
     }
 
@@ -127,9 +97,10 @@ class PlaybackSyncService {
     final double currentPositionSeconds = currentPositionDuration.inMicroseconds / Duration.microsecondsPerSecond;
     double listenedTime = 0;
 
-    if (_currentSegmentStartTime != null) {
+    final segmentStartTime = _currentSegmentStartTime;
+    if (segmentStartTime != null) {
       final DateTime now = DateTime.now();
-      final Duration elapsedSinceLastMark = now.difference(_currentSegmentStartTime!);
+      final Duration elapsedSinceLastMark = now.difference(segmentStartTime);
       listenedTime = elapsedSinceLastMark.inMicroseconds / Duration.microsecondsPerSecond;
 
       if (_syncTimer?.isActive ?? false) {
@@ -148,26 +119,51 @@ class PlaybackSyncService {
       return false;
     }
 
-    logger(
-      'Syncing playback: currentPositionSeconds: $currentPositionSeconds, timeListenedInSeconds: $listenedTime',
-      tag: 'PlaybackSyncService',
-      level: InfoLevel.debug,
-    );
-
     final bool canReachServer = _ref.read(serverReachabilityProvider);
+    var result = false;
 
-    return await _ref
-        .read(sessionRepositoryProvider)
-        .syncOpenSession(currentPositionSeconds, listenedTime, canReachServer: canReachServer);
+    _syncQueue = _syncQueue.catchError((_) {}).then((_) async {
+      result = await repository.syncOpenSession(
+        currentPositionSeconds,
+        listenedTime,
+        canReachServer: canReachServer,
+        expectedSessionId: sessionId,
+      );
+    });
+
+    await _syncQueue;
+    return result;
   }
 
-  Future<bool> flush({Duration? positionOverride, bool sessionClosing = false}) async {
-    final synced = await _stopSync(positionOverride: positionOverride, sessionClosing: sessionClosing);
-    if (sessionClosing) {
-      _hasPlaybackSinceLastFlush = false;
+  Future<bool> _stopSync({Duration? positionOverride, bool sessionClosing = false, String? expectedSessionId}) async {
+    final repository = _ref.read(sessionRepositoryProvider);
+    final sessionId = expectedSessionId ?? repository.currentSession?.id;
+    final hadPlaybackSinceLastFlush = _hasPlaybackSinceLastFlush;
+
+    _syncTimer?.cancel();
+    _syncTimer = null;
+
+    if (sessionClosing && !hadPlaybackSinceLastFlush) {
+      _currentSegmentStartTime = null;
+      return false;
     }
-    _currentSegmentStartTime = null;
+
+    final sync = _enqueueSync(positionOverride: positionOverride, force: true, expectedSessionId: sessionId);
+    _hasPlaybackSinceLastFlush = false;
+
+    final synced = await sync;
+    if (!synced && sessionId != null && repository.currentSession?.id == sessionId && !_hasPlaybackSinceLastFlush) {
+      _hasPlaybackSinceLastFlush = hadPlaybackSinceLastFlush;
+    }
     return synced;
+  }
+
+  Future<bool> flush({Duration? positionOverride, bool sessionClosing = false, String? expectedSessionId}) {
+    return _stopSync(
+      positionOverride: positionOverride,
+      sessionClosing: sessionClosing,
+      expectedSessionId: expectedSessionId,
+    );
   }
 
   void markProgressDirty() {
