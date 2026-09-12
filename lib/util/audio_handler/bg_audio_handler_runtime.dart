@@ -35,21 +35,38 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     }
 
     final activeFallback = _transcodeFallbackFuture;
+    final activeLease = _transcodeFallbackLease;
     if (activeFallback != null) {
-      return activeFallback;
+      if (identical(activeLease, mutationLease) && _playerMutationBarrier.isCurrent(mutationLease)) {
+        return activeFallback;
+      }
+      return activeFallback.then((_) {
+        if (!_playerMutationBarrier.isCurrent(mutationLease)) {
+          return false;
+        }
+        return _attemptTranscodeFallback(
+          error,
+          initialPosition: initialPosition,
+          resumePlayback: resumePlayback,
+          mutationLease: mutationLease,
+        );
+      });
     }
 
-    final fallback = _performTranscodeFallback(
+    late final Future<bool> fallback;
+    fallback = _performTranscodeFallback(
       error,
       initialPosition: initialPosition,
       resumePlayback: resumePlayback,
       mutationLease: mutationLease,
     );
     _transcodeFallbackFuture = fallback;
+    _transcodeFallbackLease = mutationLease;
     unawaited(
       fallback.whenComplete(() {
         if (identical(_transcodeFallbackFuture, fallback)) {
           _transcodeFallbackFuture = null;
+          _transcodeFallbackLease = null;
         }
       }),
     );
@@ -87,11 +104,11 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
     final resumePosition = initialPosition ?? position;
     final sourceSessionBinding = repository.currentSessionBinding;
     var ownedMedia = media;
+    var completedFallback = false;
     bool isCurrentRequest() =>
         !_isDisposing &&
         identical(_currentMediaItem, ownedMedia) &&
         !isCastControlActive &&
-        (!resumePlayback || playerControlState.playing) &&
         _playerMutationBarrier.isCurrent(mutationLease);
 
     try {
@@ -136,11 +153,18 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
         mutationLease: mutationLease,
         isStillCurrent: isCurrentRequest,
       );
-
-      if (resumePlayback && isCurrentRequest()) {
-        await _syncedPlay(mutationLease: mutationLease);
+      if (!isCurrentRequest()) {
+        return false;
       }
 
+      if (resumePlayback) {
+        await _syncedPlay(mutationLease: mutationLease);
+        if (!isCurrentRequest()) {
+          return false;
+        }
+      }
+
+      completedFallback = true;
       return true;
     } on PlayerInterruptedException {
       return false;
@@ -149,6 +173,11 @@ extension _BGAudioHandlerRuntime on BGAudioHandler {
       return false;
     } finally {
       _transcodeFallbackInFlight = false;
+      if (!completedFallback &&
+          !_playerMutationBarrier.isCurrent(mutationLease) &&
+          _transcodeAttemptedFor == mediaKey) {
+        _transcodeAttemptedFor = null;
+      }
     }
   }
 
