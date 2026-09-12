@@ -86,11 +86,7 @@ class PlaybackSyncService {
     logger('Playback sync timer running every ${intervalSeconds}s', tag: 'PlaybackSyncService', level: InfoLevel.debug);
   }
 
-  Future<bool> _enqueueSync({
-    Duration? positionOverride,
-    bool force = false,
-    String? expectedSessionId,
-  }) async {
+  Future<bool> _enqueueSync({Duration? positionOverride, bool force = false, String? expectedSessionId}) async {
     final repository = _ref.read(sessionRepositoryProvider);
     final sessionId = expectedSessionId ?? repository.currentSession?.id;
     if (sessionId == null || repository.currentSession?.id != sessionId) {
@@ -152,11 +148,7 @@ class PlaybackSyncService {
       return false;
     }
 
-    final sync = _enqueueSync(
-      positionOverride: positionOverride,
-      force: true,
-      expectedSessionId: expectedSessionId,
-    );
+    final sync = _enqueueSync(positionOverride: positionOverride, force: true, expectedSessionId: expectedSessionId);
     _hasPlaybackSinceLastFlush = false;
 
     final synced = await sync;
