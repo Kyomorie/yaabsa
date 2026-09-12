@@ -993,9 +993,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         level: InfoLevel.debug,
       );
       await queueTransitionLoadingStream.firstWhere((isLoading) => !isLoading);
-      if (observedLoadingLease == null ||
-          !_playerMutationBarrier.isCurrent(observedLoadingLease) ||
-          _isDisposing) {
+      if (observedLoadingLease == null || !_playerMutationBarrier.isCurrent(observedLoadingLease) || _isDisposing) {
         return;
       }
     }
@@ -1637,8 +1635,11 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         : (resolvedPosition > maxPosition ? maxPosition : resolvedPosition);
     final shouldRetarget = boundedPosition != fromPosition;
     final operationId = userNavigation ? _beginUserSeekNavigation(mutationLease: mutationLease) : null;
-    final lease = mutationLease ??
-        (userNavigation ? _playerMutationBarrier.currentLease ?? _playerMutationBarrier.acquire() : _playerMutationBarrier.acquire());
+    final lease =
+        mutationLease ??
+        (userNavigation
+            ? _playerMutationBarrier.currentLease ?? _playerMutationBarrier.acquire()
+            : _playerMutationBarrier.acquire());
     final seekGeneration = ++_seekGeneration;
     final mediaKey = _mediaKey(media);
     var navigationSucceeded = false;
