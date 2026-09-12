@@ -115,6 +115,43 @@ void main() {
       expect(coordinator.isSkippedVersion('v1.12.0'), isTrue);
       expect(coordinator.isSkippedVersion('1.12.1'), isFalse);
     });
+
+    test('notifies only for a successful newer release that was not skipped', () {
+      final coordinator = AppUpdateCoordinator(
+        checker: AppUpdateChecker(dio: dio),
+        stateStore: store,
+        nowMs: () => now,
+      );
+      const result = AppUpdateCheckResult(
+        status: AppUpdateCheckStatus.success,
+        currentVersion: '1.11.0',
+        latestVersion: '1.12.0',
+        isUpdateAvailable: true,
+      );
+
+      expect(coordinator.shouldNotify(result), isTrue);
+
+      store.skippedVersion = 'v1.12.0';
+      expect(coordinator.shouldNotify(result), isFalse);
+    });
+
+    test('does not notify for failed or current-version checks', () {
+      final coordinator = AppUpdateCoordinator(
+        checker: AppUpdateChecker(dio: dio),
+        stateStore: store,
+        nowMs: () => now,
+      );
+      const failed = AppUpdateCheckResult.failed(currentVersion: '1.11.0');
+      const current = AppUpdateCheckResult(
+        status: AppUpdateCheckStatus.success,
+        currentVersion: '1.11.0',
+        latestVersion: '1.11.0',
+        isUpdateAvailable: false,
+      );
+
+      expect(coordinator.shouldNotify(failed), isFalse);
+      expect(coordinator.shouldNotify(current), isFalse);
+    });
   });
 }
 
