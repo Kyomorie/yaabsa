@@ -117,10 +117,14 @@ class SessionRepository {
     String? episodeId,
     bool forceDirectPlay = false,
     bool forceTranscode = false,
+    bool Function()? isStillCurrent,
   }) async {
     final generation = ++_sessionMutationGeneration;
+    bool operationIsCurrent() =>
+        _isSessionMutationCurrent(generation) && (isStillCurrent == null || isStillCurrent());
+
     await ref.read(currentUserProvider.future);
-    if (!_isSessionMutationCurrent(generation)) {
+    if (!operationIsCurrent()) {
       return null;
     }
 
@@ -134,7 +138,7 @@ class SessionRepository {
     }
 
     final downloaded = forceTranscode ? null : await db.getStoredDownload(itemId, userId, episodeId: episodeId);
-    if (!_isSessionMutationCurrent(generation)) {
+    if (!operationIsCurrent()) {
       return null;
     }
 
@@ -156,7 +160,7 @@ class SessionRepository {
         supportedMimeTypes: await PlayerUtils.getSupportedMimeTypes(),
         mediaPlayer: '$appName just_audio',
       );
-      if (!_isSessionMutationCurrent(generation)) {
+      if (!operationIsCurrent()) {
         return null;
       }
 
@@ -166,7 +170,7 @@ class SessionRepository {
         playRequest: playRequest,
       )).data;
 
-      if (!_isSessionMutationCurrent(generation)) {
+      if (!operationIsCurrent()) {
         if (session != null) {
           try {
             await api.getSessionApi().closeOpenSession(session.id);
@@ -201,11 +205,14 @@ class SessionRepository {
       final randomId = Uuid().v4();
       openedSession = await createLocalSession(randomId, itemId, userId, DateTime.now(), episodeId: episodeId);
       openedSessionIsLocal = true;
-      if (!_isSessionMutationCurrent(generation)) {
+      if (!operationIsCurrent()) {
         return null;
       }
     }
 
+    if (!operationIsCurrent()) {
+      return null;
+    }
     _currentSession = openedSession;
     _isLocalSession = openedSessionIsLocal;
 
@@ -214,7 +221,7 @@ class SessionRepository {
       downloaded?.coverPath,
       cacheKey: '$userId:$itemId:${episodeId ?? 'item'}',
     );
-    if (!_isSessionMutationCurrent(generation) || _currentSession?.id != openedSession.id) {
+    if (!operationIsCurrent() || _currentSession?.id != openedSession.id) {
       return null;
     }
 
