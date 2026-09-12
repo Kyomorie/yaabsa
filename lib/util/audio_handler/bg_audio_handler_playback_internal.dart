@@ -238,7 +238,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     }
   }
 
-  Future<void> _prepareForQueuedItemTransition() async {
+  Future<bool> _prepareForQueuedItemTransition() async {
     final lease = _playerMutationBarrier.acquire();
     final transitionPosition = position;
     _setQueueTransitionTargetItem(null);
@@ -253,7 +253,8 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       logger('Error preparing queued transition: $e', tag: 'AudioHandler', level: InfoLevel.error);
     }
 
-    await _safePlayerStop(lease);
+    final stopped = await _safePlayerStop(lease);
+    return stopped && _playerMutationBarrier.isCurrent(lease);
   }
 
   Future<void> _syncedPlay({bool restoreProgress = false, bool skipResumeProgressReconcile = false}) async {
@@ -290,6 +291,8 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
   }
 
   Future<void> _reconcileResumeProgressInBackground(InternalMedia resumeItem, Duration startPosition) async {
+    final reconcilePlaybackContextGeneration = _playbackContextGeneration;
+    final reconcileSeekGeneration = _seekGeneration;
     final activeUserId = _ref.read(currentUserProvider).value?.id;
     final isMusic = _ref
         .read(settingsManagerProvider.notifier)
@@ -314,6 +317,16 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       final progress = await _ref
           .read(mediaProgressProvider.notifier)
           .fetchOrRefreshIndividualProgress(resumeItem.itemId, episodeId: resumeItem.episodeId);
+
+      if (reconcilePlaybackContextGeneration != _playbackContextGeneration ||
+          reconcileSeekGeneration != _seekGeneration) {
+        logger(
+          'Background resume reconcile aborted because playback navigation changed while progress was loading.',
+          tag: 'AudioHandler',
+          level: InfoLevel.debug,
+        );
+        return;
+      }
 
       final currentMedia = _currentMediaItem;
       if (currentMedia == null ||
