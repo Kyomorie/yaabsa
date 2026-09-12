@@ -14,7 +14,7 @@ void main() {
       expect(ledger.hasArmedGate, isFalse);
     });
 
-    test('claim freezes the matched gate and removes it from the slot', () {
+    test('claim freezes the matched gate without consuming owner state', () {
       final ledger = SleepTimerCompletionGateLedger();
       final token = ledger.arm(itemId: 'book-a', episodeId: 'episode-a');
 
@@ -26,10 +26,24 @@ void main() {
       expect(claim!.token, same(token));
       expect(claim.itemId, 'book-a');
       expect(claim.episodeId, 'episode-a');
-      expect(ledger.hasArmedGate, isFalse);
+      expect(ledger.armedToken, same(token));
+      expect(ledger.hasArmedGate, isTrue);
     });
 
-    test('non-matching completion cannot consume the current gate', () {
+    test('a stale completion can claim again until the owner clears the gate', () {
+      final ledger = SleepTimerCompletionGateLedger();
+      final token = ledger.arm(itemId: 'book-a', episodeId: 'episode-a');
+
+      final firstClaim = ledger.claimWhere((itemId, episodeId) => itemId == 'book-a' && episodeId == 'episode-a');
+      final secondClaim = ledger.claimWhere((itemId, episodeId) => itemId == 'book-a' && episodeId == 'episode-a');
+
+      expect(firstClaim?.token, same(token));
+      expect(secondClaim?.token, same(token));
+      expect(ledger.clear(token), isTrue);
+      expect(ledger.claimWhere((_, __) => true), isNull);
+    });
+
+    test('non-matching completion cannot claim the current gate', () {
       final ledger = SleepTimerCompletionGateLedger();
       final token = ledger.arm(itemId: 'book-a', episodeId: 'episode-a');
 
