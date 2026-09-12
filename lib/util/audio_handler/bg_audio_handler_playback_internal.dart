@@ -92,11 +92,9 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       _lastQueueItem = targetItem;
 
       try {
-        final openedMedia = await _ref.read(sessionRepositoryProvider).openSession(
-          itemId,
-          episodeId: episodeId,
-          isStillCurrent: ownsPlayback,
-        );
+        final openedMedia = await _ref
+            .read(sessionRepositoryProvider)
+            .openSession(itemId, episodeId: episodeId, isStillCurrent: ownsPlayback);
         if (!ownsPlayback()) {
           return false;
         }
