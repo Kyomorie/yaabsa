@@ -57,6 +57,29 @@ void main() {
       expect(secondIssued, isTrue);
     });
 
+    test('an already issued mutation keeps its result after lease invalidation', () async {
+      final barrier = PlayerMutationBarrier();
+      final first = barrier.acquire();
+      final blocker = Completer<void>();
+      final firstIssued = Completer<void>();
+
+      final firstRun = barrier.run(first, () async {
+        firstIssued.complete();
+        await blocker.future;
+        return 7;
+      });
+      await firstIssued.future;
+
+      final second = barrier.acquire();
+      expect(first.isInvalidated, isTrue);
+
+      blocker.complete();
+
+      expect(await firstRun, 7);
+      expect(barrier.isCurrent(first), isFalse);
+      expect(barrier.isCurrent(second), isTrue);
+    });
+
     test('explicit invalidation wakes lease waiters exactly once', () async {
       final barrier = PlayerMutationBarrier();
       final lease = barrier.acquire();
