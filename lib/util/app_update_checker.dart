@@ -82,6 +82,14 @@ class AppUpdateChecker {
         );
         return AppUpdateCheckResult.failed(currentVersion: currentVersion);
       }
+      if (parsedLatest.isPrerelease) {
+        logger(
+          'Skipping app update notification because the latest release tag is a prerelease: $tagName',
+          tag: 'AppUpdateChecker',
+          level: InfoLevel.warning,
+        );
+        return AppUpdateCheckResult.failed(currentVersion: currentVersion);
+      }
 
       return AppUpdateCheckResult(
         status: AppUpdateCheckStatus.success,
