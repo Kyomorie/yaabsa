@@ -32,20 +32,14 @@ runs:
         fi
 
         AVDMANAGER="$(dirname "$SDKMANAGER")/avdmanager"
-        ADB="$SDK_ROOT/platform-tools/adb"
-        EMULATOR="$SDK_ROOT/emulator/emulator"
-        for tool in "$AVDMANAGER" "$ADB" "$EMULATOR"; do
-          if [[ ! -x "$tool" ]]; then
-            echo "Required Android SDK tool is unavailable: $tool"
-            exit 1
-          fi
-        done
+        if [[ ! -x "$AVDMANAGER" ]]; then
+          echo "Required Android SDK tool is unavailable: $AVDMANAGER"
+          exit 1
+        fi
 
         echo "SDK_ROOT=$SDK_ROOT"
         echo "SDKMANAGER=$SDKMANAGER"
         echo "AVDMANAGER=$AVDMANAGER"
-        echo "ADB=$ADB"
-        echo "EMULATOR=$EMULATOR"
 
         echo "=== Prepare Android emulator ==="
         yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
@@ -53,6 +47,17 @@ runs:
           "platform-tools" \
           "emulator" \
           "system-images;android-35;google_apis;x86_64"
+
+        ADB="$SDK_ROOT/platform-tools/adb"
+        EMULATOR="$SDK_ROOT/emulator/emulator"
+        for tool in "$ADB" "$EMULATOR"; do
+          if [[ ! -x "$tool" ]]; then
+            echo "Required Android SDK tool is unavailable after sdkmanager install: $tool"
+            exit 1
+          fi
+        done
+        echo "ADB=$ADB"
+        echo "EMULATOR=$EMULATOR"
 
         echo "no" | "$AVDMANAGER" create avd \
           --force \
