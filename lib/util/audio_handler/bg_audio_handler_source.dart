@@ -69,6 +69,7 @@ extension _BGAudioHandlerSource on BGAudioHandler {
         if (!ownsSourceLoad()) {
           throw PlayerInterruptedException('Source loading superseded before the player mutation was issued');
         }
+        _audioSourceGeneration += 1;
         return player.setAudioSources(
           source,
           initialIndex: trackIndex,

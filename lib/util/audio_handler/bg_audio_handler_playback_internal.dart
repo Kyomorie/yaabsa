@@ -149,15 +149,28 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         _abandonQueueTransitionLoadingIfOwned(lease);
         return false;
       }
-      _clearQueueTransitionLoadingIfOwned(lease);
       if (isCastControlActive) {
+        _clearQueueTransitionLoadingIfOwned(lease);
         await play();
+        if (!ownsPlayback()) {
+          return false;
+        }
       } else {
-        await _syncedPlay(mutationLease: lease);
+        final startAttempt = _beginPlaybackStartAttempt(lease);
+        final startResult = await _syncedPlay(mutationLease: lease);
+        final attemptCurrent = ownsPlayback() && _isPlaybackStartAttemptCurrent(startAttempt);
+        _settlePlaybackStartAttempt(
+          startAttempt,
+          attemptCurrent ? _statusForPlaybackStartResult(startResult) : PlaybackStartAttemptStatus.superseded,
+        );
+        if (!attemptCurrent || !startResult.started) {
+          _abandonQueueTransitionLoadingIfOwned(lease);
+          PlayerUtils.disableWakelock(_ref);
+          return false;
+        }
+        _clearQueueTransitionLoadingIfOwned(lease);
       }
-      if (!ownsPlayback()) {
-        return false;
-      }
+
       TrayManager.update();
       if (!isCurrentItem) {
         _markPendingManualQueueSessionPlayed();
@@ -328,14 +341,46 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     ensureOwnership('while stopping the old player');
   }
 
-  Future<void> _syncedPlay({
+  PlaybackStartAttempt _beginPlaybackStartAttempt(PlayerMutationLease lease, {String? reservedQueueEntryId}) {
+    return _playbackStartAttemptLedger.begin(
+      lease: lease,
+      sourceGeneration: _audioSourceGeneration,
+      reservedQueueEntryId: reservedQueueEntryId,
+    );
+  }
+
+  bool _isPlaybackStartAttemptCurrent(PlaybackStartAttempt attempt) {
+    return _playbackStartAttemptLedger.isCurrent(
+      attempt,
+      barrier: _playerMutationBarrier,
+      currentSourceGeneration: _audioSourceGeneration,
+      isDisposing: _isDisposing,
+      reservationIsCurrent: (queueEntryId) => queueList.any((entry) => entry.id == queueEntryId),
+    );
+  }
+
+  PlaybackStartAttemptStatus _statusForPlaybackStartResult(PlaybackStartResult result) {
+    return switch (result.status) {
+      PlaybackStartStatus.started => PlaybackStartAttemptStatus.started,
+      PlaybackStartStatus.superseded => PlaybackStartAttemptStatus.superseded,
+      PlaybackStartStatus.rejected => PlaybackStartAttemptStatus.rejected,
+      PlaybackStartStatus.failed => PlaybackStartAttemptStatus.failed,
+      PlaybackStartStatus.unsupported => PlaybackStartAttemptStatus.unsupported,
+    };
+  }
+
+  void _settlePlaybackStartAttempt(PlaybackStartAttempt attempt, PlaybackStartAttemptStatus status) {
+    _playbackStartAttemptLedger.settle(attempt, status);
+  }
+
+  Future<PlaybackStartResult> _syncedPlay({
     bool restoreProgress = false,
     bool skipResumeProgressReconcile = false,
     PlayerMutationLease? mutationLease,
   }) async {
     final lease = mutationLease ?? _playerMutationBarrier.acquire();
     if (!_playerMutationBarrier.isCurrent(lease)) {
-      return;
+      return const PlaybackStartResult(PlaybackStartStatus.superseded);
     }
 
     if (_chapterNotificationEnabled) {
@@ -344,18 +389,19 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       mediaItem.add(_currentMediaItem?.toMediaItem());
     }
 
-    if (_currentMediaItem == null) return Future.value();
+    if (_currentMediaItem == null) {
+      return const PlaybackStartResult(PlaybackStartStatus.rejected);
+    }
     final resumeItem = _currentMediaItem!;
     final startPosition = position;
+    final shouldReconcileProgress = restoreProgress && !skipResumeProgressReconcile && !isCastControlActive;
     logger(
       'Starting playback for item: ${resumeItem.itemId} (${resumeItem.episodeId ?? 'item'}) from position: $startPosition (restoreProgress=$restoreProgress, castControl=$isCastControlActive)',
       tag: 'AudioHandler',
       level: InfoLevel.info,
     );
 
-    if (restoreProgress && !skipResumeProgressReconcile && !isCastControlActive) {
-      unawaited(_reconcileResumeProgressInBackground(resumeItem, startPosition, mutationLease: lease));
-    } else if (restoreProgress && skipResumeProgressReconcile) {
+    if (restoreProgress && skipResumeProgressReconcile) {
       logger(
         'Resume progress reconcile skipped because playback position was manually changed while paused.',
         tag: 'AudioHandler',
@@ -364,13 +410,33 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     }
 
     if (!_playerMutationBarrier.isCurrent(lease)) {
-      return;
+      return const PlaybackStartResult(PlaybackStartStatus.superseded);
     }
-    unawaited(
-      _player.play().catchError((error, stackTrace) {
-        logger('Failed to start player playback: $error\\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);
-      }),
-    );
+
+    try {
+      final playFuture = _player.play();
+      unawaited(
+        playFuture.catchError((error, stackTrace) {
+          logger('Failed to start player playback: $error\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);
+        }),
+      );
+      final result = await awaitPlaybackStartOrLeaseInvalidated<PlaybackStartResult>(
+        lease: lease,
+        backendResult: _player.waitForPlaybackStart(),
+        supersededValue: const PlaybackStartResult(PlaybackStartStatus.superseded),
+      );
+      if (result.started && shouldReconcileProgress && _playerMutationBarrier.isCurrent(lease)) {
+        unawaited(_reconcileResumeProgressInBackground(resumeItem, startPosition, mutationLease: lease));
+      }
+      return result;
+    } catch (error, stackTrace) {
+      logger(
+        'Failed while waiting for backend-confirmed playback start: $error\n$stackTrace',
+        tag: 'AudioHandler',
+        level: InfoLevel.error,
+      );
+      return PlaybackStartResult(PlaybackStartStatus.failed, errorMessage: error.toString());
+    }
   }
 
   Future<void> _reconcileResumeProgressInBackground(

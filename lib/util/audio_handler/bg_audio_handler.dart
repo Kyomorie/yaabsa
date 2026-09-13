@@ -44,6 +44,7 @@ import 'package:yaabsa/util/globals.dart' show packageInfo;
 import 'package:yaabsa/util/audio_handler/playback_error_classifier.dart';
 import 'package:yaabsa/util/audio_handler/playback_sync_service.dart';
 import 'package:yaabsa/util/audio_handler/player_mutation_barrier.dart';
+import 'package:yaabsa/util/audio_handler/playback_start_attempt.dart';
 import 'package:yaabsa/util/audio_handler/sleep_timer_completion_gate.dart';
 import 'package:yaabsa/util/bluetooth_auto_resume.dart';
 import 'package:yaabsa/util/audio_handler/player_history_handler.dart';
@@ -175,6 +176,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   int _userSeekNavigationSequence = 0;
   final UserSeekNavigationLedger _userSeekNavigationLedger = UserSeekNavigationLedger();
   final PlayerMutationBarrier _playerMutationBarrier = PlayerMutationBarrier();
+  final PlaybackStartAttemptLedger _playbackStartAttemptLedger = PlaybackStartAttemptLedger();
+  int _audioSourceGeneration = 0;
   final SleepTimerCompletionGateLedger _sleepTimerCompletionGate = SleepTimerCompletionGateLedger();
   PlayerMutationLease? _queueTransitionLoadingOwner;
   int _seekGeneration = 0;
@@ -1071,25 +1074,37 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       if (!ownsPlay()) {
         return;
       }
-      _queueTransitionLoadingOwner = null;
-      _setQueueTransitionLoading(false);
-      await _syncedPlay(
+      final startAttempt = _beginPlaybackStartAttempt(playLease, reservedQueueEntryId: matchingCurrentQueueEntry?.id);
+      final startResult = await _syncedPlay(
         restoreProgress: !ignoreProgress,
         skipResumeProgressReconcile: skipResumeProgressReconcile,
         mutationLease: playLease,
       );
-      if (!ownsPlay()) {
-        return;
+      final attemptCurrent = ownsPlay() && _isPlaybackStartAttemptCurrent(startAttempt);
+      if (!attemptCurrent || !startResult.started) {
+        _settlePlaybackStartAttempt(
+          startAttempt,
+          attemptCurrent ? _statusForPlaybackStartResult(startResult) : PlaybackStartAttemptStatus.superseded,
+        );
+        abandonPlayLoading();
+        PlayerUtils.disableWakelock(_ref);
+        return Future.value();
       }
-      if (matchingCurrentQueueEntry != null) {
-        final matchingIndex = queueList.indexWhere((entry) => entry.id == matchingCurrentQueueEntry!.id);
-        if (matchingIndex >= 0) {
-          final removed = queueList.removeAt(matchingIndex);
-          _originalQueueList.removeWhere((entry) => entry.id == removed.id);
-          _emitQueueState();
-          _maybePrefetchAutoQueue();
+      try {
+        if (matchingCurrentQueueEntry != null) {
+          final matchingIndex = queueList.indexWhere((entry) => entry.id == matchingCurrentQueueEntry!.id);
+          if (matchingIndex >= 0) {
+            final removed = queueList.removeAt(matchingIndex);
+            _originalQueueList.removeWhere((entry) => entry.id == removed.id);
+            _emitQueueState();
+            _maybePrefetchAutoQueue();
+          }
+          _markManualQueueItemPlayed(matchingCurrentQueueEntry);
         }
-        _markManualQueueItemPlayed(matchingCurrentQueueEntry);
+        _queueTransitionLoadingOwner = null;
+        _setQueueTransitionLoading(false);
+      } finally {
+        _settlePlaybackStartAttempt(startAttempt, PlaybackStartAttemptStatus.started);
       }
       return Future.value();
     }
@@ -1192,31 +1207,43 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         tag: 'AudioHandler',
         level: InfoLevel.debug,
       );
-      _clearQueueTransitionLoadingIfOwned(playLease);
-      await _syncedPlay(restoreProgress: !ignoreProgress, mutationLease: playLease);
-      if (!ownsPlay()) {
+      final startAttempt = _beginPlaybackStartAttempt(playLease, reservedQueueEntryId: nextEntry?.id);
+      final startResult = await _syncedPlay(restoreProgress: !ignoreProgress, mutationLease: playLease);
+      final attemptCurrent = ownsPlay() && _isPlaybackStartAttemptCurrent(startAttempt);
+      if (!attemptCurrent || !startResult.started) {
+        _settlePlaybackStartAttempt(
+          startAttempt,
+          attemptCurrent ? _statusForPlaybackStartResult(startResult) : PlaybackStartAttemptStatus.superseded,
+        );
+        abandonPlayLoading();
+        PlayerUtils.disableWakelock(_ref);
         return;
       }
-      if (nextEntry != null) {
-        final reservedIndex = queueList.indexWhere((entry) => entry.id == nextEntry.id);
-        if (reservedIndex >= 0) {
-          final removed = queueList.removeAt(reservedIndex);
-          _originalQueueList.removeWhere((entry) => entry.id == removed.id);
-          _emitQueueState();
-          if (!isPendingManualEntry) {
-            _maybePrefetchAutoQueue();
+      try {
+        if (nextEntry != null) {
+          final reservedIndex = queueList.indexWhere((entry) => entry.id == nextEntry.id);
+          if (reservedIndex >= 0) {
+            final removed = queueList.removeAt(reservedIndex);
+            _originalQueueList.removeWhere((entry) => entry.id == removed.id);
+            _emitQueueState();
+            if (!isPendingManualEntry) {
+              _maybePrefetchAutoQueue();
+            }
+            final loopMode = _ref
+                .read(settingsManagerProvider.notifier)
+                .getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
+            final isLoopOn = loopMode == 'on';
+            if (_activeMusicLibraryId != null && !isLoopOn) {
+              unawaited(_refillMusicQueue(_activeMusicLibraryId!, filter: _activeMusicLibraryFilter));
+            }
           }
-          final loopMode = _ref
-              .read(settingsManagerProvider.notifier)
-              .getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
-          final isLoopOn = loopMode == 'on';
-          if (_activeMusicLibraryId != null && !isLoopOn) {
-            unawaited(_refillMusicQueue(_activeMusicLibraryId!, filter: _activeMusicLibraryFilter));
-          }
+          _markManualQueueItemPlayed(nextEntry);
+        } else {
+          unawaited(_setupAutoQueueOnResume(itemId: nextItem.itemId, episodeId: nextItem.episodeId));
         }
-        _markManualQueueItemPlayed(nextEntry);
-      } else {
-        unawaited(_setupAutoQueueOnResume(itemId: nextItem.itemId, episodeId: nextItem.episodeId));
+        _clearQueueTransitionLoadingIfOwned(playLease);
+      } finally {
+        _settlePlaybackStartAttempt(startAttempt, PlaybackStartAttemptStatus.started);
       }
     } catch (e) {
       if (!ownsPlay()) {
