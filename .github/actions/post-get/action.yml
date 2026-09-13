@@ -92,7 +92,26 @@ runs:
           >"$EMULATOR_LOG" 2>&1 &
         EMULATOR_PID=$!
 
+        PUBSPEC_BACKUP=""
+        LOCK_BACKUP=""
+        LOCK_EXISTED=false
+        RUNTIME_TEST_PATH=""
+        RUNTIME_TEST_CREATED=false
+
         cleanup() {
+          set +e
+          if [[ "$RUNTIME_TEST_CREATED" == "true" && -n "$RUNTIME_TEST_PATH" ]]; then
+            rm -f "$RUNTIME_TEST_PATH"
+            rmdir "$GITHUB_WORKSPACE/integration_test" 2>/dev/null || true
+          fi
+          if [[ -n "$PUBSPEC_BACKUP" && -f "$PUBSPEC_BACKUP" ]]; then
+            cp "$PUBSPEC_BACKUP" "$GITHUB_WORKSPACE/pubspec.yaml"
+          fi
+          if [[ "$LOCK_EXISTED" == "true" && -n "$LOCK_BACKUP" && -f "$LOCK_BACKUP" ]]; then
+            cp "$LOCK_BACKUP" "$GITHUB_WORKSPACE/pubspec.lock"
+          elif [[ "$LOCK_EXISTED" == "false" && -n "$LOCK_BACKUP" ]]; then
+            rm -f "$GITHUB_WORKSPACE/pubspec.lock"
+          fi
           "$ADB" emu kill >/dev/null 2>&1 || true
           kill "$EMULATOR_PID" >/dev/null 2>&1 || true
         }
@@ -155,49 +174,50 @@ runs:
         fi
         echo "DEVICE_ID=$DEVICE_ID"
 
-        echo "=== Create isolated runtime harness ==="
-        SMOKE_DIR="$RUNNER_TEMP/yaabsa_app_update_runtime_smoke"
-        rm -rf "$SMOKE_DIR"
-        flutter create \
-          --platforms=android \
-          --project-name yaabsa_runtime_smoke \
-          --org de.vito0912 \
-          --no-pub \
-          "$SMOKE_DIR"
+        echo "=== Prepare YAABSA root project for runner-only runtime smoke ==="
+        PUBSPEC_BACKUP="$RUNNER_TEMP/yaabsa-runtime-pubspec.yaml"
+        LOCK_BACKUP="$RUNNER_TEMP/yaabsa-runtime-pubspec.lock"
+        cp "$GITHUB_WORKSPACE/pubspec.yaml" "$PUBSPEC_BACKUP"
+        if [[ -f "$GITHUB_WORKSPACE/pubspec.lock" ]]; then
+          cp "$GITHUB_WORKSPACE/pubspec.lock" "$LOCK_BACKUP"
+          LOCK_EXISTED=true
+        fi
 
-        cat >"$SMOKE_DIR/pubspec.yaml" <<EOF
-        name: yaabsa_runtime_smoke
-        description: Isolated YAABSA app update notifier runtime smoke harness
-        publish_to: 'none'
-        version: 1.10.0+1
+        python - <<'PY'
+        from pathlib import Path
+        import re
 
-        environment:
-          sdk: ^3.13.0
+        path = Path("pubspec.yaml")
+        text = path.read_text(encoding="utf-8")
 
-        dependencies:
-          flutter:
-            sdk: flutter
-          yaabsa:
-            path: $GITHUB_WORKSPACE
+        text, version_count = re.subn(
+            r"(?m)^version:\s*[^\n]+$",
+            "version: 1.10.0+135",
+            text,
+            count=1,
+        )
+        if version_count != 1:
+            raise SystemExit(f"Expected exactly one pubspec version line, replaced {version_count}")
 
-        dev_dependencies:
-          flutter_test:
-            sdk: flutter
-          integration_test:
-            sdk: flutter
+        marker = "dev_dependencies:\n  flutter_test:\n"
+        replacement = "dev_dependencies:\n  integration_test:\n    sdk: flutter\n  flutter_test:\n"
+        if marker not in text:
+            raise SystemExit("Unable to locate YAABSA dev_dependencies/flutter_test marker")
+        text = text.replace(marker, replacement, 1)
+        path.write_text(text, encoding="utf-8")
+        PY
 
-        dependency_overrides:
-          audio_service_platform_interface:
-            path: $GITHUB_WORKSPACE/packages/audio_service/audio_service_platform_interface
-          just_audio_platform_interface:
-            path: $GITHUB_WORKSPACE/packages/just_audio/just_audio_platform_interface
+        mkdir -p "$GITHUB_WORKSPACE/integration_test"
+        RUNTIME_TEST_PATH="$GITHUB_WORKSPACE/integration_test/app_update_runtime_smoke_test.dart"
+        if [[ -e "$RUNTIME_TEST_PATH" ]]; then
+          echo "Refusing to overwrite existing runtime test path: $RUNTIME_TEST_PATH"
+          exit 1
+        fi
+        RUNTIME_TEST_CREATED=true
 
-        flutter:
-          uses-material-design: true
-        EOF
+        cat >"$RUNTIME_TEST_PATH" <<'DART'
+        import 'dart:async';
 
-        mkdir -p "$SMOKE_DIR/integration_test"
-        cat >"$SMOKE_DIR/integration_test/app_update_runtime_smoke_test.dart" <<'DART'
         import 'package:flutter/material.dart';
         import 'package:flutter_test/flutter_test.dart';
         import 'package:integration_test/integration_test.dart';
@@ -222,39 +242,45 @@ runs:
             await store.setNextCheckAllowed(0);
             await store.setSkippedVersion('');
 
-            final realResult = await const AppUpdateChecker()
-                .check(packageInfo.version)
-                .timeout(const Duration(seconds: 30));
-            expect(realResult.status, AppUpdateCheckStatus.success);
-            expect(realResult.isUpdateAvailable, isTrue);
-            expect(realResult.latestVersion, isNotNull);
-            final latestVersion = realResult.latestVersion!;
-
             await tester.pumpWidget(
               const MaterialApp(
                 home: Scaffold(body: AppUpdateStartupTrigger()),
               ),
             );
 
-            for (var i = 0; i < 120 && find.text('New Yaabsa release').evaluate().isEmpty; i++) {
-              await tester.pump(const Duration(milliseconds: 250));
+            final titleFinder = find.text('New Yaabsa release');
+            for (var i = 0; i < 90 && titleFinder.evaluate().isEmpty; i++) {
+              await tester.pump();
+              await Future<void>.delayed(const Duration(milliseconds: 500));
             }
 
-            expect(find.text('New Yaabsa release'), findsOneWidget);
-            expect(
-              find.text(
-                'Version $latestVersion has been released. You are using 1.10.0.\n\n'
-                'Store availability may lag behind upstream releases.',
-              ),
-              findsOneWidget,
-            );
+            expect(titleFinder, findsOneWidget);
             expect(find.text('Skip this version'), findsOneWidget);
             expect(find.text('Later'), findsOneWidget);
-            expect(store.nextCheckAllowed, greaterThan(DateTime.now().millisecondsSinceEpoch));
+
+            final contentFinder = find.textContaining(
+              'has been released. You are using 1.10.0.',
+            );
+            expect(contentFinder, findsOneWidget);
+            final content = tester.widget<Text>(contentFinder).data;
+            expect(content, isNotNull);
+
+            final match = RegExp(
+              r'^Version (.+) has been released\. You are using 1\.10\.0\.\n\n'
+              r'Store availability may lag behind upstream releases\.$',
+            ).firstMatch(content!);
+            expect(match, isNotNull);
+            final latestVersion = match!.group(1)!;
+            expect(latestVersion, isNotEmpty);
+            expect(latestVersion, isNot('1.10.0'));
+
+            expect(
+              store.nextCheckAllowed,
+              greaterThan(DateTime.now().millisecondsSinceEpoch),
+            );
 
             await tester.tap(find.text('Skip this version'));
             await tester.pumpAndSettle();
-
             expect(store.skippedVersion, latestVersion);
 
             final cache = containerRef.read(settingsCacheProvider);
@@ -266,7 +292,13 @@ runs:
               checker: const AppUpdateChecker(),
               stateStore: store,
             );
-            expect(coordinator.shouldNotify(realResult), isFalse);
+            final sameReleaseResult = AppUpdateCheckResult(
+              status: AppUpdateCheckStatus.success,
+              currentVersion: '1.10.0',
+              latestVersion: latestVersion,
+              isUpdateAvailable: true,
+            );
+            expect(coordinator.shouldNotify(sameReleaseResult), isFalse);
 
             final dialogContext = tester.element(find.byType(Scaffold));
             final laterResult = showAppUpdateDialog(
@@ -275,19 +307,20 @@ runs:
               latestVersion: latestVersion,
             );
             await tester.pumpAndSettle();
-            expect(find.text('New Yaabsa release'), findsOneWidget);
+            expect(titleFinder, findsOneWidget);
             await tester.tap(find.text('Later'));
             await tester.pumpAndSettle();
             expect(await laterResult, AppUpdateDialogAction.later);
-            expect(find.text('New Yaabsa release'), findsNothing);
+            expect(titleFinder, findsNothing);
           });
         }
         DART
 
-        cd "$SMOKE_DIR"
+        cd "$GITHUB_WORKSPACE"
         flutter pub get
 
-        echo "=== Run production notifier on Android emulator ==="
+        echo "=== Run production notifier in YAABSA Android project ==="
         flutter test \
           integration_test/app_update_runtime_smoke_test.dart \
+          --flavor auto \
           -d "$DEVICE_ID"
