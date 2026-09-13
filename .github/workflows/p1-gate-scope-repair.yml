@@ -1,13 +1,8 @@
-name: Repair YAABSA P1 scope gate
+name: P1 gate repair
 
 on:
   push:
-    branches:
-      - automation/p1-backend-acceptance
-    paths:
-      - .github/workflows/p1-gate-scope-repair.yml
-
-permissions: {}
+    branches: [automation/p1-backend-acceptance]
 
 jobs:
   repair:
@@ -19,41 +14,18 @@ jobs:
         with:
           ref: automation/p1-backend-acceptance
           fetch-depth: 2
-
-      - name: Repair untracked-file scope accounting
+      - name: Patch scope accounting
         shell: bash
         run: |
           set -euo pipefail
           before="$(git rev-parse HEAD)"
-          python3 <<'PY'
-          from pathlib import Path
-
-          path = Path('.github/workflows/p1-backend-acceptance-apply.yml')
-          text = path.read_text()
-          old = '''          git diff --check
-          actual="$(git diff --name-only | sort)"
-'''
-          new = '''          git diff --check
-          git add -N \\
-            lib/util/audio_handler/playback_start_attempt.dart \\
-            test/util/playback_start_attempt_test.dart
-          actual="$(git diff --name-only | sort)"
-'''
-          if text.count(old) != 2:
-              raise SystemExit(f'Expected exactly two P1 scope gates, found {text.count(old)}')
-          text = text.replace(old, new)
-          path.write_text(text)
-          PY
+          python3 -c 'from pathlib import Path; p=Path(".github/workflows/p1-backend-acceptance-apply.yml"); s=p.read_text(); old="          git diff --check\n          actual=\\\"$(git diff --name-only | sort)\\\"\n"; new="          git diff --check\n          git add -N \\\\\n            lib/util/audio_handler/playback_start_attempt.dart \\\\\n            test/util/playback_start_attempt_test.dart\n          actual=\\\"$(git diff --name-only | sort)\\\"\n"; assert s.count(old)==2, s.count(old); p.write_text(s.replace(old,new))'
           git diff --check
-          [[ "$(git diff --name-only)" == '.github/workflows/p1-backend-acceptance-apply.yml' ]] || {
-            echo 'Unexpected repair scope:' >&2
-            git diff --name-only >&2
-            exit 1
-          }
+          test "$(git diff --name-only)" = '.github/workflows/p1-backend-acceptance-apply.yml'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add .github/workflows/p1-backend-acceptance-apply.yml
           git commit -m 'ci: include untracked P1 files in scope gate'
           remote="$(git ls-remote origin refs/heads/automation/p1-backend-acceptance | cut -f1)"
-          [[ "$remote" == "$before" ]] || { echo "Automation branch moved: $remote" >&2; exit 1; }
+          test "$remote" = "$before"
           git push origin HEAD:refs/heads/automation/p1-backend-acceptance
