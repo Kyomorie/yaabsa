@@ -1,0 +1,771 @@
+name: YAABSA P1 direct integration gate
+
+on:
+  push:
+    branches:
+      - automation/p1-backend-acceptance
+    paths:
+      - .github/workflows/p1-integrate-v2.yml
+
+permissions: {}
+
+env:
+  EXPECTED_YAABSA_HEAD: 45fe831fb52c5e3048801142d9754f72b0be6969
+  JUST_AUDIO_SHA: f80ad2ee8a73e5e32a82df20c98666385c6b2aca
+  MEDIA_KIT_SHA: c1a5a15046ab565613c2d1e8736152aef9b6348c
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout exact YAABSA feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+          fetch-depth: 8
+          submodules: false
+
+      - name: Verify exact target head
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_YAABSA_HEAD" || {
+            echo "Unexpected YAABSA head: $actual" >&2
+            exit 1
+          }
+
+      - name: Pin validated playback backends
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          path = Path('.gitmodules')
+          text = path.read_text()
+          replacements = {
+              'url = git@github.com:Vito0912/just_audio.git': 'url = https://github.com/Kyomorie/just_audio.git',
+              'url = git@github.com:Vito0912/just_audio_media_kit.git': 'url = https://github.com/Kyomorie/just_audio_media_kit.git',
+          }
+          for old, new in replacements.items():
+              if text.count(old) != 1:
+                  raise SystemExit(f'Unexpected .gitmodules entry: {old}')
+              text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          git -C packages/just_audio fetch --no-tags https://github.com/Kyomorie/just_audio.git "$JUST_AUDIO_SHA"
+          git -C packages/just_audio checkout --detach "$JUST_AUDIO_SHA"
+          git -C packages/just_audio_media_kit fetch --no-tags https://github.com/Kyomorie/just_audio_media_kit.git "$MEDIA_KIT_SHA"
+          git -C packages/just_audio_media_kit checkout --detach "$MEDIA_KIT_SHA"
+          test "$(git -C packages/just_audio rev-parse HEAD)" = "$JUST_AUDIO_SHA"
+          test "$(git -C packages/just_audio_media_kit rev-parse HEAD)" = "$MEDIA_KIT_SHA"
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' .gitmodules packages/just_audio packages/just_audio_media_kit | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected backend pin paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Commit backend pins locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .gitmodules packages/just_audio packages/just_audio_media_kit
+          git commit -m 'chore: pin backend playback acknowledgment forks'
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_YAABSA_HEAD"
+          actual="$(git diff --name-only HEAD^ HEAD | sort)"
+          expected="$(printf '%s\n' .gitmodules packages/just_audio packages/just_audio_media_kit | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected backend pin commit paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Add playback-start attempt primitives and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > lib/util/audio_handler/playback_start_attempt.dart <<'DART'
+          import 'dart:async';
+
+          import 'player_mutation_barrier.dart';
+
+          enum PlaybackStartAttemptStatus { pending, started, superseded, rejected, failed, unsupported }
+
+          class PlaybackStartAttempt {
+            PlaybackStartAttempt._({
+              required this.id,
+              required this.lease,
+              required this.sourceGeneration,
+              required this.reservedQueueEntryId,
+            });
+
+            final int id;
+            final PlayerMutationLease lease;
+            final int sourceGeneration;
+            final String? reservedQueueEntryId;
+            PlaybackStartAttemptStatus _status = PlaybackStartAttemptStatus.pending;
+
+            PlaybackStartAttemptStatus get status => _status;
+            bool get isPending => _status == PlaybackStartAttemptStatus.pending;
+          }
+
+          class PlaybackStartAttemptLedger {
+            int _sequence = 0;
+            PlaybackStartAttempt? _active;
+
+            PlaybackStartAttempt begin({
+              required PlayerMutationLease lease,
+              required int sourceGeneration,
+              String? reservedQueueEntryId,
+            }) {
+              final previous = _active;
+              if (previous != null && previous.isPending) {
+                previous._status = PlaybackStartAttemptStatus.superseded;
+              }
+              final attempt = PlaybackStartAttempt._(
+                id: ++_sequence,
+                lease: lease,
+                sourceGeneration: sourceGeneration,
+                reservedQueueEntryId: reservedQueueEntryId,
+              );
+              _active = attempt;
+              return attempt;
+            }
+
+            bool isCurrent(
+              PlaybackStartAttempt attempt, {
+              required PlayerMutationBarrier barrier,
+              required int currentSourceGeneration,
+              required bool isDisposing,
+              required bool Function(String queueEntryId) reservationIsCurrent,
+            }) {
+              if (!identical(_active, attempt) ||
+                  !attempt.isPending ||
+                  isDisposing ||
+                  !barrier.isCurrent(attempt.lease) ||
+                  attempt.sourceGeneration != currentSourceGeneration) {
+                return false;
+              }
+              final reservationId = attempt.reservedQueueEntryId;
+              return reservationId == null || reservationIsCurrent(reservationId);
+            }
+
+            bool settle(PlaybackStartAttempt attempt, PlaybackStartAttemptStatus status) {
+              if (status == PlaybackStartAttemptStatus.pending) {
+                throw ArgumentError.value(status, 'status', 'Terminal playback-start status required');
+              }
+              if (!attempt.isPending) {
+                return false;
+              }
+              attempt._status = status;
+              if (identical(_active, attempt)) {
+                _active = null;
+              }
+              return true;
+            }
+
+            PlaybackStartAttempt? get active => _active;
+          }
+
+          Future<T> awaitPlaybackStartOrLeaseInvalidated<T>({
+            required PlayerMutationLease lease,
+            required Future<T> backendResult,
+            required T supersededValue,
+          }) {
+            if (lease.isInvalidated) {
+              return Future<T>.value(supersededValue);
+            }
+            return Future.any<T>([
+              backendResult,
+              lease.invalidated.then((_) => supersededValue),
+            ]);
+          }
+          DART
+
+          cat > test/util/playback_start_attempt_test.dart <<'DART'
+          import 'dart:async';
+          import 'dart:io';
+
+          import 'package:flutter_test/flutter_test.dart';
+          import 'package:yaabsa/util/audio_handler/playback_start_attempt.dart';
+          import 'package:yaabsa/util/audio_handler/player_mutation_barrier.dart';
+
+          void main() {
+            group('PlaybackStartAttemptLedger', () {
+              test('currentness binds exact lease, source generation, and reservation', () {
+                final barrier = PlayerMutationBarrier();
+                final lease = barrier.acquire();
+                final ledger = PlaybackStartAttemptLedger();
+                final reservations = <String>{'q1'};
+                final attempt = ledger.begin(
+                  lease: lease,
+                  sourceGeneration: 7,
+                  reservedQueueEntryId: 'q1',
+                );
+
+                bool current({int generation = 7, bool disposing = false}) => ledger.isCurrent(
+                      attempt,
+                      barrier: barrier,
+                      currentSourceGeneration: generation,
+                      isDisposing: disposing,
+                      reservationIsCurrent: reservations.contains,
+                    );
+
+                expect(current(), isTrue);
+                expect(current(generation: 8), isFalse);
+                expect(current(disposing: true), isFalse);
+                reservations.clear();
+                expect(current(), isFalse);
+              });
+
+              test('newer attempt supersedes older attempt', () {
+                final barrier = PlayerMutationBarrier();
+                final ledger = PlaybackStartAttemptLedger();
+                final first = ledger.begin(lease: barrier.acquire(), sourceGeneration: 1);
+                final second = ledger.begin(lease: barrier.acquire(), sourceGeneration: 1);
+
+                expect(first.status, PlaybackStartAttemptStatus.superseded);
+                expect(first.isPending, isFalse);
+                expect(identical(ledger.active, second), isTrue);
+              });
+
+              test('every non-start terminal releases the active attempt', () {
+                for (final status in const [
+                  PlaybackStartAttemptStatus.superseded,
+                  PlaybackStartAttemptStatus.rejected,
+                  PlaybackStartAttemptStatus.failed,
+                  PlaybackStartAttemptStatus.unsupported,
+                ]) {
+                  final barrier = PlayerMutationBarrier();
+                  final ledger = PlaybackStartAttemptLedger();
+                  final attempt = ledger.begin(lease: barrier.acquire(), sourceGeneration: 1);
+                  expect(ledger.settle(attempt, status), isTrue);
+                  expect(attempt.status, status);
+                  expect(ledger.active, isNull);
+                }
+              });
+
+              test('stale reservation cannot be authorized by a backend success', () {
+                final barrier = PlayerMutationBarrier();
+                final lease = barrier.acquire();
+                final ledger = PlaybackStartAttemptLedger();
+                final attempt = ledger.begin(
+                  lease: lease,
+                  sourceGeneration: 2,
+                  reservedQueueEntryId: 'q42',
+                );
+
+                expect(
+                  ledger.isCurrent(
+                    attempt,
+                    barrier: barrier,
+                    currentSourceGeneration: 2,
+                    isDisposing: false,
+                    reservationIsCurrent: (_) => false,
+                  ),
+                  isFalse,
+                );
+              });
+            });
+
+            test('backend wait is interrupted by a newer lease without serializing the mutation barrier', () async {
+              final barrier = PlayerMutationBarrier();
+              final oldLease = barrier.acquire();
+              final backend = Completer<String>();
+              final waiting = awaitPlaybackStartOrLeaseInvalidated<String>(
+                lease: oldLease,
+                backendResult: backend.future,
+                supersededValue: 'superseded',
+              );
+
+              final newerLease = barrier.acquire();
+              var newerMutationRan = false;
+              await barrier.run<void>(newerLease, () async {
+                newerMutationRan = true;
+              });
+
+              expect(newerMutationRan, isTrue);
+              expect(await waiting, 'superseded');
+              backend.complete('started');
+            });
+
+            test('handler waits for backend confirmation outside the player mutation barrier', () {
+              final source = File('lib/util/audio_handler/bg_audio_handler_playback_internal.dart').readAsStringSync();
+              final start = source.indexOf('Future<PlaybackStartResult> _syncedPlay(');
+              final end = source.indexOf('Future<void> _reconcileResumeProgressInBackground(', start);
+              expect(start, greaterThanOrEqualTo(0));
+              expect(end, greaterThan(start));
+              final method = source.substring(start, end);
+              expect(method, contains('_player.waitForPlaybackStart()'));
+              expect(method, contains('awaitPlaybackStartOrLeaseInvalidated'));
+              expect(method, isNot(contains('_playerMutationBarrier.run')));
+            });
+
+            test('queue consumption is guarded by exact reservation and confirmed start', () {
+              final source = File('lib/util/audio_handler/bg_audio_handler.dart').readAsStringSync();
+              expect(source, contains('reservedQueueEntryId: matchingCurrentQueueEntry?.id'));
+              expect(source, contains('reservedQueueEntryId: nextEntry?.id'));
+              expect(RegExp(r'if \(!attemptCurrent \|\| !startResult\.started\)').allMatches(source).length, 2);
+
+              final currentStart = source.indexOf('reservedQueueEntryId: matchingCurrentQueueEntry?.id');
+              final currentRemove = source.indexOf('queueList.removeAt(matchingIndex)', currentStart);
+              expect(currentRemove, greaterThan(currentStart));
+
+              final queuedStart = source.indexOf('reservedQueueEntryId: nextEntry?.id');
+              final queuedRemove = source.indexOf('queueList.removeAt(reservedIndex)', queuedStart);
+              expect(queuedRemove, greaterThan(queuedStart));
+            });
+          }
+          DART
+
+      - name: Patch YAABSA P1 integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          handler = Path('lib/util/audio_handler/bg_audio_handler.dart')
+          text = handler.read_text()
+
+          import_anchor = "import 'package:yaabsa/util/audio_handler/player_mutation_barrier.dart';\n"
+          if text.count(import_anchor) != 1:
+              raise SystemExit('Unexpected player mutation barrier import')
+          text = text.replace(
+              import_anchor,
+              import_anchor + "import 'package:yaabsa/util/audio_handler/playback_start_attempt.dart';\n",
+              1,
+          )
+
+          field_anchor = '  final PlayerMutationBarrier _playerMutationBarrier = PlayerMutationBarrier();\n'
+          if text.count(field_anchor) != 1:
+              raise SystemExit('Unexpected player mutation barrier field')
+          text = text.replace(
+              field_anchor,
+              field_anchor
+              + '  final PlaybackStartAttemptLedger _playbackStartAttemptLedger = PlaybackStartAttemptLedger();\n'
+              + '  int _audioSourceGeneration = 0;\n',
+              1,
+          )
+
+          current_old = '''      _queueTransitionLoadingOwner = null;
+              _setQueueTransitionLoading(false);
+              await _syncedPlay(
+                restoreProgress: !ignoreProgress,
+                skipResumeProgressReconcile: skipResumeProgressReconcile,
+                mutationLease: playLease,
+              );
+              if (!ownsPlay()) {
+                return;
+              }
+              if (matchingCurrentQueueEntry != null) {
+                final matchingIndex = queueList.indexWhere((entry) => entry.id == matchingCurrentQueueEntry!.id);
+                if (matchingIndex >= 0) {
+                  final removed = queueList.removeAt(matchingIndex);
+                  _originalQueueList.removeWhere((entry) => entry.id == removed.id);
+                  _emitQueueState();
+                  _maybePrefetchAutoQueue();
+                }
+                _markManualQueueItemPlayed(matchingCurrentQueueEntry);
+              }
+              return Future.value();
+          '''
+          current_new = '''      final startAttempt = _beginPlaybackStartAttempt(
+                playLease,
+                reservedQueueEntryId: matchingCurrentQueueEntry?.id,
+              );
+              final startResult = await _syncedPlay(
+                restoreProgress: !ignoreProgress,
+                skipResumeProgressReconcile: skipResumeProgressReconcile,
+                mutationLease: playLease,
+              );
+              final attemptCurrent = ownsPlay() && _isPlaybackStartAttemptCurrent(startAttempt);
+              if (!attemptCurrent || !startResult.started) {
+                _settlePlaybackStartAttempt(
+                  startAttempt,
+                  attemptCurrent ? _statusForPlaybackStartResult(startResult) : PlaybackStartAttemptStatus.superseded,
+                );
+                abandonPlayLoading();
+                PlayerUtils.disableWakelock(_ref);
+                return Future.value();
+              }
+              try {
+                if (matchingCurrentQueueEntry != null) {
+                  final matchingIndex = queueList.indexWhere((entry) => entry.id == matchingCurrentQueueEntry!.id);
+                  if (matchingIndex >= 0) {
+                    final removed = queueList.removeAt(matchingIndex);
+                    _originalQueueList.removeWhere((entry) => entry.id == removed.id);
+                    _emitQueueState();
+                    _maybePrefetchAutoQueue();
+                  }
+                  _markManualQueueItemPlayed(matchingCurrentQueueEntry);
+                }
+                _queueTransitionLoadingOwner = null;
+                _setQueueTransitionLoading(false);
+              } finally {
+                _settlePlaybackStartAttempt(startAttempt, PlaybackStartAttemptStatus.started);
+              }
+              return Future.value();
+          '''
+          if text.count(current_old) != 1:
+              raise SystemExit('Unexpected current-item play block')
+          text = text.replace(current_old, current_new, 1)
+
+          queued_old = '''      _clearQueueTransitionLoadingIfOwned(playLease);
+              await _syncedPlay(restoreProgress: !ignoreProgress, mutationLease: playLease);
+              if (!ownsPlay()) {
+                return;
+              }
+              if (nextEntry != null) {
+                final reservedIndex = queueList.indexWhere((entry) => entry.id == nextEntry.id);
+                if (reservedIndex >= 0) {
+                  final removed = queueList.removeAt(reservedIndex);
+                  _originalQueueList.removeWhere((entry) => entry.id == removed.id);
+                  _emitQueueState();
+                  if (!isPendingManualEntry) {
+                    _maybePrefetchAutoQueue();
+                  }
+                  final loopMode = _ref
+                      .read(settingsManagerProvider.notifier)
+                      .getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
+                  final isLoopOn = loopMode == 'on';
+                  if (_activeMusicLibraryId != null && !isLoopOn) {
+                    unawaited(_refillMusicQueue(_activeMusicLibraryId!, filter: _activeMusicLibraryFilter));
+                  }
+                }
+                _markManualQueueItemPlayed(nextEntry);
+              } else {
+                unawaited(_setupAutoQueueOnResume(itemId: nextItem.itemId, episodeId: nextItem.episodeId));
+              }
+          '''
+          queued_new = '''      final startAttempt = _beginPlaybackStartAttempt(
+                playLease,
+                reservedQueueEntryId: nextEntry?.id,
+              );
+              final startResult = await _syncedPlay(restoreProgress: !ignoreProgress, mutationLease: playLease);
+              final attemptCurrent = ownsPlay() && _isPlaybackStartAttemptCurrent(startAttempt);
+              if (!attemptCurrent || !startResult.started) {
+                _settlePlaybackStartAttempt(
+                  startAttempt,
+                  attemptCurrent ? _statusForPlaybackStartResult(startResult) : PlaybackStartAttemptStatus.superseded,
+                );
+                abandonPlayLoading();
+                PlayerUtils.disableWakelock(_ref);
+                return;
+              }
+              try {
+                if (nextEntry != null) {
+                  final reservedIndex = queueList.indexWhere((entry) => entry.id == nextEntry.id);
+                  if (reservedIndex >= 0) {
+                    final removed = queueList.removeAt(reservedIndex);
+                    _originalQueueList.removeWhere((entry) => entry.id == removed.id);
+                    _emitQueueState();
+                    if (!isPendingManualEntry) {
+                      _maybePrefetchAutoQueue();
+                    }
+                    final loopMode = _ref
+                        .read(settingsManagerProvider.notifier)
+                        .getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
+                    final isLoopOn = loopMode == 'on';
+                    if (_activeMusicLibraryId != null && !isLoopOn) {
+                      unawaited(_refillMusicQueue(_activeMusicLibraryId!, filter: _activeMusicLibraryFilter));
+                    }
+                  }
+                  _markManualQueueItemPlayed(nextEntry);
+                } else {
+                  unawaited(_setupAutoQueueOnResume(itemId: nextItem.itemId, episodeId: nextItem.episodeId));
+                }
+                _clearQueueTransitionLoadingIfOwned(playLease);
+              } finally {
+                _settlePlaybackStartAttempt(startAttempt, PlaybackStartAttemptStatus.started);
+              }
+          '''
+          if text.count(queued_old) != 1:
+              raise SystemExit('Unexpected queued-item play block')
+          text = text.replace(queued_old, queued_new, 1)
+          handler.write_text(text)
+
+          source = Path('lib/util/audio_handler/bg_audio_handler_source.dart')
+          source_text = source.read_text()
+          source_anchor = '''        if (!ownsSourceLoad()) {
+                  throw PlayerInterruptedException('Source loading superseded before the player mutation was issued');
+                }
+                return player.setAudioSources(
+          '''
+          source_new = '''        if (!ownsSourceLoad()) {
+                  throw PlayerInterruptedException('Source loading superseded before the player mutation was issued');
+                }
+                _audioSourceGeneration += 1;
+                return player.setAudioSources(
+          '''
+          if source_text.count(source_anchor) != 1:
+              raise SystemExit('Unexpected setAudioSources mutation block')
+          source.write_text(source_text.replace(source_anchor, source_new, 1))
+
+          playback = Path('lib/util/audio_handler/bg_audio_handler_playback_internal.dart')
+          ptext = playback.read_text()
+          local_old = '''      _clearQueueTransitionLoadingIfOwned(lease);
+              if (isCastControlActive) {
+                await play();
+              } else {
+                await _syncedPlay(mutationLease: lease);
+              }
+              if (!ownsPlayback()) {
+                return false;
+              }
+          '''
+          local_new = '''      if (isCastControlActive) {
+                _clearQueueTransitionLoadingIfOwned(lease);
+                await play();
+                if (!ownsPlayback()) {
+                  return false;
+                }
+              } else {
+                final startAttempt = _beginPlaybackStartAttempt(lease);
+                final startResult = await _syncedPlay(mutationLease: lease);
+                final attemptCurrent = ownsPlayback() && _isPlaybackStartAttemptCurrent(startAttempt);
+                _settlePlaybackStartAttempt(
+                  startAttempt,
+                  attemptCurrent ? _statusForPlaybackStartResult(startResult) : PlaybackStartAttemptStatus.superseded,
+                );
+                if (!attemptCurrent || !startResult.started) {
+                  _abandonQueueTransitionLoadingIfOwned(lease);
+                  PlayerUtils.disableWakelock(_ref);
+                  return false;
+                }
+                _clearQueueTransitionLoadingIfOwned(lease);
+              }
+          '''
+          if ptext.count(local_old) != 1:
+              raise SystemExit('Unexpected playItemFromPosition start block')
+          ptext = ptext.replace(local_old, local_new, 1)
+
+          start = ptext.index('  Future<void> _syncedPlay({')
+          end = ptext.index('\n  Future<void> _reconcileResumeProgressInBackground(', start)
+          replacement = textwrap.indent(textwrap.dedent('''\
+          PlaybackStartAttempt _beginPlaybackStartAttempt(
+            PlayerMutationLease lease, {
+            String? reservedQueueEntryId,
+          }) {
+            return _playbackStartAttemptLedger.begin(
+              lease: lease,
+              sourceGeneration: _audioSourceGeneration,
+              reservedQueueEntryId: reservedQueueEntryId,
+            );
+          }
+
+          bool _isPlaybackStartAttemptCurrent(PlaybackStartAttempt attempt) {
+            return _playbackStartAttemptLedger.isCurrent(
+              attempt,
+              barrier: _playerMutationBarrier,
+              currentSourceGeneration: _audioSourceGeneration,
+              isDisposing: _isDisposing,
+              reservationIsCurrent: (queueEntryId) => queueList.any((entry) => entry.id == queueEntryId),
+            );
+          }
+
+          PlaybackStartAttemptStatus _statusForPlaybackStartResult(PlaybackStartResult result) {
+            return switch (result.status) {
+              PlaybackStartStatus.started => PlaybackStartAttemptStatus.started,
+              PlaybackStartStatus.superseded => PlaybackStartAttemptStatus.superseded,
+              PlaybackStartStatus.rejected => PlaybackStartAttemptStatus.rejected,
+              PlaybackStartStatus.failed => PlaybackStartAttemptStatus.failed,
+              PlaybackStartStatus.unsupported => PlaybackStartAttemptStatus.unsupported,
+            };
+          }
+
+          void _settlePlaybackStartAttempt(PlaybackStartAttempt attempt, PlaybackStartAttemptStatus status) {
+            _playbackStartAttemptLedger.settle(attempt, status);
+          }
+
+          Future<PlaybackStartResult> _syncedPlay({
+            bool restoreProgress = false,
+            bool skipResumeProgressReconcile = false,
+            PlayerMutationLease? mutationLease,
+          }) async {
+            final lease = mutationLease ?? _playerMutationBarrier.acquire();
+            if (!_playerMutationBarrier.isCurrent(lease)) {
+              return const PlaybackStartResult(PlaybackStartStatus.superseded);
+            }
+
+            if (_chapterNotificationEnabled) {
+              _updateMediaItemForChapterNotification();
+            } else {
+              mediaItem.add(_currentMediaItem?.toMediaItem());
+            }
+
+            if (_currentMediaItem == null) {
+              return const PlaybackStartResult(PlaybackStartStatus.rejected);
+            }
+            final resumeItem = _currentMediaItem!;
+            final startPosition = position;
+            final shouldReconcileProgress = restoreProgress && !skipResumeProgressReconcile && !isCastControlActive;
+            logger(
+              'Starting playback for item: ${resumeItem.itemId} (${resumeItem.episodeId ?? 'item'}) from position: $startPosition (restoreProgress=$restoreProgress, castControl=$isCastControlActive)',
+              tag: 'AudioHandler',
+              level: InfoLevel.info,
+            );
+
+            if (restoreProgress && skipResumeProgressReconcile) {
+              logger(
+                'Resume progress reconcile skipped because playback position was manually changed while paused.',
+                tag: 'AudioHandler',
+                level: InfoLevel.debug,
+              );
+            }
+
+            if (!_playerMutationBarrier.isCurrent(lease)) {
+              return const PlaybackStartResult(PlaybackStartStatus.superseded);
+            }
+
+            try {
+              final playFuture = _player.play();
+              unawaited(
+                playFuture.catchError((error, stackTrace) {
+                  logger('Failed to start player playback: $error\\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);
+                }),
+              );
+              final result = await awaitPlaybackStartOrLeaseInvalidated<PlaybackStartResult>(
+                lease: lease,
+                backendResult: _player.waitForPlaybackStart(),
+                supersededValue: const PlaybackStartResult(PlaybackStartStatus.superseded),
+              );
+              if (result.started && shouldReconcileProgress && _playerMutationBarrier.isCurrent(lease)) {
+                unawaited(_reconcileResumeProgressInBackground(resumeItem, startPosition, mutationLease: lease));
+              }
+              return result;
+            } catch (error, stackTrace) {
+              logger(
+                'Failed while waiting for backend-confirmed playback start: $error\\n$stackTrace',
+                tag: 'AudioHandler',
+                level: InfoLevel.error,
+              );
+              return PlaybackStartResult(PlaybackStartStatus.failed, errorMessage: error.toString());
+            }
+          }
+          '''), '  ').rstrip()
+          ptext = ptext[:start] + replacement + ptext[end:]
+          playback.write_text(ptext)
+          PY
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        shell: bash
+        run: flutter pub get
+
+      - name: Format and enforce exact P1 source scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart
+          git add -N lib/util/audio_handler/playback_start_attempt.dart test/util/playback_start_attempt_test.dart
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P1 source paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Analyze P1 surface
+        shell: bash
+        run: |
+          flutter analyze \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart \
+            --no-fatal-warnings --no-fatal-infos
+
+      - name: Run focused P1 and sleep-timer tests
+        shell: bash
+        run: |
+          flutter test \
+            test/util/playback_start_attempt_test.dart \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/sleep_timer_completion_gate_test.dart \
+            test/util/sleep_timer_target_test.dart \
+            test/util/user_seek_navigation_ledger_test.dart \
+            test/util/playback_preference_guard_test.dart
+
+      - name: Restore dependency side effects and recheck scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -- pubspec.lock 2>/dev/null || true
+          rm -rf .dart_tool
+          git add -N lib/util/audio_handler/playback_start_attempt.dart test/util/playback_start_attempt_test.dart
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P1 paths after validation:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Commit P1 source locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart
+          git commit -m 'fix: consume queue only after backend playback starts'
+          test "$(git log -1 --format=%s HEAD^)" = 'chore: pin backend playback acknowledgment forks'
+          actual="$(git diff --name-only HEAD^ HEAD | sort)"
+          expected="$(printf '%s\n' \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P1 commit paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+          test -z "$(git status --porcelain)"
+
+      - name: Final exact-head gate and fast-forward push
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^^)" = "$EXPECTED_YAABSA_HEAD"
+          remote_head="$(git ls-remote origin refs/heads/feat/chapter-end-sleep-timer | cut -f1)"
+          test "$remote_head" = "$EXPECTED_YAABSA_HEAD" || {
+            echo "YAABSA feature branch moved externally: $remote_head" >&2
+            exit 1
+          }
+          git diff --check HEAD^^ HEAD
+          git push origin HEAD:refs/heads/feat/chapter-end-sleep-timer
