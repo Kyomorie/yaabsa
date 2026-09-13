@@ -1,0 +1,59 @@
+name: Repair YAABSA P1 scope gate
+
+on:
+  push:
+    branches:
+      - automation/p1-backend-acceptance
+    paths:
+      - .github/workflows/p1-gate-scope-repair.yml
+
+permissions: {}
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: automation/p1-backend-acceptance
+          fetch-depth: 2
+
+      - name: Repair untracked-file scope accounting
+        shell: bash
+        run: |
+          set -euo pipefail
+          before="$(git rev-parse HEAD)"
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/p1-backend-acceptance-apply.yml')
+          text = path.read_text()
+          old = '''          git diff --check
+          actual="$(git diff --name-only | sort)"
+'''
+          new = '''          git diff --check
+          git add -N \\
+            lib/util/audio_handler/playback_start_attempt.dart \\
+            test/util/playback_start_attempt_test.dart
+          actual="$(git diff --name-only | sort)"
+'''
+          if text.count(old) != 2:
+              raise SystemExit(f'Expected exactly two P1 scope gates, found {text.count(old)}')
+          text = text.replace(old, new)
+          path.write_text(text)
+          PY
+          git diff --check
+          [[ "$(git diff --name-only)" == '.github/workflows/p1-backend-acceptance-apply.yml' ]] || {
+            echo 'Unexpected repair scope:' >&2
+            git diff --name-only >&2
+            exit 1
+          }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/p1-backend-acceptance-apply.yml
+          git commit -m 'ci: include untracked P1 files in scope gate'
+          remote="$(git ls-remote origin refs/heads/automation/p1-backend-acceptance | cut -f1)"
+          [[ "$remote" == "$before" ]] || { echo "Automation branch moved: $remote" >&2; exit 1; }
+          git push origin HEAD:refs/heads/automation/p1-backend-acceptance
