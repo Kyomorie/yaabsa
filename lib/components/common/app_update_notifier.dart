@@ -120,10 +120,6 @@ Future<void> _openRelease(Uri releaseUri) async {
       logger('Could not open the Yaabsa release page.', tag: 'AppUpdateNotifier', level: InfoLevel.warning);
     }
   } catch (e, s) {
-    logger(
-      'Failed to open the Yaabsa release page: $e\n$s',
-      tag: 'AppUpdateNotifier',
-      level: InfoLevel.warning,
-    );
+    logger('Failed to open the Yaabsa release page: $e\n$s', tag: 'AppUpdateNotifier', level: InfoLevel.warning);
   }
 }
