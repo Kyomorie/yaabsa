@@ -46,11 +46,10 @@ class AppUpdateChecker {
   static final RegExp _installedVersionPattern = RegExp(r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$');
   static final RegExp _releaseTagPattern = RegExp(r'^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$');
 
-  final HttpClientAdapter Function()? _adapterFactory;
+  final HttpClientAdapter Function()? adapterFactory;
   final Duration timeout;
 
-  const AppUpdateChecker({HttpClientAdapter Function()? adapterFactory, this.timeout = const Duration(seconds: 5)})
-    : _adapterFactory = adapterFactory;
+  const AppUpdateChecker({this.adapterFactory, this.timeout = const Duration(seconds: 5)});
 
   Future<AppUpdateCandidate?> check({
     required String currentVersion,
@@ -68,8 +67,8 @@ class AppUpdateChecker {
 
     final dio = Dio(BaseOptions(connectTimeout: timeout, sendTimeout: timeout, receiveTimeout: timeout));
 
-    if (_adapterFactory != null) {
-      dio.httpClientAdapter = _adapterFactory!();
+    if (adapterFactory != null) {
+      dio.httpClientAdapter = adapterFactory();
     }
     dio.httpClientAdapter = _ConsentCheckingAdapter(dio.httpClientAdapter, hasConsent);
 
