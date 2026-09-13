@@ -186,6 +186,12 @@ runs:
           integration_test:
             sdk: flutter
 
+        dependency_overrides:
+          audio_service_platform_interface:
+            path: $GITHUB_WORKSPACE/packages/audio_service/audio_service_platform_interface
+          just_audio_platform_interface:
+            path: $GITHUB_WORKSPACE/packages/just_audio/just_audio_platform_interface
+
         flutter:
           uses-material-design: true
         EOF
