@@ -1,0 +1,123 @@
+name: PR P4 preference hardening
+
+on:
+  push:
+    branches:
+      - feat/chapter-end-sleep-timer
+    paths:
+      - .github/workflows/pr-p4-preference-hardening.yml
+
+permissions: {}
+
+jobs:
+  harden-p4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout exact trigger commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Verify exact trigger parent and scope
+        shell: bash
+        run: |
+          expected_parent='69f1b5245ab6b627d7995965e4b94c94179ee5b6'
+          actual_parent="$(git rev-parse HEAD^)"
+          if [[ "$actual_parent" != "$expected_parent" ]]; then
+            echo "Unexpected parent: $actual_parent" >&2
+            exit 1
+          fi
+          changed="$(git diff --name-only HEAD^ HEAD)"
+          if [[ "$changed" != '.github/workflows/pr-p4-preference-hardening.yml' ]]; then
+            echo 'Trigger commit changed unexpected paths:' >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          fi
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        shell: bash
+        run: flutter pub get
+
+      - name: Format P4 source and focused test
+        shell: bash
+        run: |
+          dart format \
+            lib/util/audio_handler/bg_audio_handler_preferences.dart \
+            test/util/playback_preference_guard_test.dart
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          unexpected="$(printf '%s\n' "$actual" | grep -v -E '^(lib/util/audio_handler/bg_audio_handler_preferences\.dart|test/util/playback_preference_guard_test\.dart)$' || true)"
+          if [[ -n "$unexpected" ]]; then
+            echo 'Formatting changed unexpected paths:' >&2
+            printf '%s\n' "$unexpected" >&2
+            exit 1
+          fi
+
+      - name: Analyze application sources
+        shell: bash
+        run: flutter analyze lib
+
+      - name: Run focused P4 and sleep timer ownership tests
+        shell: bash
+        run: >-
+          flutter test
+          test/util/playback_preference_guard_test.dart
+          test/util/player_mutation_barrier_test.dart
+          test/util/sleep_timer_completion_gate_test.dart
+          test/util/sleep_timer_target_test.dart
+          test/util/user_seek_navigation_ledger_test.dart
+
+      - name: Commit validated formatting when needed
+        shell: bash
+        run: |
+          if [[ -z "$(git status --porcelain -- lib/util/audio_handler/bg_audio_handler_preferences.dart test/util/playback_preference_guard_test.dart)" ]]; then
+            echo 'No formatting commit required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lib/util/audio_handler/bg_audio_handler_preferences.dart \
+            test/util/playback_preference_guard_test.dart
+          actual="$(git diff --cached --name-only | sort)"
+          unexpected="$(printf '%s\n' "$actual" | grep -v -E '^(lib/util/audio_handler/bg_audio_handler_preferences\.dart|test/util/playback_preference_guard_test\.dart)$' || true)"
+          if [[ -n "$unexpected" ]]; then
+            echo 'Unexpected staged paths:' >&2
+            printf '%s\n' "$unexpected" >&2
+            exit 1
+          fi
+          git commit -m 'style: format preference hardening'
+
+      - name: Push validated formatting if created
+        shell: bash
+        run: |
+          if [[ "$(git rev-parse HEAD)" == '${{ github.sha }}' ]]; then
+            echo 'No source commit to push.'
+            exit 0
+          fi
+          if [[ "$(git rev-parse HEAD^)" != '${{ github.sha }}' ]]; then
+            echo 'Validated source commit has unexpected parent.' >&2
+            exit 1
+          fi
+          remote_head="$(git ls-remote origin refs/heads/feat/chapter-end-sleep-timer | cut -f1)"
+          if [[ "$remote_head" != '${{ github.sha }}' ]]; then
+            echo "Branch moved externally: $remote_head" >&2
+            exit 1
+          fi
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo 'Working tree is dirty after validation.' >&2
+            git status --short >&2
+            exit 1
+          fi
+          git push origin HEAD:refs/heads/feat/chapter-end-sleep-timer
