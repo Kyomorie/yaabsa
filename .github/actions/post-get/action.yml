@@ -19,14 +19,42 @@ runs:
       run: |
         set -euo pipefail
 
+        echo "=== Locate Android SDK tools ==="
+        SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+        SDKMANAGER="$(command -v sdkmanager || true)"
+        if [[ -z "$SDKMANAGER" ]]; then
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -path '*/bin/sdkmanager' -type f -print 2>/dev/null | sort -V | tail -n 1)"
+        fi
+        if [[ -z "$SDKMANAGER" || ! -x "$SDKMANAGER" ]]; then
+          echo "Unable to locate sdkmanager under Android SDK root: $SDK_ROOT"
+          find "$SDK_ROOT" -maxdepth 4 -type f \( -name sdkmanager -o -name avdmanager -o -name emulator -o -name adb \) -print 2>/dev/null || true
+          exit 1
+        fi
+
+        AVDMANAGER="$(dirname "$SDKMANAGER")/avdmanager"
+        ADB="$SDK_ROOT/platform-tools/adb"
+        EMULATOR="$SDK_ROOT/emulator/emulator"
+        for tool in "$AVDMANAGER" "$ADB" "$EMULATOR"; do
+          if [[ ! -x "$tool" ]]; then
+            echo "Required Android SDK tool is unavailable: $tool"
+            exit 1
+          fi
+        done
+
+        echo "SDK_ROOT=$SDK_ROOT"
+        echo "SDKMANAGER=$SDKMANAGER"
+        echo "AVDMANAGER=$AVDMANAGER"
+        echo "ADB=$ADB"
+        echo "EMULATOR=$EMULATOR"
+
         echo "=== Prepare Android emulator ==="
-        yes | sdkmanager --licenses >/dev/null 2>&1 || true
-        sdkmanager \
+        yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+        "$SDKMANAGER" \
           "platform-tools" \
           "emulator" \
           "system-images;android-35;google_apis;x86_64"
 
-        echo "no" | avdmanager create avd \
+        echo "no" | "$AVDMANAGER" create avd \
           --force \
           --name yaabsa-smoke \
           --package "system-images;android-35;google_apis;x86_64" \
@@ -41,7 +69,7 @@ runs:
         fi
 
         EMULATOR_LOG="$RUNNER_TEMP/yaabsa-smoke-emulator.log"
-        "$ANDROID_HOME/emulator/emulator" \
+        "$EMULATOR" \
           -avd yaabsa-smoke \
           -no-window \
           -no-audio \
@@ -54,15 +82,15 @@ runs:
         EMULATOR_PID=$!
 
         cleanup() {
-          adb emu kill >/dev/null 2>&1 || true
+          "$ADB" emu kill >/dev/null 2>&1 || true
           kill "$EMULATOR_PID" >/dev/null 2>&1 || true
         }
         trap cleanup EXIT
 
-        adb wait-for-device
+        "$ADB" wait-for-device
         booted=false
         for _ in $(seq 1 120); do
-          if [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
+          if [[ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
             booted=true
             break
           fi
@@ -75,11 +103,11 @@ runs:
           exit 1
         fi
 
-        adb shell settings put global window_animation_scale 0
-        adb shell settings put global transition_animation_scale 0
-        adb shell settings put global animator_duration_scale 0
-        adb shell input keyevent 82 || true
-        adb devices -l
+        "$ADB" shell settings put global window_animation_scale 0
+        "$ADB" shell settings put global transition_animation_scale 0
+        "$ADB" shell settings put global animator_duration_scale 0
+        "$ADB" shell input keyevent 82 || true
+        "$ADB" devices -l
 
         echo "=== Create isolated runtime harness ==="
         SMOKE_DIR="$RUNNER_TEMP/yaabsa_app_update_runtime_smoke"
@@ -118,8 +146,6 @@ runs:
 
         mkdir -p "$SMOKE_DIR/integration_test"
         cat >"$SMOKE_DIR/integration_test/app_update_runtime_smoke_test.dart" <<'DART'
-        import 'dart:async';
-
         import 'package:flutter/material.dart';
         import 'package:flutter_test/flutter_test.dart';
         import 'package:integration_test/integration_test.dart';
