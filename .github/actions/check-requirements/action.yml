@@ -16,10 +16,7 @@ runs:
 
     - name: Check formatting
       shell: bash
-      run: |
-        dart format lib
-        git diff -- lib/components/common/app_update_notifier.dart
-        git diff --exit-code -- lib
+      run: dart format --set-exit-if-changed lib
 
     - name: Check generated files
       shell: bash
