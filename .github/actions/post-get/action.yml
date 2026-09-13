@@ -59,11 +59,16 @@ runs:
         echo "ADB=$ADB"
         echo "EMULATOR=$EMULATOR"
 
+        export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
+        mkdir -p "$ANDROID_AVD_HOME"
+        echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME"
+
         echo "no" | "$AVDMANAGER" create avd \
           --force \
           --name yaabsa-smoke \
           --package "system-images;android-35;google_apis;x86_64" \
           --device "pixel_7"
+        "$AVDMANAGER" list avd
 
         if [[ -e /dev/kvm ]]; then
           sudo chmod 666 /dev/kvm
