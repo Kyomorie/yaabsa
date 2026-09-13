@@ -8,7 +8,8 @@ import 'package:yaabsa/util/app_update_state.dart';
 import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/logger.dart';
 
-const String _latestReleasePageUrl = 'https://github.com/Vito0912/yaabsa/releases/latest';
+const String _latestReleasePageUrl =
+    'https://github.com/Vito0912/yaabsa/releases/latest';
 
 enum AppUpdateDialogAction { later, skipVersion }
 
