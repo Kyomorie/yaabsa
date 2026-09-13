@@ -67,8 +67,8 @@ class _AppUpdateStartupTriggerState extends State<AppUpdateStartupTrigger> with 
 
   Future<bool> _hasAppUpdateConsent() async {
     try {
-      final settingsState = containerRef.read(settingsManagerProvider);
-      if (!settingsState.hasValue) return false;
+      final settingsManager = containerRef.read(settingsManagerProvider.notifier);
+      if (!settingsManager.isInitialized) return false;
 
       final cache = containerRef.read(settingsCacheProvider);
       if (!cache.isInitialized || cache.get<String>(appUpdateSettingKey) != 'true') {
