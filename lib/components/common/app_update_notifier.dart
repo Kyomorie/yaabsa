@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:yaabsa/database/settings_manager.dart';
 import 'package:yaabsa/util/app_update_checker.dart';
 import 'package:yaabsa/util/app_update_state.dart';
 import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/logger.dart';
+
+const String _latestReleasePageUrl = 'https://github.com/Vito0912/yaabsa/releases/latest';
 
 enum AppUpdateDialogAction { later, skipVersion }
 
@@ -81,6 +84,28 @@ class _AppUpdateStartupTriggerState extends State<AppUpdateStartupTrigger> {
   Widget build(BuildContext context) => const SizedBox.shrink();
 }
 
+Future<void> _openLatestRelease() async {
+  try {
+    final launched = await launchUrl(
+      Uri.parse(_latestReleasePageUrl),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched) {
+      logger(
+        'Could not open the latest Yaabsa release page.',
+        tag: 'AppUpdateNotifier',
+        level: InfoLevel.warning,
+      );
+    }
+  } catch (e, s) {
+    logger(
+      'Failed to open the latest Yaabsa release page: $e\n$s',
+      tag: 'AppUpdateNotifier',
+      level: InfoLevel.warning,
+    );
+  }
+}
+
 Future<AppUpdateDialogAction?> showAppUpdateDialog(
   BuildContext context, {
   required String currentVersion,
@@ -96,6 +121,10 @@ Future<AppUpdateDialogAction?> showAppUpdateDialog(
           'Store availability may lag behind upstream releases.',
         ),
         actions: [
+          TextButton(
+            onPressed: () => unawaited(_openLatestRelease()),
+            child: const Text('View release'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(AppUpdateDialogAction.skipVersion),
             child: const Text('Skip this version'),
