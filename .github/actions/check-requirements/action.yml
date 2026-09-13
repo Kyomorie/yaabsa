@@ -16,7 +16,12 @@ runs:
 
     - name: Check formatting
       shell: bash
-      run: dart format --set-exit-if-changed lib
+      run: |
+        dart format lib
+        echo '=== FORMAT DIFF START ==='
+        git diff -- lib/components/common/app_update_notifier.dart lib/screens/layout_home/layout_home_app_bars.dart lib/screens/settings/library_settings.dart lib/util/app_update_checker.dart
+        echo '=== FORMAT DIFF END ==='
+        exit 1
 
     - name: Check generated files
       shell: bash
