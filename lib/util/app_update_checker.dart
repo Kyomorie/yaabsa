@@ -67,8 +67,9 @@ class AppUpdateChecker {
 
     final dio = Dio(BaseOptions(connectTimeout: timeout, sendTimeout: timeout, receiveTimeout: timeout));
 
-    if (adapterFactory != null) {
-      dio.httpClientAdapter = adapterFactory();
+    final factory = adapterFactory;
+    if (factory != null) {
+      dio.httpClientAdapter = factory();
     }
     dio.httpClientAdapter = _ConsentCheckingAdapter(dio.httpClientAdapter, hasConsent);
 
