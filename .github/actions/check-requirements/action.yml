@@ -14,6 +14,14 @@ runs:
       shell: bash
       run: flutter pub get
 
+    - name: Run app update feature tests
+      shell: bash
+      run: >-
+        flutter test
+        test/util/app_update_checker_test.dart
+        test/util/app_update_state_test.dart
+        test/components/common/app_update_notifier_test.dart
+
     - name: Check formatting
       shell: bash
       run: dart format --set-exit-if-changed lib
