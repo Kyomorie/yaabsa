@@ -89,16 +89,18 @@ class AppUpdateChecker {
     dio.httpClientAdapter = _ConsentCheckingAdapter(dio.httpClientAdapter, hasConsent);
 
     try {
-      final response = await dio.get<Map<String, dynamic>>(
-        latestReleaseUrl,
-        options: Options(
-          headers: const {'Accept': 'application/vnd.github+json', 'User-Agent': 'Yaabsa-App'},
-          responseType: ResponseType.json,
-          followRedirects: false,
-          maxRedirects: 0,
-          validateStatus: (status) => status == 200,
-        ),
-      );
+      final response = await dio
+          .get<Map<String, dynamic>>(
+            latestReleaseUrl,
+            options: Options(
+              headers: const {'Accept': 'application/vnd.github+json', 'User-Agent': 'Yaabsa-App'},
+              responseType: ResponseType.json,
+              followRedirects: false,
+              maxRedirects: 0,
+              validateStatus: (status) => status == 200,
+            ),
+          )
+          .timeout(timeout);
 
       final tagName = response.data?['tag_name'];
       if (tagName is! String) {
