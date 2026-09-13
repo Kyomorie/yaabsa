@@ -19,7 +19,7 @@ jobs:
         run: |
           set -euo pipefail
           before="$(git rev-parse HEAD)"
-          python3 -c 'from pathlib import Path; p=Path(".github/workflows/p1-backend-acceptance-apply.yml"); s=p.read_text(); old="          git diff --check\n          actual=\\\"$(git diff --name-only | sort)\\\"\n"; new="          git diff --check\n          git add -N \\\\\n            lib/util/audio_handler/playback_start_attempt.dart \\\\\n            test/util/playback_start_attempt_test.dart\n          actual=\\\"$(git diff --name-only | sort)\\\"\n"; assert s.count(old)==2, s.count(old); p.write_text(s.replace(old,new))'
+          python3 -c 'from pathlib import Path; p=Path(".github/workflows/p1-backend-acceptance-apply.yml"); s=p.read_text(); needle="          actual=\\\"$(git diff --name-only | sort)\\\""; insert="          git add -N \\\\\n            lib/util/audio_handler/playback_start_attempt.dart \\\\\n            test/util/playback_start_attempt_test.dart\n"; assert s.count(needle)==2, (s.count(needle), [x for x in s.splitlines() if "actual=" in x]); p.write_text(s.replace(needle, insert+needle))'
           git diff --check
           test "$(git diff --name-only)" = '.github/workflows/p1-backend-acceptance-apply.yml'
           git config user.name 'github-actions[bot]'
