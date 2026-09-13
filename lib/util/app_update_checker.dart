@@ -7,10 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:yaabsa/util/logger.dart';
 
 const String appUpdateSettingKey = 'check_for_app_updates';
-const bool _isDirectDistribution = bool.fromEnvironment(
-  'YAABSA_DIRECT_DISTRIBUTION',
-  defaultValue: false,
-);
+const bool _isDirectDistribution = bool.fromEnvironment('YAABSA_DIRECT_DISTRIBUTION', defaultValue: false);
 
 bool get isAppUpdateCheckEligible => AppUpdateEligibility.isEligible(
   isWeb: kIsWeb,
@@ -39,11 +36,7 @@ class AppUpdateCandidate {
   final String latestVersion;
   final Uri releaseUri;
 
-  const AppUpdateCandidate({
-    required this.currentVersion,
-    required this.latestVersion,
-    required this.releaseUri,
-  });
+  const AppUpdateCandidate({required this.currentVersion, required this.latestVersion, required this.releaseUri});
 }
 
 typedef AppUpdateConsentReader = Future<bool> Function();
@@ -56,10 +49,8 @@ class AppUpdateChecker {
   final HttpClientAdapter Function()? _adapterFactory;
   final Duration timeout;
 
-  const AppUpdateChecker({
-    HttpClientAdapter Function()? adapterFactory,
-    this.timeout = const Duration(seconds: 5),
-  }) : _adapterFactory = adapterFactory;
+  const AppUpdateChecker({HttpClientAdapter Function()? adapterFactory, this.timeout = const Duration(seconds: 5)})
+    : _adapterFactory = adapterFactory;
 
   Future<AppUpdateCandidate?> check({
     required String currentVersion,
@@ -75,13 +66,7 @@ class AppUpdateChecker {
       return null;
     }
 
-    final dio = Dio(
-      BaseOptions(
-        connectTimeout: timeout,
-        sendTimeout: timeout,
-        receiveTimeout: timeout,
-      ),
-    );
+    final dio = Dio(BaseOptions(connectTimeout: timeout, sendTimeout: timeout, receiveTimeout: timeout));
 
     if (_adapterFactory != null) {
       dio.httpClientAdapter = _adapterFactory!();
