@@ -36,11 +36,9 @@ runs:
 
     - name: Check if flutter fixes are available
       shell: bash
-      run: |
-        echo '=== DART FIX START ==='
-        dart fix lib/ --dry-run
-        echo '=== DART FIX END ==='
-        exit 1
+      run: dart fix lib/ --dry-run | grep "Nothing to fix!" || (echo "Flutter fixes are
+        available. Please run 'dart fix . --apply' and commit the changes." &&
+        exit 1)
 
     - name: Check if errors are present
       shell: bash
