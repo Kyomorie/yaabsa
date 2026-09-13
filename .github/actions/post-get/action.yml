@@ -12,3 +12,315 @@ runs:
       shell: bash
       run: |
         echo "In a Galaxy far, far away..."
+
+    - name: Runtime smoke - app update notifier on Android emulator
+      if: ${{ inputs.flow == 'pr-build-android-auto' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        echo "=== Locate Android SDK tools ==="
+        SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+        SDKMANAGER="$(command -v sdkmanager || true)"
+        if [[ -z "$SDKMANAGER" ]]; then
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -path '*/bin/sdkmanager' -type f -print 2>/dev/null | sort -V | tail -n 1)"
+        fi
+        if [[ -z "$SDKMANAGER" || ! -x "$SDKMANAGER" ]]; then
+          echo "Unable to locate sdkmanager under Android SDK root: $SDK_ROOT"
+          find "$SDK_ROOT" -maxdepth 4 -type f \( -name sdkmanager -o -name avdmanager -o -name emulator -o -name adb \) -print 2>/dev/null || true
+          exit 1
+        fi
+
+        AVDMANAGER="$(dirname "$SDKMANAGER")/avdmanager"
+        if [[ ! -x "$AVDMANAGER" ]]; then
+          echo "Required Android SDK tool is unavailable: $AVDMANAGER"
+          exit 1
+        fi
+
+        echo "SDK_ROOT=$SDK_ROOT"
+        echo "SDKMANAGER=$SDKMANAGER"
+        echo "AVDMANAGER=$AVDMANAGER"
+
+        echo "=== Prepare Android emulator ==="
+        yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+        "$SDKMANAGER" \
+          "platform-tools" \
+          "emulator" \
+          "system-images;android-35;google_apis;x86_64"
+
+        ADB="$SDK_ROOT/platform-tools/adb"
+        EMULATOR="$SDK_ROOT/emulator/emulator"
+        for tool in "$ADB" "$EMULATOR"; do
+          if [[ ! -x "$tool" ]]; then
+            echo "Required Android SDK tool is unavailable after sdkmanager install: $tool"
+            exit 1
+          fi
+        done
+        echo "ADB=$ADB"
+        echo "EMULATOR=$EMULATOR"
+
+        export ANDROID_AVD_HOME="$RUNNER_TEMP/android-avd"
+        mkdir -p "$ANDROID_AVD_HOME"
+        echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME"
+
+        echo "no" | "$AVDMANAGER" create avd \
+          --force \
+          --name yaabsa-smoke \
+          --package "system-images;android-35;google_apis;x86_64" \
+          --device "pixel_7"
+        "$AVDMANAGER" list avd
+
+        if [[ -e /dev/kvm ]]; then
+          sudo chmod 666 /dev/kvm
+          ACCEL_ARGS=()
+          echo "KVM acceleration available."
+        else
+          echo "WARNING: /dev/kvm is unavailable; falling back to software emulation."
+          ACCEL_ARGS=(-accel off)
+        fi
+
+        EMULATOR_LOG="$RUNNER_TEMP/yaabsa-smoke-emulator.log"
+        "$EMULATOR" \
+          -avd yaabsa-smoke \
+          -no-window \
+          -no-audio \
+          -no-boot-anim \
+          -no-snapshot \
+          -gpu swiftshader_indirect \
+          -no-metrics \
+          "${ACCEL_ARGS[@]}" \
+          >"$EMULATOR_LOG" 2>&1 &
+        EMULATOR_PID=$!
+
+        PUBSPEC_BACKUP=""
+        LOCK_BACKUP=""
+        LOCK_EXISTED=false
+        RUNTIME_TEST_PATH=""
+        RUNTIME_TEST_CREATED=false
+
+        cleanup() {
+          set +e
+          if [[ "$RUNTIME_TEST_CREATED" == "true" && -n "$RUNTIME_TEST_PATH" ]]; then
+            rm -f "$RUNTIME_TEST_PATH"
+            rmdir "$GITHUB_WORKSPACE/integration_test" 2>/dev/null || true
+          fi
+          if [[ -n "$PUBSPEC_BACKUP" && -f "$PUBSPEC_BACKUP" ]]; then
+            cp "$PUBSPEC_BACKUP" "$GITHUB_WORKSPACE/pubspec.yaml"
+          fi
+          if [[ "$LOCK_EXISTED" == "true" && -n "$LOCK_BACKUP" && -f "$LOCK_BACKUP" ]]; then
+            cp "$LOCK_BACKUP" "$GITHUB_WORKSPACE/pubspec.lock"
+          elif [[ "$LOCK_EXISTED" == "false" && -n "$LOCK_BACKUP" ]]; then
+            rm -f "$GITHUB_WORKSPACE/pubspec.lock"
+          fi
+          "$ADB" emu kill >/dev/null 2>&1 || true
+          kill "$EMULATOR_PID" >/dev/null 2>&1 || true
+        }
+        trap cleanup EXIT
+
+        echo "=== Wait for ADB device ==="
+        adb_ready=false
+        for _ in $(seq 1 90); do
+          if "$ADB" get-state >/dev/null 2>&1; then
+            adb_ready=true
+            break
+          fi
+          if ! kill -0 "$EMULATOR_PID" >/dev/null 2>&1; then
+            echo "Android emulator process exited before ADB became ready."
+            cat "$EMULATOR_LOG"
+            exit 1
+          fi
+          sleep 2
+        done
+
+        if [[ "$adb_ready" != "true" ]]; then
+          echo "Android emulator did not appear in ADB within 180 seconds."
+          "$ADB" devices -l || true
+          cat "$EMULATOR_LOG"
+          exit 1
+        fi
+
+        echo "=== Wait for Android boot completion ==="
+        booted=false
+        for _ in $(seq 1 120); do
+          if [[ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
+            booted=true
+            break
+          fi
+          if ! kill -0 "$EMULATOR_PID" >/dev/null 2>&1; then
+            echo "Android emulator process exited before boot completed."
+            cat "$EMULATOR_LOG"
+            exit 1
+          fi
+          sleep 2
+        done
+
+        if [[ "$booted" != "true" ]]; then
+          echo "Android emulator did not finish booting within 240 seconds after ADB became ready."
+          "$ADB" devices -l || true
+          cat "$EMULATOR_LOG"
+          exit 1
+        fi
+
+        "$ADB" shell settings put global window_animation_scale 0
+        "$ADB" shell settings put global transition_animation_scale 0
+        "$ADB" shell settings put global animator_duration_scale 0
+        "$ADB" shell input keyevent 82 || true
+        "$ADB" devices -l
+
+        DEVICE_ID="$("$ADB" devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')"
+        if [[ -z "$DEVICE_ID" ]]; then
+          echo "No booted Android device found after emulator startup."
+          exit 1
+        fi
+        echo "DEVICE_ID=$DEVICE_ID"
+
+        echo "=== Prepare YAABSA root project for runner-only runtime smoke ==="
+        PUBSPEC_BACKUP="$RUNNER_TEMP/yaabsa-runtime-pubspec.yaml"
+        LOCK_BACKUP="$RUNNER_TEMP/yaabsa-runtime-pubspec.lock"
+        cp "$GITHUB_WORKSPACE/pubspec.yaml" "$PUBSPEC_BACKUP"
+        if [[ -f "$GITHUB_WORKSPACE/pubspec.lock" ]]; then
+          cp "$GITHUB_WORKSPACE/pubspec.lock" "$LOCK_BACKUP"
+          LOCK_EXISTED=true
+        fi
+
+        python - <<'PY'
+        from pathlib import Path
+        import re
+
+        path = Path("pubspec.yaml")
+        text = path.read_text(encoding="utf-8")
+
+        text, version_count = re.subn(
+            r"(?m)^version:\s*[^\n]+$",
+            "version: 1.10.0+135",
+            text,
+            count=1,
+        )
+        if version_count != 1:
+            raise SystemExit(f"Expected exactly one pubspec version line, replaced {version_count}")
+
+        marker = "dev_dependencies:\n  flutter_test:\n"
+        replacement = "dev_dependencies:\n  integration_test:\n    sdk: flutter\n  flutter_test:\n"
+        if marker not in text:
+            raise SystemExit("Unable to locate YAABSA dev_dependencies/flutter_test marker")
+        text = text.replace(marker, replacement, 1)
+        path.write_text(text, encoding="utf-8")
+        PY
+
+        mkdir -p "$GITHUB_WORKSPACE/integration_test"
+        RUNTIME_TEST_PATH="$GITHUB_WORKSPACE/integration_test/app_update_runtime_smoke_test.dart"
+        if [[ -e "$RUNTIME_TEST_PATH" ]]; then
+          echo "Refusing to overwrite existing runtime test path: $RUNTIME_TEST_PATH"
+          exit 1
+        fi
+        RUNTIME_TEST_CREATED=true
+
+        cat >"$RUNTIME_TEST_PATH" <<'DART'
+        import 'dart:async';
+
+        import 'package:flutter/material.dart';
+        import 'package:flutter_test/flutter_test.dart';
+        import 'package:integration_test/integration_test.dart';
+        import 'package:yaabsa/components/common/app_update_notifier.dart';
+        import 'package:yaabsa/database/settings_manager.dart';
+        import 'package:yaabsa/util/app_update_checker.dart';
+        import 'package:yaabsa/util/app_update_state.dart';
+        import 'package:yaabsa/util/globals.dart';
+        import 'package:yaabsa/util/init.dart';
+
+        void main() {
+          IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+          testWidgets('real Android runtime update notifier smoke', (tester) async {
+            await Init.globals();
+            expect(packageInfo.version, '1.10.0');
+
+            final settingsManager = containerRef.read(settingsManagerProvider.notifier);
+            await settingsManager.ensureInitialized();
+            final store = SettingsManagerAppUpdateStateStore(settingsManager);
+
+            await store.setNextCheckAllowed(0);
+            await store.setSkippedVersion('');
+
+            await tester.pumpWidget(
+              const MaterialApp(
+                home: Scaffold(body: AppUpdateStartupTrigger()),
+              ),
+            );
+
+            final titleFinder = find.text('New Yaabsa release');
+            for (var i = 0; i < 90 && titleFinder.evaluate().isEmpty; i++) {
+              await tester.pump();
+              await Future<void>.delayed(const Duration(milliseconds: 500));
+            }
+
+            expect(titleFinder, findsOneWidget);
+            expect(find.text('Skip this version'), findsOneWidget);
+            expect(find.text('Later'), findsOneWidget);
+
+            final contentFinder = find.textContaining(
+              'has been released. You are using 1.10.0.',
+            );
+            expect(contentFinder, findsOneWidget);
+            final content = tester.widget<Text>(contentFinder).data;
+            expect(content, isNotNull);
+
+            final match = RegExp(
+              r'^Version (.+) has been released\. You are using 1\.10\.0\.\n\n'
+              r'Store availability may lag behind upstream releases\.$',
+            ).firstMatch(content!);
+            expect(match, isNotNull);
+            final latestVersion = match!.group(1)!;
+            expect(latestVersion, isNotEmpty);
+            expect(latestVersion, isNot('1.10.0'));
+
+            expect(
+              store.nextCheckAllowed,
+              greaterThan(DateTime.now().millisecondsSinceEpoch),
+            );
+
+            await tester.tap(find.text('Skip this version'));
+            await tester.pumpAndSettle();
+            expect(store.skippedVersion, latestVersion);
+
+            final cache = containerRef.read(settingsCacheProvider);
+            cache.clear();
+            await settingsManager.ensureInitialized();
+            expect(store.skippedVersion, latestVersion);
+
+            final coordinator = AppUpdateCoordinator(
+              checker: const AppUpdateChecker(),
+              stateStore: store,
+            );
+            final sameReleaseResult = AppUpdateCheckResult(
+              status: AppUpdateCheckStatus.success,
+              currentVersion: '1.10.0',
+              latestVersion: latestVersion,
+              isUpdateAvailable: true,
+            );
+            expect(coordinator.shouldNotify(sameReleaseResult), isFalse);
+
+            final dialogContext = tester.element(find.byType(Scaffold));
+            final laterResult = showAppUpdateDialog(
+              dialogContext,
+              currentVersion: '1.10.0',
+              latestVersion: latestVersion,
+            );
+            await tester.pumpAndSettle();
+            expect(titleFinder, findsOneWidget);
+            await tester.tap(find.text('Later'));
+            await tester.pumpAndSettle();
+            expect(await laterResult, AppUpdateDialogAction.later);
+            expect(titleFinder, findsNothing);
+          });
+        }
+        DART
+
+        cd "$GITHUB_WORKSPACE"
+        flutter pub get
+
+        echo "=== Run production notifier in YAABSA Android project ==="
+        flutter test \
+          integration_test/app_update_runtime_smoke_test.dart \
+          --flavor auto \
+          -d "$DEVICE_ID"
