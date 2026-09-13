@@ -23,6 +23,8 @@ void main() {
     test('fails closed for malformed versions', () {
       expect(AppUpdateChecker.isUpdateAvailable('1.11.0', 'release-next'), isFalse);
       expect(AppUpdateChecker.isUpdateAvailable('unknown', 'v1.12.0'), isFalse);
+      expect(AppUpdateChecker.isUpdateAvailable('1.11.0', 'v1.12.0+meta..broken'), isFalse);
+      expect(AppUpdateChecker.isUpdateAvailable('1.11.0', 'v1.12.0-alpha..1'), isFalse);
     });
   });
 
