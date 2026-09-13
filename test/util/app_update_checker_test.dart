@@ -111,6 +111,28 @@ void main() {
       expect(result.isUpdateAvailable, isFalse);
     });
 
+    test('rejects a prerelease tag even when GitHub metadata marks it stable', () async {
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            handler.resolve(
+              Response<Map<String, dynamic>>(
+                requestOptions: options,
+                statusCode: 200,
+                data: const {'tag_name': 'v1.12.0-rc.1', 'draft': false, 'prerelease': false},
+              ),
+            );
+          },
+        ),
+      );
+
+      final result = await AppUpdateChecker(dio: dio).check('1.11.0');
+
+      expect(result.status, AppUpdateCheckStatus.failed);
+      expect(result.latestVersion, isNull);
+      expect(result.isUpdateAvailable, isFalse);
+    });
+
     test('surfaces GitHub rate-limit reset time', () async {
       dio.interceptors.add(
         InterceptorsWrapper(
