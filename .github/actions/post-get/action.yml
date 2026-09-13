@@ -68,6 +68,7 @@ runs:
         if [[ -e /dev/kvm ]]; then
           sudo chmod 666 /dev/kvm
           ACCEL_ARGS=()
+          echo "KVM acceleration available."
         else
           echo "WARNING: /dev/kvm is unavailable; falling back to software emulation."
           ACCEL_ARGS=(-accel off)
@@ -92,18 +93,46 @@ runs:
         }
         trap cleanup EXIT
 
-        "$ADB" wait-for-device
+        echo "=== Wait for ADB device ==="
+        adb_ready=false
+        for _ in $(seq 1 90); do
+          if "$ADB" get-state >/dev/null 2>&1; then
+            adb_ready=true
+            break
+          fi
+          if ! kill -0 "$EMULATOR_PID" >/dev/null 2>&1; then
+            echo "Android emulator process exited before ADB became ready."
+            cat "$EMULATOR_LOG"
+            exit 1
+          fi
+          sleep 2
+        done
+
+        if [[ "$adb_ready" != "true" ]]; then
+          echo "Android emulator did not appear in ADB within 180 seconds."
+          "$ADB" devices -l || true
+          cat "$EMULATOR_LOG"
+          exit 1
+        fi
+
+        echo "=== Wait for Android boot completion ==="
         booted=false
         for _ in $(seq 1 120); do
           if [[ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
             booted=true
             break
           fi
+          if ! kill -0 "$EMULATOR_PID" >/dev/null 2>&1; then
+            echo "Android emulator process exited before boot completed."
+            cat "$EMULATOR_LOG"
+            exit 1
+          fi
           sleep 2
         done
 
         if [[ "$booted" != "true" ]]; then
-          echo "Android emulator did not finish booting."
+          echo "Android emulator did not finish booting within 240 seconds after ADB became ready."
+          "$ADB" devices -l || true
           cat "$EMULATOR_LOG"
           exit 1
         fi
@@ -113,6 +142,13 @@ runs:
         "$ADB" shell settings put global animator_duration_scale 0
         "$ADB" shell input keyevent 82 || true
         "$ADB" devices -l
+
+        DEVICE_ID="$("$ADB" devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')"
+        if [[ -z "$DEVICE_ID" ]]; then
+          echo "No booted Android device found after emulator startup."
+          exit 1
+        fi
+        echo "DEVICE_ID=$DEVICE_ID"
 
         echo "=== Create isolated runtime harness ==="
         SMOKE_DIR="$RUNNER_TEMP/yaabsa_app_update_runtime_smoke"
@@ -243,4 +279,4 @@ runs:
         echo "=== Run production notifier on Android emulator ==="
         flutter test \
           integration_test/app_update_runtime_smoke_test.dart \
-          -d emulator-5554
+          -d "$DEVICE_ID"
