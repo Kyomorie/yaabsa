@@ -1,0 +1,229 @@
+name: YAABSA P1 integration v3
+
+on:
+  push:
+    branches:
+      - automation/p1-backend-acceptance
+    paths:
+      - .github/workflows/p1-integrate-v3.yml
+      - .github/p1_integrate.py
+
+permissions: {}
+
+env:
+  EXPECTED_YAABSA_HEAD: 45fe831fb52c5e3048801142d9754f72b0be6969
+  JUST_AUDIO_SHA: f80ad2ee8a73e5e32a82df20c98666385c6b2aca
+  MEDIA_KIT_SHA: c1a5a15046ab565613c2d1e8736152aef9b6348c
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout integration control
+        uses: actions/checkout@v6
+        with:
+          ref: automation/p1-backend-acceptance
+          path: control
+          fetch-depth: 2
+          submodules: false
+
+      - name: Checkout exact YAABSA feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+          path: work
+          fetch-depth: 8
+          submodules: false
+
+      - name: Verify exact target head
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_YAABSA_HEAD" || {
+            echo "Unexpected YAABSA head: $actual" >&2
+            exit 1
+          }
+
+      - name: Pin validated playback backends
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          path = Path('.gitmodules')
+          text = path.read_text()
+          replacements = {
+              'url = git@github.com:Vito0912/just_audio.git': 'url = https://github.com/Kyomorie/just_audio.git',
+              'url = git@github.com:Vito0912/just_audio_media_kit.git': 'url = https://github.com/Kyomorie/just_audio_media_kit.git',
+          }
+          for old, new in replacements.items():
+              if text.count(old) != 1:
+                  raise SystemExit(f'Unexpected .gitmodules entry: {old}')
+              text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          git -C packages/just_audio fetch --no-tags https://github.com/Kyomorie/just_audio.git "$JUST_AUDIO_SHA"
+          git -C packages/just_audio checkout --detach "$JUST_AUDIO_SHA"
+          git -C packages/just_audio_media_kit fetch --no-tags https://github.com/Kyomorie/just_audio_media_kit.git "$MEDIA_KIT_SHA"
+          git -C packages/just_audio_media_kit checkout --detach "$MEDIA_KIT_SHA"
+          test "$(git -C packages/just_audio rev-parse HEAD)" = "$JUST_AUDIO_SHA"
+          test "$(git -C packages/just_audio_media_kit rev-parse HEAD)" = "$MEDIA_KIT_SHA"
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' .gitmodules packages/just_audio packages/just_audio_media_kit | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected backend pin paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Commit backend pins locally
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .gitmodules packages/just_audio packages/just_audio_media_kit
+          git commit -m 'chore: pin backend playback acknowledgment forks'
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_YAABSA_HEAD"
+          actual="$(git diff --name-only HEAD^ HEAD | sort)"
+          expected="$(printf '%s\n' .gitmodules packages/just_audio packages/just_audio_media_kit | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected backend pin commit paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Apply robust P1 source integrator
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../control/.github/p1_integrate.py
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        working-directory: work
+        shell: bash
+        run: flutter pub get
+
+      - name: Format and enforce exact P1 source scope
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart
+          git add -N lib/util/audio_handler/playback_start_attempt.dart test/util/playback_start_attempt_test.dart
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P1 source paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Analyze P1 surface
+        working-directory: work
+        shell: bash
+        run: |
+          flutter analyze \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart \
+            --no-fatal-warnings --no-fatal-infos
+
+      - name: Run focused P1 and sleep-timer tests
+        working-directory: work
+        shell: bash
+        run: |
+          flutter test \
+            test/util/playback_start_attempt_test.dart \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/sleep_timer_completion_gate_test.dart \
+            test/util/sleep_timer_target_test.dart \
+            test/util/user_seek_navigation_ledger_test.dart \
+            test/util/playback_preference_guard_test.dart
+
+      - name: Restore dependency side effects and recheck scope
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -- pubspec.lock 2>/dev/null || true
+          rm -rf .dart_tool
+          git add -N lib/util/audio_handler/playback_start_attempt.dart test/util/playback_start_attempt_test.dart
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P1 paths after validation:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Commit P1 source locally
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart
+          git commit -m 'fix: consume queue only after backend playback starts'
+          test "$(git log -1 --format=%s HEAD^)" = 'chore: pin backend playback acknowledgment forks'
+          actual="$(git diff --name-only HEAD^ HEAD | sort)"
+          expected="$(printf '%s\n' \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_playback_internal.dart \
+            lib/util/audio_handler/bg_audio_handler_source.dart \
+            lib/util/audio_handler/playback_start_attempt.dart \
+            test/util/playback_start_attempt_test.dart | sort)"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P1 commit paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+          test -z "$(git status --porcelain)"
+
+      - name: Final exact-head gate and fast-forward push
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^^)" = "$EXPECTED_YAABSA_HEAD"
+          remote_head="$(git ls-remote origin refs/heads/feat/chapter-end-sleep-timer | cut -f1)"
+          test "$remote_head" = "$EXPECTED_YAABSA_HEAD" || {
+            echo "YAABSA feature branch moved externally: $remote_head" >&2
+            exit 1
+          }
+          git diff --check HEAD^^ HEAD
+          git push origin HEAD:refs/heads/feat/chapter-end-sleep-timer
