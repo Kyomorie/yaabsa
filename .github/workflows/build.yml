@@ -343,6 +343,22 @@ jobs:
 
       - name: Set up Flutter (aarch64)
         if: ${{ matrix.flutter_arch == 'arm64' }}
+        id: flutter_version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(curl --fail --silent --show-error --location \
+            https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json \
+            | jq -r '[.releases[] | select(.channel == "stable")] | .[0].version')"
+          if [[ -z "$version" || "$version" == "null" ]]; then
+            echo "Unable to determine the current stable Flutter version."
+            exit 1
+          fi
+          echo "Using Flutter stable version: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Flutter (aarch64)
+        if: ${{ matrix.flutter_arch == 'arm64' }}
         uses: subosito/flutter-action@v2
         with:
           channel: master
@@ -805,12 +821,6 @@ jobs:
       - name: Download Flatpak Pages artifact
         uses: actions/download-artifact@v8
         with:
-          name: flatpak-pages
-          path: combined-pages
-
-      - name: Download Web Pages artifact
-        uses: actions/download-artifact@v8
-        with:
           name: web-pages
           path: combined-pages
 
@@ -870,7 +880,7 @@ jobs:
 
       - name: Build Android Auto APKs
         run: |
-          flutter build apk --split-per-abi --flavor auto --release
+          flutter build apk --split-per-abi --flavor auto --release --dart-define=YAABSA_DIRECT_DISTRIBUTION=true
         env:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           STORE_FILE: ${{ secrets.STORE_FILE }}
