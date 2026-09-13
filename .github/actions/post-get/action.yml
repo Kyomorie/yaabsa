@@ -12,3 +12,204 @@ runs:
       shell: bash
       run: |
         echo "In a Galaxy far, far away..."
+
+    - name: Runtime smoke - app update notifier on Android emulator
+      if: ${{ inputs.flow == 'pr-build-android-auto' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        echo "=== Prepare Android emulator ==="
+        yes | sdkmanager --licenses >/dev/null 2>&1 || true
+        sdkmanager \
+          "platform-tools" \
+          "emulator" \
+          "system-images;android-35;google_apis;x86_64"
+
+        echo "no" | avdmanager create avd \
+          --force \
+          --name yaabsa-smoke \
+          --package "system-images;android-35;google_apis;x86_64" \
+          --device "pixel_7"
+
+        if [[ -e /dev/kvm ]]; then
+          sudo chmod 666 /dev/kvm
+          ACCEL_ARGS=()
+        else
+          echo "WARNING: /dev/kvm is unavailable; falling back to software emulation."
+          ACCEL_ARGS=(-accel off)
+        fi
+
+        EMULATOR_LOG="$RUNNER_TEMP/yaabsa-smoke-emulator.log"
+        "$ANDROID_HOME/emulator/emulator" \
+          -avd yaabsa-smoke \
+          -no-window \
+          -no-audio \
+          -no-boot-anim \
+          -no-snapshot \
+          -gpu swiftshader_indirect \
+          -no-metrics \
+          "${ACCEL_ARGS[@]}" \
+          >"$EMULATOR_LOG" 2>&1 &
+        EMULATOR_PID=$!
+
+        cleanup() {
+          adb emu kill >/dev/null 2>&1 || true
+          kill "$EMULATOR_PID" >/dev/null 2>&1 || true
+        }
+        trap cleanup EXIT
+
+        adb wait-for-device
+        booted=false
+        for _ in $(seq 1 120); do
+          if [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
+            booted=true
+            break
+          fi
+          sleep 2
+        done
+
+        if [[ "$booted" != "true" ]]; then
+          echo "Android emulator did not finish booting."
+          cat "$EMULATOR_LOG"
+          exit 1
+        fi
+
+        adb shell settings put global window_animation_scale 0
+        adb shell settings put global transition_animation_scale 0
+        adb shell settings put global animator_duration_scale 0
+        adb shell input keyevent 82 || true
+        adb devices -l
+
+        echo "=== Create isolated runtime harness ==="
+        SMOKE_DIR="$RUNNER_TEMP/yaabsa_app_update_runtime_smoke"
+        rm -rf "$SMOKE_DIR"
+        flutter create \
+          --platforms=android \
+          --project-name yaabsa_runtime_smoke \
+          --org de.vito0912 \
+          --no-pub \
+          "$SMOKE_DIR"
+
+        cat >"$SMOKE_DIR/pubspec.yaml" <<EOF
+        name: yaabsa_runtime_smoke
+        description: Isolated YAABSA app update notifier runtime smoke harness
+        publish_to: 'none'
+        version: 1.10.0+1
+
+        environment:
+          sdk: ^3.13.0
+
+        dependencies:
+          flutter:
+            sdk: flutter
+          yaabsa:
+            path: $GITHUB_WORKSPACE
+
+        dev_dependencies:
+          flutter_test:
+            sdk: flutter
+          integration_test:
+            sdk: flutter
+
+        flutter:
+          uses-material-design: true
+        EOF
+
+        mkdir -p "$SMOKE_DIR/integration_test"
+        cat >"$SMOKE_DIR/integration_test/app_update_runtime_smoke_test.dart" <<'DART'
+        import 'dart:async';
+
+        import 'package:flutter/material.dart';
+        import 'package:flutter_test/flutter_test.dart';
+        import 'package:integration_test/integration_test.dart';
+        import 'package:yaabsa/components/common/app_update_notifier.dart';
+        import 'package:yaabsa/database/settings_manager.dart';
+        import 'package:yaabsa/util/app_update_checker.dart';
+        import 'package:yaabsa/util/app_update_state.dart';
+        import 'package:yaabsa/util/globals.dart';
+        import 'package:yaabsa/util/init.dart';
+
+        void main() {
+          IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+          testWidgets('real Android runtime update notifier smoke', (tester) async {
+            await Init.globals();
+            expect(packageInfo.version, '1.10.0');
+
+            final settingsManager = containerRef.read(settingsManagerProvider.notifier);
+            await settingsManager.ensureInitialized();
+            final store = SettingsManagerAppUpdateStateStore(settingsManager);
+
+            await store.setNextCheckAllowed(0);
+            await store.setSkippedVersion('');
+
+            final realResult = await const AppUpdateChecker()
+                .check(packageInfo.version)
+                .timeout(const Duration(seconds: 30));
+            expect(realResult.status, AppUpdateCheckStatus.success);
+            expect(realResult.isUpdateAvailable, isTrue);
+            expect(realResult.latestVersion, isNotNull);
+            final latestVersion = realResult.latestVersion!;
+
+            await tester.pumpWidget(
+              const MaterialApp(
+                home: Scaffold(body: AppUpdateStartupTrigger()),
+              ),
+            );
+
+            for (var i = 0; i < 120 && find.text('New Yaabsa release').evaluate().isEmpty; i++) {
+              await tester.pump(const Duration(milliseconds: 250));
+            }
+
+            expect(find.text('New Yaabsa release'), findsOneWidget);
+            expect(
+              find.text(
+                'Version $latestVersion has been released. You are using 1.10.0.\n\n'
+                'Store availability may lag behind upstream releases.',
+              ),
+              findsOneWidget,
+            );
+            expect(find.text('Skip this version'), findsOneWidget);
+            expect(find.text('Later'), findsOneWidget);
+            expect(store.nextCheckAllowed, greaterThan(DateTime.now().millisecondsSinceEpoch));
+
+            await tester.tap(find.text('Skip this version'));
+            await tester.pumpAndSettle();
+
+            expect(store.skippedVersion, latestVersion);
+
+            final cache = containerRef.read(settingsCacheProvider);
+            cache.clear();
+            await settingsManager.ensureInitialized();
+            expect(store.skippedVersion, latestVersion);
+
+            final coordinator = AppUpdateCoordinator(
+              checker: const AppUpdateChecker(),
+              stateStore: store,
+            );
+            expect(coordinator.shouldNotify(realResult), isFalse);
+
+            final dialogContext = tester.element(find.byType(Scaffold));
+            final laterResult = showAppUpdateDialog(
+              dialogContext,
+              currentVersion: '1.10.0',
+              latestVersion: latestVersion,
+            );
+            await tester.pumpAndSettle();
+            expect(find.text('New Yaabsa release'), findsOneWidget);
+            await tester.tap(find.text('Later'));
+            await tester.pumpAndSettle();
+            expect(await laterResult, AppUpdateDialogAction.later);
+            expect(find.text('New Yaabsa release'), findsNothing);
+          });
+        }
+        DART
+
+        cd "$SMOKE_DIR"
+        flutter pub get
+
+        echo "=== Run production notifier on Android emulator ==="
+        flutter test \
+          integration_test/app_update_runtime_smoke_test.dart \
+          -d emulator-5554
