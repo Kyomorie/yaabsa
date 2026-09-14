@@ -1563,7 +1563,11 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             tag: 'AudioHandler',
             level: InfoLevel.debug,
           );
-          await _seekInternal(newPosition, mutationLease: skipLease);
+          await _seekInternal(
+            newPosition,
+            mutationLease: skipLease,
+            authoritativeProgressCorrection: true,
+          );
           if (!ownsSkip()) {
             return;
           }
@@ -1662,7 +1666,11 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             tag: 'AudioHandler',
             level: InfoLevel.debug,
           );
-          await _seekInternal(newPosition, mutationLease: skipLease);
+          await _seekInternal(
+            newPosition,
+            mutationLease: skipLease,
+            authoritativeProgressCorrection: true,
+          );
           if (!ownsSkip()) {
             return;
           }
@@ -1693,7 +1701,13 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   @override
   Future<void> seek(Duration position) {
-    return _seekResolved(position, positionIsAbsolute: false, userNavigation: true, recordManualSeek: true);
+    return _seekResolved(
+      position,
+      positionIsAbsolute: false,
+      userNavigation: true,
+      recordManualSeek: true,
+      authoritativeProgressCorrection: true,
+    );
   }
 
   Future<void> _seekResolved(
@@ -1701,6 +1715,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     required bool positionIsAbsolute,
     required bool userNavigation,
     required bool recordManualSeek,
+    bool authoritativeProgressCorrection = false,
     PlayerMutationLease? mutationLease,
   }) async {
     final media = _currentMediaItem;
@@ -1780,40 +1795,76 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       final relativeTrackPosition = boundedPosition - media.startDurationForTrack(newTrackIndex);
       final trackChanged = newTrackIndex != _currentTrackIndex;
 
-      final seekApplied = await _playerMutationBarrier.run<bool>(lease, () async {
-        await _player.seek(relativeTrackPosition, index: newTrackIndex);
-        return true;
-      });
-      if (seekApplied != true) {
+      final seekResult = await _playerMutationBarrier.run<SeekConfirmationResult>(
+        lease,
+        () => _player.seekConfirmed(relativeTrackPosition, index: newTrackIndex),
+      );
+      if (seekResult == null || !_isSeekOwnershipCurrent(lease, seekGeneration, mediaKey)) {
         return;
       }
-      _currentTrackIndex = newTrackIndex;
-      navigationSucceeded = true;
+
+      Duration settledPosition;
+      if (seekResult.status == SeekConfirmationStatus.reached) {
+        final actualPosition = seekResult.actualPosition;
+        final actualIndex = seekResult.actualIndex;
+        if (actualPosition == null || actualIndex == null || actualIndex < 0 || actualIndex >= media.tracks.length) {
+          logger(
+            'Confirmed seek returned reached without a valid actual position/index.',
+            tag: 'AudioHandler',
+            level: InfoLevel.warning,
+          );
+          return;
+        }
+
+        final actualAbsolutePosition = media.startDurationForTrack(actualIndex) + actualPosition;
+        settledPosition = _clampDuration(actualAbsolutePosition, Duration.zero, media.totalDuration);
+        _currentTrackIndex = actualIndex;
+        navigationSucceeded = settledPosition != fromPosition;
+
+        if (authoritativeProgressCorrection && _isSeekOwnershipCurrent(lease, seekGeneration, mediaKey)) {
+          unawaited(_syncService.correctAuthoritativePosition(settledPosition));
+        }
+      } else if (seekResult.status == SeekConfirmationStatus.unsupported) {
+        // The compatibility implementation already performed the legacy seek.
+        // Preserve existing UX, but do not treat the optimistic Dart position
+        // as authoritative for progress synchronization.
+        _currentTrackIndex = newTrackIndex;
+        navigationSucceeded = true;
+        settledPosition = boundedPosition;
+
+        if (trackChanged && !kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+          final correctionReady = await _waitForDesktopCorrectiveSeek(
+            lease: lease,
+            seekGeneration: seekGeneration,
+            mediaKey: mediaKey,
+            trackIndex: newTrackIndex,
+          );
+          if (!correctionReady) {
+            return;
+          }
+          await _playerMutationBarrier.run<void>(lease, () => _player.seek(relativeTrackPosition, index: newTrackIndex));
+          if (!_isSeekOwnershipCurrent(lease, seekGeneration, mediaKey)) {
+            return;
+          }
+        }
+      } else {
+        final level = seekResult.status == SeekConfirmationStatus.superseded ? InfoLevel.debug : InfoLevel.warning;
+        logger(
+          'Seek was not authoritatively reached: ${seekResult.status}${seekResult.errorMessage == null ? '' : ' (${seekResult.errorMessage})'}',
+          tag: 'AudioHandler',
+          level: level,
+        );
+        return;
+      }
+
       if (!_isSeekOwnershipCurrent(lease, seekGeneration, mediaKey)) {
         return;
       }
-
-      if (trackChanged && !kIsWeb && (Platform.isWindows || Platform.isLinux)) {
-        final correctionReady = await _waitForDesktopCorrectiveSeek(
-          lease: lease,
-          seekGeneration: seekGeneration,
-          mediaKey: mediaKey,
-          trackIndex: newTrackIndex,
-        );
-        if (!correctionReady) {
-          return;
-        }
-        await _playerMutationBarrier.run<void>(lease, () => _player.seek(relativeTrackPosition, index: newTrackIndex));
-        if (!_isSeekOwnershipCurrent(lease, seekGeneration, mediaKey)) {
-          return;
-        }
-      }
-
-      _refreshChapterNotificationState(customPosition: boundedPosition);
-      _updateMediaItemForChapterNotification(customPosition: boundedPosition);
+      _refreshChapterNotificationState(customPosition: settledPosition);
+      _updateMediaItemForChapterNotification(customPosition: settledPosition);
       unawaited(_updatePlaybackState());
       if (recordManualSeek) {
-        _recordManualSeekIfNeeded(fromPosition, boundedPosition);
+        _recordManualSeekIfNeeded(fromPosition, settledPosition);
       }
     } finally {
       if (operationId != null) {
@@ -1989,12 +2040,18 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     }
   }
 
-  Future<void> _seekInternal(Duration position, {bool userNavigation = false, PlayerMutationLease? mutationLease}) {
+  Future<void> _seekInternal(
+    Duration position, {
+    bool userNavigation = false,
+    bool authoritativeProgressCorrection = false,
+    PlayerMutationLease? mutationLease,
+  }) {
     return _seekResolved(
       position,
       positionIsAbsolute: true,
       userNavigation: userNavigation,
       recordManualSeek: false,
+      authoritativeProgressCorrection: authoritativeProgressCorrection || userNavigation,
       mutationLease: mutationLease,
     );
   }

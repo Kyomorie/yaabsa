@@ -12,6 +12,80 @@ import 'package:yaabsa/util/setting_key.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
+typedef PlaybackSyncDispatch =
+    Future<bool> Function({required Duration position, required double listenedTime, required String sessionId});
+
+/// Serializes progress writes and gives a backend-confirmed position authority
+/// over older in-flight writes without discarding their listening-time delta.
+class PlaybackSyncAuthorityQueue {
+  Future<void> _tail = Future<void>.value();
+  int _revision = 0;
+  Duration? _authoritativePosition;
+  String? _authoritativeSessionId;
+
+  int get revision => _revision;
+
+  Future<bool> enqueue({
+    required Duration position,
+    required double listenedTime,
+    required String sessionId,
+    required PlaybackSyncDispatch dispatch,
+  }) {
+    return _enqueue(
+      position: position,
+      listenedTime: listenedTime,
+      sessionId: sessionId,
+      capturedRevision: _revision,
+      dispatch: dispatch,
+    );
+  }
+
+  Future<bool> correct({
+    required Duration position,
+    required String sessionId,
+    required PlaybackSyncDispatch dispatch,
+  }) {
+    final correctionRevision = ++_revision;
+    _authoritativePosition = position;
+    _authoritativeSessionId = sessionId;
+    return _enqueue(
+      position: position,
+      listenedTime: 0,
+      sessionId: sessionId,
+      capturedRevision: correctionRevision,
+      dispatch: dispatch,
+    );
+  }
+
+  Future<bool> _enqueue({
+    required Duration position,
+    required double listenedTime,
+    required String sessionId,
+    required int capturedRevision,
+    required PlaybackSyncDispatch dispatch,
+  }) async {
+    var result = false;
+    final operation = _tail.catchError((_) {}).then((_) async {
+      result = await dispatch(position: position, listenedTime: listenedTime, sessionId: sessionId);
+
+      final latestPosition = _authoritativePosition;
+      if (capturedRevision < _revision &&
+          latestPosition != null &&
+          _authoritativeSessionId == sessionId) {
+        final correctionResult = await dispatch(position: latestPosition, listenedTime: 0, sessionId: sessionId);
+        result = result && correctionResult;
+      }
+    });
+    _tail = operation;
+    await operation;
+    return result;
+  }
+
+  Future<void> drain() async {
+    await _tail.catchError((_) {});
+  }
+}
+
 /// Periodically syncs the open playback session while audio is playing and
 /// flushes a final sync when playback pauses or stops. Player-agnostic: it
 /// only needs a control-state stream and a way to read the current position
@@ -19,9 +93,9 @@ import 'package:just_audio/just_audio.dart';
 class PlaybackSyncService {
   final ProviderContainer _ref;
   final Duration Function() _position;
+  final PlaybackSyncAuthorityQueue _authorityQueue = PlaybackSyncAuthorityQueue();
   Timer? _syncTimer;
   StreamSubscription<PlayerState>? _playerStateSubscription;
-  Future<void> _syncQueue = Future<void>.value();
   int? _effectiveSyncIntervalSeconds;
 
   static const int _minimumSyncIntervalSeconds = 5;
@@ -29,6 +103,9 @@ class PlaybackSyncService {
 
   DateTime? _currentSegmentStartTime;
   bool _hasPlaybackSinceLastFlush = false;
+  bool _effectivelyPlaying = false;
+  Duration? _pausedAuthoritativePosition;
+  String? _pausedAuthoritativeSessionId;
 
   PlaybackSyncService(this._ref, {required Stream<PlayerState> playerStateStream, required this._position}) {
     _currentSegmentStartTime = null;
@@ -37,8 +114,11 @@ class PlaybackSyncService {
 
     _playerStateSubscription = playerStateStream.listen((playerState) {
       final bool isEffectivelyPlaying = playerState.playing && playerState.processingState == ProcessingState.ready;
+      _effectivelyPlaying = isEffectivelyPlaying;
 
       if (isEffectivelyPlaying) {
+        _pausedAuthoritativePosition = null;
+        _pausedAuthoritativeSessionId = null;
         if (_ref.read(sessionRepositoryProvider).currentSession != null) {
           _hasPlaybackSinceLastFlush = true;
         }
@@ -86,6 +166,36 @@ class PlaybackSyncService {
     logger('Playback sync timer running every ${intervalSeconds}s', tag: 'PlaybackSyncService', level: InfoLevel.debug);
   }
 
+  Future<bool> _dispatchSync({
+    required Duration position,
+    required double listenedTime,
+    required String sessionId,
+    required bool canReachServer,
+  }) async {
+    final repository = _ref.read(sessionRepositoryProvider);
+    if (repository.currentSession?.id != sessionId) {
+      return false;
+    }
+
+    return repository.syncOpenSession(
+      position.inMicroseconds / Duration.microsecondsPerSecond,
+      listenedTime,
+      canReachServer: canReachServer,
+      expectedSessionId: sessionId,
+    );
+  }
+
+  PlaybackSyncDispatch _dispatcher(bool canReachServer) {
+    return ({required Duration position, required double listenedTime, required String sessionId}) {
+      return _dispatchSync(
+        position: position,
+        listenedTime: listenedTime,
+        sessionId: sessionId,
+        canReachServer: canReachServer,
+      );
+    };
+  }
+
   Future<bool> _enqueueSync({Duration? positionOverride, bool force = false, String? expectedSessionId}) async {
     final repository = _ref.read(sessionRepositoryProvider);
     final sessionId = expectedSessionId ?? repository.currentSession?.id;
@@ -93,8 +203,10 @@ class PlaybackSyncService {
       return false;
     }
 
-    final Duration currentPositionDuration = positionOverride ?? _position();
-    final double currentPositionSeconds = currentPositionDuration.inMicroseconds / Duration.microsecondsPerSecond;
+    final heldPosition = !_effectivelyPlaying && _pausedAuthoritativeSessionId == sessionId
+        ? _pausedAuthoritativePosition
+        : null;
+    final Duration currentPositionDuration = heldPosition ?? positionOverride ?? _position();
     double listenedTime = 0;
 
     final segmentStartTime = _currentSegmentStartTime;
@@ -120,19 +232,35 @@ class PlaybackSyncService {
     }
 
     final bool canReachServer = _ref.read(serverReachabilityProvider);
-    var result = false;
+    return _authorityQueue.enqueue(
+      position: currentPositionDuration,
+      listenedTime: listenedTime,
+      sessionId: sessionId,
+      dispatch: _dispatcher(canReachServer),
+    );
+  }
 
-    _syncQueue = _syncQueue.catchError((_) {}).then((_) async {
-      result = await repository.syncOpenSession(
-        currentPositionSeconds,
-        listenedTime,
-        canReachServer: canReachServer,
-        expectedSessionId: sessionId,
-      );
-    });
+  /// Enqueues a zero-listening-time correction only after the player backend
+  /// has reported where a seek actually landed. Older writes may still deliver
+  /// their listening delta, but they are followed by the newest correction.
+  Future<bool> correctAuthoritativePosition(Duration position, {String? expectedSessionId}) {
+    final repository = _ref.read(sessionRepositoryProvider);
+    final sessionId = expectedSessionId ?? repository.currentSession?.id;
+    if (sessionId == null || repository.currentSession?.id != sessionId) {
+      return Future<bool>.value(false);
+    }
 
-    await _syncQueue;
-    return result;
+    if (!_effectivelyPlaying) {
+      _pausedAuthoritativePosition = position;
+      _pausedAuthoritativeSessionId = sessionId;
+    }
+
+    final bool canReachServer = _ref.read(serverReachabilityProvider);
+    return _authorityQueue.correct(
+      position: position,
+      sessionId: sessionId,
+      dispatch: _dispatcher(canReachServer),
+    );
   }
 
   Future<bool> _stopSync({Duration? positionOverride, bool sessionClosing = false, String? expectedSessionId}) async {
@@ -175,7 +303,10 @@ class PlaybackSyncService {
     _syncTimer = null;
     await _playerStateSubscription?.cancel();
     _playerStateSubscription = null;
+    await _authorityQueue.drain();
     _currentSegmentStartTime = null;
     _hasPlaybackSinceLastFlush = false;
+    _pausedAuthoritativePosition = null;
+    _pausedAuthoritativeSessionId = null;
   }
 }
