@@ -1,0 +1,160 @@
+name: YAABSA P3 queued skip ownership v2
+
+on:
+  push:
+    branches:
+      - automation/p3-skip-ownership
+    paths:
+      - .github/workflows/p3-skip-ownership-v2.yml
+
+permissions: {}
+
+env:
+  EXPECTED_YAABSA_HEAD: 7037b99d5e2510325cb15c58167add84f39b3340
+  JUST_AUDIO_SHA: f80ad2ee8a73e5e32a82df20c98666385c6b2aca
+  MEDIA_KIT_SHA: c1a5a15046ab565613c2d1e8736152aef9b6348c
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout integration control
+        uses: actions/checkout@v6
+        with:
+          ref: automation/p3-skip-ownership
+          path: control
+          fetch-depth: 4
+          submodules: false
+
+      - name: Checkout exact YAABSA feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+          path: work
+          fetch-depth: 12
+          submodules: false
+
+      - name: Verify exact target head and backend pins
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_YAABSA_HEAD" || {
+            echo "Unexpected YAABSA head: $actual" >&2
+            exit 1
+          }
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          test "$(git -C packages/just_audio rev-parse HEAD)" = "$JUST_AUDIO_SHA"
+          test "$(git -C packages/just_audio_media_kit rev-parse HEAD)" = "$MEDIA_KIT_SHA"
+
+      - name: Apply P3 queued skip ownership hardening
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 ../control/.github/p3_skip_ownership.py
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        working-directory: work
+        shell: bash
+        run: flutter pub get
+
+      - name: Format and enforce exact source scope
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format lib/util/audio_handler/bg_audio_handler.dart
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="lib/util/audio_handler/bg_audio_handler.dart"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P3 source paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Re-verify P3 source contracts after formatting
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          PYTHONPATH=../control/.github python3 - <<'PY'
+          from pathlib import Path
+          from p3_skip_ownership import verify
+          verify(Path('lib/util/audio_handler/bg_audio_handler.dart').read_text())
+          PY
+
+      - name: Analyze P3 surface
+        working-directory: work
+        shell: bash
+        run: |
+          flutter analyze \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/player_mutation_barrier.dart \
+            --no-fatal-warnings --no-fatal-infos
+
+      - name: Run focused race and sleep-timer tests
+        working-directory: work
+        shell: bash
+        run: |
+          flutter test \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/user_seek_navigation_ledger_test.dart \
+            test/util/playback_start_attempt_test.dart \
+            test/util/sleep_timer_completion_gate_test.dart \
+            test/util/sleep_timer_target_test.dart
+
+      - name: Restore dependency side effects and recheck scope
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -- pubspec.lock 2>/dev/null || true
+          rm -rf .dart_tool
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="lib/util/audio_handler/bg_audio_handler.dart"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P3 paths after validation:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Commit P3 source locally
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/util/audio_handler/bg_audio_handler.dart
+          git commit -m 'fix: keep queued chapter skips bound to original lease'
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_YAABSA_HEAD"
+          actual="$(git diff --name-only HEAD^ HEAD)"
+          test "$actual" = 'lib/util/audio_handler/bg_audio_handler.dart'
+          test -z "$(git status --porcelain)"
+
+      - name: Final exact-head gate and fast-forward push
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin refs/heads/feat/chapter-end-sleep-timer | cut -f1)"
+          test "$remote_head" = "$EXPECTED_YAABSA_HEAD" || {
+            echo "YAABSA feature branch moved externally: $remote_head" >&2
+            exit 1
+          }
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_YAABSA_HEAD"
+          git diff --check "$EXPECTED_YAABSA_HEAD" HEAD
+          git push origin HEAD:refs/heads/feat/chapter-end-sleep-timer
