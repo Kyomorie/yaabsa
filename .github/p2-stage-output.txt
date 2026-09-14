@@ -1,0 +1,40 @@
+=== SOURCE CLEAN GATE ===
+
+=== PIN BACKENDS ===
+just_audio_fetch=0
+just_audio_checkout=0
+media_kit_fetch=0
+media_kit_checkout=0
+=== APPLY HELPER ===
+helper=0
+=== FORMAT ===
+Warning: Package resolution error when reading "analysis_options.yaml" file for "lib/database/app_database.dart":
+Failed to resolve package URI "package:flutter_lints/flutter.yaml" in include at "/home/runner/work/yaabsa/yaabsa/analysis_options.yaml".
+Formatted lib/database/app_database.dart
+Warning: Package resolution error when reading "analysis_options.yaml" file for "lib/provider/core/server_status_provider.dart":
+Failed to resolve package URI "package:flutter_lints/flutter.yaml" in include at "/home/runner/work/yaabsa/yaabsa/analysis_options.yaml".
+Formatted lib/provider/core/server_status_provider.dart
+Warning: Package resolution error when reading "analysis_options.yaml" file for "lib/util/audio_handler/bg_audio_handler.dart":
+Failed to resolve package URI "package:flutter_lints/flutter.yaml" in include at "/home/runner/work/yaabsa/yaabsa/analysis_options.yaml".
+Formatted lib/util/audio_handler/bg_audio_handler.dart
+Formatted lib/util/audio_handler/bg_audio_handler_resume.dart
+Formatted lib/util/audio_handler/playback_sync_service.dart
+Warning: Package resolution error when reading "analysis_options.yaml" file for "test/database/stored_sync_ack_test.dart":
+Failed to resolve package URI "package:flutter_lints/flutter.yaml" in include at "/home/runner/work/yaabsa/yaabsa/analysis_options.yaml".
+Formatted test/database/stored_sync_ack_test.dart
+Warning: Package resolution error when reading "analysis_options.yaml" file for "test/util/playback_sync_authority_queue_test.dart":
+Failed to resolve package URI "package:flutter_lints/flutter.yaml" in include at "/home/runner/work/yaabsa/yaabsa/analysis_options.yaml".
+Formatted test/util/playback_sync_authority_queue_test.dart
+Formatted 7 files (7 changed) in 0.12 seconds.
+format=0
+=== DIFF CHECK ===
+diff_check=0
+=== CHANGED SOURCE PATHS ===
+lib/database/app_database.dart
+lib/provider/core/server_status_provider.dart
+lib/util/audio_handler/bg_audio_handler.dart
+lib/util/audio_handler/bg_audio_handler_resume.dart
+lib/util/audio_handler/playback_sync_service.dart
+packages/just_audio
+packages/just_audio_media_kit
+overall=0
