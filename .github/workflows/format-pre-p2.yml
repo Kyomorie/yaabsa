@@ -1,0 +1,30 @@
+name: Pre-P2 format baseline
+
+on:
+  push:
+    branches:
+      - automation/format-pre-p2-v1
+    paths:
+      - '.github/workflows/format-pre-p2.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  format-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: automation/format-pre-p2-v1
+          fetch-depth: 1
+          submodules: recursive
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Check lib formatting
+        run: dart format --set-exit-if-changed lib
