@@ -24,16 +24,15 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       return true;
     }
 
-    await _seekInternal(targetPosition, mutationLease: mutationLease);
+    await _seekInternal(
+      targetPosition,
+      mutationLease: mutationLease,
+      authoritativeProgressCorrection: true,
+    );
     if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
       return false;
     }
 
-    try {
-      await _syncService.flush(positionOverride: targetPosition);
-    } catch (e) {
-      logger('Failed to sync sleep timer rewind after expiry: $e', tag: 'AudioHandler', level: InfoLevel.warning);
-    }
 
     if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
       return false;
