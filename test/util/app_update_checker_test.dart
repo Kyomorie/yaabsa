@@ -10,11 +10,7 @@ void main() {
   group('AppUpdateEligibility', () {
     test('allows Linux without a direct-distribution marker', () {
       expect(
-        AppUpdateEligibility.isEligible(
-          isWeb: false,
-          platform: TargetPlatform.linux,
-          isDirectDistribution: false,
-        ),
+        AppUpdateEligibility.isEligible(isWeb: false, platform: TargetPlatform.linux, isDirectDistribution: false),
         isTrue,
       );
     });
@@ -61,12 +57,7 @@ void main() {
     test('rejects Web and unsupported desktop/mobile platforms', () {
       for (final platform in TargetPlatform.values) {
         expect(
-          AppUpdateEligibility.isEligible(
-            isWeb: true,
-            platform: platform,
-            isDirectDistribution: true,
-            flavor: 'auto',
-          ),
+          AppUpdateEligibility.isEligible(isWeb: true, platform: platform, isDirectDistribution: true, flavor: 'auto'),
           isFalse,
         );
       }
@@ -78,12 +69,7 @@ void main() {
         TargetPlatform.fuchsia,
       ]) {
         expect(
-          AppUpdateEligibility.isEligible(
-            isWeb: false,
-            platform: platform,
-            isDirectDistribution: true,
-            flavor: 'auto',
-          ),
+          AppUpdateEligibility.isEligible(isWeb: false, platform: platform, isDirectDistribution: true, flavor: 'auto'),
           isFalse,
         );
       }
@@ -98,26 +84,11 @@ void main() {
     });
 
     test('rejects anything outside the strict version contract', () {
-      for (final remote in [
-        '1.12.0',
-        'V1.12.0',
-        'v1.12',
-        'v1.12.0-beta.1',
-        'v1.12.0+1',
-        ' v1.12.0',
-        'v01.12.0',
-      ]) {
+      for (final remote in ['1.12.0', 'V1.12.0', 'v1.12', 'v1.12.0-beta.1', 'v1.12.0+1', ' v1.12.0', 'v01.12.0']) {
         expect(AppUpdateChecker.isUpdateAvailable('1.11.0', remote), isFalse, reason: remote);
       }
 
-      for (final installed in [
-        'v1.11.0',
-        '1.11',
-        '1.11.0+138',
-        '1.11.0-beta.1',
-        ' 1.11.0',
-        '01.11.0',
-      ]) {
+      for (final installed in ['v1.11.0', '1.11', '1.11.0+138', '1.11.0-beta.1', ' 1.11.0', '01.11.0']) {
         expect(AppUpdateChecker.isUpdateAvailable(installed, 'v1.12.0'), isFalse, reason: installed);
       }
     });
@@ -191,14 +162,8 @@ void main() {
     });
 
     test('fails closed when the request exceeds the bounded timeout', () async {
-      final adapter = _RecordingAdapter(
-        body: '{"tag_name":"v1.12.0"}',
-        delay: const Duration(milliseconds: 100),
-      );
-      final checker = AppUpdateChecker(
-        adapterFactory: () => adapter,
-        timeout: const Duration(milliseconds: 10),
-      );
+      final adapter = _RecordingAdapter(body: '{"tag_name":"v1.12.0"}', delay: const Duration(milliseconds: 100));
+      final checker = AppUpdateChecker(adapterFactory: () => adapter, timeout: const Duration(milliseconds: 10));
 
       final candidate = await checker.check(currentVersion: '1.11.0', hasConsent: () async => true);
 
@@ -225,10 +190,7 @@ void main() {
     });
 
     test('concurrent triggers still dispatch at most once', () async {
-      final adapter = _RecordingAdapter(
-        body: '{"tag_name":"v1.12.0"}',
-        delay: const Duration(milliseconds: 20),
-      );
+      final adapter = _RecordingAdapter(body: '{"tag_name":"v1.12.0"}', delay: const Duration(milliseconds: 20));
       final coordinator = AppUpdateCoordinator(
         checker: AppUpdateChecker(adapterFactory: () => adapter),
         packageInfoLoader: () async => _packageInfo('1.11.0'),
@@ -356,12 +318,7 @@ void main() {
 }
 
 PackageInfo _packageInfo(String version) {
-  return PackageInfo(
-    appName: 'Yaabsa',
-    packageName: 'de.vito0912.yaabsa',
-    version: version,
-    buildNumber: '138',
-  );
+  return PackageInfo(appName: 'Yaabsa', packageName: 'de.vito0912.yaabsa', version: version, buildNumber: '138');
 }
 
 class _RecordingAdapter implements HttpClientAdapter {
