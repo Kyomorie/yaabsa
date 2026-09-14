@@ -1,0 +1,133 @@
+name: Final test formatting and full suite v1
+
+on:
+  push:
+    branches:
+      - automation/final-format-and-fulltest-v1
+    paths:
+      - .github/workflows/final-format-and-fulltest-v1.yml
+
+permissions: {}
+
+jobs:
+  validate-and-format:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout exact trigger commit
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Gate exact PR source parent
+        shell: bash
+        run: |
+          expected='94320c54fe8dcab6474be757515eb97e1f3afadf'
+          actual="$(git rev-parse HEAD^)"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "Unexpected validation parent: $actual" >&2
+            exit 1
+          fi
+          changed="$(git diff --name-only HEAD^ HEAD)"
+          if [[ "$changed" != '.github/workflows/final-format-and-fulltest-v1.yml' ]]; then
+            echo 'Trigger commit changed unexpected paths:' >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          fi
+
+      - name: Gate backend pins
+        shell: bash
+        run: |
+          test "$(git -C packages/just_audio rev-parse HEAD)" = 'd44edc6103c3238bca3342e70e09f0cc48dae670'
+          test "$(git -C packages/just_audio_media_kit rev-parse HEAD)" = '1e4a0c36d8c9881cb55ed42b2c970dabde169c7f'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies without lock drift
+        shell: bash
+        run: |
+          cp pubspec.lock /tmp/pubspec.lock.before
+          flutter pub get
+          cmp /tmp/pubspec.lock.before pubspec.lock
+
+      - name: Format only the four failing tests
+        shell: bash
+        run: |
+          dart format \
+            test/util/playback_sync_authority_queue_test.dart \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/sleep_timer_target_test.dart \
+            test/database/stored_sync_ack_test.dart
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            test/database/stored_sync_ack_test.dart \
+            test/util/playback_sync_authority_queue_test.dart \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/sleep_timer_target_test.dart | sort)"
+          if [[ "$actual" != "$expected" ]]; then
+            echo 'Formatter changed an unexpected path or failed to change an expected one:' >&2
+            printf 'actual:\n%s\nexpected:\n%s\n' "$actual" "$expected" >&2
+            exit 1
+          fi
+
+      - name: Verify application formatting still clean
+        shell: bash
+        run: dart format --output=none --set-exit-if-changed lib
+
+      - name: Analyze all sources
+        shell: bash
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run full Flutter test suite
+        shell: bash
+        run: flutter test
+
+      - name: Commit validated test formatting
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            test/util/playback_sync_authority_queue_test.dart \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/sleep_timer_target_test.dart \
+            test/database/stored_sync_ack_test.dart
+          actual="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n' \
+            test/database/stored_sync_ack_test.dart \
+            test/util/playback_sync_authority_queue_test.dart \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/sleep_timer_target_test.dart | sort)"
+          if [[ "$actual" != "$expected" ]]; then
+            echo 'Unexpected staged formatter scope.' >&2
+            exit 1
+          fi
+          git commit -m 'style: format final sleep timer tests'
+
+      - name: Push validated formatter commit
+        shell: bash
+        run: |
+          trigger='${{ github.sha }}'
+          if [[ "$(git rev-parse HEAD^)" != "$trigger" ]]; then
+            echo 'Validated formatter commit has unexpected parent.' >&2
+            exit 1
+          fi
+          remote_head="$(git ls-remote origin refs/heads/automation/final-format-and-fulltest-v1 | cut -f1)"
+          if [[ "$remote_head" != "$trigger" ]]; then
+            echo "Validation branch moved externally: $remote_head" >&2
+            exit 1
+          fi
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo 'Working tree dirty after formatter commit.' >&2
+            git status --short >&2
+            exit 1
+          fi
+          git push origin HEAD:refs/heads/automation/final-format-and-fulltest-v1
