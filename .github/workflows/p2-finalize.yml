@@ -23,12 +23,13 @@ jobs:
       - name: Gate exact bootstrap provenance
         shell: bash
         run: |
-          test "$(git rev-parse HEAD^)" = "ec5fc0470010bf2f3b84b1da5a7989393a95df46"
+          test "$(git merge-base HEAD ec5fc0470010bf2f3b84b1da5a7989393a95df46)" = "ec5fc0470010bf2f3b84b1da5a7989393a95df46"
           mapfile -t prefiles < <(git diff --name-only ec5fc0470010bf2f3b84b1da5a7989393a95df46...HEAD | sort)
           printf '%s\n' "${prefiles[@]}"
           test "${#prefiles[@]}" -eq 2
           test "${prefiles[0]}" = ".github/scripts/apply-p2-progress-authority.py"
           test "${prefiles[1]}" = ".github/workflows/p2-finalize.yml"
+          test "$(git hash-object .github/scripts/apply-p2-progress-authority.py)" = "438e42b12632777378d67b2d0e790d71f4560f49"
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -76,13 +77,25 @@ jobs:
       - name: Verify P2 contracts
         shell: bash
         run: |
-          grep -q 'seekConfirmed(relativeTrackPosition' lib/util/audio_handler/bg_audio_handler.dart
-          grep -q 'SeekConfirmationStatus.reached' lib/util/audio_handler/bg_audio_handler.dart
-          grep -q 'correctAuthoritativePosition' lib/util/audio_handler/playback_sync_service.dart
-          grep -q 'listenedTime: 0' lib/util/audio_handler/playback_sync_service.dart
-          grep -q 'acknowledgeReplayedSync' lib/database/app_database.dart
-          grep -q 'acknowledgeReplayedSync' lib/provider/core/server_status_provider.dart
-          ! grep -q 'flush(positionOverride: targetPosition)' lib/util/audio_handler/bg_audio_handler_resume.dart
+          python3 - <<'PY'
+          from pathlib import Path
+
+          handler = Path('lib/util/audio_handler/bg_audio_handler.dart').read_text()
+          sync = Path('lib/util/audio_handler/playback_sync_service.dart').read_text()
+          db = Path('lib/database/app_database.dart').read_text()
+          status = Path('lib/provider/core/server_status_provider.dart').read_text()
+          resume = Path('lib/util/audio_handler/bg_audio_handler_resume.dart').read_text()
+
+          assert 'seekConfirmed' in handler
+          assert 'relativeTrackPosition' in handler
+          assert 'seekResult.status == SeekConfirmationStatus.reached' in handler
+          assert 'correctAuthoritativePosition(settledPosition)' in handler
+          assert 'PlaybackSyncAuthorityQueue' in sync
+          assert 'listenedTime: 0' in sync
+          assert 'acknowledgeReplayedSync' in db
+          assert 'acknowledgeReplayedSync' in status
+          assert 'flush(positionOverride: targetPosition)' not in resume
+          PY
       - name: Resolve dependencies without lock drift
         shell: bash
         run: |
