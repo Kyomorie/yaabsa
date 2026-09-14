@@ -1,0 +1,30 @@
+name: Format baseline probe
+
+on:
+  push:
+    branches:
+      - automation/format-baseline-v1
+    paths:
+      - '.github/workflows/format-baseline.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  format-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: automation/format-baseline-v1
+          fetch-depth: 1
+          submodules: recursive
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Check lib formatting
+        run: dart format --set-exit-if-changed lib
