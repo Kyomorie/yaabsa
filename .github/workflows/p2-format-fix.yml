@@ -1,0 +1,78 @@
+name: P2 formatter fix
+
+on:
+  push:
+    branches:
+      - automation/p2-format-fix-v1
+    paths:
+      - '.github/workflows/p2-format-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format-validate-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: automation/p2-format-fix-v1
+          fetch-depth: 0
+          submodules: recursive
+      - name: Gate exact bootstrap provenance
+        shell: bash
+        run: |
+          test "$(git merge-base HEAD 11c5a421da33b0dda2bc782a0f60fd7b78ccf3f8)" = "11c5a421da33b0dda2bc782a0f60fd7b78ccf3f8"
+          mapfile -t prefiles < <(git diff --name-only 11c5a421da33b0dda2bc782a0f60fd7b78ccf3f8...HEAD | sort)
+          printf '%s\n' "${prefiles[@]}"
+          test "${#prefiles[@]}" -eq 1
+          test "${prefiles[0]}" = ".github/workflows/p2-format-fix.yml"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Resolve dependencies without lock drift
+        shell: bash
+        run: |
+          cp pubspec.lock /tmp/p2-format-pubspec.lock
+          flutter pub get
+          cmp -s pubspec.lock /tmp/p2-format-pubspec.lock
+      - name: Format only P2-touched failing files
+        shell: bash
+        run: |
+          dart format \
+            lib/database/app_database.dart \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_resume.dart \
+            lib/util/audio_handler/playback_sync_service.dart
+          git diff --check
+          dart format --set-exit-if-changed lib
+          mapfile -t changed < <(git diff --name-only 11c5a421da33b0dda2bc782a0f60fd7b78ccf3f8 -- . ':!.github' | sort)
+          printf '%s\n' "${changed[@]}"
+          expected=(
+            lib/database/app_database.dart
+            lib/util/audio_handler/bg_audio_handler.dart
+            lib/util/audio_handler/bg_audio_handler_resume.dart
+            lib/util/audio_handler/playback_sync_service.dart
+          )
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Run P2 and util regression tests
+        run: flutter test test/util test/database/stored_sync_ack_test.dart
+      - name: Commit exact formatter result
+        shell: bash
+        run: |
+          test "$(git ls-remote origin refs/heads/automation/p2-format-fix-v1 | awk '{print $1}')" = "${{ github.sha }}"
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/database/app_database.dart \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_resume.dart \
+            lib/util/audio_handler/playback_sync_service.dart
+          git commit -m "style: format P2 progress authority changes"
+          git push origin HEAD:automation/p2-format-fix-v1
