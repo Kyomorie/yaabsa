@@ -1,9 +1,15 @@
 part of 'bg_audio_handler.dart';
 
 extension _BGAudioHandlerResume on BGAudioHandler {
-  Future<void> _applySleepTimerAutoRewindNowInternal() async {
+  Future<bool> _applySleepTimerAutoRewindNowInternal({
+    PlayerMutationLease? mutationLease,
+  }) async {
     if (_currentMediaItem == null) {
-      return;
+      return false;
+    }
+    if (mutationLease != null &&
+        !_playerMutationBarrier.isCurrent(mutationLease)) {
+      return false;
     }
 
     final rewindMinutes = _ref
@@ -11,27 +17,24 @@ extension _BGAudioHandlerResume on BGAudioHandler {
         .getGlobalSetting<int>(SettingKeys.sleepTimerAutoRewindMinutes);
 
     if (rewindMinutes <= 0) {
-      return;
+      return true;
     }
 
     final rewindBy = Duration(minutes: rewindMinutes);
     final currentPosition = position;
     final targetPosition = _rewindPosition(currentPosition, rewindBy);
     if (targetPosition >= currentPosition) {
-      return;
+      return true;
     }
 
-    await _seekInternal(targetPosition);
-
-    final currentPositionSeconds = targetPosition.inMicroseconds / Duration.microsecondsPerSecond;
-    final canReachServer = _ref.read(serverReachabilityProvider);
-
-    try {
-      await _ref
-          .read(sessionRepositoryProvider)
-          .syncOpenSession(currentPositionSeconds, 0.3, canReachServer: canReachServer);
-    } catch (e) {
-      logger('Failed to sync sleep timer rewind before stop: $e', tag: 'AudioHandler', level: InfoLevel.warning);
+    await _seekInternal(
+      targetPosition,
+      mutationLease: mutationLease,
+      authoritativeProgressCorrection: true,
+    );
+    if (mutationLease != null &&
+        !_playerMutationBarrier.isCurrent(mutationLease)) {
+      return false;
     }
 
     logger(
@@ -39,6 +42,7 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       tag: 'AudioHandler',
       level: InfoLevel.debug,
     );
+    return true;
   }
 
   Future<bool> _playLastPlayedInternal({
@@ -54,23 +58,51 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       }
     }
 
+    if (_currentMediaItem != null) {
+      return _performPlayLastPlayed(
+        resumeCurrentIfPaused: resumeCurrentIfPaused,
+      );
+    }
+
     final activePlayback = _lastPlayedPlaybackFuture;
-    if (activePlayback != null) {
-      logger('Joining active last played playback request.', tag: 'AudioHandler', level: InfoLevel.debug);
+    final activeLease = _lastPlayedPlaybackLease;
+    final activeGeneration = _lastPlayedPlaybackGeneration;
+    if (activePlayback != null &&
+        activeLease != null &&
+        activeGeneration == _playbackContextGeneration &&
+        _playerMutationBarrier.isCurrent(activeLease)) {
+      logger(
+        'Joining active last played playback request.',
+        tag: 'AudioHandler',
+        level: InfoLevel.debug,
+      );
       return activePlayback;
+    }
+    if (activePlayback != null) {
+      logger(
+        'Superseding stale last played playback request.',
+        tag: 'AudioHandler',
+        level: InfoLevel.debug,
+      );
     }
 
     late final Future<bool> playback;
-    playback = _performPlayLastPlayed(resumeCurrentIfPaused: resumeCurrentIfPaused).whenComplete(() {
-      if (identical(_lastPlayedPlaybackFuture, playback)) {
-        _lastPlayedPlaybackFuture = null;
-      }
-    });
+    playback =
+        _performPlayLastPlayed(resumeCurrentIfPaused: resumeCurrentIfPaused)
+            .whenComplete(() {
+              if (identical(_lastPlayedPlaybackFuture, playback)) {
+                _lastPlayedPlaybackFuture = null;
+                _lastPlayedPlaybackLease = null;
+                _lastPlayedPlaybackGeneration = null;
+              }
+            });
     _lastPlayedPlaybackFuture = playback;
     return playback;
   }
 
-  Future<bool> _performPlayLastPlayed({required bool resumeCurrentIfPaused}) async {
+  Future<bool> _performPlayLastPlayed({
+    required bool resumeCurrentIfPaused,
+  }) async {
     if (_currentMediaItem != null) {
       if (resumeCurrentIfPaused && !playerControlState.playing) {
         await play();
@@ -79,21 +111,57 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       return false;
     }
 
-    final canPreserveRestoredManualQueue = queueList.isNotEmpty && queueList.every((entry) => !entry.autoQueued);
+    final canPreserveRestoredManualQueue =
+        queueList.isNotEmpty && queueList.every((entry) => !entry.autoQueued);
     if (playerControlState.playing ||
         _queueTransitionLoading ||
         (queueList.isNotEmpty && !canPreserveRestoredManualQueue)) {
       return false;
     }
 
-    _setQueueTransitionLoading(true);
+    final requestGeneration = ++_playbackContextGeneration;
+    final requestLease = _playerMutationBarrier.acquire();
+    _lastPlayedPlaybackLease = requestLease;
+    _lastPlayedPlaybackGeneration = requestGeneration;
+    bool requestIsCurrent() =>
+        !_isDisposing &&
+        requestGeneration == _playbackContextGeneration &&
+        _playerMutationBarrier.isCurrent(requestLease);
+
+    _setOwnedQueueTransitionLoading(requestLease);
     await _updatePlaybackState();
+    if (!requestIsCurrent()) {
+      _abandonQueueTransitionLoadingIfOwned(
+        requestLease,
+        emitMediaWhenEmpty: true,
+      );
+      return false;
+    }
 
     try {
       final activeUserId = await _readActiveUserId();
-      final lastPlayedItem = await _readLastPlayedQueueItemForActiveUser(explicitUserId: activeUserId);
+      if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(
+          requestLease,
+          emitMediaWhenEmpty: true,
+        );
+        return false;
+      }
+      final lastPlayedItem = await _readLastPlayedQueueItemForActiveUser(
+        explicitUserId: activeUserId,
+      );
+      if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(
+          requestLease,
+          emitMediaWhenEmpty: true,
+        );
+        return false;
+      }
       if (lastPlayedItem == null) {
-        _setQueueTransitionLoading(false);
+        _clearQueueTransitionLoadingIfOwned(
+          requestLease,
+          emitMediaWhenEmpty: true,
+        );
         return false;
       }
       _setQueueTransitionTargetItem(lastPlayedItem);
@@ -113,6 +181,13 @@ extension _BGAudioHandlerResume on BGAudioHandler {
           );
         }
       }
+      if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(
+          requestLease,
+          emitMediaWhenEmpty: true,
+        );
+        return false;
+      }
 
       final progress = await _ref
           .read(mediaProgressProvider.notifier)
@@ -121,6 +196,13 @@ extension _BGAudioHandlerResume on BGAudioHandler {
             episodeId: lastPlayedItem.episodeId,
             userId: activeUserId,
           );
+      if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(
+          requestLease,
+          emitMediaWhenEmpty: true,
+        );
+        return false;
+      }
 
       if (progress?.isFinished ?? false) {
         logger(
@@ -128,41 +210,77 @@ extension _BGAudioHandlerResume on BGAudioHandler {
           tag: 'AudioHandler',
           level: InfoLevel.debug,
         );
-        _setQueueTransitionLoading(false);
+        _clearQueueTransitionLoadingIfOwned(
+          requestLease,
+          emitMediaWhenEmpty: true,
+        );
         return false;
       }
 
       final resumePosition = Duration(
-        microseconds: ((progress?.currentTime ?? 0) * Duration.microsecondsPerSecond).round(),
+        microseconds:
+            ((progress?.currentTime ?? 0) * Duration.microsecondsPerSecond)
+                .round(),
       );
+      if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(
+          requestLease,
+          emitMediaWhenEmpty: true,
+        );
+        return false;
+      }
 
-      await playItemFromPosition(
+      final played = await _playItemFromPositionInternal(
         itemId: lastPlayedItem.itemId,
         episodeId: lastPlayedItem.episodeId,
         position: resumePosition,
         preserveQueue: canPreserveRestoredManualQueue,
+        mutationLease: requestLease,
       );
 
-      return _currentMediaItem != null;
+      return played && _currentMediaItem != null;
     } catch (e, s) {
-      logger('Failed to resume last played item: $e\n$s', tag: 'AudioHandler', level: InfoLevel.error);
-      _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
+      if (!requestIsCurrent()) {
+        _abandonQueueTransitionLoadingIfOwned(
+          requestLease,
+          emitMediaWhenEmpty: true,
+        );
+        return false;
+      }
+      logger(
+        'Failed to resume last played item: $e\n$s',
+        tag: 'AudioHandler',
+        level: InfoLevel.error,
+      );
+      _clearQueueTransitionLoadingIfOwned(
+        requestLease,
+        emitMediaWhenEmpty: true,
+      );
       PlayerUtils.disableWakelock(_ref);
       return false;
     }
   }
 
   Future<bool> _playLastPlayedIfEnabledOnStartupInternal() {
-    return _playLastPlayedInternal(requireStartupSettingEnabled: true, resumeCurrentIfPaused: false);
+    return _playLastPlayedInternal(
+      requireStartupSettingEnabled: true,
+      resumeCurrentIfPaused: false,
+    );
   }
 
-  Future<void> _handleActiveUserIdEmission(String activeUserId, {required bool stopPlayback}) async {
+  Future<void> _handleActiveUserIdEmission(
+    String activeUserId, {
+    required bool stopPlayback,
+  }) async {
     if (stopPlayback) {
       _lastPlayedMiniPlayerRestoreGeneration += 1;
       _skipQueueIntentPersistence = true;
     }
     try {
-      if (stopPlayback && (_currentMediaItem != null || queueList.isNotEmpty || _queueTransitionLoading)) {
+      if (stopPlayback &&
+          (_currentMediaItem != null ||
+              queueList.isNotEmpty ||
+              _queueTransitionLoading)) {
         await stop(clearQueue: true);
       }
 
@@ -180,7 +298,9 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       await _restoreQueueIntent(activeUserId);
 
       unawaited(_androidAutoAuthenticationChanged(this, authenticated: true));
-      await _restoreLastPlayedMiniPlayerIfEnabledInternal(explicitUserId: activeUserId);
+      await _restoreLastPlayedMiniPlayerIfEnabledInternal(
+        explicitUserId: activeUserId,
+      );
     } finally {
       if (stopPlayback) {
         _skipQueueIntentPersistence = false;
@@ -188,22 +308,31 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     }
   }
 
-  Future<void> _restoreLastPlayedMiniPlayerIfEnabledInternal({String? explicitUserId}) async {
+  Future<void> _restoreLastPlayedMiniPlayerIfEnabledInternal({
+    String? explicitUserId,
+  }) async {
     final userId = await _readActiveUserId(explicitUserId: explicitUserId);
-    if (userId == null || userId.isEmpty || _currentMediaItem != null || _queueTransitionLoading) {
+    if (userId == null ||
+        userId.isEmpty ||
+        _currentMediaItem != null ||
+        _queueTransitionLoading) {
       return;
     }
 
     final activeRestore = _lastPlayedMiniPlayerRestoreFuture;
     if (activeRestore != null &&
         _lastPlayedMiniPlayerRestoreUserId == userId &&
-        _lastPlayedMiniPlayerRestoreActiveGeneration == _lastPlayedMiniPlayerRestoreGeneration) {
+        _lastPlayedMiniPlayerRestoreActiveGeneration ==
+            _lastPlayedMiniPlayerRestoreGeneration) {
       await activeRestore;
       return;
     }
 
     final generation = ++_lastPlayedMiniPlayerRestoreGeneration;
-    final restore = _performLastPlayedMiniPlayerRestore(userId: userId, generation: generation);
+    final restore = _performLastPlayedMiniPlayerRestore(
+      userId: userId,
+      generation: generation,
+    );
     _lastPlayedMiniPlayerRestoreUserId = userId;
     _lastPlayedMiniPlayerRestoreActiveGeneration = generation;
     _lastPlayedMiniPlayerRestoreFuture = restore;
@@ -219,13 +348,20 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     }
   }
 
-  Future<void> _performLastPlayedMiniPlayerRestore({required String userId, required int generation}) async {
-    final lastPlayedItem = await _readLastPlayedQueueItemForActiveUser(explicitUserId: userId);
+  Future<void> _performLastPlayedMiniPlayerRestore({
+    required String userId,
+    required int generation,
+  }) async {
+    final lastPlayedItem = await _readLastPlayedQueueItemForActiveUser(
+      explicitUserId: userId,
+    );
     if (lastPlayedItem == null) {
       return;
     }
 
-    final rawSnapshot = await _readLastPlayedMiniPlayerSnapshotRawForActiveUser(explicitUserId: userId);
+    final rawSnapshot = await _readLastPlayedMiniPlayerSnapshotRawForActiveUser(
+      explicitUserId: userId,
+    );
     final snapshot = LastPlayedMiniPlayerSnapshot.fromRawJson(rawSnapshot);
     if (snapshot == null) {
       return;
@@ -233,9 +369,16 @@ extension _BGAudioHandlerResume on BGAudioHandler {
 
     final progress = await _ref
         .read(mediaProgressProvider.notifier)
-        .fetchOrRefreshIndividualProgress(lastPlayedItem.itemId, episodeId: lastPlayedItem.episodeId, userId: userId);
+        .fetchOrRefreshIndividualProgress(
+          lastPlayedItem.itemId,
+          episodeId: lastPlayedItem.episodeId,
+          userId: userId,
+        );
 
-    if (!_canPublishLastPlayedMiniPlayerRestore(userId: userId, generation: generation)) {
+    if (!_canPublishLastPlayedMiniPlayerRestore(
+      userId: userId,
+      generation: generation,
+    )) {
       return;
     }
 
@@ -258,10 +401,16 @@ extension _BGAudioHandlerResume on BGAudioHandler {
         .getGlobalSetting<bool>(SettingKeys.showLastPlayedMiniPlayerAlways);
 
     final resumePosition = progress != null
-        ? Duration(microseconds: (progress.currentTime * Duration.microsecondsPerSecond).round())
+        ? Duration(
+            microseconds:
+                (progress.currentTime * Duration.microsecondsPerSecond).round(),
+          )
         : Duration.zero;
     final totalDuration = progress != null
-        ? Duration(microseconds: (progress.duration * Duration.microsecondsPerSecond).round())
+        ? Duration(
+            microseconds: (progress.duration * Duration.microsecondsPerSecond)
+                .round(),
+          )
         : Duration.zero;
 
     _lastQueueItem = lastPlayedItem;
@@ -283,7 +432,10 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     unawaited(_updatePlaybackState());
   }
 
-  bool _canPublishLastPlayedMiniPlayerRestore({required String userId, required int generation}) {
+  bool _canPublishLastPlayedMiniPlayerRestore({
+    required String userId,
+    required int generation,
+  }) {
     final observedUserId = _observedActiveUserId;
     return !_isDisposing &&
         generation == _lastPlayedMiniPlayerRestoreGeneration &&
@@ -293,14 +445,19 @@ extension _BGAudioHandlerResume on BGAudioHandler {
         !_queueTransitionLoading;
   }
 
-  Future<QueueItem?> _readLastPlayedQueueItemForActiveUser({String? explicitUserId}) async {
+  Future<QueueItem?> _readLastPlayedQueueItemForActiveUser({
+    String? explicitUserId,
+  }) async {
     final userId = await _readActiveUserId(explicitUserId: explicitUserId);
     if (userId == null || userId.isEmpty) {
       return null;
     }
 
     final db = _ref.read(appDatabaseProvider);
-    final rawLastPlayed = (await db.getUserSetting(userId, SettingKeys.lastPlayedQueueItem))?.value;
+    final rawLastPlayed = (await db.getUserSetting(
+      userId,
+      SettingKeys.lastPlayedQueueItem,
+    ))?.value;
     return _decodeLastPlayedQueueItem(rawLastPlayed);
   }
 
@@ -311,17 +468,28 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     }
 
     try {
-      return (await _ref.read(appDatabaseProvider).getGlobalSetting('activeUserId'))?.value.trim();
+      return (await _ref
+              .read(appDatabaseProvider)
+              .getGlobalSetting('activeUserId'))
+          ?.value
+          .trim();
     } catch (_) {
       return null;
     }
   }
 
-  Future<String?> _readLastPlayedMiniPlayerSnapshotRawForActiveUser({String? explicitUserId}) async {
+  Future<String?> _readLastPlayedMiniPlayerSnapshotRawForActiveUser({
+    String? explicitUserId,
+  }) async {
     var userId = explicitUserId ?? _activeUserId;
     if (userId == null || userId.isEmpty) {
       try {
-        userId = (await _ref.read(appDatabaseProvider).getGlobalSetting('activeUserId'))?.value.trim();
+        userId =
+            (await _ref
+                    .read(appDatabaseProvider)
+                    .getGlobalSetting('activeUserId'))
+                ?.value
+                .trim();
       } catch (_) {}
     }
     if (userId == null || userId.isEmpty) {
@@ -329,7 +497,10 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     }
 
     final db = _ref.read(appDatabaseProvider);
-    return (await db.getUserSetting(userId, SettingKeys.lastPlayedMiniPlayerSnapshot))?.value;
+    return (await db.getUserSetting(
+      userId,
+      SettingKeys.lastPlayedMiniPlayerSnapshot,
+    ))?.value;
   }
 
   void _clearSmartRewindPauseMarker() {
@@ -355,7 +526,10 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     _pausedManualSeekEpisodeId = _currentMediaItem!.episodeId;
   }
 
-  bool _hasPausedManualSeekMarkerForItem({required String itemId, required String? episodeId}) {
+  bool _hasPausedManualSeekMarkerForItem({
+    required String itemId,
+    required String? episodeId,
+  }) {
     final markedPosition = _pausedManualSeekPosition;
     if (markedPosition == null) {
       return false;
@@ -377,7 +551,10 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     }
 
     final markedPosition = _pausedManualSeekPosition;
-    final hasMarker = _hasPausedManualSeekMarkerForItem(itemId: currentMedia.itemId, episodeId: currentMedia.episodeId);
+    final hasMarker = _hasPausedManualSeekMarkerForItem(
+      itemId: currentMedia.itemId,
+      episodeId: currentMedia.episodeId,
+    );
 
     if (hasMarker) {
       logger(
@@ -391,7 +568,9 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     return hasMarker;
   }
 
-  Future<void> _seekWithoutPausedManualMarker(Future<void> Function() action) async {
+  Future<void> _seekWithoutPausedManualMarker(
+    Future<void> Function() action,
+  ) async {
     _internalSeekGuardDepth += 1;
     try {
       await action();
@@ -434,16 +613,30 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       SettingKeys.smartRewindLongPauseThresholdSeconds,
     );
 
-    final shortThreshold = shortPauseThresholdSeconds < 1 ? 1 : shortPauseThresholdSeconds;
-    final longThresholdSeed = longPauseThresholdSeconds < 1 ? shortThreshold : longPauseThresholdSeconds;
-    final longThreshold = longThresholdSeed < shortThreshold ? shortThreshold : longThresholdSeed;
+    final shortThreshold = shortPauseThresholdSeconds < 1
+        ? 1
+        : shortPauseThresholdSeconds;
+    final longThresholdSeed = longPauseThresholdSeconds < 1
+        ? shortThreshold
+        : longPauseThresholdSeconds;
+    final longThreshold = longThresholdSeed < shortThreshold
+        ? shortThreshold
+        : longThresholdSeed;
 
-    final shortRewindSeconds = settingManager.getGlobalSetting<int>(SettingKeys.smartRewindShortRewindSeconds);
-    final mediumRewindSeconds = settingManager.getGlobalSetting<int>(SettingKeys.smartRewindMediumRewindSeconds);
-    final longRewindSeconds = settingManager.getGlobalSetting<int>(SettingKeys.smartRewindLongRewindSeconds);
+    final shortRewindSeconds = settingManager.getGlobalSetting<int>(
+      SettingKeys.smartRewindShortRewindSeconds,
+    );
+    final mediumRewindSeconds = settingManager.getGlobalSetting<int>(
+      SettingKeys.smartRewindMediumRewindSeconds,
+    );
+    final longRewindSeconds = settingManager.getGlobalSetting<int>(
+      SettingKeys.smartRewindLongRewindSeconds,
+    );
 
     final shortRewind = shortRewindSeconds < 1 ? 1 : shortRewindSeconds;
-    final mediumRewind = mediumRewindSeconds < 1 ? shortRewind : mediumRewindSeconds;
+    final mediumRewind = mediumRewindSeconds < 1
+        ? shortRewind
+        : mediumRewindSeconds;
     final longRewind = longRewindSeconds < 1 ? mediumRewind : longRewindSeconds;
 
     final pausedSeconds = pausedFor.inSeconds;
@@ -456,8 +649,12 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     return Duration(seconds: longRewind);
   }
 
-  Future<void> _applySmartRewindOnResumeIfNeeded() async {
-    if (_currentMediaItem == null || playerControlState.playing) {
+  Future<void> _applySmartRewindOnResumeIfNeeded({
+    required PlayerMutationLease mutationLease,
+  }) async {
+    if (!_playerMutationBarrier.isCurrent(mutationLease) ||
+        _currentMediaItem == null ||
+        playerControlState.playing) {
       return;
     }
 
@@ -467,7 +664,9 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     }
 
     final settingManager = _ref.read(settingsManagerProvider.notifier);
-    final smartRewindEnabled = settingManager.getGlobalSetting<bool>(SettingKeys.smartRewindEnabled);
+    final smartRewindEnabled = settingManager.getGlobalSetting<bool>(
+      SettingKeys.smartRewindEnabled,
+    );
     if (!smartRewindEnabled) {
       _clearSmartRewindPauseMarker();
       return;
@@ -491,7 +690,12 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     final targetPosition = _rewindPosition(currentPosition, rewindBy);
 
     if (targetPosition < currentPosition) {
-      await _seekWithoutPausedManualMarker(() => _seekInternal(targetPosition));
+      await _seekWithoutPausedManualMarker(
+        () => _seekInternal(targetPosition, mutationLease: mutationLease),
+      );
+      if (!_playerMutationBarrier.isCurrent(mutationLease)) {
+        return;
+      }
       logger(
         'Applied smart rewind (${rewindBy.inSeconds}s) after pause (${pausedFor.inSeconds}s).',
         tag: 'AudioHandler',
@@ -499,14 +703,24 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       );
     }
 
-    _clearSmartRewindPauseMarker();
+    if (_playerMutationBarrier.isCurrent(mutationLease)) {
+      _clearSmartRewindPauseMarker();
+    }
   }
 
-  Future<void> _persistLastPlayedQueueItem({required String itemId, String? episodeId}) async {
+  Future<void> _persistLastPlayedQueueItem({
+    required String itemId,
+    String? episodeId,
+  }) async {
     var userId = _ref.read(currentUserProvider).value?.id;
     if (userId == null || userId.isEmpty) {
       try {
-        userId = (await _ref.read(appDatabaseProvider).getGlobalSetting('activeUserId'))?.value.trim();
+        userId =
+            (await _ref
+                    .read(appDatabaseProvider)
+                    .getGlobalSetting('activeUserId'))
+                ?.value
+                .trim();
       } catch (_) {}
     }
     if (userId == null || userId.isEmpty) {
@@ -514,7 +728,10 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     }
 
     final db = _ref.read(appDatabaseProvider);
-    final payload = jsonEncode(<String, dynamic>{'itemId': itemId, 'episodeId': episodeId});
+    final payload = jsonEncode(<String, dynamic>{
+      'itemId': itemId,
+      'episodeId': episodeId,
+    });
 
     try {
       await db.setUserSetting(userId, SettingKeys.lastPlayedQueueItem, payload);
@@ -527,11 +744,18 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     }
   }
 
-  Future<void> _persistLastPlayedMiniPlayerSnapshot(InternalMedia mediaItem) async {
+  Future<void> _persistLastPlayedMiniPlayerSnapshot(
+    InternalMedia mediaItem,
+  ) async {
     var userId = _activeUserId;
     if (userId == null || userId.isEmpty) {
       try {
-        userId = (await _ref.read(appDatabaseProvider).getGlobalSetting('activeUserId'))?.value.trim();
+        userId =
+            (await _ref
+                    .read(appDatabaseProvider)
+                    .getGlobalSetting('activeUserId'))
+                ?.value
+                .trim();
       } catch (_) {}
     }
     if (userId == null || userId.isEmpty) {
@@ -542,7 +766,11 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     final snapshot = LastPlayedMiniPlayerSnapshot.fromMedia(mediaItem);
 
     try {
-      await db.setUserSetting(userId, SettingKeys.lastPlayedMiniPlayerSnapshot, snapshot.toRawJson());
+      await db.setUserSetting(
+        userId,
+        SettingKeys.lastPlayedMiniPlayerSnapshot,
+        snapshot.toRawJson(),
+      );
     } catch (e, s) {
       logger(
         'Failed to persist mini player snapshot for user $userId: $e\n$s',
@@ -569,11 +797,18 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       }
 
       final episodeIdValue = decoded['episodeId'];
-      final episodeId = episodeIdValue is String && episodeIdValue.trim().isNotEmpty ? episodeIdValue.trim() : null;
+      final episodeId =
+          episodeIdValue is String && episodeIdValue.trim().isNotEmpty
+          ? episodeIdValue.trim()
+          : null;
 
       return QueueItem(itemId: itemIdValue.trim(), episodeId: episodeId);
     } catch (e) {
-      logger('Failed to decode last played item payload: $e', tag: 'AudioHandler', level: InfoLevel.warning);
+      logger(
+        'Failed to decode last played item payload: $e',
+        tag: 'AudioHandler',
+        level: InfoLevel.warning,
+      );
       return null;
     }
   }
