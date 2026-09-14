@@ -22,3 +22,9 @@ jobs:
         run: dart format lib/util/audio_handler/bg_audio_handler_resume.dart
       - name: Show formatter diff
         run: git diff -- lib/util/audio_handler/bg_audio_handler_resume.dart
+      - name: Upload formatted resume file
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-resume
+          path: lib/util/audio_handler/bg_audio_handler_resume.dart
+          retention-days: 1
