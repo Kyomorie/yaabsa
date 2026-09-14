@@ -36,62 +36,43 @@ void main() {
 
   test('unchanged replay snapshot is deleted after acknowledgement', () async {
     final t0 = DateTime.utc(2026, 9, 14, 8);
-    await db.addOrUpdateSync(
-      _sync(position: 30, listened: 12, updatedAt: t0, progress: 'old'),
-    );
+    await db.addOrUpdateSync(_sync(position: 30, listened: 12, updatedAt: t0, progress: 'old'));
     final snapshot = (await db.getSync('session'))!;
 
     expect(await db.acknowledgeReplayedSync(snapshot), isTrue);
     expect(await db.getSync('session'), isNull);
   });
 
-  test(
-    'concurrent zero-time correction survives replay acknowledgement',
-    () async {
-      final t0 = DateTime.utc(2026, 9, 14, 8);
-      final t1 = t0.add(const Duration(seconds: 1));
-      await db.addOrUpdateSync(
-        _sync(position: 30, listened: 12, updatedAt: t0, progress: 'old'),
-      );
-      final snapshot = (await db.getSync('session'))!;
+  test('concurrent zero-time correction survives replay acknowledgement', () async {
+    final t0 = DateTime.utc(2026, 9, 14, 8);
+    final t1 = t0.add(const Duration(seconds: 1));
+    await db.addOrUpdateSync(_sync(position: 30, listened: 12, updatedAt: t0, progress: 'old'));
+    final snapshot = (await db.getSync('session'))!;
 
-      await db.addOrUpdateSync(
-        _sync(position: 90, listened: 0, updatedAt: t1, progress: 'new'),
-      );
-      expect(await db.acknowledgeReplayedSync(snapshot), isTrue);
+    await db.addOrUpdateSync(_sync(position: 90, listened: 0, updatedAt: t1, progress: 'new'));
+    expect(await db.acknowledgeReplayedSync(snapshot), isTrue);
 
-      final remaining = await db.getSync('session');
-      expect(remaining, isNotNull);
-      expect(remaining!.currentTime, 90);
-      expect(remaining.timeListened, 0);
-      expect(remaining.mediaProgress, 'new');
-      expect(
-        remaining.lastUpdated.millisecondsSinceEpoch,
-        t1.millisecondsSinceEpoch,
-      );
-    },
-  );
+    final remaining = await db.getSync('session');
+    expect(remaining, isNotNull);
+    expect(remaining!.currentTime, 90);
+    expect(remaining.timeListened, 0);
+    expect(remaining.mediaProgress, 'new');
+    expect(remaining.lastUpdated.millisecondsSinceEpoch, t1.millisecondsSinceEpoch);
+  });
 
-  test(
-    'concurrent new listening is retained without replaying old delta twice',
-    () async {
-      final t0 = DateTime.utc(2026, 9, 14, 8);
-      final t1 = t0.add(const Duration(seconds: 1));
-      await db.addOrUpdateSync(
-        _sync(position: 30, listened: 12, updatedAt: t0, progress: 'old'),
-      );
-      final snapshot = (await db.getSync('session'))!;
+  test('concurrent new listening is retained without replaying old delta twice', () async {
+    final t0 = DateTime.utc(2026, 9, 14, 8);
+    final t1 = t0.add(const Duration(seconds: 1));
+    await db.addOrUpdateSync(_sync(position: 30, listened: 12, updatedAt: t0, progress: 'old'));
+    final snapshot = (await db.getSync('session'))!;
 
-      await db.addOrUpdateSync(
-        _sync(position: 95, listened: 5, updatedAt: t1, progress: 'new'),
-      );
-      expect(await db.acknowledgeReplayedSync(snapshot), isTrue);
+    await db.addOrUpdateSync(_sync(position: 95, listened: 5, updatedAt: t1, progress: 'new'));
+    expect(await db.acknowledgeReplayedSync(snapshot), isTrue);
 
-      final remaining = await db.getSync('session');
-      expect(remaining, isNotNull);
-      expect(remaining!.currentTime, 95);
-      expect(remaining.timeListened, 5);
-      expect(remaining.mediaProgress, 'new');
-    },
-  );
+    final remaining = await db.getSync('session');
+    expect(remaining, isNotNull);
+    expect(remaining!.currentTime, 95);
+    expect(remaining.timeListened, 5);
+    expect(remaining.mediaProgress, 'new');
+  });
 }

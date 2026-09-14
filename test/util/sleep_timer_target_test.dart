@@ -156,7 +156,10 @@ void main() {
 
       for (final malformed in malformedIntervals) {
         final target = resolveChapterSleepTarget(
-          chapters: [const InternalChapter(start: 0, end: 10, title: 'Chapter 1'), malformed],
+          chapters: [
+            const InternalChapter(start: 0, end: 10, title: 'Chapter 1'),
+            malformed,
+          ],
           mediaDuration: const Duration(seconds: 30),
           position: const Duration(seconds: 5),
           itemId: 'book-1',

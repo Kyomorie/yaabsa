@@ -116,50 +116,25 @@ void main() {
       );
 
       expect(
-        guard.isCurrent(
-          barrier: barrier,
-          playbackContextGeneration: 4,
-          seekGeneration: 7,
-          mediaKey: 'book-a:item',
-        ),
+        guard.isCurrent(barrier: barrier, playbackContextGeneration: 4, seekGeneration: 7, mediaKey: 'book-a:item'),
         isTrue,
       );
       expect(
-        guard.isCurrent(
-          barrier: barrier,
-          playbackContextGeneration: 5,
-          seekGeneration: 7,
-          mediaKey: 'book-a:item',
-        ),
+        guard.isCurrent(barrier: barrier, playbackContextGeneration: 5, seekGeneration: 7, mediaKey: 'book-a:item'),
         isFalse,
       );
       expect(
-        guard.isCurrent(
-          barrier: barrier,
-          playbackContextGeneration: 4,
-          seekGeneration: 8,
-          mediaKey: 'book-a:item',
-        ),
+        guard.isCurrent(barrier: barrier, playbackContextGeneration: 4, seekGeneration: 8, mediaKey: 'book-a:item'),
         isFalse,
       );
       expect(
-        guard.isCurrent(
-          barrier: barrier,
-          playbackContextGeneration: 4,
-          seekGeneration: 7,
-          mediaKey: 'book-b:item',
-        ),
+        guard.isCurrent(barrier: barrier, playbackContextGeneration: 4, seekGeneration: 7, mediaKey: 'book-b:item'),
         isFalse,
       );
 
       final newer = barrier.acquire();
       expect(
-        guard.isCurrent(
-          barrier: barrier,
-          playbackContextGeneration: 4,
-          seekGeneration: 7,
-          mediaKey: 'book-a:item',
-        ),
+        guard.isCurrent(barrier: barrier, playbackContextGeneration: 4, seekGeneration: 7, mediaKey: 'book-a:item'),
         isFalse,
       );
       expect(barrier.currentLease, same(newer));
