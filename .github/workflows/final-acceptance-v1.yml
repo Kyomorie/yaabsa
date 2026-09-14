@@ -1,0 +1,89 @@
+name: Final chapter timer acceptance v1
+
+on:
+  push:
+    branches:
+      - automation/final-acceptance-v1
+    paths:
+      - .github/workflows/final-acceptance-v1.yml
+
+permissions: {}
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout validation trigger
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Gate exact PR source parent
+        shell: bash
+        run: |
+          expected='94320c54fe8dcab6474be757515eb97e1f3afadf'
+          actual="$(git rev-parse HEAD^)"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "Unexpected validation parent: $actual" >&2
+            exit 1
+          fi
+          changed="$(git diff --name-only HEAD^ HEAD)"
+          if [[ "$changed" != '.github/workflows/final-acceptance-v1.yml' ]]; then
+            echo 'Validation trigger changed unexpected paths:' >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          fi
+          git checkout --detach "$expected"
+
+      - name: Gate backend pins
+        shell: bash
+        run: |
+          test "$(git -C packages/just_audio rev-parse HEAD)" = 'd44edc6103c3238bca3342e70e09f0cc48dae670'
+          test "$(git -C packages/just_audio_media_kit rev-parse HEAD)" = '1e4a0c36d8c9881cb55ed42b2c970dabde169c7f'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies without lock drift
+        shell: bash
+        run: |
+          cp pubspec.lock /tmp/pubspec.lock.before
+          flutter pub get
+          cmp /tmp/pubspec.lock.before pubspec.lock
+
+      - name: Verify formatting
+        shell: bash
+        run: |
+          dart format --output=none --set-exit-if-changed lib
+          dart format --output=none --set-exit-if-changed \
+            test/util/playback_preference_guard_test.dart \
+            test/util/playback_start_attempt_test.dart \
+            test/util/playback_sync_authority_queue_test.dart \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/sleep_timer_completion_gate_test.dart \
+            test/util/sleep_timer_target_test.dart \
+            test/util/user_seek_navigation_ledger_test.dart \
+            test/database/stored_sync_ack_test.dart
+          git diff --check
+
+      - name: Analyze application sources
+        shell: bash
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run complete changed util and sync regression suite
+        shell: bash
+        run: flutter test test/util test/database/stored_sync_ack_test.dart
+
+      - name: Verify source tree stayed clean
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo 'Validation changed the source tree:' >&2
+            git status --short >&2
+            exit 1
+          fi
