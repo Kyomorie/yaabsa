@@ -1,0 +1,81 @@
+name: Final chapter timer acceptance v2
+
+on:
+  push:
+    branches:
+      - automation/final-acceptance-v2
+    paths:
+      - .github/workflows/final-acceptance-v2.yml
+
+permissions: {}
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout validation trigger
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Gate exact final PR head
+        shell: bash
+        run: |
+          expected='c83e779c73c848b747177c736134b3dbf68049ed'
+          actual="$(git rev-parse HEAD^)"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "Unexpected validation parent: $actual" >&2
+            exit 1
+          fi
+          changed="$(git diff --name-only HEAD^ HEAD)"
+          if [[ "$changed" != '.github/workflows/final-acceptance-v2.yml' ]]; then
+            echo 'Validation trigger changed unexpected paths:' >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          fi
+          git checkout --detach "$expected"
+
+      - name: Gate backend pins
+        shell: bash
+        run: |
+          test "$(git -C packages/just_audio rev-parse HEAD)" = 'd44edc6103c3238bca3342e70e09f0cc48dae670'
+          test "$(git -C packages/just_audio_media_kit rev-parse HEAD)" = '1e4a0c36d8c9881cb55ed42b2c970dabde169c7f'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies without lock drift
+        shell: bash
+        run: |
+          cp pubspec.lock /tmp/pubspec.lock.before
+          flutter pub get
+          cmp /tmp/pubspec.lock.before pubspec.lock
+
+      - name: Verify all application and test formatting
+        shell: bash
+        run: |
+          dart format --output=none --set-exit-if-changed lib
+          dart format --output=none --set-exit-if-changed test
+          git diff --check
+
+      - name: Analyze all sources
+        shell: bash
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Run full Flutter test suite
+        shell: bash
+        run: flutter test
+
+      - name: Verify source tree stayed clean
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo 'Validation changed the source tree:' >&2
+            git status --short >&2
+            exit 1
+          fi
