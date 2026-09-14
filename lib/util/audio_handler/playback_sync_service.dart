@@ -12,8 +12,11 @@ import 'package:yaabsa/util/setting_key.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
-typedef PlaybackSyncDispatch =
-    Future<bool> Function({required Duration position, required double listenedTime, required String sessionId});
+typedef PlaybackSyncDispatch = Future<bool> Function({
+  required Duration position,
+  required double listenedTime,
+  required String sessionId,
+});
 
 /// Serializes progress writes and gives a backend-confirmed position authority
 /// over older in-flight writes without discarding their listening-time delta.
@@ -69,9 +72,7 @@ class PlaybackSyncAuthorityQueue {
       result = await dispatch(position: position, listenedTime: listenedTime, sessionId: sessionId);
 
       final latestPosition = _authoritativePosition;
-      if (capturedRevision < _revision &&
-          latestPosition != null &&
-          _authoritativeSessionId == sessionId) {
+      if (capturedRevision < _revision && latestPosition != null && _authoritativeSessionId == sessionId) {
         final correctionResult = await dispatch(position: latestPosition, listenedTime: 0, sessionId: sessionId);
         result = result && correctionResult;
       }
@@ -256,11 +257,7 @@ class PlaybackSyncService {
     }
 
     final bool canReachServer = _ref.read(serverReachabilityProvider);
-    return _authorityQueue.correct(
-      position: position,
-      sessionId: sessionId,
-      dispatch: _dispatcher(canReachServer),
-    );
+    return _authorityQueue.correct(position: position, sessionId: sessionId, dispatch: _dispatcher(canReachServer));
   }
 
   Future<bool> _stopSync({Duration? positionOverride, bool sessionClosing = false, String? expectedSessionId}) async {
