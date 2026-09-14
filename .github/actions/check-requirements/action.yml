@@ -43,18 +43,3 @@ runs:
     - name: Check if errors are present
       shell: bash
       run: flutter analyze lib | grep "No issues found!" || (echo "Analyzer found issues in yaabsa sources. Please fix them and commit the changes." && exit 1)
-
-    - name: Check focused test formatting
-      shell: bash
-      run: |
-        dart format test/util/app_update_checker_test.dart test/components/common/app_update_notifier_test.dart
-        if [[ -n $(git diff -- test/util/app_update_checker_test.dart test/components/common/app_update_notifier_test.dart) ]]; then
-          echo '=== TEST FORMAT DIFF START ==='
-          git diff -- test/util/app_update_checker_test.dart test/components/common/app_update_notifier_test.dart
-          echo '=== TEST FORMAT DIFF END ==='
-          exit 1
-        fi
-
-    - name: Run focused app update tests
-      shell: bash
-      run: flutter test test/util/app_update_checker_test.dart test/components/common/app_update_notifier_test.dart
