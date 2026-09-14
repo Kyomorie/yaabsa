@@ -146,9 +146,59 @@ void main() {
       expect(candidate?.releaseUri.toString(), 'https://github.com/Vito0912/yaabsa/releases/tag/v1.12.0');
     });
 
-    test('fails closed for malformed JSON contract', () async {
+    test('fails closed for malformed release tags', () async {
       final adapter = _RecordingAdapter(body: '{"tag_name":"latest"}');
       final checker = AppUpdateChecker(adapterFactory: () => adapter);
+
+      final candidate = await checker.check(currentVersion: '1.11.0', hasConsent: () async => true);
+
+      expect(adapter.fetchCount, 1);
+      expect(candidate, isNull);
+    });
+
+    test('fails closed for missing, wrong-type, and invalid JSON responses', () async {
+      for (final body in ['{}', '{"tag_name":123}', 'not json']) {
+        final adapter = _RecordingAdapter(body: body);
+        final checker = AppUpdateChecker(adapterFactory: () => adapter);
+
+        final candidate = await checker.check(currentVersion: '1.11.0', hasConsent: () async => true);
+
+        expect(adapter.fetchCount, 1, reason: body);
+        expect(candidate, isNull, reason: body);
+      }
+    });
+
+    test('fails closed for non-200 responses including rate limits', () async {
+      for (final statusCode in [403, 429, 500]) {
+        final adapter = _RecordingAdapter(body: '{"tag_name":"v1.12.0"}', statusCode: statusCode);
+        final checker = AppUpdateChecker(adapterFactory: () => adapter);
+
+        final candidate = await checker.check(currentVersion: '1.11.0', hasConsent: () async => true);
+
+        expect(adapter.fetchCount, 1, reason: '$statusCode');
+        expect(candidate, isNull, reason: '$statusCode');
+      }
+    });
+
+    test('fails closed for transport errors', () async {
+      final adapter = _RecordingAdapter(body: '{"tag_name":"v1.12.0"}', throwConnectionError: true);
+      final checker = AppUpdateChecker(adapterFactory: () => adapter);
+
+      final candidate = await checker.check(currentVersion: '1.11.0', hasConsent: () async => true);
+
+      expect(adapter.fetchCount, 1);
+      expect(candidate, isNull);
+    });
+
+    test('fails closed when the request exceeds the bounded timeout', () async {
+      final adapter = _RecordingAdapter(
+        body: '{"tag_name":"v1.12.0"}',
+        delay: const Duration(milliseconds: 100),
+      );
+      final checker = AppUpdateChecker(
+        adapterFactory: () => adapter,
+        timeout: const Duration(milliseconds: 10),
+      );
 
       final candidate = await checker.check(currentVersion: '1.11.0', hasConsent: () async => true);
 
@@ -174,12 +224,88 @@ void main() {
       expect(adapter.fetchCount, 1);
     });
 
+    test('concurrent triggers still dispatch at most once', () async {
+      final adapter = _RecordingAdapter(
+        body: '{"tag_name":"v1.12.0"}',
+        delay: const Duration(milliseconds: 20),
+      );
+      final coordinator = AppUpdateCoordinator(
+        checker: AppUpdateChecker(adapterFactory: () => adapter),
+        packageInfoLoader: () async => _packageInfo('1.11.0'),
+        isEligible: () => true,
+      );
+
+      final results = await Future.wait([
+        coordinator.attempt(hasConsent: () async => true),
+        coordinator.attempt(hasConsent: () async => true),
+      ]);
+
+      expect(results.whereType<AppUpdateCandidate>().length, 1);
+      expect(adapter.fetchCount, 1);
+    });
+
+    test('ineligible distribution stops before metadata and network', () async {
+      final adapter = _RecordingAdapter(body: '{"tag_name":"v1.12.0"}');
+      var metadataReads = 0;
+      final coordinator = AppUpdateCoordinator(
+        checker: AppUpdateChecker(adapterFactory: () => adapter),
+        packageInfoLoader: () async {
+          metadataReads += 1;
+          return _packageInfo('1.11.0');
+        },
+        isEligible: () => false,
+      );
+
+      final candidate = await coordinator.attempt(hasConsent: () async => true);
+
+      expect(candidate, isNull);
+      expect(metadataReads, 0);
+      expect(adapter.fetchCount, 0);
+    });
+
+    test('consent read failures fail closed before metadata and network', () async {
+      final adapter = _RecordingAdapter(body: '{"tag_name":"v1.12.0"}');
+      var metadataReads = 0;
+      final coordinator = AppUpdateCoordinator(
+        checker: AppUpdateChecker(adapterFactory: () => adapter),
+        packageInfoLoader: () async {
+          metadataReads += 1;
+          return _packageInfo('1.11.0');
+        },
+        isEligible: () => true,
+      );
+
+      final candidate = await coordinator.attempt(hasConsent: () async => throw StateError('settings unavailable'));
+
+      expect(candidate, isNull);
+      expect(metadataReads, 0);
+      expect(adapter.fetchCount, 0);
+    });
+
     test('metadata failure stops before network dispatch', () async {
       final adapter = _RecordingAdapter(body: '{"tag_name":"v1.12.0"}');
       final coordinator = AppUpdateCoordinator(
         checker: AppUpdateChecker(adapterFactory: () => adapter),
         packageInfoLoader: () async => throw StateError('metadata unavailable'),
         isEligible: () => true,
+      );
+
+      final candidate = await coordinator.attempt(hasConsent: () async => true);
+
+      expect(candidate, isNull);
+      expect(adapter.fetchCount, 0);
+    });
+
+    test('metadata timeout stops before network dispatch', () async {
+      final adapter = _RecordingAdapter(body: '{"tag_name":"v1.12.0"}');
+      final coordinator = AppUpdateCoordinator(
+        checker: AppUpdateChecker(adapterFactory: () => adapter),
+        packageInfoLoader: () async {
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+          return _packageInfo('1.11.0');
+        },
+        isEligible: () => true,
+        metadataTimeout: const Duration(milliseconds: 10),
       );
 
       final candidate = await coordinator.attempt(hasConsent: () async => true);
@@ -240,9 +366,17 @@ PackageInfo _packageInfo(String version) {
 
 class _RecordingAdapter implements HttpClientAdapter {
   final String body;
+  final int statusCode;
+  final Duration delay;
+  final bool throwConnectionError;
   int fetchCount = 0;
 
-  _RecordingAdapter({required this.body});
+  _RecordingAdapter({
+    required this.body,
+    this.statusCode = 200,
+    this.delay = Duration.zero,
+    this.throwConnectionError = false,
+  });
 
   @override
   Future<ResponseBody> fetch(
@@ -251,9 +385,22 @@ class _RecordingAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     fetchCount += 1;
+
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
+
+    if (throwConnectionError) {
+      throw DioException(
+        requestOptions: options,
+        type: DioExceptionType.connectionError,
+        message: 'Simulated connection failure',
+      );
+    }
+
     return ResponseBody.fromString(
       body,
-      200,
+      statusCode,
       headers: {
         Headers.contentTypeHeader: ['application/json'],
       },
