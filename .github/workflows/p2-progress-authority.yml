@@ -1,0 +1,172 @@
+name: P2 progress authority
+
+on:
+  push:
+    branches:
+      - automation/p2-progress-authority
+    paths:
+      - '.github/workflows/p2-progress-authority.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: automation/p2-progress-authority
+          fetch-depth: 0
+          submodules: recursive
+      - name: Gate exact candidate provenance
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD^)" = "5c00962d145ed0e941e13a7b14d752fcc606f344"
+          test "$(git rev-parse 5c00962d145ed0e941e13a7b14d752fcc606f344^)" = "ec5fc0470010bf2f3b84b1da5a7989393a95df46"
+          mapfile -t prefiles < <(git diff --name-only ec5fc0470010bf2f3b84b1da5a7989393a95df46...HEAD | sort)
+          printf '%s\n' "${prefiles[@]}"
+          test "${#prefiles[@]}" -eq 2
+          test "${prefiles[0]}" = ".github/scripts/apply-p2-progress-authority.py"
+          test "${prefiles[1]}" = ".github/workflows/p2-progress-authority.yml"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Pin exact validated backend commits
+        shell: bash
+        run: |
+          git -C packages/just_audio fetch --quiet origin feat/backend-playback-ack
+          git -C packages/just_audio checkout --quiet d44edc6103c3238bca3342e70e09f0cc48dae670
+          test "$(git -C packages/just_audio rev-parse HEAD)" = "d44edc6103c3238bca3342e70e09f0cc48dae670"
+          git -C packages/just_audio_media_kit fetch --quiet origin feat/backend-playback-ack
+          git -C packages/just_audio_media_kit checkout --quiet 1e4a0c36d8c9881cb55ed42b2c970dabde169c7f
+          test "$(git -C packages/just_audio_media_kit rev-parse HEAD)" = "1e4a0c36d8c9881cb55ed42b2c970dabde169c7f"
+      - name: Apply P2 source candidate
+        shell: bash
+        run: |
+          python3 .github/scripts/apply-p2-progress-authority.py
+          dart format \
+            lib/database/app_database.dart \
+            lib/provider/core/server_status_provider.dart \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_resume.dart \
+            lib/util/audio_handler/playback_sync_service.dart \
+            test/database/stored_sync_ack_test.dart \
+            test/util/playback_sync_authority_queue_test.dart
+          git diff --check
+          mapfile -t changed < <(git diff --name-only ec5fc0470010bf2f3b84b1da5a7989393a95df46 -- . ':!.github' | sort)
+          printf '%s\n' "${changed[@]}"
+          expected=(
+            lib/database/app_database.dart
+            lib/provider/core/server_status_provider.dart
+            lib/util/audio_handler/bg_audio_handler.dart
+            lib/util/audio_handler/bg_audio_handler_resume.dart
+            lib/util/audio_handler/playback_sync_service.dart
+            packages/just_audio
+            packages/just_audio_media_kit
+            test/database/stored_sync_ack_test.dart
+            test/util/playback_sync_authority_queue_test.dart
+          )
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
+          test "$(git diff --submodule=short ec5fc0470010bf2f3b84b1da5a7989393a95df46 -- packages/just_audio | grep -c d44edc6103c3238bca3342e70e09f0cc48dae670)" -eq 1
+          test "$(git diff --submodule=short ec5fc0470010bf2f3b84b1da5a7989393a95df46 -- packages/just_audio_media_kit | grep -c 1e4a0c36d8c9881cb55ed42b2c970dabde169c7f)" -eq 1
+      - name: Verify P2 contracts
+        shell: bash
+        run: |
+          grep -q 'seekConfirmed(relativeTrackPosition' lib/util/audio_handler/bg_audio_handler.dart
+          grep -q 'SeekConfirmationStatus.reached' lib/util/audio_handler/bg_audio_handler.dart
+          grep -q 'correctAuthoritativePosition' lib/util/audio_handler/playback_sync_service.dart
+          grep -q 'listenedTime: 0' lib/util/audio_handler/playback_sync_service.dart
+          grep -q 'acknowledgeReplayedSync' lib/database/app_database.dart
+          grep -q 'acknowledgeReplayedSync' lib/provider/core/server_status_provider.dart
+          ! grep -q 'flush(positionOverride: targetPosition)' lib/util/audio_handler/bg_audio_handler_resume.dart
+      - name: Resolve dependencies without lock drift
+        shell: bash
+        run: |
+          cp pubspec.lock /tmp/p2-pubspec.lock
+          flutter pub get
+          cmp -s pubspec.lock /tmp/p2-pubspec.lock
+      - name: Analyze
+        shell: bash
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Run P2 and regression tests
+        shell: bash
+        run: |
+          flutter test \
+            test/util/playback_sync_authority_queue_test.dart \
+            test/database/stored_sync_ack_test.dart \
+            test/bg_audio_handler_sleep_timer_test.dart \
+            test/sleep_timer_state_test.dart \
+            test/sleep_timer_handler_test.dart \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/user_seek_navigation_ledger_test.dart \
+            test/audio_handler_concurrency_test.dart
+
+  commit:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: automation/p2-progress-authority
+          fetch-depth: 0
+          submodules: recursive
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Gate exact validated workflow head
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+      - name: Recreate exact validated source tree
+        shell: bash
+        run: |
+          git -C packages/just_audio fetch --quiet origin feat/backend-playback-ack
+          git -C packages/just_audio checkout --quiet d44edc6103c3238bca3342e70e09f0cc48dae670
+          git -C packages/just_audio_media_kit fetch --quiet origin feat/backend-playback-ack
+          git -C packages/just_audio_media_kit checkout --quiet 1e4a0c36d8c9881cb55ed42b2c970dabde169c7f
+          python3 .github/scripts/apply-p2-progress-authority.py
+          dart format \
+            lib/database/app_database.dart \
+            lib/provider/core/server_status_provider.dart \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_resume.dart \
+            lib/util/audio_handler/playback_sync_service.dart \
+            test/database/stored_sync_ack_test.dart \
+            test/util/playback_sync_authority_queue_test.dart
+          git diff --check
+          mapfile -t changed < <(git diff --name-only ec5fc0470010bf2f3b84b1da5a7989393a95df46 -- . ':!.github' | sort)
+          expected=(
+            lib/database/app_database.dart
+            lib/provider/core/server_status_provider.dart
+            lib/util/audio_handler/bg_audio_handler.dart
+            lib/util/audio_handler/bg_audio_handler_resume.dart
+            lib/util/audio_handler/playback_sync_service.dart
+            packages/just_audio
+            packages/just_audio_media_kit
+            test/database/stored_sync_ack_test.dart
+            test/util/playback_sync_authority_queue_test.dart
+          )
+          test "${#changed[@]}" -eq "${#expected[@]}"
+          for i in "${!expected[@]}"; do test "${changed[$i]}" = "${expected[$i]}"; done
+      - name: Commit validated source candidate
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            lib/database/app_database.dart \
+            lib/provider/core/server_status_provider.dart \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_resume.dart \
+            lib/util/audio_handler/playback_sync_service.dart \
+            packages/just_audio \
+            packages/just_audio_media_kit \
+            test/database/stored_sync_ack_test.dart \
+            test/util/playback_sync_authority_queue_test.dart
+          git commit -m "fix: make confirmed seeks authoritative for progress sync"
+          git push origin HEAD:automation/p2-progress-authority
