@@ -20,6 +20,8 @@ jobs:
         with:
           channel: stable
           cache: true
+      - name: Install dependencies
+        run: flutter pub get
       - name: Format merged resume file
         run: dart format lib/util/audio_handler/bg_audio_handler_resume.dart
       - name: Commit formatter result if needed
