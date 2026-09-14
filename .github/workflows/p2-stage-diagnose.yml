@@ -1,0 +1,76 @@
+name: P2 stage diagnose
+
+on:
+  push:
+    branches:
+      - automation/p2-progress-authority
+    paths:
+      - '.github/workflows/p2-stage-diagnose.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: automation/p2-progress-authority
+          fetch-depth: 0
+          submodules: recursive
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Diagnose apply stage command by command
+        shell: bash
+        run: |
+          set +e
+          exec > >(tee .github/p2-stage-output.txt) 2>&1
+          overall=0
+          echo '=== SOURCE CLEAN GATE ==='
+          src_before="$(git diff --name-only ec5fc0470010bf2f3b84b1da5a7989393a95df46 -- . ':!.github')"
+          printf '%s\n' "$src_before"
+          if [[ -n "$src_before" ]]; then overall=1; fi
+
+          echo '=== PIN BACKENDS ==='
+          git -C packages/just_audio fetch --quiet origin feat/backend-playback-ack
+          c=$?; echo "just_audio_fetch=$c"; (( c == 0 )) || overall=1
+          git -C packages/just_audio checkout --quiet d44edc6103c3238bca3342e70e09f0cc48dae670
+          c=$?; echo "just_audio_checkout=$c"; (( c == 0 )) || overall=1
+          git -C packages/just_audio_media_kit fetch --quiet origin feat/backend-playback-ack
+          c=$?; echo "media_kit_fetch=$c"; (( c == 0 )) || overall=1
+          git -C packages/just_audio_media_kit checkout --quiet 1e4a0c36d8c9881cb55ed42b2c970dabde169c7f
+          c=$?; echo "media_kit_checkout=$c"; (( c == 0 )) || overall=1
+
+          echo '=== APPLY HELPER ==='
+          python3 .github/scripts/apply-p2-progress-authority.py
+          c=$?; echo "helper=$c"; (( c == 0 )) || overall=1
+
+          echo '=== FORMAT ==='
+          dart format \
+            lib/database/app_database.dart \
+            lib/provider/core/server_status_provider.dart \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/bg_audio_handler_resume.dart \
+            lib/util/audio_handler/playback_sync_service.dart \
+            test/database/stored_sync_ack_test.dart \
+            test/util/playback_sync_authority_queue_test.dart
+          c=$?; echo "format=$c"; (( c == 0 )) || overall=1
+
+          echo '=== DIFF CHECK ==='
+          git diff --check
+          c=$?; echo "diff_check=$c"; (( c == 0 )) || overall=1
+
+          echo '=== CHANGED SOURCE PATHS ==='
+          git diff --name-only ec5fc0470010bf2f3b84b1da5a7989393a95df46 -- . ':!.github' | sort
+
+          echo "overall=$overall"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/p2-stage-output.txt
+          git commit -m "ci: capture P2 stage diagnostics"
+          git push origin HEAD:automation/p2-progress-authority
+          exit 0
