@@ -1,0 +1,24 @@
+name: Temporary chapter timer format debug
+
+on:
+  pull_request:
+    types:
+      - synchronize
+
+permissions: {}
+
+jobs:
+  format-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Format merged resume file
+        run: dart format lib/util/audio_handler/bg_audio_handler_resume.dart
+      - name: Show formatter diff
+        run: git diff -- lib/util/audio_handler/bg_audio_handler_resume.dart
