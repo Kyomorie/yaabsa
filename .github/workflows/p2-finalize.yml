@@ -52,11 +52,16 @@ jobs:
 
           path = Path('test/database/stored_sync_ack_test.dart')
           text = path.read_text()
-          old = "import 'package:drift/drift.dart';"
-          new = "import 'package:drift/drift.dart' hide isNotNull, isNull;"
-          if text.count(old) != 1:
-              raise SystemExit(f'expected one drift import, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1))
+          old_import = "import 'package:drift/drift.dart';"
+          new_import = "import 'package:drift/drift.dart' hide isNotNull, isNull;"
+          if text.count(old_import) != 1:
+              raise SystemExit(f'expected one drift import, found {text.count(old_import)}')
+          text = text.replace(old_import, new_import, 1)
+          old_timestamp = 'expect(remaining.lastUpdated, t1);'
+          new_timestamp = 'expect(remaining.lastUpdated.millisecondsSinceEpoch, t1.millisecondsSinceEpoch);'
+          if text.count(old_timestamp) != 1:
+              raise SystemExit(f'expected one timestamp assertion, found {text.count(old_timestamp)}')
+          path.write_text(text.replace(old_timestamp, new_timestamp, 1))
           PY
           dart format \
             lib/database/app_database.dart \
@@ -119,15 +124,7 @@ jobs:
       - name: Run P2 and regression tests
         shell: bash
         run: |
-          flutter test \
-            test/util/playback_sync_authority_queue_test.dart \
-            test/database/stored_sync_ack_test.dart \
-            test/bg_audio_handler_sleep_timer_test.dart \
-            test/sleep_timer_state_test.dart \
-            test/sleep_timer_handler_test.dart \
-            test/util/player_mutation_barrier_test.dart \
-            test/util/user_seek_navigation_ledger_test.dart \
-            test/audio_handler_concurrency_test.dart
+          flutter test test/util test/database/stored_sync_ack_test.dart
       - name: Commit exact validated source
         shell: bash
         run: |
