@@ -1,0 +1,389 @@
+name: YAABSA P3 queued skip ownership
+
+on:
+  push:
+    branches:
+      - automation/p3-skip-ownership
+    paths:
+      - .github/workflows/p3-skip-ownership.yml
+
+permissions: {}
+
+env:
+  EXPECTED_YAABSA_HEAD: 7037b99d5e2510325cb15c58167add84f39b3340
+  JUST_AUDIO_SHA: f80ad2ee8a73e5e32a82df20c98666385c6b2aca
+  MEDIA_KIT_SHA: c1a5a15046ab565613c2d1e8736152aef9b6348c
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout exact YAABSA feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/chapter-end-sleep-timer
+          path: work
+          fetch-depth: 12
+          submodules: false
+
+      - name: Verify exact target head and backend pins
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "$EXPECTED_YAABSA_HEAD" || {
+            echo "Unexpected YAABSA head: $actual" >&2
+            exit 1
+          }
+          git config --global url."https://github.com/".insteadOf git@github.com:
+          git submodule sync --recursive
+          git submodule update --init --recursive
+          test "$(git -C packages/just_audio rev-parse HEAD)" = "$JUST_AUDIO_SHA"
+          test "$(git -C packages/just_audio_media_kit rev-parse HEAD)" = "$MEDIA_KIT_SHA"
+
+      - name: Apply P3 queued skip ownership hardening
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/util/audio_handler/bg_audio_handler.dart')
+          text = path.read_text()
+
+          def replace_once(source, old, new, label):
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return source.replace(old, new, 1)
+
+          text = replace_once(
+              text,
+              """  @override
+          Future<void> play() async {
+            final ignoreProgress = _ignoreProgressOnNextPlay || _activeMusicLibraryId != null;
+          """,
+              """  @override
+          Future<void> play() => _playInternal();
+
+          Future<void> _playWithPlayerMutationLease(PlayerMutationLease lease) {
+            if (!_playerMutationBarrier.isCurrent(lease) || _isDisposing) {
+              return Future.value();
+            }
+            return _playInternal(mutationLease: lease);
+          }
+
+          Future<void> _playInternal({PlayerMutationLease? mutationLease}) async {
+            if (mutationLease != null && (!_playerMutationBarrier.isCurrent(mutationLease) || _isDisposing)) {
+              return;
+            }
+            final ignoreProgress = _ignoreProgressOnNextPlay || _activeMusicLibraryId != null;
+          """,
+              'split public and lease-authorized play',
+          )
+
+          text = replace_once(
+              text,
+              """    var playContextGeneration = ++_playbackContextGeneration;
+              final playLease = _playerMutationBarrier.acquire();
+          """,
+              """    if (mutationLease != null && (!_playerMutationBarrier.isCurrent(mutationLease) || _isDisposing)) {
+              return;
+            }
+
+            var playContextGeneration =
+                mutationLease == null ? ++_playbackContextGeneration : _playbackContextGeneration;
+            final playLease = mutationLease ?? _playerMutationBarrier.acquire();
+          """,
+              'reuse authorized play lease',
+          )
+
+          text = replace_once(
+              text,
+              """      playContextGeneration = _playbackContextGeneration;
+          """,
+              """      if (mutationLease == null) {
+                playContextGeneration = _playbackContextGeneration;
+              }
+          """,
+              'do not rebase authorized play context',
+          )
+
+          text = replace_once(
+              text,
+              """    QueueItem? nextItem = nextEntry?.item;
+
+              if (nextEntry == null && _restoredMediaItem != null) {
+          """,
+              """    QueueItem? nextItem = nextEntry?.item;
+
+            if (mutationLease != null && nextEntry == null) {
+              abandonPlayLoading();
+              return;
+            }
+
+            if (nextEntry == null && _restoredMediaItem != null) {
+          """,
+              'forbid stale-authority fallback during authorized play',
+          )
+
+          def transform_block(source, start_marker, end_marker, transform, label):
+              start = source.find(start_marker)
+              if start < 0:
+                  raise SystemExit(f'{label}: start marker missing')
+              end = source.find(end_marker, start)
+              if end < 0:
+                  raise SystemExit(f'{label}: end marker missing')
+              block = source[start:end]
+              updated = transform(block)
+              if updated == block:
+                  raise SystemExit(f'{label}: transformation made no changes')
+              return source[:start] + updated + source[end:]
+
+          def one(block, old, new, label):
+              count = block.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, found {count}')
+              return block.replace(old, new, 1)
+
+          def transform_next(block):
+              block = one(
+                  block,
+                  "    final operationId = _beginUserSeekNavigation();\n",
+                  "    final skipLease = _playerMutationBarrier.acquire();\n"
+                  "    final operationId = _beginUserSeekNavigation(mutationLease: skipLease);\n"
+                  "    bool ownsSkip() => _playerMutationBarrier.isCurrent(skipLease) && !_isDisposing;\n",
+                  'next: capture lease before queue wait',
+              )
+              block = one(
+                  block,
+                  "        if (_currentMediaItem == null) return;\n",
+                  "        if (!ownsSkip() || _currentMediaItem == null) return;\n",
+                  'next: post-wait ownership gate',
+              )
+              block = one(
+                  block,
+                  "          await _seekInternal(newPosition);\n          navigationSucceeded = position != fromPosition;\n",
+                  "          await _seekInternal(newPosition, mutationLease: skipLease);\n"
+                  "          if (!ownsSkip()) {\n"
+                  "            return;\n"
+                  "          }\n"
+                  "          navigationSucceeded = position != fromPosition;\n",
+                  'next: keep chapter seek on original lease',
+              )
+              block = one(
+                  block,
+                  "        if (queueList.isNotEmpty) {\n",
+                  "        if (!ownsSkip()) {\n"
+                  "          return;\n"
+                  "        }\n\n"
+                  "        if (queueList.isNotEmpty) {\n",
+                  'next: gate queue transition before mutation',
+              )
+              block = one(
+                  block,
+                  "          await play();\n          final afterMedia = _currentMediaItem;\n",
+                  "          await _playWithPlayerMutationLease(skipLease);\n"
+                  "          if (!ownsSkip()) {\n"
+                  "            return;\n"
+                  "          }\n"
+                  "          final afterMedia = _currentMediaItem;\n",
+                  'next: keep next-item play on original lease',
+              )
+              return block
+
+          def transform_previous(block):
+              block = one(
+                  block,
+                  "    final operationId = _beginUserSeekNavigation();\n",
+                  "    final skipLease = _playerMutationBarrier.acquire();\n"
+                  "    final operationId = _beginUserSeekNavigation(mutationLease: skipLease);\n"
+                  "    bool ownsSkip() => _playerMutationBarrier.isCurrent(skipLease) && !_isDisposing;\n",
+                  'previous: capture lease before queue wait',
+              )
+              block = one(
+                  block,
+                  "        if (_currentMediaItem == null) return;\n",
+                  "        if (!ownsSkip() || _currentMediaItem == null) return;\n",
+                  'previous: post-wait ownership gate',
+              )
+              block = one(
+                  block,
+                  "          await _seekInternal(newPosition);\n          navigationSucceeded = position != fromPosition;\n",
+                  "          await _seekInternal(newPosition, mutationLease: skipLease);\n"
+                  "          if (!ownsSkip()) {\n"
+                  "            return;\n"
+                  "          }\n"
+                  "          navigationSucceeded = position != fromPosition;\n",
+                  'previous: keep chapter seek on original lease',
+              )
+              return block
+
+          text = transform_block(
+              text,
+              '  Future<void> skipToNextInApp() async {',
+              '\n  @override\n  Future<void> skipToPrevious()',
+              transform_next,
+              'skipToNextInApp',
+          )
+          text = transform_block(
+              text,
+              '  Future<void> skipToPreviousInApp() async {',
+              '\n  Future<void> _queueSkipOperation(',
+              transform_previous,
+              'skipToPreviousInApp',
+          )
+
+          path.write_text(text)
+          PY
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        working-directory: work
+        shell: bash
+        run: flutter pub get
+
+      - name: Format and enforce exact source scope
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          dart format lib/util/audio_handler/bg_audio_handler.dart
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="lib/util/audio_handler/bg_audio_handler.dart"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P3 source paths:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Verify P3 source contracts
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          source = Path('lib/util/audio_handler/bg_audio_handler.dart').read_text()
+
+          def block(start_marker, end_marker):
+              start = source.index(start_marker)
+              end = source.index(end_marker, start)
+              return source[start:end]
+
+          next_block = block(
+              '  Future<void> skipToNextInApp() async {',
+              '\n  @override\n  Future<void> skipToPrevious()',
+          )
+          previous_block = block(
+              '  Future<void> skipToPreviousInApp() async {',
+              '\n  Future<void> _queueSkipOperation(',
+          )
+
+          required_global = {
+              'public play wrapper': 'Future<void> play() => _playInternal();',
+              'authorized play wrapper': 'Future<void> _playWithPlayerMutationLease(PlayerMutationLease lease)',
+              'authorized play internal': 'Future<void> _playInternal({PlayerMutationLease? mutationLease}) async',
+              'lease reuse': 'final playLease = mutationLease ?? _playerMutationBarrier.acquire();',
+              'authorized fallback rejection': 'if (mutationLease != null && nextEntry == null)',
+          }
+          for label, snippet in required_global.items():
+              if source.count(snippet) != 1:
+                  raise SystemExit(f'{label} contract failed: count={source.count(snippet)}')
+
+          required_next = {
+              'capture before wait': 'final skipLease = _playerMutationBarrier.acquire();',
+              'navigation binds lease': '_beginUserSeekNavigation(mutationLease: skipLease)',
+              'post-wait currentness': 'if (!ownsSkip() || _currentMediaItem == null) return;',
+              'chapter seek carries lease': 'await _seekInternal(newPosition, mutationLease: skipLease);',
+              'next-item play carries lease': 'await _playWithPlayerMutationLease(skipLease);',
+          }
+          for label, snippet in required_next.items():
+              if next_block.count(snippet) != 1:
+                  raise SystemExit(f'next {label} contract failed: count={next_block.count(snippet)}')
+          if 'await play();' in next_block:
+              raise SystemExit('next skip still contains an authority-reacquiring public play call')
+
+          required_previous = {
+              'capture before wait': 'final skipLease = _playerMutationBarrier.acquire();',
+              'navigation binds lease': '_beginUserSeekNavigation(mutationLease: skipLease)',
+              'post-wait currentness': 'if (!ownsSkip() || _currentMediaItem == null) return;',
+              'chapter seek carries lease': 'await _seekInternal(newPosition, mutationLease: skipLease);',
+          }
+          for label, snippet in required_previous.items():
+              if previous_block.count(snippet) != 1:
+                  raise SystemExit(f'previous {label} contract failed: count={previous_block.count(snippet)}')
+          PY
+
+      - name: Analyze P3 surface
+        working-directory: work
+        shell: bash
+        run: |
+          flutter analyze \
+            lib/util/audio_handler/bg_audio_handler.dart \
+            lib/util/audio_handler/player_mutation_barrier.dart \
+            --no-fatal-warnings --no-fatal-infos
+
+      - name: Run focused race and sleep-timer tests
+        working-directory: work
+        shell: bash
+        run: |
+          flutter test \
+            test/util/player_mutation_barrier_test.dart \
+            test/util/user_seek_navigation_ledger_test.dart \
+            test/util/playback_start_attempt_test.dart \
+            test/util/sleep_timer_completion_gate_test.dart \
+            test/util/sleep_timer_target_test.dart
+
+      - name: Restore dependency side effects and recheck scope
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -- pubspec.lock 2>/dev/null || true
+          rm -rf .dart_tool
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="lib/util/audio_handler/bg_audio_handler.dart"
+          test "$actual" = "$expected" || {
+            printf 'Unexpected P3 paths after validation:\n%s\n' "$actual" >&2
+            exit 1
+          }
+
+      - name: Commit P3 source locally
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/util/audio_handler/bg_audio_handler.dart
+          git commit -m 'fix: keep queued chapter skips bound to original lease'
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_YAABSA_HEAD"
+          actual="$(git diff --name-only HEAD^ HEAD)"
+          test "$actual" = 'lib/util/audio_handler/bg_audio_handler.dart'
+          test -z "$(git status --porcelain)"
+
+      - name: Final exact-head gate and fast-forward push
+        working-directory: work
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_head="$(git ls-remote origin refs/heads/feat/chapter-end-sleep-timer | cut -f1)"
+          test "$remote_head" = "$EXPECTED_YAABSA_HEAD" || {
+            echo "YAABSA feature branch moved externally: $remote_head" >&2
+            exit 1
+          }
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_YAABSA_HEAD"
+          git diff --check "$EXPECTED_YAABSA_HEAD" HEAD
+          git push origin HEAD:refs/heads/feat/chapter-end-sleep-timer
