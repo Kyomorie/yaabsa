@@ -967,7 +967,19 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   @override
-  Future<void> play() async {
+  Future<void> play() => _playInternal();
+
+  Future<void> _playWithPlayerMutationLease(PlayerMutationLease lease) {
+    if (!_playerMutationBarrier.isCurrent(lease) || _isDisposing) {
+      return Future.value();
+    }
+    return _playInternal(mutationLease: lease);
+  }
+
+  Future<void> _playInternal({PlayerMutationLease? mutationLease}) async {
+    if (mutationLease != null && (!_playerMutationBarrier.isCurrent(mutationLease) || _isDisposing)) {
+      return;
+    }
     final ignoreProgress = _ignoreProgressOnNextPlay || _activeMusicLibraryId != null;
     final forceRestart = _ignoreProgressOnNextPlay;
     _ignoreProgressOnNextPlay = false;
@@ -1004,8 +1016,12 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       }
     }
 
-    var playContextGeneration = ++_playbackContextGeneration;
-    final playLease = _playerMutationBarrier.acquire();
+    if (mutationLease != null && (!_playerMutationBarrier.isCurrent(mutationLease) || _isDisposing)) {
+      return;
+    }
+
+    var playContextGeneration = mutationLease == null ? ++_playbackContextGeneration : _playbackContextGeneration;
+    final playLease = mutationLease ?? _playerMutationBarrier.acquire();
     bool playIntentIsCurrent() => playContextGeneration == _playbackContextGeneration && !_isDisposing;
     bool ownsPlay() => playIntentIsCurrent() && _playerMutationBarrier.isCurrent(playLease);
     void abandonPlayLoading() {
@@ -1041,7 +1057,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         abandonPlayLoading();
         return;
       }
-      playContextGeneration = _playbackContextGeneration;
+      if (mutationLease == null) {
+        playContextGeneration = _playbackContextGeneration;
+      }
     }
 
     if (!ownsPlay()) {
@@ -1116,6 +1134,11 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     }
 
     QueueItem? nextItem = nextEntry?.item;
+
+    if (mutationLease != null && nextEntry == null) {
+      abandonPlayLoading();
+      return;
+    }
 
     if (nextEntry == null && _restoredMediaItem != null) {
       final resumed = await _playLastPlayedInternal(requireStartupSettingEnabled: false, resumeCurrentIfPaused: false);
@@ -1524,11 +1547,13 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   Future<void> skipToNextInApp() async {
     if (_currentMediaItem == null) return;
-    final operationId = _beginUserSeekNavigation();
+    final skipLease = _playerMutationBarrier.acquire();
+    final operationId = _beginUserSeekNavigation(mutationLease: skipLease);
+    bool ownsSkip() => _playerMutationBarrier.isCurrent(skipLease) && !_isDisposing;
     var navigationSucceeded = false;
     try {
       await _queueSkipOperation(() async {
-        if (_currentMediaItem == null) return;
+        if (!ownsSkip() || _currentMediaItem == null) return;
         InternalChapter? nextChapter = _currentMediaItem!.getNextChapterForDuration(position);
         if (nextChapter != null) {
           final fromPosition = position;
@@ -1538,7 +1563,10 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             tag: 'AudioHandler',
             level: InfoLevel.debug,
           );
-          await _seekInternal(newPosition);
+          await _seekInternal(newPosition, mutationLease: skipLease);
+          if (!ownsSkip()) {
+            return;
+          }
           navigationSucceeded = position != fromPosition;
           unawaited(
             PlayerHistoryHandler.addPlayerHistory(
@@ -1570,12 +1598,19 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           addToQueue(finishedQueueItem, displayInfo: displayInfo, allowCurrent: true, markAsManual: false);
         }
 
+        if (!ownsSkip()) {
+          return;
+        }
+
         if (queueList.isNotEmpty) {
           final beforeMedia = _currentMediaItem;
           final beforePosition = position;
           _forceQueueSwitchOnNextPlay = true;
           _ignoreProgressOnNextPlay = isLoopOn;
-          await play();
+          await _playWithPlayerMutationLease(skipLease);
+          if (!ownsSkip()) {
+            return;
+          }
           final afterMedia = _currentMediaItem;
           navigationSucceeded =
               afterMedia != null &&
@@ -1611,11 +1646,13 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   Future<void> skipToPreviousInApp() async {
     if (_currentMediaItem == null) return;
-    final operationId = _beginUserSeekNavigation();
+    final skipLease = _playerMutationBarrier.acquire();
+    final operationId = _beginUserSeekNavigation(mutationLease: skipLease);
+    bool ownsSkip() => _playerMutationBarrier.isCurrent(skipLease) && !_isDisposing;
     var navigationSucceeded = false;
     try {
       await _queueSkipOperation(() async {
-        if (_currentMediaItem == null) return;
+        if (!ownsSkip() || _currentMediaItem == null) return;
         InternalChapter? previousChapter = _currentMediaItem!.getPreviousChapterForDuration(position);
         if (previousChapter != null) {
           final fromPosition = position;
@@ -1625,7 +1662,10 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             tag: 'AudioHandler',
             level: InfoLevel.debug,
           );
-          await _seekInternal(newPosition);
+          await _seekInternal(newPosition, mutationLease: skipLease);
+          if (!ownsSkip()) {
+            return;
+          }
           navigationSucceeded = position != fromPosition;
           unawaited(
             PlayerHistoryHandler.addPlayerHistory(
