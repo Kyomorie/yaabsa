@@ -1680,8 +1680,9 @@ class AppDatabase extends _$AppDatabase {
   /// delta is subtracted.
   Future<bool> acknowledgeReplayedSync(StoredSyncEntry replayed) {
     return transaction(() async {
-      final current = await (select(storedSyncs)..where((tbl) => tbl.sessionId.equals(replayed.sessionId)))
-          .getSingleOrNull();
+      final current = await (select(
+        storedSyncs,
+      )..where((tbl) => tbl.sessionId.equals(replayed.sessionId))).getSingleOrNull();
       if (current == null) {
         return true;
       }

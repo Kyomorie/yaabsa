@@ -1563,11 +1563,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             tag: 'AudioHandler',
             level: InfoLevel.debug,
           );
-          await _seekInternal(
-            newPosition,
-            mutationLease: skipLease,
-            authoritativeProgressCorrection: true,
-          );
+          await _seekInternal(newPosition, mutationLease: skipLease, authoritativeProgressCorrection: true);
           if (!ownsSkip()) {
             return;
           }
@@ -1666,11 +1662,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             tag: 'AudioHandler',
             level: InfoLevel.debug,
           );
-          await _seekInternal(
-            newPosition,
-            mutationLease: skipLease,
-            authoritativeProgressCorrection: true,
-          );
+          await _seekInternal(newPosition, mutationLease: skipLease, authoritativeProgressCorrection: true);
           if (!ownsSkip()) {
             return;
           }
@@ -1842,7 +1834,10 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           if (!correctionReady) {
             return;
           }
-          await _playerMutationBarrier.run<void>(lease, () => _player.seek(relativeTrackPosition, index: newTrackIndex));
+          await _playerMutationBarrier.run<void>(
+            lease,
+            () => _player.seek(relativeTrackPosition, index: newTrackIndex),
+          );
           if (!_isSeekOwnershipCurrent(lease, seekGeneration, mediaKey)) {
             return;
           }

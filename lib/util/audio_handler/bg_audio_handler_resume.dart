@@ -24,15 +24,10 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       return true;
     }
 
-    await _seekInternal(
-      targetPosition,
-      mutationLease: mutationLease,
-      authoritativeProgressCorrection: true,
-    );
+    await _seekInternal(targetPosition, mutationLease: mutationLease, authoritativeProgressCorrection: true);
     if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
       return false;
     }
-
 
     if (mutationLease != null && !_playerMutationBarrier.isCurrent(mutationLease)) {
       return false;
