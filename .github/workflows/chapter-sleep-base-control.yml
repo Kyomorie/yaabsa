@@ -1,0 +1,41 @@
+name: Chapter sleep base control
+
+on:
+  push:
+    branches:
+      - ci/chapter-sleep-v4-base-control
+
+permissions:
+  contents: read
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run build runner
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Show generated-tree delta
+        shell: bash
+        run: |
+          echo '--- changed file count ---'
+          git diff --name-only | wc -l
+          echo '--- git diff --stat summary ---'
+          git diff --stat | tail -n 1
+          echo '--- feature-adjacent generated files ---'
+          git diff --name-only | grep -E 'session_provider\.g\.dart|sleep_timer_handler\.g\.dart' || true
