@@ -46,6 +46,7 @@ class SessionRepository {
 
   PlaybackSession? _currentSession;
   bool _isLocalSession = true;
+  final Map<String, PlaybackSession> _localBoundSessionVersions = <String, PlaybackSession>{};
 
   PlaybackSession? get currentSession => _currentSession;
   PlaybackSessionBinding? get currentSessionBinding {
@@ -105,6 +106,7 @@ class SessionRepository {
 
   Future<void> closeSessionBinding(PlaybackSessionBinding binding) async {
     if (binding.isLocal) {
+      _localBoundSessionVersions.remove(binding.sessionId);
       if (_currentSession?.id == binding.sessionId) {
         logger('Closed bound local session ${binding.sessionId}', tag: 'SessionRepository');
         _currentSession = null;
@@ -221,6 +223,7 @@ class SessionRepository {
       final randomId = Uuid().v4();
       _currentSession = await createLocalSession(randomId, itemId, userId, DateTime.now(), episodeId: episodeId);
       _isLocalSession = true;
+      _localBoundSessionVersions[_currentSession!.id] = _currentSession!;
     }
 
     final hasCoverPath =
@@ -295,7 +298,9 @@ class SessionRepository {
     required bool canReachServer,
   }) async {
     final currentBoundSession = _currentSession?.id == binding.sessionId ? _currentSession : null;
-    final session = currentBoundSession ?? binding.session;
+    final session = binding.isLocal
+        ? (currentBoundSession ?? _localBoundSessionVersions[binding.sessionId] ?? binding.session)
+        : (currentBoundSession ?? binding.session);
 
     if (binding.isLocal) {
       final double newTimeListening = (session.timeListening ?? 0.0) + timeListened;
@@ -304,6 +309,7 @@ class SessionRepository {
         timeListening: newTimeListening,
         updatedAt: DateTime.now().millisecondsSinceEpoch,
       );
+      _localBoundSessionVersions[binding.sessionId] = updatedSession;
       if (_currentSession?.id == binding.sessionId) {
         _currentSession = updatedSession;
         _isLocalSession = true;
