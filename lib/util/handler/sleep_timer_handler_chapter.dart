@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+
 part of 'sleep_timer_handler.dart';
 
 final Expando<_ChapterSleepTimerRuntime> _chapterSleepTimerRuntime = Expando<_ChapterSleepTimerRuntime>(
