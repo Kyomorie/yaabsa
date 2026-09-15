@@ -290,6 +290,33 @@ void main() {
       expect(claim.suppressesAutoAdvance, isTrue);
     });
 
+    test('navigation-active completion suppresses auto advance even without timer protection', () {
+      const claim = SleepTimerCompletionClaim(
+        media: mediaA,
+        completionGeneration: 3,
+        navigationGeneration: 5,
+        navigationActive: true,
+        playbackActionGeneration: 8,
+        protection: null,
+      );
+
+      expect(claim.navigationActive, isTrue);
+      expect(claim.suppressesAutoAdvance, isTrue);
+    });
+
+    test('unprotected completion outside navigation does not suppress normal auto advance', () {
+      const claim = SleepTimerCompletionClaim(
+        media: mediaA,
+        completionGeneration: 3,
+        navigationGeneration: 5,
+        navigationActive: false,
+        playbackActionGeneration: 8,
+        protection: null,
+      );
+
+      expect(claim.suppressesAutoAdvance, isFalse);
+    });
+
     test('completion captured during navigation still suppresses later auto advance', () {
       final ledger = ChapterSleepCompletionProtectionLedger();
       ledger.arm(media: mediaA, timerGeneration: 8);
@@ -304,6 +331,23 @@ void main() {
       );
 
       expect(claim.navigationActive, isTrue);
+      expect(claim.suppressesAutoAdvance, isTrue);
+    });
+
+    test('captured protected completion stays suppressive after ownership changes', () {
+      final ledger = ChapterSleepCompletionProtectionLedger();
+      final old = ledger.arm(media: mediaA, timerGeneration: 8);
+      final claim = SleepTimerCompletionClaim(
+        media: mediaA,
+        completionGeneration: 5,
+        navigationGeneration: 12,
+        navigationActive: false,
+        playbackActionGeneration: 7,
+        protection: ledger.snapshotFor(mediaA),
+      );
+
+      expect(ledger.clear(old), isTrue);
+      ledger.arm(media: mediaB, timerGeneration: 9);
       expect(claim.suppressesAutoAdvance, isTrue);
     });
 
