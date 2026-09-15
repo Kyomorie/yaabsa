@@ -1,0 +1,50 @@
+name: Chapter sleep validation
+
+on:
+  push:
+    branches:
+      - ci/chapter-sleep-v4-validation
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed lib test/util/chapter_sleep_timer_coordination_test.dart
+
+      - name: Check generated files
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Verify generated tree clean
+        run: git diff --exit-code
+
+      - name: Check fixes
+        shell: bash
+        run: |
+          set -o pipefail
+          dart fix lib/ --dry-run | tee /tmp/dart-fix.txt
+          grep -q "Nothing to fix!" /tmp/dart-fix.txt
+
+      - name: Analyze sources
+        run: flutter analyze lib
+
+      - name: Run chapter sleep coordination tests
+        run: flutter test test/util/chapter_sleep_timer_coordination_test.dart
