@@ -6,6 +6,7 @@ import 'package:yaabsa/components/player/common/seek_bar_slider.dart';
 import 'package:yaabsa/database/settings_manager.dart';
 import 'package:yaabsa/models/internal_media.dart';
 import 'package:yaabsa/provider/player/user_bookmarks_provider.dart';
+import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
 import 'package:yaabsa/util/extensions.dart';
 import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/handler/sleep_timer_handler.dart';
