@@ -41,19 +41,15 @@ jobs:
 
           resume = Path('lib/util/audio_handler/bg_audio_handler_resume.dart')
           resume_text = resume.read_text()
-          dead = '''  Future<void> _seekWithoutPausedManualMarker(Future<void> Function() action) async {
-            _internalSeekGuardDepth += 1;
-            try {
-              await action();
-            } finally {
-              _internalSeekGuardDepth -= 1;
-            }
-          }
-
-          '''
-          if resume_text.count(dead) != 1:
-              raise SystemExit('expected exactly one _seekWithoutPausedManualMarker block')
-          resume.write_text(resume_text.replace(dead, ''))
+          start_marker = '  Future<void> _seekWithoutPausedManualMarker('
+          end_marker = '  void _recordPausedPlaybackMarker()'
+          if resume_text.count(start_marker) != 1 or resume_text.count(end_marker) != 1:
+              raise SystemExit('expected unique resume helper anchors')
+          start = resume_text.index(start_marker)
+          end = resume_text.index(end_marker, start)
+          if end <= start:
+              raise SystemExit('invalid resume helper anchor order')
+          resume.write_text(resume_text[:start] + resume_text[end:])
           PY
           dart format lib/util/handler/sleep_timer_handler_chapter.dart lib/util/audio_handler/bg_audio_handler_resume.dart
 
