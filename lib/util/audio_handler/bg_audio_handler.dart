@@ -41,6 +41,7 @@ import 'package:yaabsa/provider/player/queue_source_provider.dart';
 import 'package:yaabsa/provider/library/smart_download_provider.dart';
 import 'package:yaabsa/models/queue_source.dart';
 import 'package:yaabsa/util/globals.dart' show packageInfo;
+import 'package:yaabsa/util/audio_handler/chapter_sleep_timer_coordination.dart';
 import 'package:yaabsa/util/audio_handler/playback_error_classifier.dart';
 import 'package:yaabsa/util/audio_handler/playback_sync_service.dart';
 import 'package:yaabsa/util/bluetooth_auto_resume.dart';
@@ -57,6 +58,7 @@ import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:rxdart/rxdart.dart';
 
 part 'bg_audio_handler_models.dart';
+part 'bg_audio_handler_chapter_sleep.dart';
 part 'bg_audio_handler_runtime.dart';
 part 'bg_audio_handler_resume.dart';
 part 'bg_audio_handler_queue.dart';
@@ -885,6 +887,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   @override
   Future<void> play() async {
+    _chapterSleepNotePlaybackAction();
     final ignoreProgress = _ignoreProgressOnNextPlay || _activeMusicLibraryId != null;
     final forceRestart = _ignoreProgressOnNextPlay;
     _ignoreProgressOnNextPlay = false;
@@ -969,6 +972,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     PlayerQueueEntry? nextEntry = queueList.isNotEmpty ? queueList.removeAt(0) : null;
     final isPendingManualEntry = nextEntry != null && !nextEntry.autoQueued && _manualQueueSessionPending;
     if (nextEntry != null) {
+      _originalQueueList.removeWhere((e) => e.id != nextEntry.id && false);
       _originalQueueList.removeWhere((e) => e.id == nextEntry.id);
       _forceQueueSwitchOnNextPlay = false;
       _emitQueueState();
@@ -995,7 +999,6 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     }
 
     if (nextItem == null && _lastQueueItem != null) {
-      // e.g. Android still shows the notification and allows pressing play. This will re-use the last item.
       nextItem = _lastQueueItem;
     }
     if (nextItem == null) {
@@ -1087,6 +1090,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   @override
   Future<void> stop({bool clearQueue = true}) async {
+    _chapterSleepNotePlaybackAction();
     if (_currentMediaItem != null) {
       unawaited(
         refreshPersonalizedShelfForCompletedItem(
@@ -1100,6 +1104,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     }
     final stopPosition = position;
     final stoppedMedia = _currentMediaItem;
+    final sessionRepository = _ref.read(sessionRepositoryProvider);
+    final stoppedSessionBinding = sessionRepository.currentSessionBinding;
     final shouldStopCastPlayback = isCastControlActive;
 
     if (stoppedMedia != null) {
@@ -1140,14 +1146,20 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       _emitQueueState();
       _persistQueueIntentSoon();
     }
-    try {
-      unawaited(
-        _syncService
-            .flush(positionOverride: stopPosition, sessionClosing: true)
-            .then((_) => _ref.read(sessionRepositoryProvider).closeSession()),
-      );
-    } catch (e) {
-      logger('Error closing session: $e', tag: 'AudioHandler', level: InfoLevel.error);
+    if (stoppedSessionBinding != null) {
+      try {
+        unawaited(
+          _syncService
+              .flush(
+                positionOverride: stopPosition,
+                sessionClosing: true,
+                binding: stoppedSessionBinding,
+              )
+              .then((_) => sessionRepository.closeSessionBinding(stoppedSessionBinding)),
+        );
+      } catch (e) {
+        logger('Error closing session: $e', tag: 'AudioHandler', level: InfoLevel.error);
+      }
     }
     return _safePlayerStop();
   }
@@ -1164,6 +1176,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   @override
   Future<void> pause() async {
+    _chapterSleepNotePlaybackAction();
     PlayerUtils.disableWakelock(_ref);
     _resetStreamRecoveryState(clearWindow: true);
     if (isCastControlActive) {
@@ -1182,7 +1195,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   static const bool headphoneSkip =
-      true; // Later should determine if the skip button just fasts forward or skips chapters
+      true;
 
   Duration _skipDurationForKey(String key) {
     final configuredSeconds = _ref.read(settingsManagerProvider.notifier).getGlobalSetting<int>(key);
@@ -1205,7 +1218,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     final skipTime = _skipDurationForKey(SettingKeys.fastForwardInterval);
     final fromPosition = position;
     final newPosition = fromPosition + skipTime;
-    await _seekInternal(newPosition);
+    await seekAbsolute(newPosition);
     unawaited(
       PlayerHistoryHandler.addPlayerHistory(
         PlayerHistoryType.skipForward,
@@ -1222,9 +1235,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     final newPosition = fromPosition - skipTime;
     if (newPosition < Duration.zero) {
       logger('Rewind position is negative, resetting to zero', tag: 'AudioHandler', level: InfoLevel.debug);
-      await _seekInternal(Duration.zero);
+      await seekAbsolute(Duration.zero);
     } else {
-      await _seekInternal(newPosition);
+      await seekAbsolute(newPosition);
     }
     unawaited(
       PlayerHistoryHandler.addPlayerHistory(
@@ -1245,60 +1258,70 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   Future<void> skipToNextInApp() async {
     if (_currentMediaItem == null) return;
-    return _queueSkipOperation(() async {
-      if (_currentMediaItem == null) return;
-      InternalChapter? nextChapter = _currentMediaItem!.getNextChapterForDuration(position);
-      if (nextChapter != null) {
-        final fromPosition = position;
-        final newPosition = Duration(microseconds: (nextChapter.start * Duration.microsecondsPerSecond).round());
-        logger(
-          'Skipping to next chapter: $nextChapter, new position: $newPosition',
-          tag: 'AudioHandler',
-          level: InfoLevel.debug,
-        );
-        await _seekInternal(newPosition);
-        unawaited(
-          PlayerHistoryHandler.addPlayerHistory(
-            PlayerHistoryType.skipForward,
-            details: <String, Object?>{
-              'fromPosition': fromPosition.inSeconds,
-              'toPosition': newPosition.inSeconds,
-              'chapterTitle': nextChapter.title,
-            },
-          ),
-        );
-        return;
-      }
+    final fromPosition = position;
+    final navigationOperation = _beginChapterSleepPositionMutation(SleepTimerPositionMutationKind.userNavigation);
+    try {
+      await _queueSkipOperation(() async {
+        if (_currentMediaItem == null) return;
+        InternalChapter? nextChapter = _currentMediaItem!.getNextChapterForDuration(position);
+        if (nextChapter != null) {
+          final chapterFromPosition = position;
+          final newPosition = Duration(microseconds: (nextChapter.start * Duration.microsecondsPerSecond).round());
+          logger(
+            'Skipping to next chapter: $nextChapter, new position: $newPosition',
+            tag: 'AudioHandler',
+            level: InfoLevel.debug,
+          );
+          await _seekInternal(newPosition);
+          unawaited(
+            PlayerHistoryHandler.addPlayerHistory(
+              PlayerHistoryType.skipForward,
+              details: <String, Object?>{
+                'fromPosition': chapterFromPosition.inSeconds,
+                'toPosition': newPosition.inSeconds,
+                'chapterTitle': nextChapter.title,
+              },
+            ),
+          );
+          return;
+        }
 
-      logger('No next chapter found, skipping to next item', tag: 'AudioHandler', level: InfoLevel.debug);
-      final loopMode = _ref
-          .read(settingsManagerProvider.notifier)
-          .getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
-      final isLoopOn = loopMode == 'on';
+        logger('No next chapter found, skipping to next item', tag: 'AudioHandler', level: InfoLevel.debug);
+        final loopMode = _ref
+            .read(settingsManagerProvider.notifier)
+            .getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
+        final isLoopOn = loopMode == 'on';
 
-      if (isLoopOn && _currentMediaItem != null) {
-        final finishedMedia = _currentMediaItem!;
-        final finishedQueueItem = QueueItem(itemId: finishedMedia.itemId, episodeId: finishedMedia.episodeId);
-        final displayInfo = QueueDisplayInfo(
-          title: finishedMedia.title,
-          subtitle: finishedMedia.subtitle,
-          author: finishedMedia.author,
-        );
-        addToQueue(finishedQueueItem, displayInfo: displayInfo, allowCurrent: true, markAsManual: false);
-      }
+        if (isLoopOn && _currentMediaItem != null) {
+          final finishedMedia = _currentMediaItem!;
+          final finishedQueueItem = QueueItem(itemId: finishedMedia.itemId, episodeId: finishedMedia.episodeId);
+          final displayInfo = QueueDisplayInfo(
+            title: finishedMedia.title,
+            subtitle: finishedMedia.subtitle,
+            author: finishedMedia.author,
+          );
+          addToQueue(finishedQueueItem, displayInfo: displayInfo, allowCurrent: true, markAsManual: false);
+        }
 
-      if (queueList.isNotEmpty) {
-        _forceQueueSwitchOnNextPlay = true;
-        _ignoreProgressOnNextPlay = isLoopOn;
-        await play();
-      } else {
-        logger(
-          'No next chapter and queue is empty, ignoring skip-to-next',
-          tag: 'AudioHandler',
-          level: InfoLevel.debug,
-        );
-      }
-    });
+        if (queueList.isNotEmpty) {
+          _forceQueueSwitchOnNextPlay = true;
+          _ignoreProgressOnNextPlay = isLoopOn;
+          await play();
+        } else {
+          logger(
+            'No next chapter and queue is empty, ignoring skip-to-next',
+            tag: 'AudioHandler',
+            level: InfoLevel.debug,
+          );
+        }
+      });
+    } finally {
+      _settleChapterSleepPositionMutation(
+        navigationOperation,
+        SleepTimerPositionMutationKind.userNavigation,
+        didMutate: position != fromPosition,
+      );
+    }
   }
 
   @override
@@ -1312,30 +1335,40 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   Future<void> skipToPreviousInApp() async {
     if (_currentMediaItem == null) return;
-    return _queueSkipOperation(() async {
-      if (_currentMediaItem == null) return;
-      InternalChapter? previousChapter = _currentMediaItem!.getPreviousChapterForDuration(position);
-      if (previousChapter != null) {
-        final fromPosition = position;
-        final newPosition = Duration(microseconds: (previousChapter.start * Duration.microsecondsPerSecond).round());
-        logger(
-          'Skipping to previous chapter: $previousChapter, new position: $newPosition',
-          tag: 'AudioHandler',
-          level: InfoLevel.debug,
-        );
-        await _seekInternal(newPosition);
-        unawaited(
-          PlayerHistoryHandler.addPlayerHistory(
-            PlayerHistoryType.skipBackward,
-            details: <String, Object?>{
-              'fromPosition': fromPosition.inSeconds,
-              'toPosition': newPosition.inSeconds,
-              'chapterTitle': previousChapter.title,
-            },
-          ),
-        );
-      }
-    });
+    final fromPosition = position;
+    final navigationOperation = _beginChapterSleepPositionMutation(SleepTimerPositionMutationKind.userNavigation);
+    try {
+      await _queueSkipOperation(() async {
+        if (_currentMediaItem == null) return;
+        InternalChapter? previousChapter = _currentMediaItem!.getPreviousChapterForDuration(position);
+        if (previousChapter != null) {
+          final chapterFromPosition = position;
+          final newPosition = Duration(microseconds: (previousChapter.start * Duration.microsecondsPerSecond).round());
+          logger(
+            'Skipping to previous chapter: $previousChapter, new position: $newPosition',
+            tag: 'AudioHandler',
+            level: InfoLevel.debug,
+          );
+          await _seekInternal(newPosition);
+          unawaited(
+            PlayerHistoryHandler.addPlayerHistory(
+              PlayerHistoryType.skipBackward,
+              details: <String, Object?>{
+                'fromPosition': chapterFromPosition.inSeconds,
+                'toPosition': newPosition.inSeconds,
+                'chapterTitle': previousChapter.title,
+              },
+            ),
+          );
+        }
+      });
+    } finally {
+      _settleChapterSleepPositionMutation(
+        navigationOperation,
+        SleepTimerPositionMutationKind.userNavigation,
+        didMutate: position != fromPosition,
+      );
+    }
   }
 
   Future<void> _queueSkipOperation(Future<void> Function() operation) {
@@ -1346,83 +1379,16 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   @override
-  Future<void> seek(Duration position) async {
-    if (_currentMediaItem == null) return Future.value();
-
-    final fromPosition = this.position;
-
-    Duration resolvedPosition = position;
-    if (_chapterNotificationEnabled && !_isInternalSeek) {
-      resolvedPosition = _chapterNotificationOffset + position;
-    }
-
-    final maxPosition = _currentMediaItem!.totalDuration;
-    final boundedPosition = resolvedPosition < Duration.zero
-        ? Duration.zero
-        : (resolvedPosition > maxPosition ? maxPosition : resolvedPosition);
-
-    if (!_isInternalSeek && (boundedPosition - fromPosition).abs() >= const Duration(seconds: 1)) {
-      _syncService.markProgressDirty();
-    }
-
-    final shouldRecordPausedManualSeek =
-        _internalSeekGuardDepth == 0 &&
-        !playerControlState.playing &&
-        (playerControlState.processingState == ProcessingState.ready ||
-            playerControlState.processingState == ProcessingState.completed);
-    if (shouldRecordPausedManualSeek) {
-      _markPausedManualSeek(boundedPosition);
-    }
-
-    if (isCastControlActive) {
-      final relativePosition = _absoluteToCastRelativePosition(boundedPosition);
-      await GoogleCastRemoteMediaClient.instance.seek(GoogleCastMediaSeekOption(position: relativePosition));
-      _refreshPlayerControlState();
-      _refreshChapterNotificationState(customPosition: boundedPosition);
-      _updateMediaItemForChapterNotification(customPosition: boundedPosition);
-      await _updatePlaybackState();
-      _recordManualSeekIfNeeded(fromPosition, boundedPosition);
-      return Future.value();
-    }
-
-    final newTrackIndex = _currentMediaItem!.getIndexForDuration(boundedPosition);
-    if (newTrackIndex < 0) {
-      logger(
-        'Ignoring seek with invalid track index for position: $boundedPosition',
-        tag: 'AudioHandler',
-        level: InfoLevel.warning,
-      );
-      return Future.value();
-    }
-    logger(
-      'Seeking to position: $boundedPosition, track index: $newTrackIndex',
-      tag: 'AudioHandler',
-      level: InfoLevel.debug,
+  Future<void> seek(Duration position) {
+    return _seekForChapterSleepCoordination(
+      position,
+      kind: SleepTimerPositionMutationKind.userNavigation,
+      applyChapterNotificationOffset: true,
     );
-    final relativeTrackPosition = boundedPosition - _currentMediaItem!.startDurationForTrack(newTrackIndex);
-
-    if (newTrackIndex != _currentTrackIndex) {
-      _currentTrackIndex = newTrackIndex;
-      await _player.seek(relativeTrackPosition, index: _currentTrackIndex);
-      if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
-        // Bugfix for Windows as it doesn't seek correctly if the index changed
-        _player.playerStateStream.firstWhere((state) => state.processingState == ProcessingState.ready).then((_) async {
-          await _player.seek(relativeTrackPosition, index: _currentTrackIndex);
-        });
-      }
-    } else {
-      await _player.seek(relativeTrackPosition, index: _currentTrackIndex);
-    }
-
-    _refreshChapterNotificationState(customPosition: boundedPosition);
-    _updateMediaItemForChapterNotification(customPosition: boundedPosition);
-    unawaited(_updatePlaybackState());
-    _recordManualSeekIfNeeded(fromPosition, boundedPosition);
-    return Future.value();
   }
 
-  void _recordManualSeekIfNeeded(Duration fromPosition, Duration toPosition) {
-    if (_isInternalSeek || (toPosition - fromPosition).abs() < const Duration(seconds: 1)) {
+  void _recordManualSeekIfNeeded(Duration fromPosition, Duration toPosition, {required bool internal}) {
+    if (internal || (toPosition - fromPosition).abs() < const Duration(seconds: 1)) {
       return;
     }
 
@@ -1507,16 +1473,24 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         current.artUri == next.artUri;
   }
 
-  Future<void> _seekInternal(Duration position) async {
-    _isInternalSeek = true;
-    try {
-      await seek(position);
-    } finally {
-      _isInternalSeek = false;
-    }
+  Future<void> _seekInternal(
+    Duration position, {
+    SleepTimerPositionMutationKind mutationKind = SleepTimerPositionMutationKind.otherInternal,
+  }) {
+    return _seekForChapterSleepCoordination(
+      position,
+      kind: mutationKind,
+      applyChapterNotificationOffset: false,
+    );
   }
 
-  Future<void> seekAbsolute(Duration position) => _seekInternal(position);
+  Future<void> seekAbsolute(Duration position) {
+    return _seekForChapterSleepCoordination(
+      position,
+      kind: SleepTimerPositionMutationKind.userNavigation,
+      applyChapterNotificationOffset: false,
+    );
+  }
 
   Duration _clampDuration(Duration value, Duration min, Duration max) {
     if (value < min) return min;
@@ -1649,7 +1623,6 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     JustAudioMediaKit.bufferSize = bufferSize;
 
     final DarwinLoadControl iOSLoadControl = DarwinLoadControl(
-      // iOS does what iOS wants anyways
       preferredForwardBufferDuration: Duration(seconds: 300),
       canUseNetworkResourcesForLiveStreamingWhilePaused: false,
     );
@@ -1719,12 +1692,20 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         _hasFiredCompleted = true;
         final finishedMedia = _currentMediaItem;
         if (finishedMedia == null) return;
+        final completionClaim = _claimChapterSleepCompletion(finishedMedia);
         logger(
           'Current track index: $_currentTrackIndex, total tracks: ${finishedMedia.tracks.length}',
           tag: 'AudioHandler',
           level: InfoLevel.debug,
         );
-        await _syncService.flush();
+
+        if (!completionClaim.suppressesAutoAdvance) {
+          await _syncService.flush();
+          if (!_isChapterSleepCompletionClaimCurrent(completionClaim)) {
+            return;
+          }
+        }
+
         unawaited(
           _ref
               .read(smartDownloadManagerProvider.notifier)
@@ -1741,6 +1722,13 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           ),
         );
 
+        if (completionClaim.suppressesAutoAdvance || completionClaim.navigationActive) {
+          return;
+        }
+        if (!_isChapterSleepCompletionClaimCurrent(completionClaim)) {
+          return;
+        }
+
         final loopMode = _ref
             .read(settingsManagerProvider.notifier)
             .getGlobalSetting<String>(SettingKeys.loopMode, defaultValue: 'off');
@@ -1756,6 +1744,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
           addToQueue(finishedQueueItem, displayInfo: displayInfo, allowCurrent: true, markAsManual: false);
         }
 
+        if (!_isChapterSleepCompletionClaimCurrent(completionClaim)) {
+          return;
+        }
         if (queueList.isNotEmpty) {
           _forceQueueSwitchOnNextPlay = true;
           _ignoreProgressOnNextPlay = isLoopOn;
@@ -2127,11 +2118,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
     playbackState.add(
       PlaybackState(
-        // Which buttons should appear in the notification now
         controls: controls,
-        // Which other actions should be enabled in the notification
         systemActions: finalSystemActions,
-        // Which controls to show in Android's compact view.
         androidCompactActionIndices: compactActionIndices,
         processingState: !hasPlaybackContext
             ? AudioProcessingState.idle
@@ -2141,12 +2129,6 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             ? AudioProcessingState.ready
             : _toAudioProcessingState(controlState.processingState),
         playing: hasPlaybackContext && (isTransitionLoading ? true : controlState.playing),
-        // The current position as of this update. You should not broadcast
-        // position changes continuously because listeners will be able to
-        // project the current position after any elapsed time based on the
-        // current speed and whether audio is playing and ready. Instead, only
-        // broadcast position updates when they are different from expected (e.g.
-        // buffering, or seeking).
         updatePosition: hasPlaybackContext ? updatePosition : Duration.zero,
         bufferedPosition: hasPlaybackContext ? bufferedPosition : Duration.zero,
         speed: hasPlaybackContext ? effectiveSpeed : 1.0,
@@ -2241,6 +2223,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     _castSessionSubscription = null;
     await _castMediaStatusSubscription?.cancel();
     _castMediaStatusSubscription = null;
+    await _disposeChapterSleepTimerCoordination();
     await _syncService.dispose();
     await _player.dispose();
     await mediaItemStream.close();
