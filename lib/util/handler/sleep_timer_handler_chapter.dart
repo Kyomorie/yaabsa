@@ -22,6 +22,7 @@ class _ChapterSleepTimerRuntime {
 
   int fadeOwner = 0;
   double? fadeBaseVolume;
+  int? fadeRestoreOwner;
   Future<void> volumeQueue = Future<void>.value();
 }
 
@@ -97,7 +98,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     runtime.armedTarget = target;
     runtime.reentryGate.reset();
     runtime.fadeOwner += 1;
-    runtime.fadeBaseVolume = null;
+    runtime.fadeRestoreOwner = null;
 
     runtime.completionProtection = audioHandler.armSleepTimerCompletionProtection(
       itemId: target.media.itemId,
@@ -203,7 +204,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
       }
     });
     runtime.castSubscription = audioHandler.castControlActiveStream.listen((castActive) {
-      if (castActive && _chapterRuntimeIsArmed(runtime)) {
+      if (castActive && _chapterRuntimeIsArmedOrExpiring(runtime)) {
         _failClosedChapterTimer('Cast control became active');
       }
     });
@@ -362,13 +363,12 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
       return;
     }
 
-    _restoreChapterFadeForTransition(runtime, reason: 'chapter sleep timer retarget');
     runtime.targetGeneration += 1;
     runtime.expiryGeneration += 1;
     runtime.armedTarget = target;
     runtime.reentryGate.reset();
     runtime.fadeOwner += 1;
-    runtime.fadeBaseVolume = null;
+    runtime.fadeRestoreOwner = null;
     _clearChapterCompletionProtection(runtime);
     runtime.completionProtection = audioHandler.armSleepTimerCompletionProtection(
       itemId: target.media.itemId,
@@ -466,6 +466,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
       return;
     }
 
+    runtime.fadeRestoreOwner = null;
     runtime.fadeBaseVolume ??= audioHandler.volume;
     final base = runtime.fadeBaseVolume;
     if (base == null || base <= 0) {
@@ -482,23 +483,36 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     _ChapterSleepTimerRuntime runtime, {
     required String reason,
   }) {
-    final base = runtime.fadeBaseVolume;
-    if (base == null) {
-      return;
-    }
-    runtime.fadeBaseVolume = null;
-    runtime.volumeQueue = runtime.volumeQueue.catchError((_) {}).then((_) async {
-      await _setPlayerVolumeSafely(base, reason: reason);
-    });
+    _queueChapterFadeRestore(runtime, owner: runtime.fadeOwner, reason: reason);
   }
 
   void _restoreChapterFade(_ChapterSleepTimerRuntime runtime, {required int owner}) {
+    _queueChapterFadeRestore(runtime, owner: owner, reason: 'chapter sleep timer fade restore');
+  }
+
+  void _queueChapterFadeRestore(
+    _ChapterSleepTimerRuntime runtime, {
+    required int owner,
+    required String reason,
+  }) {
     final base = runtime.fadeBaseVolume;
-    if (base == null) {
+    if (base == null || runtime.fadeRestoreOwner == owner) {
       return;
     }
-    runtime.fadeBaseVolume = null;
-    _queueChapterVolume(runtime, owner: owner, volume: base, reason: 'chapter sleep timer fade restore');
+    runtime.fadeRestoreOwner = owner;
+    runtime.volumeQueue = runtime.volumeQueue.catchError((_) {}).then((_) async {
+      if (runtime.fadeOwner != owner || runtime.fadeRestoreOwner != owner || runtime.fadeBaseVolume != base) {
+        if (runtime.fadeRestoreOwner == owner) {
+          runtime.fadeRestoreOwner = null;
+        }
+        return;
+      }
+      await _setPlayerVolumeSafely(base, reason: reason);
+      if (runtime.fadeOwner == owner && runtime.fadeRestoreOwner == owner && runtime.fadeBaseVolume == base) {
+        runtime.fadeBaseVolume = null;
+        runtime.fadeRestoreOwner = null;
+      }
+    });
   }
 
   void _queueChapterVolume(
@@ -544,6 +558,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
 
     runtime.expiryState = ChapterSleepExpiryState.expiring;
     final expiryGeneration = ++runtime.expiryGeneration;
+    audioHandler.noteChapterSleepExpiryClaim();
 
     final context = _ChapterSleepExpiryContext(
       media: target.media,
@@ -611,6 +626,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
             navigationGeneration: context.navigationGeneration,
             playbackActionGeneration: context.playbackActionGeneration,
             sessionClosing: true,
+            forcePositionSync: true,
           );
           if (!_chapterExpiryIsCurrent(runtime, context)) {
             _abortChapterExpiryIfOwned(runtime, context, 'ownership changed during closing progress flush');
@@ -759,6 +775,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     _ChapterSleepExpiryContext context,
   ) {
     return _chapterExpiryRuntimeOwnerIsCurrent(runtime, context) &&
+        !audioHandler.isCastControlActive &&
         context.media.matchesMedia(audioHandler.currentMediaItem) &&
         audioHandler.isChapterSleepOwnershipCurrent(
           media: context.media,
