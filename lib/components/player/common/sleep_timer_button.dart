@@ -81,6 +81,8 @@ class _SleepTimerModalState extends State<SleepTimerModal> {
   @override
   Widget build(BuildContext context) {
     final sleepTimer = widget.ref.watch(sleepTimerHandlerProvider);
+    final sleepTimerNotifier = widget.ref.read(sleepTimerHandlerProvider.notifier);
+    final canStartChapterEnd = sleepTimerNotifier.canStartChapterEnd;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -93,25 +95,40 @@ class _SleepTimerModalState extends State<SleepTimerModal> {
           const SizedBox(height: 8),
           if (sleepTimer.isActive)
             Text(
-              'Remaining ${sleepTimer.remainingTime.toCompactRemainingString()}',
+              sleepTimer.isChapterEnd
+                  ? 'End of ${sleepTimer.chapterTitle ?? 'current chapter'} · ${sleepTimer.remainingTime.toCompactRemainingString()} remaining'
+                  : 'Remaining ${sleepTimer.remainingTime.toCompactRemainingString()}',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _quickOptions
-                .map(
-                  (option) => ActionChip(
-                    label: Text(option.label),
-                    onPressed: () {
-                      widget.ref.read(sleepTimerHandlerProvider.notifier).start(option.duration);
-                      Navigator.of(context).pop();
-                      HapticFeedback.lightImpact();
-                    },
-                  ),
-                )
-                .toList(),
+            children: [
+              if (canStartChapterEnd)
+                ActionChip(
+                  avatar: const Icon(Icons.bookmark_added_outlined),
+                  label: const Text('End of chapter'),
+                  onPressed: () {
+                    final started = sleepTimerNotifier.startChapterEnd();
+                    if (!started) {
+                      return;
+                    }
+                    Navigator.of(context).pop();
+                    HapticFeedback.lightImpact();
+                  },
+                ),
+              ..._quickOptions.map(
+                (option) => ActionChip(
+                  label: Text(option.label),
+                  onPressed: () {
+                    sleepTimerNotifier.start(option.duration);
+                    Navigator.of(context).pop();
+                    HapticFeedback.lightImpact();
+                  },
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           if (sleepTimer.isActive)
@@ -119,29 +136,31 @@ class _SleepTimerModalState extends State<SleepTimerModal> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                OutlinedButton.icon(
-                  onPressed: () {
-                    if (sleepTimer.isRunning) {
-                      widget.ref.read(sleepTimerHandlerProvider.notifier).pause();
-                    } else {
-                      widget.ref.read(sleepTimerHandlerProvider.notifier).resume();
-                    }
-                    setState(() {});
-                  },
-                  icon: Icon(sleepTimer.isRunning ? Icons.pause : Icons.play_arrow),
-                  label: Text(sleepTimer.isRunning ? 'Pause' : 'Resume'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    widget.ref.read(sleepTimerHandlerProvider.notifier).extend(const Duration(minutes: 5));
-                    setState(() {});
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('+5m'),
-                ),
+                if (!sleepTimer.isChapterEnd) ...[
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      if (sleepTimer.isRunning) {
+                        sleepTimerNotifier.pause();
+                      } else {
+                        sleepTimerNotifier.resume();
+                      }
+                      setState(() {});
+                    },
+                    icon: Icon(sleepTimer.isRunning ? Icons.pause : Icons.play_arrow),
+                    label: Text(sleepTimer.isRunning ? 'Pause' : 'Resume'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      sleepTimerNotifier.extend(const Duration(minutes: 5));
+                      setState(() {});
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('+5m'),
+                  ),
+                ],
                 FilledButton.tonalIcon(
                   onPressed: () {
-                    widget.ref.read(sleepTimerHandlerProvider.notifier).stop();
+                    sleepTimerNotifier.stop();
                     Navigator.of(context).pop();
                     HapticFeedback.lightImpact();
                   },
