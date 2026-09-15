@@ -89,6 +89,9 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       }
     }
 
+    final userNavigationOperation = isCurrentItem
+        ? _beginChapterSleepPositionMutation(SleepTimerPositionMutationKind.userNavigation)
+        : null;
     try {
       _clearSmartRewindPauseMarker();
       if (isCurrentItem) {
@@ -96,6 +99,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
           position,
           kind: SleepTimerPositionMutationKind.userNavigation,
           applyChapterNotificationOffset: false,
+          registerMutation: false,
         );
       } else {
         await _seekInternal(position);
@@ -121,6 +125,13 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       PlayerUtils.disableWakelock(_ref);
       _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
       return false;
+    } finally {
+      if (userNavigationOperation != null) {
+        _settleChapterSleepPositionMutation(
+          userNavigationOperation,
+          SleepTimerPositionMutationKind.userNavigation,
+        );
+      }
     }
   }
 
