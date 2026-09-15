@@ -95,6 +95,14 @@ class SessionRepository {
     return _currentSession?.id == binding.sessionId;
   }
 
+  bool detachSessionBinding(PlaybackSessionBinding binding) {
+    if (_currentSession?.id != binding.sessionId) {
+      return false;
+    }
+    _currentSession = null;
+    return true;
+  }
+
   Future<void> closeSessionBinding(PlaybackSessionBinding binding) async {
     if (binding.isLocal) {
       if (_currentSession?.id == binding.sessionId) {
@@ -286,7 +294,8 @@ class SessionRepository {
     double timeListened, {
     required bool canReachServer,
   }) async {
-    final session = binding.session;
+    final currentBoundSession = _currentSession?.id == binding.sessionId ? _currentSession : null;
+    final session = currentBoundSession ?? binding.session;
 
     if (binding.isLocal) {
       final double newTimeListening = (session.timeListening ?? 0.0) + timeListened;
@@ -357,7 +366,6 @@ class SessionRepository {
       await ref
           .read(mediaProgressProvider.notifier)
           .updateMediaProgress(session.libraryItemId, currentTime, session);
-
       PlayerHistoryHandler.addPlayerHistory(PlayerHistoryType.sync);
       return result;
     } catch (e) {
