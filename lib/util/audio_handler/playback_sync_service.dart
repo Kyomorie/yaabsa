@@ -28,6 +28,7 @@ class PlaybackSyncService {
   static const int _minimumIosSyncIntervalSeconds = 20;
 
   DateTime? _currentSegmentStartTime;
+  PlaybackSessionBinding? _activeSegmentBinding;
   bool _hasPlaybackSinceLastFlush = false;
 
   PlaybackSyncService(this._ref, {required Stream<PlayerState> playerStateStream, required this._position}) {
@@ -39,17 +40,22 @@ class PlaybackSyncService {
       final bool isEffectivelyPlaying = playerState.playing && playerState.processingState == ProcessingState.ready;
 
       if (isEffectivelyPlaying) {
-        if (_ref.read(sessionRepositoryProvider).currentSession != null) {
+        final currentBinding = _ref.read(sessionRepositoryProvider).currentSessionBinding;
+        if (currentBinding != null) {
           _hasPlaybackSinceLastFlush = true;
+          _activeSegmentBinding ??= currentBinding;
         }
         _currentSegmentStartTime ??= DateTime.now();
         unawaited(_startSync());
       } else {
         if (_currentSegmentStartTime != null) {
-          unawaited(_stopSync());
+          final binding = _activeSegmentBinding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
+          final positionSnapshot = _position();
+          unawaited(_stopSync(positionOverride: positionSnapshot, binding: binding));
         } else {
           _syncTimer?.cancel();
           _syncTimer = null;
+          _activeSegmentBinding = null;
         }
       }
     });
@@ -80,26 +86,74 @@ class PlaybackSyncService {
     _syncTimer?.cancel();
     _effectiveSyncIntervalSeconds = intervalSeconds;
     _syncTimer = Timer.periodic(Duration(seconds: intervalSeconds), (_) {
-      unawaited(_enqueueSync());
+      final binding = _activeSegmentBinding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
+      final positionSnapshot = _position();
+      unawaited(_enqueueSync(positionOverride: positionSnapshot, binding: binding));
     });
 
     logger('Playback sync timer running every ${intervalSeconds}s', tag: 'PlaybackSyncService', level: InfoLevel.debug);
   }
 
-  Future<bool> _enqueueSync({Duration? positionOverride, bool force = false}) async {
+  double _consumeListenedTime() {
+    final segmentStart = _currentSegmentStartTime;
+    if (segmentStart == null) {
+      return 0;
+    }
+
+    final now = DateTime.now();
+    final elapsed = now.difference(segmentStart);
+    if (_syncTimer?.isActive ?? false) {
+      _currentSegmentStartTime = now;
+    } else {
+      _currentSegmentStartTime = null;
+    }
+    return elapsed.inMicroseconds / Duration.microsecondsPerSecond;
+  }
+
+  Future<bool> _enqueuePreparedSync({
+    required PlaybackSessionBinding? binding,
+    required Duration position,
+    required double listenedTime,
+    required bool force,
+  }) async {
     var result = false;
 
     _syncQueue = _syncQueue.catchError((_) {}).then((_) async {
-      result = await _sync(positionOverride: positionOverride, force: force);
+      result = await _dispatchSync(binding: binding, position: position, listenedTime: listenedTime, force: force);
     });
 
     await _syncQueue;
     return result;
   }
 
-  Future<bool> _stopSync({Duration? positionOverride, bool sessionClosing = false}) async {
+  Future<bool> _enqueueSync({
+    Duration? positionOverride,
+    bool force = false,
+    PlaybackSessionBinding? binding,
+  }) async {
+    final capturedBinding = binding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
+    final capturedPosition = positionOverride ?? _position();
+    final listenedTime = _consumeListenedTime();
+    return _enqueuePreparedSync(
+      binding: capturedBinding,
+      position: capturedPosition,
+      listenedTime: listenedTime,
+      force: force,
+    );
+  }
+
+  Future<bool> _stopSync({
+    Duration? positionOverride,
+    bool sessionClosing = false,
+    PlaybackSessionBinding? binding,
+  }) async {
+    final capturedBinding = binding ?? _activeSegmentBinding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
+    final capturedPosition = positionOverride ?? _position();
+
     _syncTimer?.cancel();
     _syncTimer = null;
+    final listenedTime = _consumeListenedTime();
+    _activeSegmentBinding = null;
 
     if (sessionClosing) {
       await _syncQueue.catchError((_) {});
@@ -108,36 +162,29 @@ class PlaybackSyncService {
       }
     }
 
-    final synced = await _enqueueSync(positionOverride: positionOverride, force: true);
+    final synced = await _enqueuePreparedSync(
+      binding: capturedBinding,
+      position: capturedPosition,
+      listenedTime: listenedTime,
+      force: true,
+    );
     if (synced) {
       _hasPlaybackSinceLastFlush = false;
     }
     return synced;
   }
 
-  Future<bool> _sync({Duration? positionOverride, bool force = false}) async {
-    final currentSession = _ref.read(sessionRepositoryProvider).currentSession;
-    if (currentSession == null) {
-      _currentSegmentStartTime = null;
-      _hasPlaybackSinceLastFlush = false;
+  Future<bool> _dispatchSync({
+    required PlaybackSessionBinding? binding,
+    required Duration position,
+    required double listenedTime,
+    required bool force,
+  }) async {
+    if (binding == null) {
       return false;
     }
 
-    final Duration currentPositionDuration = positionOverride ?? _position();
-    final double currentPositionSeconds = currentPositionDuration.inMicroseconds / Duration.microsecondsPerSecond;
-    double listenedTime = 0;
-
-    if (_currentSegmentStartTime != null) {
-      final DateTime now = DateTime.now();
-      final Duration elapsedSinceLastMark = now.difference(_currentSegmentStartTime!);
-      listenedTime = elapsedSinceLastMark.inMicroseconds / Duration.microsecondsPerSecond;
-
-      if (_syncTimer?.isActive ?? false) {
-        _currentSegmentStartTime = now;
-      } else {
-        _currentSegmentStartTime = null;
-      }
-    }
+    final double currentPositionSeconds = position.inMicroseconds / Duration.microsecondsPerSecond;
 
     if (!force && listenedTime < 0.3) {
       logger(
@@ -149,20 +196,30 @@ class PlaybackSyncService {
     }
 
     logger(
-      'Syncing playback: currentPositionSeconds: $currentPositionSeconds, timeListenedInSeconds: $listenedTime',
+      'Syncing playback session ${binding.sessionId}: currentPositionSeconds: $currentPositionSeconds, '
+      'timeListenedInSeconds: $listenedTime',
       tag: 'PlaybackSyncService',
       level: InfoLevel.debug,
     );
 
     final bool canReachServer = _ref.read(serverReachabilityProvider);
-
-    return await _ref
+    return _ref
         .read(sessionRepositoryProvider)
-        .syncOpenSession(currentPositionSeconds, listenedTime, canReachServer: canReachServer);
+        .syncSessionBinding(binding, currentPositionSeconds, listenedTime, canReachServer: canReachServer);
   }
 
-  Future<bool> flush({Duration? positionOverride, bool sessionClosing = false}) async {
-    final synced = await _stopSync(positionOverride: positionOverride, sessionClosing: sessionClosing);
+  Future<bool> flush({
+    Duration? positionOverride,
+    bool sessionClosing = false,
+    PlaybackSessionBinding? binding,
+  }) async {
+    final capturedBinding = binding ?? _activeSegmentBinding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
+    final capturedPosition = positionOverride ?? _position();
+    final synced = await _stopSync(
+      positionOverride: capturedPosition,
+      sessionClosing: sessionClosing,
+      binding: capturedBinding,
+    );
     if (sessionClosing) {
       _hasPlaybackSinceLastFlush = false;
     }
@@ -180,6 +237,7 @@ class PlaybackSyncService {
     await _playerStateSubscription?.cancel();
     _playerStateSubscription = null;
     _currentSegmentStartTime = null;
+    _activeSegmentBinding = null;
     _hasPlaybackSinceLastFlush = false;
   }
 }
