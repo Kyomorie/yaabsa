@@ -30,7 +30,6 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
 
   int get sleepTimerNavigationGeneration => _chapterSleepState.navigation.generation;
   bool get hasActiveSleepTimerUserNavigation => _chapterSleepState.navigation.hasActive;
-  Set<int> get activeSleepTimerUserNavigationOperations => _chapterSleepState.navigation.activeSnapshot;
   bool get hasActiveSleepTimerInternalMutation => _chapterSleepState.activeInternalMutations.isNotEmpty;
   int get sleepTimerPlaybackActionGeneration => _chapterSleepState.playbackActionGeneration;
   int get sleepTimerCompletionGeneration => _chapterSleepState.completionGeneration;
@@ -44,13 +43,6 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       media: SleepTimerMediaIdentity(itemId: itemId, episodeId: episodeId),
       timerGeneration: timerGeneration,
     );
-  }
-
-  bool markSleepTimerCompletionProtectionExpiring(
-    SleepTimerCompletionProtectionToken token, {
-    required int expiryGeneration,
-  }) {
-    return _chapterSleepState.completionProtection.markExpiring(token, expiryGeneration: expiryGeneration);
   }
 
   bool isSleepTimerCompletionProtectionCurrent(SleepTimerCompletionProtectionToken token) {
@@ -299,25 +291,10 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     } else {
       state.activeInternalMutations.add(operationId);
     }
-    if (!state.mutationEvents.isClosed) {
-      state.mutationEvents.add(
-        SleepTimerPositionMutationEvent(
-          operationId: operationId,
-          kind: kind,
-          phase: SleepTimerPositionMutationPhase.began,
-          navigationGeneration: state.navigation.generation,
-          didMutate: false,
-        ),
-      );
-    }
     return operationId;
   }
 
-  void _settleChapterSleepPositionMutation(
-    int operationId,
-    SleepTimerPositionMutationKind kind, {
-    required bool didMutate,
-  }) {
+  void _settleChapterSleepPositionMutation(int operationId, SleepTimerPositionMutationKind kind) {
     final state = _chapterSleepState;
     if (kind == SleepTimerPositionMutationKind.userNavigation) {
       state.navigation.settle(operationId);
@@ -325,15 +302,7 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       state.activeInternalMutations.remove(operationId);
     }
     if (!state.mutationEvents.isClosed) {
-      state.mutationEvents.add(
-        SleepTimerPositionMutationEvent(
-          operationId: operationId,
-          kind: kind,
-          phase: SleepTimerPositionMutationPhase.settled,
-          navigationGeneration: state.navigation.generation,
-          didMutate: didMutate,
-        ),
-      );
+      state.mutationEvents.add(SleepTimerPositionMutationEvent(kind: kind));
     }
   }
 
@@ -383,7 +352,6 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     final state = _chapterSleepState;
     final seekGeneration = ++state.seekGeneration;
     final mediaIdentity = SleepTimerMediaIdentity.fromMedia(mediaAtStart);
-    var didMutate = false;
 
     bool contextIsCurrent() {
       return seekGeneration == _chapterSleepState.seekGeneration && mediaIdentity.matchesMedia(_currentMediaItem);
@@ -440,7 +408,6 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
           if (!isInternal) {
             _recordManualSeekIfNeeded(fromPosition, boundedPosition);
           }
-          didMutate = this.position != fromPosition;
           return;
         }
 
@@ -501,7 +468,6 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
         if (!isInternal) {
           _recordManualSeekIfNeeded(fromPosition, boundedPosition);
         }
-        didMutate = this.position != fromPosition;
       } finally {
         if (isInternal) {
           _internalSeekGuardDepth -= 1;
@@ -518,7 +484,7 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       await queuedSeek;
     } finally {
       if (operationId != null) {
-        _settleChapterSleepPositionMutation(operationId, kind, didMutate: didMutate);
+        _settleChapterSleepPositionMutation(operationId, kind);
       }
     }
   }

@@ -12,8 +12,6 @@ enum SleepTimerPositionMutationKind {
   otherInternal,
 }
 
-enum SleepTimerPositionMutationPhase { began, settled }
-
 class SleepTimerMediaIdentity {
   const SleepTimerMediaIdentity({required this.itemId, required this.episodeId});
 
@@ -76,7 +74,11 @@ ChapterSleepTarget? resolveChapterSleepTarget({required InternalMedia media, req
   }
 
   final chapter = media.getChapterForDuration(position);
-  if (chapter == null || !chapter.start.isFinite || !chapter.end.isFinite || chapter.start < 0 || chapter.end <= chapter.start) {
+  if (chapter == null ||
+      !chapter.start.isFinite ||
+      !chapter.end.isFinite ||
+      chapter.start < 0 ||
+      chapter.end <= chapter.start) {
     return null;
   }
 
@@ -125,19 +127,9 @@ class ChapterSleepReentryGate {
 }
 
 class SleepTimerPositionMutationEvent {
-  const SleepTimerPositionMutationEvent({
-    required this.operationId,
-    required this.kind,
-    required this.phase,
-    required this.navigationGeneration,
-    required this.didMutate,
-  });
+  const SleepTimerPositionMutationEvent({required this.kind});
 
-  final int operationId;
   final SleepTimerPositionMutationKind kind;
-  final SleepTimerPositionMutationPhase phase;
-  final int navigationGeneration;
-  final bool didMutate;
 }
 
 class ChapterSleepNavigationLedger {
@@ -146,7 +138,6 @@ class ChapterSleepNavigationLedger {
 
   int get generation => _generation;
   bool get hasActive => _active.isNotEmpty;
-  Set<int> get activeSnapshot => Set<int>.unmodifiable(_active);
 
   bool begin(int operationId) {
     if (!_active.add(operationId)) {
@@ -157,11 +148,6 @@ class ChapterSleepNavigationLedger {
   }
 
   bool settle(int operationId) => _active.remove(operationId);
-
-  void clear() {
-    _active.clear();
-    _generation += 1;
-  }
 }
 
 class SleepTimerCompletionProtectionToken {
@@ -175,15 +161,11 @@ class SleepTimerCompletionProtectionSnapshot {
     required this.token,
     required this.media,
     required this.timerGeneration,
-    required this.expiryGeneration,
-    required this.expiring,
   });
 
   final SleepTimerCompletionProtectionToken token;
   final SleepTimerMediaIdentity media;
   final int timerGeneration;
-  final int? expiryGeneration;
-  final bool expiring;
 }
 
 class ChapterSleepCompletionProtectionLedger {
@@ -201,25 +183,8 @@ class ChapterSleepCompletionProtectionLedger {
       token: token,
       media: media,
       timerGeneration: timerGeneration,
-      expiryGeneration: null,
-      expiring: false,
     );
     return token;
-  }
-
-  bool markExpiring(SleepTimerCompletionProtectionToken token, {required int expiryGeneration}) {
-    final current = _active;
-    if (current == null || current.token.value != token.value) {
-      return false;
-    }
-    _active = SleepTimerCompletionProtectionSnapshot(
-      token: current.token,
-      media: current.media,
-      timerGeneration: current.timerGeneration,
-      expiryGeneration: expiryGeneration,
-      expiring: true,
-    );
-    return true;
   }
 
   SleepTimerCompletionProtectionSnapshot? snapshotFor(SleepTimerMediaIdentity media) {

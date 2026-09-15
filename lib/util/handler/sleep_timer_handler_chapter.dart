@@ -11,9 +11,6 @@ class _ChapterSleepTimerRuntime {
   StreamSubscription<InternalMedia?>? mediaSubscription;
   StreamSubscription<bool>? castSubscription;
 
-  final Set<int> activeUserNavigations = <int>{};
-  final Map<int, SleepTimerPositionMutationKind> activeInternalMutations =
-      <int, SleepTimerPositionMutationKind>{};
   final ChapterSleepReentryGate reentryGate = ChapterSleepReentryGate();
 
   int runGeneration = 0;
@@ -40,7 +37,6 @@ class _ChapterSleepExpiryContext {
     required this.playbackActionGeneration,
     required this.protection,
     required this.target,
-    required this.fadeOwner,
   });
 
   final SleepTimerMediaIdentity media;
@@ -53,7 +49,6 @@ class _ChapterSleepExpiryContext {
   final int playbackActionGeneration;
   final SleepTimerCompletionProtectionToken protection;
   final ChapterSleepTarget target;
-  final int fadeOwner;
 }
 
 extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
@@ -100,10 +95,6 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     runtime.expiryGeneration += 1;
     runtime.expiryState = ChapterSleepExpiryState.armed;
     runtime.armedTarget = target;
-    runtime.activeUserNavigations
-      ..clear()
-      ..addAll(audioHandler.activeSleepTimerUserNavigationOperations);
-    runtime.activeInternalMutations.clear();
     runtime.reentryGate.reset();
     runtime.fadeOwner += 1;
     runtime.fadeBaseVolume = null;
@@ -172,8 +163,6 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     runtime.expiryGeneration += 1;
     runtime.expiryState = ChapterSleepExpiryState.inactive;
     runtime.armedTarget = null;
-    runtime.activeUserNavigations.clear();
-    runtime.activeInternalMutations.clear();
     runtime.reentryGate.reset();
     _restoreChapterFade(runtime, owner: runtime.fadeOwner);
   }
@@ -191,8 +180,6 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     runtime.expiryGeneration += 1;
     runtime.expiryState = ChapterSleepExpiryState.inactive;
     runtime.armedTarget = null;
-    runtime.activeUserNavigations.clear();
-    runtime.activeInternalMutations.clear();
     runtime.reentryGate.reset();
     if (restoreFade) {
       _restoreChapterFadeForTransition(runtime, reason: 'chapter sleep timer deactivation');
@@ -269,10 +256,8 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
           }
           final shouldExpire = runtime.reentryGate.shouldExpire(
             isInArmedChapter: target.sameChapter(chapter),
-            userNavigationActive:
-                runtime.activeUserNavigations.isNotEmpty || audioHandler.hasActiveSleepTimerUserNavigation,
-            internalMutationActive:
-                runtime.activeInternalMutations.isNotEmpty || audioHandler.hasActiveSleepTimerInternalMutation,
+            userNavigationActive: audioHandler.hasActiveSleepTimerUserNavigation,
+            internalMutationActive: audioHandler.hasActiveSleepTimerInternalMutation,
           );
           if (shouldExpire) {
             _claimChapterExpiry(runtime, runGeneration, targetGeneration, target);
@@ -285,29 +270,22 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
       return;
     }
 
-    if (event.phase == SleepTimerPositionMutationPhase.began) {
-      if (event.kind == SleepTimerPositionMutationKind.userNavigation) {
-        runtime.activeUserNavigations.add(event.operationId);
-      } else {
-        runtime.activeInternalMutations[event.operationId] = event.kind;
-      }
+    if (audioHandler.hasActiveSleepTimerUserNavigation || audioHandler.hasActiveSleepTimerInternalMutation) {
       return;
     }
 
     if (event.kind == SleepTimerPositionMutationKind.userNavigation) {
-      runtime.activeUserNavigations.remove(event.operationId);
-      if (runtime.activeUserNavigations.isEmpty && runtime.expiryState == ChapterSleepExpiryState.armed) {
+      if (runtime.expiryState == ChapterSleepExpiryState.armed) {
         _retargetAfterUserNavigation(runtime);
       }
       return;
     }
 
-    final kind = runtime.activeInternalMutations.remove(event.operationId) ?? event.kind;
     if (runtime.expiryState != ChapterSleepExpiryState.armed) {
       return;
     }
 
-    switch (kind) {
+    switch (event.kind) {
       case SleepTimerPositionMutationKind.smartRewind:
         _refreshAfterSmartRewind(runtime);
         break;
@@ -341,9 +319,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     }
 
     if (claim.navigationActive ||
-        runtime.activeUserNavigations.isNotEmpty ||
         audioHandler.hasActiveSleepTimerUserNavigation ||
-        runtime.activeInternalMutations.isNotEmpty ||
         audioHandler.hasActiveSleepTimerInternalMutation ||
         runtime.reentryGate.isAwaitingArmedChapter) {
       return;
@@ -356,7 +332,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     if (runtime.expiryState != ChapterSleepExpiryState.armed || audioHandler.isCastControlActive) {
       return;
     }
-    if (audioHandler.hasActiveSleepTimerUserNavigation || runtime.activeUserNavigations.isNotEmpty) {
+    if (audioHandler.hasActiveSleepTimerUserNavigation || audioHandler.hasActiveSleepTimerInternalMutation) {
       return;
     }
 
@@ -547,8 +523,6 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
   ) {
     if (!_chapterTargetIsCurrent(runtime, runGeneration, targetGeneration, target) ||
         runtime.expiryState != ChapterSleepExpiryState.armed ||
-        runtime.activeUserNavigations.isNotEmpty ||
-        runtime.activeInternalMutations.isNotEmpty ||
         audioHandler.hasActiveSleepTimerUserNavigation ||
         audioHandler.hasActiveSleepTimerInternalMutation ||
         runtime.reentryGate.isAwaitingArmedChapter) {
@@ -570,7 +544,6 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
 
     runtime.expiryState = ChapterSleepExpiryState.expiring;
     final expiryGeneration = ++runtime.expiryGeneration;
-    audioHandler.markSleepTimerCompletionProtectionExpiring(protection, expiryGeneration: expiryGeneration);
 
     final context = _ChapterSleepExpiryContext(
       media: target.media,
@@ -583,7 +556,6 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
       playbackActionGeneration: audioHandler.sleepTimerPlaybackActionGeneration,
       protection: protection,
       target: target,
-      fadeOwner: runtime.fadeOwner,
     );
 
     state = state.copyWith(remainingTime: Duration.zero, chapterTarget: target);
@@ -695,8 +667,6 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     _clearChapterCompletionProtection(runtime, expected: context.protection);
     _restoreChapterFadeForTransition(runtime, reason: 'chapter sleep timer expiry fade restore');
     runtime.armedTarget = null;
-    runtime.activeUserNavigations.clear();
-    runtime.activeInternalMutations.clear();
     runtime.reentryGate.reset();
 
     final marker = state.marker?.copyWith(endPosition: context.target.endPosition);

@@ -137,7 +137,6 @@ void main() {
 
       expect(ledger.settle(1), isTrue);
       expect(ledger.hasActive, isTrue);
-      expect(ledger.activeSnapshot, {2});
 
       expect(ledger.settle(2), isTrue);
       expect(ledger.hasActive, isFalse);
@@ -153,16 +152,14 @@ void main() {
       expect(ledger.settle(7), isTrue);
     });
 
-    test('clear invalidates prior navigation ownership', () {
+    test('settling an operation does not create a newer navigation generation', () {
       final ledger = ChapterSleepNavigationLedger();
       expect(ledger.begin(11), isTrue);
       final generation = ledger.generation;
 
-      ledger.clear();
-
+      expect(ledger.settle(11), isTrue);
       expect(ledger.hasActive, isFalse);
-      expect(ledger.generation, generation + 1);
-      expect(ledger.settle(11), isFalse);
+      expect(ledger.generation, generation);
     });
   });
 
@@ -266,26 +263,19 @@ void main() {
     const mediaA = SleepTimerMediaIdentity(itemId: 'A', episodeId: null);
     const mediaB = SleepTimerMediaIdentity(itemId: 'B', episodeId: null);
 
-    test('protects only the armed media and carries expiry ownership', () {
+    test('protects only the armed media and carries timer ownership', () {
       final ledger = ChapterSleepCompletionProtectionLedger();
-      final token = ledger.arm(media: mediaA, timerGeneration: 4);
+      ledger.arm(media: mediaA, timerGeneration: 4);
 
       final armed = ledger.snapshotFor(mediaA);
       expect(armed, isNotNull);
       expect(armed!.timerGeneration, 4);
-      expect(armed.expiring, isFalse);
       expect(ledger.snapshotFor(mediaB), isNull);
-
-      expect(ledger.markExpiring(token, expiryGeneration: 9), isTrue);
-      final expiring = ledger.snapshotFor(mediaA)!;
-      expect(expiring.expiring, isTrue);
-      expect(expiring.expiryGeneration, 9);
     });
 
-    test('completion stays protected while expiry is already running', () {
+    test('protection remains valid until expiry explicitly clears it', () {
       final ledger = ChapterSleepCompletionProtectionLedger();
       final token = ledger.arm(media: mediaA, timerGeneration: 3);
-      expect(ledger.markExpiring(token, expiryGeneration: 4), isTrue);
 
       final claim = SleepTimerCompletionClaim(
         media: mediaA,
@@ -296,8 +286,8 @@ void main() {
         protection: ledger.snapshotFor(mediaA),
       );
 
+      expect(ledger.isCurrent(token), isTrue);
       expect(claim.suppressesAutoAdvance, isTrue);
-      expect(claim.protection!.expiring, isTrue);
     });
 
     test('completion captured during navigation still suppresses later auto advance', () {
@@ -328,14 +318,13 @@ void main() {
       expect(ledger.active, isNull);
     });
 
-    test('stale owner cannot mark a newer timer as expiring', () {
+    test('clearing the current owner removes completion protection', () {
       final ledger = ChapterSleepCompletionProtectionLedger();
-      final stale = ledger.arm(media: mediaA, timerGeneration: 1);
       final current = ledger.arm(media: mediaA, timerGeneration: 2);
 
-      expect(ledger.markExpiring(stale, expiryGeneration: 3), isFalse);
-      expect(ledger.isCurrent(current), isTrue);
-      expect(ledger.active!.expiring, isFalse);
+      expect(ledger.snapshotFor(mediaA), isNotNull);
+      expect(ledger.clear(current), isTrue);
+      expect(ledger.snapshotFor(mediaA), isNull);
     });
 
     test('rearming for another media removes old completion protection', () {
