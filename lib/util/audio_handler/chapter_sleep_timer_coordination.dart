@@ -225,5 +225,5 @@ class SleepTimerCompletionClaim {
   final int playbackActionGeneration;
   final SleepTimerCompletionProtectionSnapshot? protection;
 
-  bool get suppressesAutoAdvance => protection != null;
+  bool get suppressesAutoAdvance => navigationActive || protection != null;
 }
