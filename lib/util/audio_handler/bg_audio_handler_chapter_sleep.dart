@@ -129,8 +129,12 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     required int navigationGeneration,
     required int playbackActionGeneration,
   }) async {
+    final expiryProtection = _chapterSleepState.completionProtection.active?.token;
+
     bool expiryOwnerIsCurrent() {
-      return !isCastControlActive &&
+      return expiryProtection != null &&
+          isSleepTimerCompletionProtectionCurrent(expiryProtection) &&
+          !isCastControlActive &&
           isChapterSleepOwnershipCurrent(
             media: media,
             sessionId: sessionId,
@@ -258,40 +262,42 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     PlayerUtils.disableWakelock(_ref);
 
     var playerOwnershipCurrent = true;
-    if (!kIsWeb && Platform.isLinux) {
-      await _player.pause();
-      playerOwnershipCurrent = _chapterSleepPostDetachOwnershipCurrent(
-        navigationGeneration: navigationGeneration,
-        playbackActionGeneration: playbackActionGeneration,
-      );
-      if (playerOwnershipCurrent) {
-        await _player.seek(Duration.zero);
+    try {
+      if (!kIsWeb && Platform.isLinux) {
+        await _player.pause();
+        playerOwnershipCurrent = _chapterSleepPostDetachOwnershipCurrent(
+          navigationGeneration: navigationGeneration,
+          playbackActionGeneration: playbackActionGeneration,
+        );
+        if (playerOwnershipCurrent) {
+          await _player.seek(Duration.zero);
+          playerOwnershipCurrent = _chapterSleepPostDetachOwnershipCurrent(
+            navigationGeneration: navigationGeneration,
+            playbackActionGeneration: playbackActionGeneration,
+          );
+        }
+      } else {
+        await _player.stop();
         playerOwnershipCurrent = _chapterSleepPostDetachOwnershipCurrent(
           navigationGeneration: navigationGeneration,
           playbackActionGeneration: playbackActionGeneration,
         );
       }
-    } else {
-      await _player.stop();
-      playerOwnershipCurrent = _chapterSleepPostDetachOwnershipCurrent(
-        navigationGeneration: navigationGeneration,
-        playbackActionGeneration: playbackActionGeneration,
-      );
+
+      if (playerOwnershipCurrent) {
+        TrayManager.update();
+      }
+
+      return playerOwnershipCurrent &&
+          _chapterSleepPostDetachOwnershipCurrent(
+            navigationGeneration: navigationGeneration,
+            playbackActionGeneration: playbackActionGeneration,
+          );
+    } finally {
+      // M was already detached. Its bound close must complete even if the
+      // player stop/pause/seek path throws, and it cannot clear a newer N.
+      await sessionRepository.closeSessionBinding(binding);
     }
-
-    if (playerOwnershipCurrent) {
-      TrayManager.update();
-    }
-
-    // Closing M is safe even if a newer playback action has taken ownership:
-    // the repository only clears its current session when the binding still matches.
-    await sessionRepository.closeSessionBinding(binding);
-
-    return playerOwnershipCurrent &&
-        _chapterSleepPostDetachOwnershipCurrent(
-          navigationGeneration: navigationGeneration,
-          playbackActionGeneration: playbackActionGeneration,
-        );
   }
 
   Future<void> _disposeChapterSleepTimerCoordination() async {
