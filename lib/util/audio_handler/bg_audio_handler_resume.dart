@@ -395,15 +395,6 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     return hasMarker;
   }
 
-  Future<void> _seekWithoutPausedManualMarker(Future<void> Function() action) async {
-    _internalSeekGuardDepth += 1;
-    try {
-      await action();
-    } finally {
-      _internalSeekGuardDepth -= 1;
-    }
-  }
-
   void _recordPausedPlaybackMarker() {
     if (_currentMediaItem == null) {
       _clearSmartRewindPauseMarker();
