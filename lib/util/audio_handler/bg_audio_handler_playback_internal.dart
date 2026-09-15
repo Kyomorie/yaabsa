@@ -91,7 +91,15 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
     try {
       _clearSmartRewindPauseMarker();
-      await _seekInternal(position);
+      if (isCurrentItem) {
+        await _seekForChapterSleepCoordination(
+          position,
+          kind: SleepTimerPositionMutationKind.userNavigation,
+          applyChapterNotificationOffset: false,
+        );
+      } else {
+        await _seekInternal(position);
+      }
       _setQueueTransitionLoading(false);
       if (isCastControlActive) {
         await play();
@@ -202,14 +210,14 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     }
 
     logger('Attempting fallback series auto queue for item ${item.id}.', tag: 'AudioHandler', level: InfoLevel.debug);
-    final fallbackContext = await _buildSeriesFallbackAutoQueueContext(item);
+    final fallbackContext = await _buildSeriesFallbackAutoQueueContext(item, autoQueueStart);
     if (fallbackContext != null) {
       unawaited(_startAutoQueue(fallbackContext, QueueItem(itemId: item.id)));
     } else {
       logger(
         'Fallback series auto queue context could not be resolved for item ${item.id}.',
         tag: 'AudioHandler',
-        level: InfoLevel.debug,
+        level: InfoLevel.warning,
       );
     }
   }
@@ -283,6 +291,21 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       return;
     }
 
+    final requestMedia = SleepTimerMediaIdentity.fromMedia(resumeItem);
+    final requestSessionId = resumeItem.sessionId;
+    final requestNavigationGeneration = sleepTimerNavigationGeneration;
+    final requestPlaybackActionGeneration = sleepTimerPlaybackActionGeneration;
+
+    bool requestIsCurrent() {
+      return !isCastControlActive &&
+          isChapterSleepOwnershipCurrent(
+            media: requestMedia,
+            sessionId: requestSessionId,
+            navigationGeneration: requestNavigationGeneration,
+            playbackActionGeneration: requestPlaybackActionGeneration,
+          );
+    }
+
     const driftThreshold = Duration(seconds: 10);
 
     try {
@@ -290,16 +313,9 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
           .read(mediaProgressProvider.notifier)
           .fetchOrRefreshIndividualProgress(resumeItem.itemId, episodeId: resumeItem.episodeId);
 
-      final currentMedia = _currentMediaItem;
-      if (currentMedia == null ||
-          !_queueItemsMatch(
-            leftItemId: currentMedia.itemId,
-            leftEpisodeId: currentMedia.episodeId,
-            rightItemId: resumeItem.itemId,
-            rightEpisodeId: resumeItem.episodeId,
-          )) {
+      if (!requestIsCurrent()) {
         logger(
-          'Background resume reconcile aborted: current media item changed or is null (current=${currentMedia?.itemId}(${currentMedia?.episodeId ?? 'item'}), resume=${resumeItem.itemId}(${resumeItem.episodeId ?? 'item'}))',
+          'Background resume reconcile aborted because playback ownership changed while progress was loading.',
           tag: 'AudioHandler',
           level: InfoLevel.debug,
         );
@@ -331,6 +347,10 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         return;
       }
 
+      if (!requestIsCurrent()) {
+        return;
+      }
+
       logger(
         'Background resume reconcile detected position drift of $positionDrift. '
         'Seeking from start position $startPosition to remote position $remotePosition',
@@ -342,6 +362,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         remotePosition,
         kind: SleepTimerPositionMutationKind.resumeProgressReconcile,
         applyChapterNotificationOffset: false,
+        continuationIsCurrent: requestIsCurrent,
       );
     } catch (e) {
       logger('Background resume reconcile failed: $e', tag: 'AudioHandler', level: InfoLevel.warning);
