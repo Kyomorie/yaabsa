@@ -327,13 +327,7 @@ class SessionRepository {
       }
 
       logger('Session is local; storing bound sync locally', tag: 'SessionRepository', level: InfoLevel.debug);
-      return _addLocal(
-        currentTime,
-        timeListened,
-        updatedProgress,
-        session: updatedSession,
-        sessionLocal: true,
-      );
+      return _addLocal(currentTime, timeListened, updatedProgress, session: updatedSession, sessionLocal: true);
     }
 
     if (!canReachServer) {
@@ -369,13 +363,15 @@ class SessionRepository {
         ),
       );
 
-      await ref
-          .read(mediaProgressProvider.notifier)
-          .updateMediaProgress(session.libraryItemId, currentTime, session);
+      await ref.read(mediaProgressProvider.notifier).updateMediaProgress(session.libraryItemId, currentTime, session);
       PlayerHistoryHandler.addPlayerHistory(PlayerHistoryType.sync);
       return result;
     } catch (e) {
-      logger('Failed to sync bound open session ${binding.sessionId}', tag: 'SessionRepository', level: InfoLevel.warning);
+      logger(
+        'Failed to sync bound open session ${binding.sessionId}',
+        tag: 'SessionRepository',
+        level: InfoLevel.warning,
+      );
       final MediaProgress? updatedProgress = await ref
           .read(mediaProgressProvider.notifier)
           .updateMediaProgress(session.libraryItemId, currentTime, session);
@@ -413,7 +409,8 @@ class SessionRepository {
 
     final double duration = session.duration ?? 0;
     final double normalizedProgress = duration > 0 ? (currentTime / duration).clamp(0.0, 1.0).toDouble() : 0.0;
-    final MediaProgress effectiveProgress = progress ?? session.toMediaProgress(null, userId, normalizedProgress, currentTime);
+    final MediaProgress effectiveProgress =
+        progress ?? session.toMediaProgress(null, userId, normalizedProgress, currentTime);
 
     StoredSyncsCompanion sync = StoredSyncsCompanion(
       sessionId: Value(session.id),

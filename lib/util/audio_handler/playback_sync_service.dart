@@ -130,11 +130,7 @@ class PlaybackSyncService {
     return result;
   }
 
-  Future<bool> _enqueueSync({
-    Duration? positionOverride,
-    bool force = false,
-    PlaybackSessionBinding? binding,
-  }) async {
+  Future<bool> _enqueueSync({Duration? positionOverride, bool force = false, PlaybackSessionBinding? binding}) async {
     final capturedBinding = binding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
     final capturedPosition = positionOverride ?? _position();
     final listenedTime = _consumeListenedTime();
@@ -152,7 +148,8 @@ class PlaybackSyncService {
     PlaybackSessionBinding? binding,
     bool forcePositionSync = false,
   }) async {
-    final capturedBinding = binding ?? _activeSegmentBinding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
+    final capturedBinding =
+        binding ?? _activeSegmentBinding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
     final capturedPosition = positionOverride ?? _position();
     final segmentGeneration = _segmentGeneration;
     final hadPlaybackSinceLastFlush = _hasPlaybackSinceLastFlush;
@@ -221,7 +218,8 @@ class PlaybackSyncService {
     PlaybackSessionBinding? binding,
     bool forcePositionSync = false,
   }) async {
-    final capturedBinding = binding ?? _activeSegmentBinding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
+    final capturedBinding =
+        binding ?? _activeSegmentBinding ?? _ref.read(sessionRepositoryProvider).currentSessionBinding;
     final capturedPosition = positionOverride ?? _position();
     return _stopSync(
       positionOverride: capturedPosition,

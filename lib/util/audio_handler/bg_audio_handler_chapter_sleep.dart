@@ -25,7 +25,8 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     return _chapterSleepCoordinationState[this] ??= _ChapterSleepAudioCoordinationState();
   }
 
-  Stream<SleepTimerPositionMutationEvent> get sleepTimerPositionMutationStream => _chapterSleepState.mutationEvents.stream;
+  Stream<SleepTimerPositionMutationEvent> get sleepTimerPositionMutationStream =>
+      _chapterSleepState.mutationEvents.stream;
   Stream<SleepTimerCompletionClaim> get sleepTimerCompletionClaimStream => _chapterSleepState.completionClaims.stream;
 
   int get sleepTimerNavigationGeneration => _chapterSleepState.navigation.generation;
@@ -331,11 +332,7 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
   // settlement no longer depends on it; those snapshots can be removed in a
   // follow-up cleanup without affecting behavior.
   // ignore: unused_element_parameter
-  void _settleChapterSleepPositionMutation(
-    int operationId,
-    SleepTimerPositionMutationKind kind, {
-    bool? didMutate,
-  }) {
+  void _settleChapterSleepPositionMutation(int operationId, SleepTimerPositionMutationKind kind, {bool? didMutate}) {
     final state = _chapterSleepState;
     if (kind == SleepTimerPositionMutationKind.userNavigation) {
       state.navigation.settle(operationId);
