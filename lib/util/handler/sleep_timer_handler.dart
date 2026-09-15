@@ -4,6 +4,10 @@ import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:yaabsa/database/settings_manager.dart';
+import 'package:yaabsa/models/internal_media.dart';
+import 'package:yaabsa/provider/player/session_provider.dart';
+import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
+import 'package:yaabsa/util/audio_handler/chapter_sleep_timer_coordination.dart';
 import 'package:yaabsa/util/audio_handler/player_history_handler.dart';
 import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/logger.dart';
@@ -12,6 +16,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'sleep_timer_handler.g.dart';
+part 'sleep_timer_handler_chapter.dart';
 
 enum SleepTimerState { inactive, running, paused }
 
@@ -24,7 +29,9 @@ const double _sleepTimerFadeCurveExponent = 1.8;
 class SleepTimerData {
   final Duration remainingTime;
   final SleepTimerState state;
+  final SleepTimerMode mode;
   final Duration? totalDuration;
+  final ChapterSleepTarget? chapterTarget;
   final SleepTimerMarker? marker;
   final bool? _showMarkerPinValue;
   final bool? _showMarkerRangeValue;
@@ -33,7 +40,9 @@ class SleepTimerData {
   const SleepTimerData({
     required this.remainingTime,
     required this.state,
+    this.mode = SleepTimerMode.duration,
     this.totalDuration,
+    this.chapterTarget,
     this.marker,
     bool showMarkerPin = true,
     bool showMarkerRange = true,
@@ -52,7 +61,11 @@ class SleepTimerData {
   SleepTimerData copyWith({
     Duration? remainingTime,
     SleepTimerState? state,
+    SleepTimerMode? mode,
     Duration? totalDuration,
+    bool clearTotalDuration = false,
+    ChapterSleepTarget? chapterTarget,
+    bool clearChapterTarget = false,
     SleepTimerMarker? marker,
     bool? showMarkerPin,
     bool? showMarkerRange,
@@ -61,7 +74,9 @@ class SleepTimerData {
     return SleepTimerData(
       remainingTime: remainingTime ?? this.remainingTime,
       state: state ?? this.state,
-      totalDuration: totalDuration ?? this.totalDuration,
+      mode: mode ?? this.mode,
+      totalDuration: clearTotalDuration ? null : totalDuration ?? this.totalDuration,
+      chapterTarget: clearChapterTarget ? null : chapterTarget ?? this.chapterTarget,
       marker: marker ?? this.marker,
       showMarkerPin: showMarkerPin ?? this.showMarkerPin,
       showMarkerRange: showMarkerRange ?? this.showMarkerRange,
@@ -164,6 +179,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
       _playerStateSubscription?.cancel();
       _playerStateSubscription = null;
+      _disposeChapterSleepTimerRuntime();
 
       unawaited(_restoreFadeVolumeIfNeeded());
     });
@@ -196,20 +212,22 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     final wasRunning = _wasPlaybackRunning;
     _wasPlaybackRunning = isRunning;
 
-    if (wasRunning && !isRunning && state.isRunning) {
+    if (wasRunning && !isRunning && state.isRunning && state.mode == SleepTimerMode.duration) {
       pause(triggeredByPlaybackPause: true);
       return;
     }
 
     if (!wasRunning && isRunning) {
-      if (_pauseTriggeredByPlayback && state.state == SleepTimerState.paused) {
+      if (_pauseTriggeredByPlayback && state.state == SleepTimerState.paused && state.mode == SleepTimerMode.duration) {
         resume();
         _scheduleMarkerPinHide();
         return;
       }
 
       _scheduleMarkerPinHide();
-      unawaited(_tryAutoRestartSleepTimerOnPlaybackStart());
+      if (state.mode != SleepTimerMode.chapterEnd) {
+        unawaited(_tryAutoRestartSleepTimerOnPlaybackStart());
+      }
     }
   }
 
@@ -218,6 +236,10 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   Duration _remainingForCurrentRun() {
+    if (state.mode == SleepTimerMode.chapterEnd) {
+      return _chapterRemainingTime();
+    }
+
     final countdownStartTime = _countdownStartTime;
     final countdownRunDuration = _countdownRunDuration;
     if (countdownStartTime == null || countdownRunDuration == null) {
@@ -248,6 +270,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   void _applyFadeOutIfNeeded(Duration remaining) {
+    if (state.mode == SleepTimerMode.chapterEnd) {
+      return;
+    }
     if (!_isFadeOutEnabled() || remaining > _sleepTimerFadeOutDuration) {
       unawaited(_restoreFadeVolumeIfNeeded());
       return;
@@ -354,7 +379,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     state = SleepTimerData(
       remainingTime: state.remainingTime,
       state: state.state,
+      mode: state.mode,
       totalDuration: state.totalDuration,
+      chapterTarget: state.chapterTarget,
       marker: marker,
       showMarkerPin: nextShowPin,
       showMarkerRange: nextShowRange,
@@ -382,6 +409,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     }
 
     _markerPinHideTimer?.cancel();
+    _markerPinHideTimer = null;
+    _markerRangeHideTimer?.cancel();
+    _markerRangeHideTimer = null;
     _markerPinHideTimer = Timer(_sleepTimerMarkerPinVisibilityDuration, () {
       _markerPinHideTimer = null;
       _setMarkerVisibility(showPin: false, showRange: false, forceMarkerVisibility: false);
@@ -457,7 +487,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   Future<void> _tryAutoRestartSleepTimerOnPlaybackStart() async {
-    if (state.isActive) {
+    if (state.isActive || state.mode == SleepTimerMode.chapterEnd) {
       return;
     }
 
@@ -496,6 +526,8 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
     if (state.isActive) {
       stop(suppressAutoRestart: false, recordHistory: false);
+    } else {
+      _deactivateChapterTimerRuntime();
     }
 
     _pauseTriggeredByPlayback = false;
@@ -512,6 +544,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     state = SleepTimerData(
       remainingTime: duration,
       state: SleepTimerState.running,
+      mode: SleepTimerMode.duration,
       totalDuration: duration,
       marker: marker,
       showMarkerPin: false,
@@ -534,6 +567,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
 
   void stop({bool suppressAutoRestart = true, bool recordHistory = true}) {
     final remainingTime = state.isRunning ? _remainingForCurrentRun() : state.remainingTime;
+    if (state.mode == SleepTimerMode.chapterEnd) {
+      _deactivateChapterTimerRuntime();
+    }
     _timer?.cancel();
     _timer = null;
     _countdownStartTime = null;
@@ -552,6 +588,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     state = const SleepTimerData(
       remainingTime: Duration.zero,
       state: SleepTimerState.inactive,
+      mode: SleepTimerMode.duration,
       showMarkerPin: false,
       showMarkerRange: false,
     );
@@ -568,7 +605,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   void pause({bool triggeredByPlaybackPause = false}) {
-    if (!state.isRunning) return;
+    if (!state.isRunning || state.mode != SleepTimerMode.duration) return;
 
     final remainingTime = _remainingForCurrentRun();
 
@@ -598,7 +635,9 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   void resume() {
-    if (state.state != SleepTimerState.paused || state.remainingTime <= Duration.zero) {
+    if (state.state != SleepTimerState.paused ||
+        state.remainingTime <= Duration.zero ||
+        state.mode != SleepTimerMode.duration) {
       return;
     }
 
@@ -622,7 +661,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   void extend(Duration additionalTime) {
-    if (!state.isActive || additionalTime <= Duration.zero) return;
+    if (!state.isActive || state.mode != SleepTimerMode.duration || additionalTime <= Duration.zero) return;
 
     final isRunning = state.isRunning;
     final baseRemainingTime = isRunning ? _remainingForCurrentRun() : state.remainingTime;
@@ -651,7 +690,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
   }
 
   void reset() {
-    if (!state.isActive) return;
+    if (!state.isActive || state.mode != SleepTimerMode.duration) return;
 
     final totalDuration = state.totalDuration ?? state.remainingTime;
     if (totalDuration <= Duration.zero) return;
@@ -690,6 +729,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     state = SleepTimerData(
       remainingTime: totalDuration,
       state: SleepTimerState.running,
+      mode: SleepTimerMode.duration,
       totalDuration: totalDuration,
       marker: marker,
       forceMarkerVisibility: false,
@@ -739,6 +779,7 @@ class SleepTimerHandler extends _$SleepTimerHandler {
     state = SleepTimerData(
       remainingTime: Duration.zero,
       state: SleepTimerState.inactive,
+      mode: SleepTimerMode.duration,
       marker: marker,
       forceMarkerVisibility: false,
     );

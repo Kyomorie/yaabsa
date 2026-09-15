@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:yaabsa/util/audio_handler/chapter_sleep_timer_coordination.dart';
+import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/handler/sleep_timer_handler.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -81,6 +83,7 @@ class _SleepTimerModalState extends State<SleepTimerModal> {
   @override
   Widget build(BuildContext context) {
     final sleepTimer = widget.ref.watch(sleepTimerHandlerProvider);
+    final handler = widget.ref.read(sleepTimerHandlerProvider.notifier);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -93,25 +96,43 @@ class _SleepTimerModalState extends State<SleepTimerModal> {
           const SizedBox(height: 8),
           if (sleepTimer.isActive)
             Text(
-              'Remaining ${sleepTimer.remainingTime.toCompactRemainingString()}',
+              sleepTimer.mode == SleepTimerMode.chapterEnd
+                  ? 'Remaining ${sleepTimer.remainingTime.toCompactRemainingString()} · end of chapter'
+                  : 'Remaining ${sleepTimer.remainingTime.toCompactRemainingString()}',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _quickOptions
-                .map(
-                  (option) => ActionChip(
-                    label: Text(option.label),
-                    onPressed: () {
-                      widget.ref.read(sleepTimerHandlerProvider.notifier).start(option.duration);
-                      Navigator.of(context).pop();
-                      HapticFeedback.lightImpact();
-                    },
-                  ),
-                )
-                .toList(),
+            children: [
+              ..._quickOptions.map(
+                (option) => ActionChip(
+                  label: Text(option.label),
+                  onPressed: () {
+                    widget.ref.read(sleepTimerHandlerProvider.notifier).start(option.duration);
+                    Navigator.of(context).pop();
+                    HapticFeedback.lightImpact();
+                  },
+                ),
+              ),
+              StreamBuilder<Duration>(
+                stream: audioHandler.positionStream,
+                initialData: audioHandler.position,
+                builder: (context, positionSnapshot) {
+                  final chapterTarget = handler.availableChapterSleepTarget;
+                  final chapterRemaining = chapterTarget?.remainingAt(positionSnapshot.data ?? audioHandler.position);
+                  if (chapterTarget == null || chapterRemaining == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return ActionChip(
+                    avatar: const Icon(Icons.skip_next_rounded),
+                    label: Text('End of chapter · ${chapterRemaining.toLargestUnitCompactString()}'),
+                    onPressed: _startChapterTimer,
+                  );
+                },
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           if (sleepTimer.isActive)
@@ -119,26 +140,28 @@ class _SleepTimerModalState extends State<SleepTimerModal> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                OutlinedButton.icon(
-                  onPressed: () {
-                    if (sleepTimer.isRunning) {
-                      widget.ref.read(sleepTimerHandlerProvider.notifier).pause();
-                    } else {
-                      widget.ref.read(sleepTimerHandlerProvider.notifier).resume();
-                    }
-                    setState(() {});
-                  },
-                  icon: Icon(sleepTimer.isRunning ? Icons.pause : Icons.play_arrow),
-                  label: Text(sleepTimer.isRunning ? 'Pause' : 'Resume'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    widget.ref.read(sleepTimerHandlerProvider.notifier).extend(const Duration(minutes: 5));
-                    setState(() {});
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('+5m'),
-                ),
+                if (sleepTimer.mode == SleepTimerMode.duration) ...[
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      if (sleepTimer.isRunning) {
+                        widget.ref.read(sleepTimerHandlerProvider.notifier).pause();
+                      } else {
+                        widget.ref.read(sleepTimerHandlerProvider.notifier).resume();
+                      }
+                      setState(() {});
+                    },
+                    icon: Icon(sleepTimer.isRunning ? Icons.pause : Icons.play_arrow),
+                    label: Text(sleepTimer.isRunning ? 'Pause' : 'Resume'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      widget.ref.read(sleepTimerHandlerProvider.notifier).extend(const Duration(minutes: 5));
+                      setState(() {});
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('+5m'),
+                  ),
+                ],
                 FilledButton.tonalIcon(
                   onPressed: () {
                     widget.ref.read(sleepTimerHandlerProvider.notifier).stop();
@@ -172,6 +195,22 @@ class _SleepTimerModalState extends State<SleepTimerModal> {
         ],
       ),
     );
+  }
+
+  void _startChapterTimer() {
+    final started = widget.ref.read(sleepTimerHandlerProvider.notifier).startUntilChapterEnd();
+    if (!started) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No chapter available at the current position'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop();
+    HapticFeedback.lightImpact();
   }
 
   void _handleCustomInput() {

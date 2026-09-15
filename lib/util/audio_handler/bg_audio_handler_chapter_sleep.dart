@@ -12,6 +12,7 @@ class _ChapterSleepAudioCoordinationState {
       StreamController<SleepTimerCompletionClaim>.broadcast(sync: true);
   final Set<int> activeInternalMutations = <int>{};
 
+  Future<void> seekQueue = Future<void>.value();
   int operationSequence = 0;
   int seekGeneration = 0;
   int completionGeneration = 0;
@@ -29,6 +30,8 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
 
   int get sleepTimerNavigationGeneration => _chapterSleepState.navigation.generation;
   bool get hasActiveSleepTimerUserNavigation => _chapterSleepState.navigation.hasActive;
+  Set<int> get activeSleepTimerUserNavigationOperations => _chapterSleepState.navigation.activeSnapshot;
+  bool get hasActiveSleepTimerInternalMutation => _chapterSleepState.activeInternalMutations.isNotEmpty;
   int get sleepTimerPlaybackActionGeneration => _chapterSleepState.playbackActionGeneration;
   int get sleepTimerCompletionGeneration => _chapterSleepState.completionGeneration;
 
@@ -74,6 +77,17 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
         state.playbackActionGeneration == playbackActionGeneration;
   }
 
+  bool _chapterSleepPostDetachOwnershipCurrent({
+    required int navigationGeneration,
+    required int playbackActionGeneration,
+  }) {
+    final state = _chapterSleepState;
+    return state.navigation.generation == navigationGeneration &&
+        !state.navigation.hasActive &&
+        state.playbackActionGeneration == playbackActionGeneration &&
+        _currentMediaItem == null;
+  }
+
   Future<bool> pauseForChapterSleepTimer({
     required SleepTimerMediaIdentity media,
     required String sessionId,
@@ -92,6 +106,14 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     PlayerUtils.disableWakelock(_ref);
     _resetStreamRecoveryState(clearWindow: true);
     await _player.pause();
+    if (!isChapterSleepOwnershipCurrent(
+      media: media,
+      sessionId: sessionId,
+      navigationGeneration: navigationGeneration,
+      playbackActionGeneration: playbackActionGeneration,
+    )) {
+      return false;
+    }
     _clearSmartRewindPauseMarker();
     TrayManager.update();
     return true;
@@ -161,11 +183,20 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       return false;
     }
 
-    return _syncService.flush(
+    final synced = await _syncService.flush(
       positionOverride: position,
       sessionClosing: sessionClosing,
       binding: binding,
     );
+    if (!isChapterSleepOwnershipCurrent(
+      media: media,
+      sessionId: sessionId,
+      navigationGeneration: navigationGeneration,
+      playbackActionGeneration: playbackActionGeneration,
+    )) {
+      return false;
+    }
+    return synced;
   }
 
   Future<bool> stopForChapterSleepTimer({
@@ -216,24 +247,31 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
 
     if (!kIsWeb && Platform.isLinux) {
       await _player.pause();
-      if (_chapterSleepState.playbackActionGeneration != playbackActionGeneration) {
+      if (!_chapterSleepPostDetachOwnershipCurrent(
+        navigationGeneration: navigationGeneration,
+        playbackActionGeneration: playbackActionGeneration,
+      )) {
         return false;
       }
       await _player.seek(Duration.zero);
     } else {
       await _player.stop();
     }
+    if (!_chapterSleepPostDetachOwnershipCurrent(
+      navigationGeneration: navigationGeneration,
+      playbackActionGeneration: playbackActionGeneration,
+    )) {
+      return false;
+    }
     TrayManager.update();
 
-    // The local player no longer owns the media. From here on every operation
-    // is explicitly bound to the captured session, so a newly opened session
-    // cannot be flushed, closed, or cleared by this expiry.
-    await _syncService.flush(
-      positionOverride: stopPosition,
-      sessionClosing: true,
-      binding: binding,
-    );
     await _ref.read(sessionRepositoryProvider).closeSessionBinding(binding);
+    if (!_chapterSleepPostDetachOwnershipCurrent(
+      navigationGeneration: navigationGeneration,
+      playbackActionGeneration: playbackActionGeneration,
+    )) {
+      return false;
+    }
     return true;
   }
 
@@ -243,6 +281,7 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       return;
     }
     state.disposed = true;
+    await state.seekQueue.catchError((_) {});
     await state.mutationEvents.close();
     await state.completionClaims.close();
   }
@@ -300,13 +339,14 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
 
   SleepTimerCompletionClaim _claimChapterSleepCompletion(InternalMedia media) {
     final state = _chapterSleepState;
+    final identity = SleepTimerMediaIdentity.fromMedia(media);
     final claim = SleepTimerCompletionClaim(
-      media: SleepTimerMediaIdentity.fromMedia(media),
+      media: identity,
       completionGeneration: ++state.completionGeneration,
       navigationGeneration: state.navigation.generation,
       navigationActive: state.navigation.hasActive,
       playbackActionGeneration: state.playbackActionGeneration,
-      protection: state.completionProtection.snapshotFor(SleepTimerMediaIdentity.fromMedia(media)),
+      protection: state.completionProtection.snapshotFor(identity),
     );
     if (!state.completionClaims.isClosed) {
       state.completionClaims.add(claim);
@@ -340,12 +380,8 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
 
     final fromPosition = position;
     final operationId = registerMutation ? _beginChapterSleepPositionMutation(kind) : null;
-    final isInternal = kind != SleepTimerPositionMutationKind.userNavigation;
-    if (isInternal) {
-      _internalSeekGuardDepth += 1;
-      _isInternalSeek = true;
-    }
-    final seekGeneration = ++_chapterSleepState.seekGeneration;
+    final state = _chapterSleepState;
+    final seekGeneration = ++state.seekGeneration;
     final mediaIdentity = SleepTimerMediaIdentity.fromMedia(mediaAtStart);
     var didMutate = false;
 
@@ -353,113 +389,134 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       return seekGeneration == _chapterSleepState.seekGeneration && mediaIdentity.matchesMedia(_currentMediaItem);
     }
 
-    try {
-      Duration resolvedPosition = requestedPosition;
-      if (_chapterNotificationEnabled && applyChapterNotificationOffset) {
-        resolvedPosition = _chapterNotificationOffset + requestedPosition;
-      }
-
-      final maxPosition = mediaAtStart.totalDuration;
-      final boundedPosition = resolvedPosition < Duration.zero
-          ? Duration.zero
-          : (resolvedPosition > maxPosition ? maxPosition : resolvedPosition);
-
-      if (!isInternal && (boundedPosition - fromPosition).abs() >= const Duration(seconds: 1)) {
-        _syncService.markProgressDirty();
-      }
-
-      final shouldRecordPausedManualSeek =
-          !isInternal &&
-          !playerControlState.playing &&
-          (playerControlState.processingState == ProcessingState.ready ||
-              playerControlState.processingState == ProcessingState.completed);
-      if (shouldRecordPausedManualSeek) {
-        _markPausedManualSeek(boundedPosition);
-      }
-
-      if (isCastControlActive) {
-        final relativePosition = _absoluteToCastRelativePosition(boundedPosition);
-        await GoogleCastRemoteMediaClient.instance.seek(GoogleCastMediaSeekOption(position: relativePosition));
-        if (!contextIsCurrent()) {
-          return;
-        }
-        _refreshPlayerControlState();
-        _refreshChapterNotificationState(customPosition: boundedPosition);
-        _updateMediaItemForChapterNotification(customPosition: boundedPosition);
-        await _updatePlaybackState();
-        if (!isInternal) {
-          _recordManualSeekIfNeeded(fromPosition, boundedPosition, internal: false);
-        }
-        didMutate = this.position != fromPosition;
+    final queuedSeek = state.seekQueue.catchError((_) {}).then((_) async {
+      if (!contextIsCurrent()) {
         return;
       }
 
-      final targetTrackIndex = mediaAtStart.getIndexForDuration(boundedPosition);
-      if (targetTrackIndex < 0) {
-        logger(
-          'Ignoring seek with invalid track index for position: $boundedPosition',
-          tag: 'AudioHandler',
-          level: InfoLevel.warning,
-        );
-        return;
+      final isInternal = kind != SleepTimerPositionMutationKind.userNavigation;
+      if (isInternal) {
+        _internalSeekGuardDepth += 1;
+        _isInternalSeek = true;
       }
 
-      logger(
-        'Seeking to position: $boundedPosition, track index: $targetTrackIndex',
-        tag: 'AudioHandler',
-        level: InfoLevel.debug,
-      );
-      final relativeTargetPosition = boundedPosition - mediaAtStart.startDurationForTrack(targetTrackIndex);
-      final trackChanged = targetTrackIndex != _currentTrackIndex;
-
-      if (trackChanged) {
-        _currentTrackIndex = targetTrackIndex;
-        await _player.seek(relativeTargetPosition, index: targetTrackIndex);
-        if (!contextIsCurrent()) {
-          return;
+      try {
+        Duration resolvedPosition = requestedPosition;
+        if (_chapterNotificationEnabled && applyChapterNotificationOffset) {
+          resolvedPosition = _chapterNotificationOffset + requestedPosition;
         }
 
-        if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
-          var ready = _player.playerState.processingState == ProcessingState.ready;
-          if (!ready) {
-            final state = await _player.playerStateStream.firstWhere(
-              (state) =>
-                  state.processingState == ProcessingState.ready ||
-                  state.processingState == ProcessingState.completed ||
-                  state.processingState == ProcessingState.idle,
-            );
-            ready = state.processingState == ProcessingState.ready;
-          }
-          if (!ready || !contextIsCurrent()) {
+        final maxPosition = mediaAtStart.totalDuration;
+        final boundedPosition = resolvedPosition < Duration.zero
+            ? Duration.zero
+            : (resolvedPosition > maxPosition ? maxPosition : resolvedPosition);
+
+        if (!isInternal && (boundedPosition - fromPosition).abs() >= const Duration(seconds: 1)) {
+          _syncService.markProgressDirty();
+        }
+
+        final shouldRecordPausedManualSeek =
+            !isInternal &&
+            !playerControlState.playing &&
+            (playerControlState.processingState == ProcessingState.ready ||
+                playerControlState.processingState == ProcessingState.completed);
+        if (shouldRecordPausedManualSeek) {
+          _markPausedManualSeek(boundedPosition);
+        }
+
+        if (isCastControlActive) {
+          final relativePosition = _absoluteToCastRelativePosition(boundedPosition);
+          await GoogleCastRemoteMediaClient.instance.seek(GoogleCastMediaSeekOption(position: relativePosition));
+          if (!contextIsCurrent()) {
             return;
           }
+          _refreshPlayerControlState();
+          _refreshChapterNotificationState(customPosition: boundedPosition);
+          _updateMediaItemForChapterNotification(customPosition: boundedPosition);
+          await _updatePlaybackState();
+          if (!contextIsCurrent()) {
+            return;
+          }
+          if (!isInternal) {
+            _recordManualSeekIfNeeded(fromPosition, boundedPosition);
+          }
+          didMutate = this.position != fromPosition;
+          return;
+        }
+
+        final targetTrackIndex = mediaAtStart.getIndexForDuration(boundedPosition);
+        if (targetTrackIndex < 0) {
+          logger(
+            'Ignoring seek with invalid track index for position: $boundedPosition',
+            tag: 'AudioHandler',
+            level: InfoLevel.warning,
+          );
+          return;
+        }
+
+        logger(
+          'Seeking to position: $boundedPosition, track index: $targetTrackIndex',
+          tag: 'AudioHandler',
+          level: InfoLevel.debug,
+        );
+        final relativeTargetPosition = boundedPosition - mediaAtStart.startDurationForTrack(targetTrackIndex);
+        final trackChanged = targetTrackIndex != _currentTrackIndex;
+
+        if (trackChanged) {
+          _currentTrackIndex = targetTrackIndex;
+          await _player.seek(relativeTargetPosition, index: targetTrackIndex);
+          if (!contextIsCurrent()) {
+            return;
+          }
+
+          if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) {
+            var ready = _player.playerState.processingState == ProcessingState.ready;
+            if (!ready) {
+              final playerState = await _player.playerStateStream.firstWhere(
+                (playerState) =>
+                    playerState.processingState == ProcessingState.ready ||
+                    playerState.processingState == ProcessingState.completed ||
+                    playerState.processingState == ProcessingState.idle,
+              );
+              ready = playerState.processingState == ProcessingState.ready;
+            }
+            if (!ready || !contextIsCurrent()) {
+              return;
+            }
+            await _player.seek(relativeTargetPosition, index: targetTrackIndex);
+            if (!contextIsCurrent()) {
+              return;
+            }
+          }
+        } else {
           await _player.seek(relativeTargetPosition, index: targetTrackIndex);
           if (!contextIsCurrent()) {
             return;
           }
         }
-      } else {
-        await _player.seek(relativeTargetPosition, index: targetTrackIndex);
-        if (!contextIsCurrent()) {
-          return;
-        }
-      }
 
-      _refreshChapterNotificationState(customPosition: boundedPosition);
-      _updateMediaItemForChapterNotification(customPosition: boundedPosition);
-      unawaited(_updatePlaybackState());
-      if (!isInternal) {
-        _recordManualSeekIfNeeded(fromPosition, boundedPosition, internal: false);
-      }
-      didMutate = this.position != fromPosition;
-    } finally {
-      if (isInternal) {
-        _internalSeekGuardDepth -= 1;
-        if (_internalSeekGuardDepth < 0) {
-          _internalSeekGuardDepth = 0;
+        _refreshChapterNotificationState(customPosition: boundedPosition);
+        _updateMediaItemForChapterNotification(customPosition: boundedPosition);
+        unawaited(_updatePlaybackState());
+        if (!isInternal) {
+          _recordManualSeekIfNeeded(fromPosition, boundedPosition);
         }
-        _isInternalSeek = _internalSeekGuardDepth > 0;
+        didMutate = this.position != fromPosition;
+      } finally {
+        if (isInternal) {
+          _internalSeekGuardDepth -= 1;
+          if (_internalSeekGuardDepth < 0) {
+            _internalSeekGuardDepth = 0;
+          }
+          _isInternalSeek = _internalSeekGuardDepth > 0;
+        }
       }
+    });
+
+    state.seekQueue = queuedSeek;
+    try {
+      await queuedSeek;
+    } finally {
       if (operationId != null) {
         _settleChapterSleepPositionMutation(operationId, kind, didMutate: didMutate);
       }

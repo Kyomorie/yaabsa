@@ -338,7 +338,11 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         level: InfoLevel.info,
       );
 
-      await _seekWithoutPausedManualMarker(() => _seekInternal(remotePosition));
+      await _seekForChapterSleepCoordination(
+        remotePosition,
+        kind: SleepTimerPositionMutationKind.resumeProgressReconcile,
+        applyChapterNotificationOffset: false,
+      );
     } catch (e) {
       logger('Background resume reconcile failed: $e', tag: 'AudioHandler', level: InfoLevel.warning);
     }

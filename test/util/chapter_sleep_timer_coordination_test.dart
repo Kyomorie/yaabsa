@@ -2,11 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaabsa/models/internal_media.dart';
 import 'package:yaabsa/util/audio_handler/chapter_sleep_timer_coordination.dart';
 
-InternalMedia _media({required List<InternalChapter> chapters, double duration = 120}) {
+InternalMedia _media({
+  required List<InternalChapter> chapters,
+  double duration = 120,
+  String itemId = 'item',
+  String? episodeId,
+}) {
   final media = InternalMedia(
     libraryId: 'library',
-    itemId: 'item',
-    episodeId: null,
+    itemId: itemId,
+    episodeId: episodeId,
     sessionId: 'session',
     title: 'Book',
     tracks: [
@@ -36,7 +41,10 @@ void main() {
     ];
 
     test('resolves the chapter containing the actual position', () {
-      final target = resolveChapterSleepTarget(media: _media(chapters: chapters), position: const Duration(seconds: 45));
+      final target = resolveChapterSleepTarget(
+        media: _media(chapters: chapters),
+        position: const Duration(seconds: 45),
+      );
 
       expect(target, isNotNull);
       expect(target!.chapter.title, 'B');
@@ -45,8 +53,30 @@ void main() {
       expect(target.remainingAt(const Duration(seconds: 70)), const Duration(seconds: 20));
     });
 
+    test('seek within a chapter preserves the same target', () {
+      final media = _media(chapters: chapters);
+      final first = resolveChapterSleepTarget(media: media, position: const Duration(seconds: 35));
+      final second = resolveChapterSleepTarget(media: media, position: const Duration(seconds: 75));
+
+      expect(first, isNotNull);
+      expect(second, isNotNull);
+      expect(first!.sameChapter(second!.chapter), isTrue);
+    });
+
+    test('seek across chapters resolves the actual landed chapter', () {
+      final media = _media(chapters: chapters);
+      final first = resolveChapterSleepTarget(media: media, position: const Duration(seconds: 10));
+      final second = resolveChapterSleepTarget(media: media, position: const Duration(seconds: 100));
+
+      expect(first!.chapter.title, 'A');
+      expect(second!.chapter.title, 'C');
+    });
+
     test('uses the next chapter at an exact non-final boundary', () {
-      final target = resolveChapterSleepTarget(media: _media(chapters: chapters), position: const Duration(seconds: 30));
+      final target = resolveChapterSleepTarget(
+        media: _media(chapters: chapters),
+        position: const Duration(seconds: 30),
+      );
 
       expect(target, isNotNull);
       expect(target!.chapter.title, 'B');
@@ -71,6 +101,28 @@ void main() {
         chapters: const [InternalChapter(start: 0, end: 121, title: 'invalid')],
       );
       expect(resolveChapterSleepTarget(media: invalid, position: const Duration(seconds: 10)), isNull);
+    });
+
+    test('remaining time clamps to zero after the target end', () {
+      final target = resolveChapterSleepTarget(
+        media: _media(chapters: chapters),
+        position: const Duration(seconds: 45),
+      );
+
+      expect(target, isNotNull);
+      expect(target!.remainingAt(const Duration(seconds: 95)), Duration.zero);
+    });
+
+    test('media identity includes episode id', () {
+      final media = _media(chapters: chapters, itemId: 'podcast', episodeId: 'episode-a');
+      final target = resolveChapterSleepTarget(media: media, position: const Duration(seconds: 10));
+
+      expect(target, isNotNull);
+      expect(target!.matchesMedia(media), isTrue);
+      expect(
+        target.media.matchesMedia(_media(chapters: chapters, itemId: 'podcast', episodeId: 'episode-b')),
+        isFalse,
+      );
     });
   });
 
@@ -100,6 +152,114 @@ void main() {
       expect(ledger.settle(8), isFalse);
       expect(ledger.settle(7), isTrue);
     });
+
+    test('clear invalidates prior navigation ownership', () {
+      final ledger = ChapterSleepNavigationLedger();
+      expect(ledger.begin(11), isTrue);
+      final generation = ledger.generation;
+
+      ledger.clear();
+
+      expect(ledger.hasActive, isFalse);
+      expect(ledger.generation, generation + 1);
+      expect(ledger.settle(11), isFalse);
+    });
+  });
+
+  group('ChapterSleepReentryGate', () {
+    test('natural leave expires exactly when no operation is active', () {
+      final gate = ChapterSleepReentryGate();
+
+      expect(
+        gate.shouldExpire(
+          isInArmedChapter: true,
+          userNavigationActive: false,
+          internalMutationActive: false,
+        ),
+        isFalse,
+      );
+      expect(
+        gate.shouldExpire(
+          isInArmedChapter: false,
+          userNavigationActive: false,
+          internalMutationActive: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test('user navigation and internal mutation suppress a boundary observation', () {
+      final gate = ChapterSleepReentryGate();
+
+      expect(
+        gate.shouldExpire(
+          isInArmedChapter: false,
+          userNavigationActive: true,
+          internalMutationActive: false,
+        ),
+        isFalse,
+      );
+      expect(
+        gate.shouldExpire(
+          isInArmedChapter: false,
+          userNavigationActive: false,
+          internalMutationActive: true,
+        ),
+        isFalse,
+      );
+    });
+
+    test('smart rewind across a boundary waits for reentry before natural expiry', () {
+      final gate = ChapterSleepReentryGate();
+      gate.afterSmartRewind(isInArmedChapter: false);
+
+      expect(gate.isAwaitingArmedChapter, isTrue);
+      expect(
+        gate.shouldExpire(
+          isInArmedChapter: false,
+          userNavigationActive: false,
+          internalMutationActive: false,
+        ),
+        isFalse,
+      );
+      expect(gate.isAwaitingArmedChapter, isTrue);
+
+      expect(
+        gate.shouldExpire(
+          isInArmedChapter: true,
+          userNavigationActive: false,
+          internalMutationActive: false,
+        ),
+        isFalse,
+      );
+      expect(gate.isAwaitingArmedChapter, isFalse);
+
+      expect(
+        gate.shouldExpire(
+          isInArmedChapter: false,
+          userNavigationActive: false,
+          internalMutationActive: false,
+        ),
+        isTrue,
+      );
+    });
+
+    test('smart rewind within the armed chapter does not enter reentry mode', () {
+      final gate = ChapterSleepReentryGate();
+      gate.afterSmartRewind(isInArmedChapter: true);
+
+      expect(gate.isAwaitingArmedChapter, isFalse);
+    });
+
+    test('reset clears smart-rewind reentry ownership', () {
+      final gate = ChapterSleepReentryGate();
+      gate.afterSmartRewind(isInArmedChapter: false);
+      expect(gate.isAwaitingArmedChapter, isTrue);
+
+      gate.reset();
+
+      expect(gate.isAwaitingArmedChapter, isFalse);
+    });
   });
 
   group('ChapterSleepCompletionProtectionLedger', () {
@@ -122,6 +282,41 @@ void main() {
       expect(expiring.expiryGeneration, 9);
     });
 
+    test('completion stays protected while expiry is already running', () {
+      final ledger = ChapterSleepCompletionProtectionLedger();
+      final token = ledger.arm(media: mediaA, timerGeneration: 3);
+      expect(ledger.markExpiring(token, expiryGeneration: 4), isTrue);
+
+      final claim = SleepTimerCompletionClaim(
+        media: mediaA,
+        completionGeneration: 1,
+        navigationGeneration: 0,
+        navigationActive: false,
+        playbackActionGeneration: 0,
+        protection: ledger.snapshotFor(mediaA),
+      );
+
+      expect(claim.suppressesAutoAdvance, isTrue);
+      expect(claim.protection!.expiring, isTrue);
+    });
+
+    test('completion captured during navigation still suppresses later auto advance', () {
+      final ledger = ChapterSleepCompletionProtectionLedger();
+      ledger.arm(media: mediaA, timerGeneration: 8);
+
+      final claim = SleepTimerCompletionClaim(
+        media: mediaA,
+        completionGeneration: 5,
+        navigationGeneration: 12,
+        navigationActive: true,
+        playbackActionGeneration: 7,
+        protection: ledger.snapshotFor(mediaA),
+      );
+
+      expect(claim.navigationActive, isTrue);
+      expect(claim.suppressesAutoAdvance, isTrue);
+    });
+
     test('stale cleanup cannot clear a newer owner', () {
       final ledger = ChapterSleepCompletionProtectionLedger();
       final stale = ledger.arm(media: mediaA, timerGeneration: 1);
@@ -131,6 +326,27 @@ void main() {
       expect(ledger.isCurrent(current), isTrue);
       expect(ledger.clear(current), isTrue);
       expect(ledger.active, isNull);
+    });
+
+    test('stale owner cannot mark a newer timer as expiring', () {
+      final ledger = ChapterSleepCompletionProtectionLedger();
+      final stale = ledger.arm(media: mediaA, timerGeneration: 1);
+      final current = ledger.arm(media: mediaA, timerGeneration: 2);
+
+      expect(ledger.markExpiring(stale, expiryGeneration: 3), isFalse);
+      expect(ledger.isCurrent(current), isTrue);
+      expect(ledger.active!.expiring, isFalse);
+    });
+
+    test('rearming for another media removes old completion protection', () {
+      final ledger = ChapterSleepCompletionProtectionLedger();
+      final old = ledger.arm(media: mediaA, timerGeneration: 1);
+      final current = ledger.arm(media: mediaB, timerGeneration: 2);
+
+      expect(ledger.snapshotFor(mediaA), isNull);
+      expect(ledger.snapshotFor(mediaB), isNotNull);
+      expect(ledger.isCurrent(old), isFalse);
+      expect(ledger.isCurrent(current), isTrue);
     });
   });
 }

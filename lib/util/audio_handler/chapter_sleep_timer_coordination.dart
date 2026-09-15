@@ -91,6 +91,39 @@ ChapterSleepTarget? resolveChapterSleepTarget({required InternalMedia media, req
   return target;
 }
 
+class ChapterSleepReentryGate {
+  bool _awaitingArmedChapter = false;
+
+  bool get isAwaitingArmedChapter => _awaitingArmedChapter;
+
+  void reset() {
+    _awaitingArmedChapter = false;
+  }
+
+  void afterSmartRewind({required bool isInArmedChapter}) {
+    _awaitingArmedChapter = !isInArmedChapter;
+  }
+
+  bool shouldExpire({
+    required bool isInArmedChapter,
+    required bool userNavigationActive,
+    required bool internalMutationActive,
+  }) {
+    if (userNavigationActive || internalMutationActive) {
+      return false;
+    }
+
+    if (_awaitingArmedChapter) {
+      if (isInArmedChapter) {
+        _awaitingArmedChapter = false;
+      }
+      return false;
+    }
+
+    return !isInArmedChapter;
+  }
+}
+
 class SleepTimerPositionMutationEvent {
   const SleepTimerPositionMutationEvent({
     required this.operationId,

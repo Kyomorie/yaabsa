@@ -21,7 +21,11 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       return;
     }
 
-    await _seekInternal(targetPosition);
+    await _seekForChapterSleepCoordination(
+      targetPosition,
+      kind: SleepTimerPositionMutationKind.otherInternal,
+      applyChapterNotificationOffset: false,
+    );
 
     final currentPositionSeconds = targetPosition.inMicroseconds / Duration.microsecondsPerSecond;
     final canReachServer = _ref.read(serverReachabilityProvider);
@@ -491,7 +495,11 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     final targetPosition = _rewindPosition(currentPosition, rewindBy);
 
     if (targetPosition < currentPosition) {
-      await _seekWithoutPausedManualMarker(() => _seekInternal(targetPosition));
+      await _seekForChapterSleepCoordination(
+        targetPosition,
+        kind: SleepTimerPositionMutationKind.smartRewind,
+        applyChapterNotificationOffset: false,
+      );
       logger(
         'Applied smart rewind (${rewindBy.inSeconds}s) after pause (${pausedFor.inSeconds}s).',
         tag: 'AudioHandler',
