@@ -210,7 +210,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     }
 
     logger('Attempting fallback series auto queue for item ${item.id}.', tag: 'AudioHandler', level: InfoLevel.debug);
-    final fallbackContext = await _buildSeriesFallbackAutoQueueContext(item, autoQueueStart);
+    final fallbackContext = await _buildSeriesFallbackAutoQueueContext(item);
     if (fallbackContext != null) {
       unawaited(_startAutoQueue(fallbackContext, QueueItem(itemId: item.id)));
     } else {
