@@ -80,6 +80,18 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
         _currentMediaItem == null;
   }
 
+  void noteChapterSleepExpiryClaim() {
+    _chapterSleepNotePlaybackAction();
+  }
+
+  Future<void> seekAbsoluteForUserNavigation(Duration position) {
+    return _seekForChapterSleepCoordination(
+      position,
+      kind: SleepTimerPositionMutationKind.userNavigation,
+      applyChapterNotificationOffset: false,
+    );
+  }
+
   Future<bool> pauseForChapterSleepTimer({
     required SleepTimerMediaIdentity media,
     required String sessionId,
@@ -117,12 +129,17 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     required int navigationGeneration,
     required int playbackActionGeneration,
   }) async {
-    if (!isChapterSleepOwnershipCurrent(
-      media: media,
-      sessionId: sessionId,
-      navigationGeneration: navigationGeneration,
-      playbackActionGeneration: playbackActionGeneration,
-    )) {
+    bool expiryOwnerIsCurrent() {
+      return !isCastControlActive &&
+          isChapterSleepOwnershipCurrent(
+            media: media,
+            sessionId: sessionId,
+            navigationGeneration: navigationGeneration,
+            playbackActionGeneration: playbackActionGeneration,
+          );
+    }
+
+    if (!expiryOwnerIsCurrent()) {
       return null;
     }
 
@@ -144,14 +161,10 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       kind: SleepTimerPositionMutationKind.chapterExpiry,
       applyChapterNotificationOffset: false,
       registerMutation: true,
+      continuationIsCurrent: expiryOwnerIsCurrent,
     );
 
-    if (!isChapterSleepOwnershipCurrent(
-      media: media,
-      sessionId: sessionId,
-      navigationGeneration: navigationGeneration,
-      playbackActionGeneration: playbackActionGeneration,
-    )) {
+    if (!expiryOwnerIsCurrent()) {
       return null;
     }
     return position;
@@ -165,6 +178,7 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     required int navigationGeneration,
     required int playbackActionGeneration,
     bool sessionClosing = false,
+    bool forcePositionSync = false,
   }) async {
     if (!isChapterSleepOwnershipCurrent(
       media: media,
@@ -179,6 +193,7 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       positionOverride: position,
       sessionClosing: sessionClosing,
       binding: binding,
+      forcePositionSync: forcePositionSync,
     );
     if (!isChapterSleepOwnershipCurrent(
       media: media,
@@ -226,6 +241,11 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       PlayerHistoryHandler.addPlayerHistory(PlayerHistoryType.stop, media: stoppedMedia, position: stopPosition),
     );
 
+    final sessionRepository = _ref.read(sessionRepositoryProvider);
+    if (!sessionRepository.detachSessionBinding(binding)) {
+      return false;
+    }
+
     _setQueueTransitionLoading(false);
     _clearSmartRewindPauseMarker();
     _clearPausedManualSeekMarker();
@@ -237,34 +257,41 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     _currentTrackIndex = 0;
     PlayerUtils.disableWakelock(_ref);
 
+    var playerOwnershipCurrent = true;
     if (!kIsWeb && Platform.isLinux) {
       await _player.pause();
-      if (!_chapterSleepPostDetachOwnershipCurrent(
+      playerOwnershipCurrent = _chapterSleepPostDetachOwnershipCurrent(
         navigationGeneration: navigationGeneration,
         playbackActionGeneration: playbackActionGeneration,
-      )) {
-        return false;
+      );
+      if (playerOwnershipCurrent) {
+        await _player.seek(Duration.zero);
+        playerOwnershipCurrent = _chapterSleepPostDetachOwnershipCurrent(
+          navigationGeneration: navigationGeneration,
+          playbackActionGeneration: playbackActionGeneration,
+        );
       }
-      await _player.seek(Duration.zero);
     } else {
       await _player.stop();
+      playerOwnershipCurrent = _chapterSleepPostDetachOwnershipCurrent(
+        navigationGeneration: navigationGeneration,
+        playbackActionGeneration: playbackActionGeneration,
+      );
     }
-    if (!_chapterSleepPostDetachOwnershipCurrent(
-      navigationGeneration: navigationGeneration,
-      playbackActionGeneration: playbackActionGeneration,
-    )) {
-      return false;
-    }
-    TrayManager.update();
 
-    await _ref.read(sessionRepositoryProvider).closeSessionBinding(binding);
-    if (!_chapterSleepPostDetachOwnershipCurrent(
-      navigationGeneration: navigationGeneration,
-      playbackActionGeneration: playbackActionGeneration,
-    )) {
-      return false;
+    if (playerOwnershipCurrent) {
+      TrayManager.update();
     }
-    return true;
+
+    // Closing M is safe even if a newer playback action has taken ownership:
+    // the repository only clears its current session when the binding still matches.
+    await sessionRepository.closeSessionBinding(binding);
+
+    return playerOwnershipCurrent &&
+        _chapterSleepPostDetachOwnershipCurrent(
+          navigationGeneration: navigationGeneration,
+          playbackActionGeneration: playbackActionGeneration,
+        );
   }
 
   Future<void> _disposeChapterSleepTimerCoordination() async {
@@ -294,7 +321,15 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     return operationId;
   }
 
-  void _settleChapterSleepPositionMutation(int operationId, SleepTimerPositionMutationKind kind) {
+  // `didMutate` is retained only for the two legacy skip call sites. Chapter
+  // settlement no longer depends on it; those snapshots can be removed in a
+  // follow-up cleanup without affecting behavior.
+  // ignore: unused_element_parameter
+  void _settleChapterSleepPositionMutation(
+    int operationId,
+    SleepTimerPositionMutationKind kind, {
+    bool? didMutate,
+  }) {
     final state = _chapterSleepState;
     if (kind == SleepTimerPositionMutationKind.userNavigation) {
       state.navigation.settle(operationId);
@@ -341,6 +376,7 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     required SleepTimerPositionMutationKind kind,
     required bool applyChapterNotificationOffset,
     bool registerMutation = true,
+    bool Function()? continuationIsCurrent,
   }) async {
     final mediaAtStart = _currentMediaItem;
     if (mediaAtStart == null) {
@@ -354,7 +390,9 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
     final mediaIdentity = SleepTimerMediaIdentity.fromMedia(mediaAtStart);
 
     bool contextIsCurrent() {
-      return seekGeneration == _chapterSleepState.seekGeneration && mediaIdentity.matchesMedia(_currentMediaItem);
+      return seekGeneration == _chapterSleepState.seekGeneration &&
+          mediaIdentity.matchesMedia(_currentMediaItem) &&
+          (continuationIsCurrent?.call() ?? true);
     }
 
     final queuedSeek = state.seekQueue.catchError((_) {}).then((_) async {
