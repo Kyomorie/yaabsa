@@ -287,17 +287,17 @@ extension BGAudioHandlerChapterSleepTimer on BGAudioHandler {
       if (playerOwnershipCurrent) {
         TrayManager.update();
       }
-
-      return playerOwnershipCurrent &&
-          _chapterSleepPostDetachOwnershipCurrent(
-            navigationGeneration: navigationGeneration,
-            playbackActionGeneration: playbackActionGeneration,
-          );
     } finally {
       // M was already detached. Its bound close must complete even if the
       // player stop/pause/seek path throws, and it cannot clear a newer N.
       await sessionRepository.closeSessionBinding(binding);
     }
+
+    return playerOwnershipCurrent &&
+        _chapterSleepPostDetachOwnershipCurrent(
+          navigationGeneration: navigationGeneration,
+          playbackActionGeneration: playbackActionGeneration,
+        );
   }
 
   Future<void> _disposeChapterSleepTimerCoordination() async {
