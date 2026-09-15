@@ -568,6 +568,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
   ) async {
     try {
       if (!_chapterExpiryIsCurrent(runtime, context)) {
+        _abortChapterExpiryIfOwned(runtime, context, 'ownership changed before expiry execution');
         return;
       }
 
@@ -579,6 +580,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
         playbackActionGeneration: context.playbackActionGeneration,
       );
       if (!paused || !_chapterExpiryIsCurrent(runtime, context)) {
+        _abortChapterExpiryIfOwned(runtime, context, 'ownership changed while pausing playback');
         return;
       }
 
@@ -589,6 +591,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
         playbackActionGeneration: context.playbackActionGeneration,
       );
       if (rewoundPosition == null || !_chapterExpiryIsCurrent(runtime, context)) {
+        _abortChapterExpiryIfOwned(runtime, context, 'ownership changed during expiry rewind');
         return;
       }
 
@@ -610,6 +613,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
             sessionClosing: true,
           );
           if (!_chapterExpiryIsCurrent(runtime, context)) {
+            _abortChapterExpiryIfOwned(runtime, context, 'ownership changed during closing progress flush');
             return;
           }
           final stopped = await audioHandler.stopForChapterSleepTimer(
@@ -620,7 +624,11 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
             navigationGeneration: context.navigationGeneration,
             playbackActionGeneration: context.playbackActionGeneration,
           );
-          if (!stopped || !_chapterExpiryRuntimeOwnerIsCurrent(runtime, context)) {
+          if (!stopped) {
+            _abortChapterExpiryIfOwned(runtime, context, 'ownership changed while stopping playback');
+            return;
+          }
+          if (!_chapterExpiryRuntimeOwnerIsCurrent(runtime, context)) {
             return;
           }
         } else {
@@ -640,6 +648,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
           playbackActionGeneration: context.playbackActionGeneration,
         );
         if (!_chapterExpiryIsCurrent(runtime, context)) {
+          _abortChapterExpiryIfOwned(runtime, context, 'ownership changed during progress flush');
           return;
         }
       }
@@ -647,10 +656,20 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
       _finishChapterExpiry(runtime, context, action);
     } catch (e, s) {
       logger('Chapter sleep timer expiry failed: $e\n$s', tag: 'SleepTimer', level: InfoLevel.warning);
-      if (_chapterExpiryRuntimeOwnerIsCurrent(runtime, context)) {
-        _finishChapterExpiry(runtime, context, SleepTimerExpireAction.pause);
-      }
+      _abortChapterExpiryIfOwned(runtime, context, 'expiry operation failed');
     }
+  }
+
+  void _abortChapterExpiryIfOwned(
+    _ChapterSleepTimerRuntime runtime,
+    _ChapterSleepExpiryContext context,
+    String reason,
+  ) {
+    if (!_chapterExpiryRuntimeOwnerIsCurrent(runtime, context)) {
+      return;
+    }
+    logger('Chapter sleep timer expiry aborted: $reason', tag: 'SleepTimer', level: InfoLevel.debug);
+    stop(suppressAutoRestart: false, recordHistory: false);
   }
 
   void _finishChapterExpiry(
