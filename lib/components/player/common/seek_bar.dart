@@ -244,7 +244,7 @@ class SeekBar extends ConsumerWidget {
                         rightTime: chapterDuration,
                         showRemaining: showRemaining,
                         onToggleRemaining: toggleRemaining,
-                        onSeek: (seekPosition) => audioHandler.seekAbsolute(seekPosition),
+                        onSeek: (seekPosition) => audioHandler.seekAbsoluteForUserNavigation(seekPosition),
                         markers: const <SeekTimelineMarker>[],
                         markerMode: SeekBarMarkerMode.none,
                         buildPreviewLabel: (position) => _buildSeekPreviewTooltip(position, chapters),
@@ -276,7 +276,7 @@ class SeekBar extends ConsumerWidget {
                         rightTime: totalDuration,
                         showRemaining: showRemaining,
                         onToggleRemaining: toggleRemaining,
-                        onSeek: (seekPosition) => audioHandler.seekAbsolute(seekPosition),
+                        onSeek: (seekPosition) => audioHandler.seekAbsoluteForUserNavigation(seekPosition),
                         markers: fullTimelineMarkers,
                         markerMode: markerMode,
                         buildPreviewLabel: (position) => _buildSeekPreviewTooltip(position, chapters),
@@ -288,7 +288,7 @@ class SeekBar extends ConsumerWidget {
                             ? null
                             : () async {
                                 ref.read(sleepTimerHandlerProvider.notifier).dismissMarkerPin();
-                                await audioHandler.seekAbsolute(visibleSleepTimerMarker.startPosition);
+                                await audioHandler.seekAbsoluteForUserNavigation(visibleSleepTimerMarker.startPosition);
                               },
                         centerLabel: showCurrentChapterBetweenTimeLabels ? currentChapter?.title.trim() : null,
                       ),
