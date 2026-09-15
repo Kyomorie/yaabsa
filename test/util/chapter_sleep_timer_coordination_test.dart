@@ -97,9 +97,7 @@ void main() {
       final media = _media(chapters: chapters);
       expect(resolveChapterSleepTarget(media: media, position: const Duration(seconds: 120)), isNull);
 
-      final invalid = _media(
-        chapters: const [InternalChapter(start: 0, end: 121, title: 'invalid')],
-      );
+      final invalid = _media(chapters: const [InternalChapter(start: 0, end: 121, title: 'invalid')]);
       expect(resolveChapterSleepTarget(media: invalid, position: const Duration(seconds: 10)), isNull);
     });
 
@@ -119,10 +117,7 @@ void main() {
 
       expect(target, isNotNull);
       expect(target!.matchesMedia(media), isTrue);
-      expect(
-        target.media.matchesMedia(_media(chapters: chapters, itemId: 'podcast', episodeId: 'episode-b')),
-        isFalse,
-      );
+      expect(target.media.matchesMedia(_media(chapters: chapters, itemId: 'podcast', episodeId: 'episode-b')), isFalse);
     });
   });
 
@@ -168,19 +163,11 @@ void main() {
       final gate = ChapterSleepReentryGate();
 
       expect(
-        gate.shouldExpire(
-          isInArmedChapter: true,
-          userNavigationActive: false,
-          internalMutationActive: false,
-        ),
+        gate.shouldExpire(isInArmedChapter: true, userNavigationActive: false, internalMutationActive: false),
         isFalse,
       );
       expect(
-        gate.shouldExpire(
-          isInArmedChapter: false,
-          userNavigationActive: false,
-          internalMutationActive: false,
-        ),
+        gate.shouldExpire(isInArmedChapter: false, userNavigationActive: false, internalMutationActive: false),
         isTrue,
       );
     });
@@ -189,19 +176,11 @@ void main() {
       final gate = ChapterSleepReentryGate();
 
       expect(
-        gate.shouldExpire(
-          isInArmedChapter: false,
-          userNavigationActive: true,
-          internalMutationActive: false,
-        ),
+        gate.shouldExpire(isInArmedChapter: false, userNavigationActive: true, internalMutationActive: false),
         isFalse,
       );
       expect(
-        gate.shouldExpire(
-          isInArmedChapter: false,
-          userNavigationActive: false,
-          internalMutationActive: true,
-        ),
+        gate.shouldExpire(isInArmedChapter: false, userNavigationActive: false, internalMutationActive: true),
         isFalse,
       );
     });
@@ -212,31 +191,19 @@ void main() {
 
       expect(gate.isAwaitingArmedChapter, isTrue);
       expect(
-        gate.shouldExpire(
-          isInArmedChapter: false,
-          userNavigationActive: false,
-          internalMutationActive: false,
-        ),
+        gate.shouldExpire(isInArmedChapter: false, userNavigationActive: false, internalMutationActive: false),
         isFalse,
       );
       expect(gate.isAwaitingArmedChapter, isTrue);
 
       expect(
-        gate.shouldExpire(
-          isInArmedChapter: true,
-          userNavigationActive: false,
-          internalMutationActive: false,
-        ),
+        gate.shouldExpire(isInArmedChapter: true, userNavigationActive: false, internalMutationActive: false),
         isFalse,
       );
       expect(gate.isAwaitingArmedChapter, isFalse);
 
       expect(
-        gate.shouldExpire(
-          isInArmedChapter: false,
-          userNavigationActive: false,
-          internalMutationActive: false,
-        ),
+        gate.shouldExpire(isInArmedChapter: false, userNavigationActive: false, internalMutationActive: false),
         isTrue,
       );
     });

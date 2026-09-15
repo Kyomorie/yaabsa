@@ -127,10 +127,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       return false;
     } finally {
       if (userNavigationOperation != null) {
-        _settleChapterSleepPositionMutation(
-          userNavigationOperation,
-          SleepTimerPositionMutationKind.userNavigation,
-        );
+        _settleChapterSleepPositionMutation(userNavigationOperation, SleepTimerPositionMutationKind.userNavigation);
       }
     }
   }

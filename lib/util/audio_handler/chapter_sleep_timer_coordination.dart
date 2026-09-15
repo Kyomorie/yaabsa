@@ -45,13 +45,9 @@ class ChapterSleepTarget {
   final SleepTimerMediaIdentity media;
   final InternalChapter chapter;
 
-  Duration get startPosition => Duration(
-    microseconds: (chapter.start * Duration.microsecondsPerSecond).round(),
-  );
+  Duration get startPosition => Duration(microseconds: (chapter.start * Duration.microsecondsPerSecond).round());
 
-  Duration get endPosition => Duration(
-    microseconds: (chapter.end * Duration.microsecondsPerSecond).round(),
-  );
+  Duration get endPosition => Duration(microseconds: (chapter.end * Duration.microsecondsPerSecond).round());
 
   bool matchesMedia(InternalMedia? candidate) => media.matchesMedia(candidate);
 
@@ -174,16 +170,9 @@ class ChapterSleepCompletionProtectionLedger {
 
   SleepTimerCompletionProtectionSnapshot? get active => _active;
 
-  SleepTimerCompletionProtectionToken arm({
-    required SleepTimerMediaIdentity media,
-    required int timerGeneration,
-  }) {
+  SleepTimerCompletionProtectionToken arm({required SleepTimerMediaIdentity media, required int timerGeneration}) {
     final token = SleepTimerCompletionProtectionToken._(++_sequence);
-    _active = SleepTimerCompletionProtectionSnapshot(
-      token: token,
-      media: media,
-      timerGeneration: timerGeneration,
-    );
+    _active = SleepTimerCompletionProtectionSnapshot(token: token, media: media, timerGeneration: timerGeneration);
     return token;
   }
 

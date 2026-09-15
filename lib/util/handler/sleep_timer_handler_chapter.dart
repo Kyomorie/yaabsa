@@ -1,7 +1,8 @@
 part of 'sleep_timer_handler.dart';
 
-final Expando<_ChapterSleepTimerRuntime> _chapterSleepTimerRuntime =
-    Expando<_ChapterSleepTimerRuntime>('chapterSleepTimerRuntime');
+final Expando<_ChapterSleepTimerRuntime> _chapterSleepTimerRuntime = Expando<_ChapterSleepTimerRuntime>(
+  'chapterSleepTimerRuntime',
+);
 
 class _ChapterSleepTimerRuntime {
   StreamSubscription<InternalChapter?>? watcher;
@@ -238,32 +239,27 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     return left.start == right.start && left.end == right.end && left.title == right.title;
   }
 
-  void _startFreshChapterWatcher(
-    _ChapterSleepTimerRuntime runtime,
-    InternalMedia media,
-    ChapterSleepTarget target,
-  ) {
+  void _startFreshChapterWatcher(_ChapterSleepTimerRuntime runtime, InternalMedia media, ChapterSleepTarget target) {
     unawaited(runtime.watcher?.cancel());
     runtime.watcher = null;
 
     final runGeneration = runtime.runGeneration;
     final targetGeneration = runtime.targetGeneration;
-    runtime.watcher = audioHandler.positionStream
-        .map(media.getChapterForDuration)
-        .distinct(_sameChapter)
-        .listen((chapter) {
-          if (!_chapterTargetIsCurrent(runtime, runGeneration, targetGeneration, target)) {
-            return;
-          }
-          final shouldExpire = runtime.reentryGate.shouldExpire(
-            isInArmedChapter: target.sameChapter(chapter),
-            userNavigationActive: audioHandler.hasActiveSleepTimerUserNavigation,
-            internalMutationActive: audioHandler.hasActiveSleepTimerInternalMutation,
-          );
-          if (shouldExpire) {
-            _claimChapterExpiry(runtime, runGeneration, targetGeneration, target);
-          }
-        });
+    runtime.watcher = audioHandler.positionStream.map(media.getChapterForDuration).distinct(_sameChapter).listen((
+      chapter,
+    ) {
+      if (!_chapterTargetIsCurrent(runtime, runGeneration, targetGeneration, target)) {
+        return;
+      }
+      final shouldExpire = runtime.reentryGate.shouldExpire(
+        isInArmedChapter: target.sameChapter(chapter),
+        userNavigationActive: audioHandler.hasActiveSleepTimerUserNavigation,
+        internalMutationActive: audioHandler.hasActiveSleepTimerInternalMutation,
+      );
+      if (shouldExpire) {
+        _claimChapterExpiry(runtime, runGeneration, targetGeneration, target);
+      }
+    });
   }
 
   void _handleChapterMutation(_ChapterSleepTimerRuntime runtime, SleepTimerPositionMutationEvent event) {
@@ -479,10 +475,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     _queueChapterVolume(runtime, owner: runtime.fadeOwner, volume: targetVolume, reason: 'chapter sleep timer fade');
   }
 
-  void _restoreChapterFadeForTransition(
-    _ChapterSleepTimerRuntime runtime, {
-    required String reason,
-  }) {
+  void _restoreChapterFadeForTransition(_ChapterSleepTimerRuntime runtime, {required String reason}) {
     _queueChapterFadeRestore(runtime, owner: runtime.fadeOwner, reason: reason);
   }
 
@@ -490,11 +483,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     _queueChapterFadeRestore(runtime, owner: owner, reason: 'chapter sleep timer fade restore');
   }
 
-  void _queueChapterFadeRestore(
-    _ChapterSleepTimerRuntime runtime, {
-    required int owner,
-    required String reason,
-  }) {
+  void _queueChapterFadeRestore(_ChapterSleepTimerRuntime runtime, {required int owner, required String reason}) {
     final base = runtime.fadeBaseVolume;
     if (base == null || runtime.fadeRestoreOwner == owner) {
       return;
@@ -577,17 +566,18 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
     unawaited(_executeChapterExpiry(runtime, context));
   }
 
-  Future<void> _executeChapterExpiry(
-    _ChapterSleepTimerRuntime runtime,
-    _ChapterSleepExpiryContext context,
-  ) async {
+  Future<void> _executeChapterExpiry(_ChapterSleepTimerRuntime runtime, _ChapterSleepExpiryContext context) async {
     try {
       if (!_chapterExpiryIsCurrent(runtime, context)) {
         _abortChapterExpiryIfOwned(runtime, context, 'ownership changed before expiry execution');
         return;
       }
 
-      logger('Chapter sleep timer reached chapter end; pausing playback first', tag: 'SleepTimer', level: InfoLevel.info);
+      logger(
+        'Chapter sleep timer reached chapter end; pausing playback first',
+        tag: 'SleepTimer',
+        level: InfoLevel.info,
+      );
       final paused = await audioHandler.pauseForChapterSleepTimer(
         media: context.media,
         sessionId: context.sessionId,
@@ -758,10 +748,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
         target.matchesMedia(audioHandler.currentMediaItem);
   }
 
-  bool _chapterExpiryRuntimeOwnerIsCurrent(
-    _ChapterSleepTimerRuntime runtime,
-    _ChapterSleepExpiryContext context,
-  ) {
+  bool _chapterExpiryRuntimeOwnerIsCurrent(_ChapterSleepTimerRuntime runtime, _ChapterSleepExpiryContext context) {
     return runtime.runGeneration == context.runGeneration &&
         runtime.targetGeneration == context.targetGeneration &&
         runtime.expiryGeneration == context.expiryGeneration &&
@@ -770,10 +757,7 @@ extension SleepTimerHandlerChapterEnd on SleepTimerHandler {
         audioHandler.isSleepTimerCompletionProtectionCurrent(context.protection);
   }
 
-  bool _chapterExpiryIsCurrent(
-    _ChapterSleepTimerRuntime runtime,
-    _ChapterSleepExpiryContext context,
-  ) {
+  bool _chapterExpiryIsCurrent(_ChapterSleepTimerRuntime runtime, _ChapterSleepExpiryContext context) {
     return _chapterExpiryRuntimeOwnerIsCurrent(runtime, context) &&
         !audioHandler.isCastControlActive &&
         context.media.matchesMedia(audioHandler.currentMediaItem) &&
