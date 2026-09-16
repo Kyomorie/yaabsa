@@ -49,9 +49,8 @@ jobs:
             exit 3
           fi
           avdmanager="$(dirname "$sdkmanager")/avdmanager"
-          emulator_bin="$sdk_root/emulator/emulator"
-          if [ ! -x "$avdmanager" ] || [ ! -x "$emulator_bin" ]; then
-            echo 'avdmanager or emulator is missing'
+          if [ ! -x "$avdmanager" ]; then
+            echo 'avdmanager is missing'
             exit 4
           fi
 
@@ -60,6 +59,12 @@ jobs:
           "$sdkmanager" 'platform-tools' 'emulator' "$image"
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+          emulator_bin="$sdk_root/emulator/emulator"
+          if [ ! -x "$emulator_bin" ]; then
+            echo "emulator binary missing after installation: $emulator_bin"
+            exit 5
+          fi
 
           avd_home="$RUNNER_TEMP/android-avd"
           mkdir -p "$avd_home"
@@ -76,7 +81,7 @@ jobs:
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           if ! grep -Fxq 'yaabsa-smoke' avd-list.txt; then
             echo 'yaabsa-smoke is not visible to emulator after creation'
-            exit 5
+            exit 6
           fi
 
           echo "RUNTIME_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
@@ -90,7 +95,7 @@ jobs:
           adb_bin="$sdk_root/platform-tools/adb"
           if [ ! -x "$emulator_bin" ] || [ ! -x "$adb_bin" ]; then
             echo "Emulator or adb missing below $sdk_root"
-            exit 6
+            exit 7
           fi
 
           echo "Using ANDROID_AVD_HOME=$ANDROID_AVD_HOME"
@@ -126,7 +131,7 @@ jobs:
             if ! kill -0 "$emulator_pid" 2>/dev/null; then
               echo 'Emulator process exited before ADB device appeared'
               cat emulator.log || true
-              exit 7
+              exit 8
             fi
             if "$adb_bin" devices | awk 'NR>1 && $1 ~ /^emulator-/ && $2 == "device" {found=1} END {exit !found}'; then
               device_seen=1
@@ -139,7 +144,7 @@ jobs:
             echo 'No usable emulator ADB device appeared within 120 seconds'
             "$adb_bin" devices -l || true
             cat emulator.log || true
-            exit 8
+            exit 9
           fi
 
           booted=0
@@ -148,7 +153,7 @@ jobs:
             if ! kill -0 "$emulator_pid" 2>/dev/null; then
               echo 'Emulator process exited before Android boot completed'
               cat emulator.log || true
-              exit 9
+              exit 10
             fi
             state="$("$adb_bin" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
             if [ "$state" = '1' ]; then
@@ -162,7 +167,7 @@ jobs:
             echo 'Android emulator did not finish booting within 180 seconds after ADB became ready'
             "$adb_bin" shell getprop 2>/dev/null | grep -E 'sys.boot_completed|dev.bootcomplete|init.svc.bootanim' || true
             cat emulator.log || true
-            exit 10
+            exit 11
           fi
 
           echo 'Android emulator boot completed'
@@ -188,7 +193,7 @@ jobs:
             echo 'yaabsa process is not alive after the 20s startup window'
             "$adb_bin" logcat -d > android-runtime-smoke.log || true
             cat android-runtime-smoke.log || true
-            exit 11
+            exit 12
           fi
           echo "yaabsa survived the 20s startup window (pid=$app_pid)"
 
@@ -199,12 +204,12 @@ jobs:
           if grep -q 'FATAL EXCEPTION' android-runtime-smoke.log; then
             echo 'FATAL EXCEPTION found in logcat'
             grep -n -A20 -B5 'FATAL EXCEPTION' android-runtime-smoke.log || true
-            exit 12
+            exit 13
           fi
           if grep -E -q 'E/flutter.*Unhandled Exception|DartError|Lost connection to device' android-runtime-smoke.log; then
             echo 'Potential Flutter/Dart runtime failure found in logcat'
             grep -E -n -A12 -B5 'E/flutter.*Unhandled Exception|DartError|Lost connection to device' android-runtime-smoke.log || true
-            exit 13
+            exit 14
           fi
 
       - name: Stop emulator
