@@ -237,7 +237,7 @@ jobs:
           echo "PLAYING_POSITION_MS=$pre_position_ms"
           if [ -z "$pre_position_ms" ] || [ "$pre_position_ms" -ge 60000 ]; then exit 25; fi
 
-          "$adb" shell input keyevent 4
+          tap desc 'Back' detail.xml
           sleep 2
           mini=0
           i=0
