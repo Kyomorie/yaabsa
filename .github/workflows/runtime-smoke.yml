@@ -1,4 +1,4 @@
-name: Temporary runtime smoke
+name: Temporary Android runtime smoke
 
 on:
   push:
@@ -10,115 +10,9 @@ permissions:
   actions: read
 
 jobs:
-  linux-networkmanager-startup:
-    runs-on: ubuntu-26.04
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          submodules: recursive
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Install runtime dependencies
-        shell: bash
-        run: |
-          sudo apt-get update
-          rc=$?
-          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
-          sudo apt-get install -y \
-            build-essential libgtk-3-dev libgtk-3-0 libblkid1 liblzma5 \
-            libsecret-1-0 libsecret-1-dev libmpv-dev mpv \
-            libayatana-appindicator3-dev xvfb xauth network-manager dbus-x11
-          rc=$?
-          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
-
-      - name: Start NetworkManager
-        shell: bash
-        run: |
-          sudo systemctl start NetworkManager >/tmp/networkmanager-systemctl.log 2>&1
-          rc=$?
-          if [ "$rc" -ne 0 ]; then
-            sudo /usr/sbin/NetworkManager --no-daemon >/tmp/networkmanager.log 2>&1 &
-            echo $! >/tmp/networkmanager.pid
-            sleep 3
-          fi
-          nmcli general status
-          rc=$?
-          if [ "$rc" -ne 0 ]; then
-            cat /tmp/networkmanager-systemctl.log 2>/dev/null || true
-            cat /tmp/networkmanager.log 2>/dev/null || true
-            exit "$rc"
-          fi
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Post Get
-        uses: ./.github/actions/post-get
-        with:
-          flow: pr-build-linux
-
-      - name: Build Linux debug bundle
-        run: flutter build linux --debug
-
-      - name: Launch under Xvfb and require clean process survival
-        shell: bash
-        run: |
-          exe="$PWD/build/linux/x64/debug/bundle/yaabsa"
-          log="$PWD/linux-runtime-smoke.log"
-          if [ ! -x "$exe" ]; then
-            echo "Expected executable is missing: $exe"
-            exit 2
-          fi
-          rm -f "$log"
-          xvfb-run -a sh -c '
-            exe="$1"
-            log="$2"
-            "$exe" >"$log" 2>&1 &
-            pid=$!
-            sleep 20
-            if ! kill -0 "$pid" 2>/dev/null; then
-              wait "$pid"
-              rc=$?
-              echo "yaabsa exited before the 20s survival window (rc=$rc)"
-              exit "$rc"
-            fi
-            echo "yaabsa survived the 20s startup window (pid=$pid)"
-            kill -TERM "$pid" 2>/dev/null || true
-            sleep 2
-            if kill -0 "$pid" 2>/dev/null; then
-              kill -KILL "$pid" 2>/dev/null || true
-            fi
-            wait "$pid" 2>/dev/null || true
-            exit 0
-          ' sh "$exe" "$log"
-          rc=$?
-          echo "--- linux runtime log ---"
-          cat "$log" 2>/dev/null || true
-          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
-          if grep -E -q 'ZoneError|org\.freedesktop\.NetworkManager.*not provided' "$log"; then
-            echo "Unexpected NetworkManager/ZoneError remains in a NetworkManager-enabled environment"
-            exit 7
-          fi
-
-      - name: Upload Linux runtime log
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: linux-networkmanager-runtime-smoke-log
-          path: linux-runtime-smoke.log
-          if-no-files-found: ignore
-          retention-days: 1
-
   android-startup:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 12
     env:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
@@ -142,6 +36,7 @@ jobs:
             exit 2
           fi
           cp "$apk" yaabsa-auto-debug.apk
+          echo 'Exact-head APK:'
           sha256sum yaabsa-auto-debug.apk
 
       - name: Prepare Android emulator
@@ -151,7 +46,6 @@ jobs:
           sdkmanager="$(find "$sdk_root/cmdline-tools" -type f -name sdkmanager -perm -111 2>/dev/null | sort | tail -n 1)"
           if [ -z "$sdkmanager" ]; then
             echo "sdkmanager not found below $sdk_root/cmdline-tools"
-            find "$sdk_root/cmdline-tools" -maxdepth 4 -type f -name sdkmanager -print 2>/dev/null || true
             exit 3
           fi
           avdmanager="$(dirname "$sdkmanager")/avdmanager"
@@ -161,7 +55,7 @@ jobs:
           fi
           image='system-images;android-35;google_apis;x86_64'
           yes | "$sdkmanager" --licenses >/dev/null 2>&1 || true
-          "$sdkmanager" 'platform-tools' 'emulator' 'platforms;android-35' "$image"
+          "$sdkmanager" 'platform-tools' 'emulator' "$image"
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           echo no | "$avdmanager" create avd --force --name yaabsa-smoke --package "$image" --device pixel_7
@@ -169,7 +63,7 @@ jobs:
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           echo "RUNTIME_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
 
-      - name: Boot emulator, install and launch yaabsa
+      - name: Boot emulator with bounded device wait
         shell: bash
         run: |
           sdk_root="$RUNTIME_SDK_ROOT"
@@ -180,11 +74,18 @@ jobs:
             exit 5
           fi
 
+          "$adb_bin" kill-server >/dev/null 2>&1 || true
+          "$adb_bin" start-server
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
           accel_args=()
           if [ -e /dev/kvm ]; then
+            echo '/dev/kvm is available; enabling hardware acceleration'
             sudo chmod 666 /dev/kvm || true
             accel_args=(-accel on)
           else
+            echo '/dev/kvm is not available; using software acceleration'
             accel_args=(-accel off)
           fi
 
@@ -193,19 +94,40 @@ jobs:
             -gpu swiftshader_indirect "${accel_args[@]}" > emulator.log 2>&1 &
           emulator_pid=$!
           echo "$emulator_pid" > emulator.pid
+          echo "emulator pid=$emulator_pid"
 
-          "$adb_bin" wait-for-device
-          rc=$?
-          if [ "$rc" -ne 0 ]; then
+          device_seen=0
+          i=0
+          while [ "$i" -lt 60 ]; do
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then
+              echo 'Emulator process exited before ADB device appeared'
+              cat emulator.log || true
+              exit 6
+            fi
+            if "$adb_bin" devices | awk 'NR>1 && $1 ~ /^emulator-/ && $2 == "device" {found=1} END {exit !found}'; then
+              device_seen=1
+              break
+            fi
+            sleep 2
+            i=$((i + 1))
+          done
+          if [ "$device_seen" -ne 1 ]; then
+            echo 'No usable emulator ADB device appeared within 120 seconds'
+            "$adb_bin" devices -l || true
             cat emulator.log || true
-            exit "$rc"
+            exit 7
           fi
 
           booted=0
           i=0
-          while [ "$i" -lt 150 ]; do
+          while [ "$i" -lt 90 ]; do
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then
+              echo 'Emulator process exited before Android boot completed'
+              cat emulator.log || true
+              exit 8
+            fi
             state="$("$adb_bin" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
-            if [ "$state" = "1" ]; then
+            if [ "$state" = '1' ]; then
               booted=1
               break
             fi
@@ -213,11 +135,20 @@ jobs:
             i=$((i + 1))
           done
           if [ "$booted" -ne 1 ]; then
-            echo 'Android emulator did not finish booting'
+            echo 'Android emulator did not finish booting within 180 seconds after ADB became ready'
+            "$adb_bin" shell getprop 2>/dev/null | grep -E 'sys.boot_completed|dev.bootcomplete|init.svc.bootanim' || true
             cat emulator.log || true
-            exit 6
+            exit 9
           fi
 
+          echo 'Android emulator boot completed'
+          "$adb_bin" shell getprop ro.build.version.release
+          "$adb_bin" shell getprop ro.build.version.sdk
+
+      - name: Install and launch exact-head yaabsa APK
+        shell: bash
+        run: |
+          adb_bin="$RUNTIME_SDK_ROOT/platform-tools/adb"
           "$adb_bin" install -r yaabsa-auto-debug.apk
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
@@ -233,7 +164,7 @@ jobs:
             echo 'yaabsa process is not alive after the 20s startup window'
             "$adb_bin" logcat -d > android-runtime-smoke.log || true
             cat android-runtime-smoke.log || true
-            exit 7
+            exit 10
           fi
           echo "yaabsa survived the 20s startup window (pid=$app_pid)"
 
@@ -244,7 +175,12 @@ jobs:
           if grep -q 'FATAL EXCEPTION' android-runtime-smoke.log; then
             echo 'FATAL EXCEPTION found in logcat'
             grep -n -A20 -B5 'FATAL EXCEPTION' android-runtime-smoke.log || true
-            exit 8
+            exit 11
+          fi
+          if grep -E -q 'E/flutter.*Unhandled Exception|DartError|Lost connection to device' android-runtime-smoke.log; then
+            echo 'Potential Flutter/Dart runtime failure found in logcat'
+            grep -E -n -A12 -B5 'E/flutter.*Unhandled Exception|DartError|Lost connection to device' android-runtime-smoke.log || true
+            exit 12
           fi
 
       - name: Stop emulator
@@ -263,73 +199,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: android-runtime-smoke-evidence
+          name: android-runtime-smoke-evidence-bounded
           path: |
             android-runtime-smoke.png
             android-runtime-smoke.log
             android-start.txt
             android-activities.txt
             emulator.log
-          if-no-files-found: ignore
-          retention-days: 1
-
-  windows-startup:
-    runs-on: windows-latest
-    timeout-minutes: 10
-    env:
-      GITHUB_TOKEN: ${{ github.token }}
-    steps:
-      - name: Download validated Windows debug bundle artifact
-        shell: pwsh
-        run: |
-          $headers = @{
-            Authorization = "Bearer $env:GITHUB_TOKEN"
-            Accept = "application/vnd.github+json"
-            "X-GitHub-Api-Version" = "2022-11-28"
-          }
-          $url = "https://api.github.com/repos/Kyomorie/yaabsa/actions/artifacts/10436557105/zip"
-          Invoke-WebRequest -Uri $url -Headers $headers -OutFile windows-artifact.zip
-          if (-not $?) { exit 2 }
-          Expand-Archive -Path windows-artifact.zip -DestinationPath windows-artifact -Force
-          if (-not $?) { exit 3 }
-          $exe = Get-ChildItem -Path windows-artifact -Recurse -File -Filter yaabsa.exe | Select-Object -First 1
-          if ($null -eq $exe) {
-            Get-ChildItem -Path windows-artifact -Recurse -File | Select-Object FullName
-            Write-Error "yaabsa.exe not found in Windows artifact"
-            exit 4
-          }
-          $exe.FullName | Set-Content windows-exe-path.txt
-          Get-FileHash -Algorithm SHA256 $exe.FullName
-
-      - name: Launch Windows app and require process survival
-        shell: pwsh
-        run: |
-          $exe = (Get-Content windows-exe-path.txt -Raw).Trim()
-          $stdout = Join-Path $PWD "windows-runtime-stdout.log"
-          $stderr = Join-Path $PWD "windows-runtime-stderr.log"
-          $proc = Start-Process -FilePath $exe -WorkingDirectory (Split-Path $exe) -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
-          if ($null -eq $proc) { exit 5 }
-          Start-Sleep -Seconds 20
-          $proc.Refresh()
-          if ($proc.HasExited) {
-            Write-Host "yaabsa exited before the 20s survival window (rc=$($proc.ExitCode))"
-            Get-Content $stdout -ErrorAction SilentlyContinue
-            Get-Content $stderr -ErrorAction SilentlyContinue
-            exit 6
-          }
-          Write-Host "yaabsa survived the 20s startup window (pid=$($proc.Id))"
-          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-          Start-Sleep -Seconds 2
-          Get-Content $stdout -ErrorAction SilentlyContinue
-          Get-Content $stderr -ErrorAction SilentlyContinue
-
-      - name: Upload Windows runtime logs
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: windows-runtime-smoke-logs
-          path: |
-            windows-runtime-stdout.log
-            windows-runtime-stderr.log
           if-no-files-found: ignore
           retention-days: 1
