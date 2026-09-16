@@ -1,0 +1,342 @@
+name: Temporary chapter sleep E2E bootstrap
+
+on:
+  push:
+    branches:
+      - ci/chapter-sleep-v4-runtime-smoke
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  android-abs-bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      ABS_URL: http://127.0.0.1:13378
+      ABS_ANDROID_URL: http://10.0.2.2:13378
+      ABS_USER: root
+      ABS_PASSWORD: yaabsa-e2e-runtime
+    steps:
+      - name: Download exact e04c0e1 Android APK artifact
+        shell: bash
+        run: |
+          url='https://api.github.com/repos/Kyomorie/yaabsa/actions/artifacts/10436296620/zip'
+          curl -fL \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "$url" -o android-artifact.zip
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          mkdir -p android-artifact
+          unzip -q android-artifact.zip -d android-artifact
+          apk="$(find android-artifact -type f -name '*.apk' -print -quit)"
+          if [ -z "$apk" ] || [ ! -f "$apk" ]; then
+            echo 'No APK found in exact-head artifact'
+            exit 2
+          fi
+          cp "$apk" yaabsa-auto-debug.apk
+          sha256sum yaabsa-auto-debug.apk | tee apk.sha256
+
+      - name: Create synthetic two-chapter audiobook
+        shell: bash
+        run: |
+          sudo apt-get update >/dev/null
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          sudo apt-get install -y ffmpeg jq >/dev/null
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+          mkdir -p runtime/abs/config runtime/abs/metadata 'runtime/abs/audiobooks/Chapter Test A'
+          cat > chapters.ffmeta <<'META'
+          ;FFMETADATA1
+          title=Chapter Test A
+          artist=Runtime Bot
+          album=Chapter Test A
+          [CHAPTER]
+          TIMEBASE=1/1000
+          START=0
+          END=8000
+          title=S1
+          [CHAPTER]
+          TIMEBASE=1/1000
+          START=8000
+          END=16000
+          title=S2
+          META
+
+          ffmpeg -hide_banner -loglevel error \
+            -f lavfi -i 'sine=frequency=440:duration=16:sample_rate=44100' \
+            -f ffmetadata -i chapters.ffmeta \
+            -map 0:a -map_metadata 1 -map_chapters 1 \
+            -c:a aac -b:a 96k -movflags +faststart \
+            'runtime/abs/audiobooks/Chapter Test A/Chapter Test A.m4b'
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+          ffprobe -v error -print_format json -show_format -show_chapters \
+            'runtime/abs/audiobooks/Chapter Test A/Chapter Test A.m4b' > ffprobe.json
+          chapter_count="$(jq '.chapters | length' ffprobe.json)"
+          duration="$(jq -r '.format.duration' ffprobe.json)"
+          echo "synthetic chapters=$chapter_count duration=$duration"
+          jq '.chapters[] | {id,start_time,end_time,tags}' ffprobe.json
+          if [ "$chapter_count" -ne 2 ]; then exit 3; fi
+
+      - name: Start and initialize isolated Audiobookshelf
+        shell: bash
+        run: |
+          docker run -d --rm --name abs-e2e \
+            -p 13378:80 \
+            -v "$PWD/runtime/abs/config:/config" \
+            -v "$PWD/runtime/abs/metadata:/metadata" \
+            -v "$PWD/runtime/abs/audiobooks:/audiobooks" \
+            ghcr.io/advplyr/audiobookshelf:2.36.0 > abs-container-id.txt
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+          ready=0
+          i=0
+          while [ "$i" -lt 90 ]; do
+            if curl -fsS "$ABS_URL/status" -o abs-status.json; then
+              ready=1
+              break
+            fi
+            sleep 2
+            i=$((i + 1))
+          done
+          if [ "$ready" -ne 1 ]; then
+            docker logs abs-e2e > abs-server.log 2>&1 || true
+            cat abs-server.log || true
+            exit 4
+          fi
+          echo 'Initial ABS status:'
+          cat abs-status.json
+
+          is_init="$(jq -r '.isInit' abs-status.json)"
+          if [ "$is_init" != 'true' ]; then
+            curl -fsS -X POST "$ABS_URL/init" \
+              -H 'Content-Type: application/json' \
+              -d "{\"newRoot\":{\"username\":\"$ABS_USER\",\"password\":\"$ABS_PASSWORD\"}}" \
+              -o abs-init.json
+            rc=$?
+            if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          fi
+
+          curl -fsS -X POST "$ABS_URL/login" \
+            -H 'Content-Type: application/json' \
+            -H 'x-return-tokens: true' \
+            -d "{\"username\":\"$ABS_USER\",\"password\":\"$ABS_PASSWORD\"}" \
+            -o abs-login.json
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+          token="$(jq -r '.user.accessToken // .accessToken // .user.token // empty' abs-login.json)"
+          if [ -z "$token" ]; then
+            echo 'ABS login returned no usable access token'
+            jq 'del(.user.accessToken,.user.refreshToken,.accessToken,.refreshToken,.user.token)' abs-login.json || true
+            exit 5
+          fi
+          echo "ABS_TOKEN=$token" >> "$GITHUB_ENV"
+
+          curl -fsS -X POST "$ABS_URL/api/libraries" \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d '{"name":"Runtime Books","folders":[{"fullPath":"/audiobooks"}],"mediaType":"book","provider":"google","settings":{"disableWatcher":true}}' \
+            -o abs-library.json
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          library_id="$(jq -r '.id // empty' abs-library.json)"
+          if [ -z "$library_id" ]; then
+            cat abs-library.json
+            exit 6
+          fi
+          echo "ABS_LIBRARY_ID=$library_id" >> "$GITHUB_ENV"
+
+          curl -fsS -X POST "$ABS_URL/api/libraries/$library_id/scan?force=1" \
+            -H "Authorization: Bearer $token" -o abs-scan.json
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+          scanned=0
+          i=0
+          while [ "$i" -lt 90 ]; do
+            curl -fsS "$ABS_URL/api/libraries/$library_id/items?limit=0&minified=0" \
+              -H "Authorization: Bearer $token" -o abs-items.json || true
+            total="$(jq -r '.total // 0' abs-items.json 2>/dev/null || echo 0)"
+            chapters="$(jq -r '[.results[0].media.chapters[]?] | length' abs-items.json 2>/dev/null || echo 0)"
+            num_chapters="$(jq -r '.results[0].media.numChapters // 0' abs-items.json 2>/dev/null || echo 0)"
+            if [ "$total" -ge 1 ] && { [ "$chapters" -ge 2 ] || [ "$num_chapters" -ge 2 ]; }; then
+              scanned=1
+              break
+            fi
+            sleep 2
+            i=$((i + 1))
+          done
+          echo 'ABS scanned item summary:'
+          jq '{total, item: (.results[0] | {id,path,mediaType,media:{duration:.media.duration,numChapters:.media.numChapters,chapters:.media.chapters,metadata:.media.metadata}})}' abs-items.json || cat abs-items.json
+          if [ "$scanned" -ne 1 ]; then
+            docker logs abs-e2e > abs-server.log 2>&1 || true
+            exit 7
+          fi
+
+      - name: Prepare Android 35 emulator
+        shell: bash
+        run: |
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          sdkmanager="$(find "$sdk_root/cmdline-tools" -type f -name sdkmanager -perm -111 2>/dev/null | sort | tail -n 1)"
+          if [ -z "$sdkmanager" ]; then exit 8; fi
+          avdmanager="$(dirname "$sdkmanager")/avdmanager"
+          image='system-images;android-35;google_apis;x86_64'
+          yes | "$sdkmanager" --licenses >/dev/null 2>&1 || true
+          "$sdkmanager" 'platform-tools' 'emulator' "$image" >/dev/null
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          emulator_bin="$sdk_root/emulator/emulator"
+          if [ ! -x "$avdmanager" ] || [ ! -x "$emulator_bin" ]; then exit 9; fi
+
+          avd_home="$RUNNER_TEMP/android-avd"
+          mkdir -p "$avd_home"
+          export ANDROID_AVD_HOME="$avd_home"
+          echo no | "$avdmanager" create avd --force --name yaabsa-e2e --package "$image" --device pixel_7 >/dev/null
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          if ! "$emulator_bin" -list-avds | grep -Fxq 'yaabsa-e2e'; then exit 10; fi
+          echo "RUNTIME_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_AVD_HOME=$avd_home" >> "$GITHUB_ENV"
+
+      - name: Boot emulator and launch Yaabsa
+        shell: bash
+        run: |
+          sdk_root="$RUNTIME_SDK_ROOT"
+          emulator_bin="$sdk_root/emulator/emulator"
+          adb_bin="$sdk_root/platform-tools/adb"
+          "$adb_bin" kill-server >/dev/null 2>&1 || true
+          "$adb_bin" start-server >/dev/null
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm || true
+            accel='on'
+          else
+            accel='off'
+          fi
+          "$emulator_bin" -avd yaabsa-e2e \
+            -no-window -no-audio -no-boot-anim -no-snapshot -wipe-data \
+            -gpu swiftshader_indirect -accel "$accel" > emulator.log 2>&1 &
+          emulator_pid=$!
+          echo "$emulator_pid" > emulator.pid
+
+          device_seen=0
+          i=0
+          while [ "$i" -lt 60 ]; do
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then cat emulator.log; exit 11; fi
+            if "$adb_bin" devices | awk 'NR>1 && $1 ~ /^emulator-/ && $2 == "device" {found=1} END {exit !found}'; then
+              device_seen=1
+              break
+            fi
+            sleep 2
+            i=$((i + 1))
+          done
+          if [ "$device_seen" -ne 1 ]; then cat emulator.log; exit 12; fi
+
+          booted=0
+          i=0
+          while [ "$i" -lt 90 ]; do
+            state="$("$adb_bin" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
+            if [ "$state" = '1' ]; then booted=1; break; fi
+            sleep 2
+            i=$((i + 1))
+          done
+          if [ "$booted" -ne 1 ]; then cat emulator.log; exit 13; fi
+
+          "$adb_bin" install -r yaabsa-auto-debug.apk >/dev/null
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          "$adb_bin" logcat -c
+          "$adb_bin" shell am start -W -n de.vito0912.yaabsa.dev/de.vito0912.yaabsa.MainActivity | tee android-start.txt
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          sleep 4
+          "$adb_bin" exec-out screencap -p > before-login.png
+          "$adb_bin" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 || true
+          "$adb_bin" exec-out cat /sdcard/window.xml > before-login.xml || true
+
+      - name: Drive Yaabsa login into isolated ABS
+        shell: bash
+        run: |
+          adb_bin="$RUNTIME_SDK_ROOT/platform-tools/adb"
+
+          # Pixel 7 AVD is 1080x2400. These taps target the three login fields and sign-in button.
+          "$adb_bin" shell input tap 540 950
+          "$adb_bin" shell input text 'http://10.0.2.2:13378'
+          "$adb_bin" shell input tap 540 1150
+          "$adb_bin" shell input text "$ABS_USER"
+          "$adb_bin" shell input tap 540 1325
+          "$adb_bin" shell input text "$ABS_PASSWORD"
+          "$adb_bin" shell input tap 540 1490
+
+          logged_in=0
+          i=0
+          while [ "$i" -lt 30 ]; do
+            sleep 2
+            "$adb_bin" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 || true
+            "$adb_bin" exec-out cat /sdcard/window.xml > after-login.xml || true
+            if grep -E -q 'Chapter Test A|Bookshelf|Library' after-login.xml && ! grep -q 'Sign in to your Audiobookshelf server' after-login.xml; then
+              logged_in=1
+              break
+            fi
+            i=$((i + 1))
+          done
+
+          "$adb_bin" exec-out screencap -p > after-login.png
+          "$adb_bin" logcat -d > android-e2e.log
+          "$adb_bin" shell dumpsys activity activities > android-activities.txt
+          echo '--- visible UI after login attempt ---'
+          grep -oE 'text="[^"]*"|content-desc="[^"]*"' after-login.xml | head -n 120 || true
+
+          if grep -q 'FATAL EXCEPTION' android-e2e.log; then
+            grep -n -A20 -B5 'FATAL EXCEPTION' android-e2e.log || true
+            exit 14
+          fi
+          if [ "$logged_in" -ne 1 ]; then
+            echo 'Yaabsa did not reach an authenticated library UI within 60 seconds'
+            exit 15
+          fi
+
+      - name: Upload E2E bootstrap evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: chapter-sleep-e2e-bootstrap-evidence
+          path: |
+            apk.sha256
+            ffprobe.json
+            abs-status.json
+            abs-init.json
+            abs-login.json
+            abs-library.json
+            abs-scan.json
+            abs-items.json
+            abs-server.log
+            before-login.png
+            before-login.xml
+            after-login.png
+            after-login.xml
+            android-start.txt
+            android-e2e.log
+            android-activities.txt
+            emulator.log
+          if-no-files-found: ignore
+          retention-days: 1
+
+      - name: Cleanup
+        if: always()
+        shell: bash
+        run: |
+          adb_bin="${RUNTIME_SDK_ROOT:-${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}}/platform-tools/adb"
+          if [ -x "$adb_bin" ]; then "$adb_bin" emu kill >/dev/null 2>&1 || true; fi
+          docker rm -f abs-e2e >/dev/null 2>&1 || true
