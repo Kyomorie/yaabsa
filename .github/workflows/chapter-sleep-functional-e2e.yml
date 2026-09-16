@@ -24,21 +24,17 @@ jobs:
         shell: bash
         run: |
           url='https://api.github.com/repos/Kyomorie/yaabsa/actions/artifacts/10436296620/zip'
-          curl -fL \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2022-11-28' \
-            "$url" -o android-artifact.zip
+          curl -fL -H "Authorization: Bearer $GITHUB_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' "$url" -o android-artifact.zip
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           mkdir -p android-artifact
           unzip -q android-artifact.zip -d android-artifact
           apk="$(find android-artifact -type f -name '*.apk' -print -quit)"
-          if [ -z "$apk" ] || [ ! -f "$apk" ]; then echo 'No APK found'; exit 2; fi
+          if [ -z "$apk" ] || [ ! -f "$apk" ]; then exit 2; fi
           cp "$apk" yaabsa-auto-debug.apk
           sha256sum yaabsa-auto-debug.apk | tee apk.sha256
 
-      - name: Create synthetic 2 chapter audiobook
+      - name: Create synthetic 90 second two chapter audiobook
         shell: bash
         run: |
           sudo apt-get update >/dev/null
@@ -64,31 +60,20 @@ jobs:
           END=90000
           title=S2
           META
-          ffmpeg -hide_banner -loglevel error \
-            -f lavfi -i 'sine=frequency=440:duration=90:sample_rate=44100' \
-            -f ffmetadata -i chapters.ffmeta \
-            -map 0:a -map_metadata 1 -map_chapters 1 \
-            -c:a aac -b:a 96k -movflags +faststart \
-            'runtime/abs/audiobooks/Chapter Test A/Chapter Test A.m4b'
+          ffmpeg -hide_banner -loglevel error -f lavfi -i 'sine=frequency=440:duration=90:sample_rate=44100' -f ffmetadata -i chapters.ffmeta -map 0:a -map_metadata 1 -map_chapters 1 -c:a aac -b:a 96k -movflags +faststart 'runtime/abs/audiobooks/Chapter Test A/Chapter Test A.m4b'
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
-          ffprobe -v error -print_format json -show_format -show_chapters \
-            'runtime/abs/audiobooks/Chapter Test A/Chapter Test A.m4b' > ffprobe.json
-          chapters="$(jq '.chapters | length' ffprobe.json)"
+          ffprobe -v error -print_format json -show_format -show_chapters 'runtime/abs/audiobooks/Chapter Test A/Chapter Test A.m4b' > ffprobe.json
+          chapter_count="$(jq '.chapters | length' ffprobe.json)"
           duration="$(jq -r '.format.duration' ffprobe.json)"
-          echo "fixture chapters=$chapters duration=$duration"
+          echo "fixture chapters=$chapter_count duration=$duration"
           jq '.chapters[] | {start_time,end_time,tags}' ffprobe.json
-          if [ "$chapters" -ne 2 ]; then exit 3; fi
+          if [ "$chapter_count" -ne 2 ]; then exit 3; fi
 
       - name: Start isolated Audiobookshelf and scan fixture
         shell: bash
         run: |
-          docker run -d --rm --name abs-e2e \
-            -p 13378:80 \
-            -v "$PWD/runtime/abs/config:/config" \
-            -v "$PWD/runtime/abs/metadata:/metadata" \
-            -v "$PWD/runtime/abs/audiobooks:/audiobooks" \
-            ghcr.io/advplyr/audiobookshelf:2.36.0 > abs-container-id.txt
+          docker run -d --rm --name abs-e2e -p 13378:80 -v "$PWD/runtime/abs/config:/config" -v "$PWD/runtime/abs/metadata:/metadata" -v "$PWD/runtime/abs/audiobooks:/audiobooks" ghcr.io/advplyr/audiobookshelf:2.36.0 > abs-container-id.txt
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           ready=0
@@ -100,45 +85,32 @@ jobs:
           done
           if [ "$ready" -ne 1 ]; then docker logs abs-e2e > abs-server.log 2>&1 || true; exit 4; fi
           if [ "$(jq -r '.isInit' abs-status.json)" != 'true' ]; then
-            curl -fsS -X POST "$ABS_URL/init" \
-              -H 'Content-Type: application/json' \
-              -d "{\"newRoot\":{\"username\":\"$ABS_USER\",\"password\":\"$ABS_PASSWORD\"}}" \
-              -o abs-init.json
+            curl -fsS -X POST "$ABS_URL/init" -H 'Content-Type: application/json' -d "{\"newRoot\":{\"username\":\"$ABS_USER\",\"password\":\"$ABS_PASSWORD\"}}" -o abs-init.json
             rc=$?
             if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           fi
-          curl -fsS -X POST "$ABS_URL/login" \
-            -H 'Content-Type: application/json' \
-            -H 'x-return-tokens: true' \
-            -d "{\"username\":\"$ABS_USER\",\"password\":\"$ABS_PASSWORD\"}" \
-            -o abs-login.json
+          curl -fsS -X POST "$ABS_URL/login" -H 'Content-Type: application/json' -H 'x-return-tokens: true' -d "{\"username\":\"$ABS_USER\",\"password\":\"$ABS_PASSWORD\"}" -o abs-login.json
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           token="$(jq -r '.user.accessToken // .accessToken // .user.token // empty' abs-login.json)"
           if [ -z "$token" ]; then exit 5; fi
           echo "ABS_TOKEN=$token" >> "$GITHUB_ENV"
-          curl -fsS -X POST "$ABS_URL/api/libraries" \
-            -H "Authorization: Bearer $token" \
-            -H 'Content-Type: application/json' \
-            -d '{"name":"Runtime Books","folders":[{"fullPath":"/audiobooks"}],"mediaType":"book","provider":"google","settings":{"disableWatcher":true}}' \
-            -o abs-library.json
+          curl -fsS -X POST "$ABS_URL/api/libraries" -H "Authorization: Bearer $token" -H 'Content-Type: application/json' -d '{"name":"Runtime Books","folders":[{"fullPath":"/audiobooks"}],"mediaType":"book","provider":"google","settings":{"disableWatcher":true}}' -o abs-library.json
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           library_id="$(jq -r '.id // empty' abs-library.json)"
           if [ -z "$library_id" ]; then exit 6; fi
           echo "ABS_LIBRARY_ID=$library_id" >> "$GITHUB_ENV"
-          curl -fsS -X POST "$ABS_URL/api/libraries/$library_id/scan?force=1" \
-            -H "Authorization: Bearer $token" -o abs-scan.json
+          curl -fsS -X POST "$ABS_URL/api/libraries/$library_id/scan?force=1" -H "Authorization: Bearer $token" -o abs-scan.json
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           scanned=0
           i=0
           while [ "$i" -lt 90 ]; do
-            curl -fsS "$ABS_URL/api/libraries/$library_id/items?limit=0&minified=0" \
-              -H "Authorization: Bearer $token" -o abs-items.json || true
+            curl -fsS "$ABS_URL/api/libraries/$library_id/items?limit=0&minified=0" -H "Authorization: Bearer $token" -o abs-items.json || true
             total="$(jq -r '.total // 0' abs-items.json 2>/dev/null || echo 0)"
-            chapter_count="$(jq -r '.results[0].media.numChapters // 0' abs-items.json 2>/dev/null || echo 0)"
-            if [ "$total" -ge 1 ] && [ "$chapter_count" -ge 2 ]; then scanned=1; break; fi
+            chapters="$(jq -r '.results[0].media.numChapters // 0' abs-items.json 2>/dev/null || echo 0)"
+            if [ "$total" -ge 1 ] && [ "$chapters" -eq 2 ]; then scanned=1; break; fi
             sleep 2
             i=$((i + 1))
           done
@@ -176,10 +148,10 @@ jobs:
           adb_bin="$sdk_root/platform-tools/adb"
           "$adb_bin" kill-server >/dev/null 2>&1 || true
           "$adb_bin" start-server >/dev/null
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           if [ -e /dev/kvm ]; then sudo chmod 666 /dev/kvm || true; accel='on'; else accel='off'; fi
-          "$emulator_bin" -avd yaabsa-functional \
-            -no-window -no-audio -no-boot-anim -no-snapshot -wipe-data \
-            -gpu swiftshader_indirect -accel "$accel" > emulator.log 2>&1 &
+          "$emulator_bin" -avd yaabsa-functional -no-window -no-audio -no-boot-anim -no-snapshot -wipe-data -gpu swiftshader_indirect -accel "$accel" > emulator.log 2>&1 &
           emulator_pid=$!
           echo "$emulator_pid" > emulator.pid
           device_seen=0
@@ -201,15 +173,17 @@ jobs:
           done
           if [ "$booted" -ne 1 ]; then exit 12; fi
           "$adb_bin" reverse tcp:13378 tcp:13378
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit 13; fi
           "$adb_bin" reverse --list | tee adb-reverse.txt
-          if ! grep -q 'tcp:13378 tcp:13378' adb-reverse.txt; then exit 13; fi
+          if ! grep -q 'tcp:13378 tcp:13378' adb-reverse.txt; then exit 14; fi
           "$adb_bin" install -r yaabsa-auto-debug.apk >/dev/null
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           "$adb_bin" logcat -c
           "$adb_bin" shell am start -n de.vito0912.yaabsa.dev/de.vito0912.yaabsa.MainActivity | tee android-start.txt
 
-      - name: Login and arm end of chapter timer
+      - name: Login, prove S1 playback, and arm end of chapter timer
         shell: bash
         run: |
           adb_bin="$RUNTIME_SDK_ROOT/platform-tools/adb"
@@ -223,11 +197,10 @@ jobs:
               clickable = [n for n in matches if n.attrib.get('clickable') == 'true']
               return clickable[0] if clickable else matches[0]
           if mode == 'edit':
-              matches = [n for n in nodes if n.attrib.get('class') == 'android.widget.EditText']
-              node = matches[int(key)]
+              node = [n for n in nodes if n.attrib.get('class') == 'android.widget.EditText'][int(key)]
           elif mode == 'value':
-              matches = [n for n in nodes if n.attrib.get('class') == 'android.widget.EditText']
-              print(matches[int(key)].attrib.get('text', ''))
+              edits = [n for n in nodes if n.attrib.get('class') == 'android.widget.EditText']
+              print(edits[int(key)].attrib.get('text', ''))
               raise SystemExit(0)
           elif mode == 'count':
               print(sum(1 for n in nodes if n.attrib.get('class') == 'android.widget.EditText'))
@@ -255,17 +228,13 @@ jobs:
             "$adb_bin" exec-out cat /sdcard/window.xml > "$out"
           }
           tap_desc() {
-            label="$1"
-            file="$2"
-            coords="$(python3 ui.py desc "$label" "$file")"
+            coords="$(python3 ui.py desc "$1" "$2")"
             rc=$?
             if [ "$rc" -ne 0 ]; then return "$rc"; fi
             "$adb_bin" shell input tap $coords
           }
           tap_contains() {
-            label="$1"
-            file="$2"
-            coords="$(python3 ui.py contains "$label" "$file")"
+            coords="$(python3 ui.py contains "$1" "$2")"
             rc=$?
             if [ "$rc" -ne 0 ]; then return "$rc"; fi
             "$adb_bin" shell input tap $coords
@@ -280,7 +249,7 @@ jobs:
             sleep 2
             i=$((i + 1))
           done
-          if [ "$login_ready" -ne 1 ]; then exit 14; fi
+          if [ "$login_ready" -ne 1 ]; then exit 15; fi
 
           coords="$(python3 ui.py edit 0 ui-current.xml)"
           "$adb_bin" shell input tap $coords
@@ -290,7 +259,7 @@ jobs:
           "$adb_bin" shell input text 'ttp://127.0.0.1:13378'
           sleep 1
           dump_ui ui-server.xml
-          if [ "$(python3 ui.py value 0 ui-server.xml)" != "$ABS_ANDROID_URL" ]; then exit 15; fi
+          if [ "$(python3 ui.py value 0 ui-server.xml)" != "$ABS_ANDROID_URL" ]; then exit 16; fi
 
           dump_ui ui-current.xml
           coords="$(python3 ui.py edit 1 ui-current.xml)"
@@ -299,7 +268,7 @@ jobs:
           "$adb_bin" shell input text "$ABS_USER"
           sleep 1
           dump_ui ui-user.xml
-          if [ "$(python3 ui.py value 1 ui-user.xml)" != "$ABS_USER" ]; then exit 16; fi
+          if [ "$(python3 ui.py value 1 ui-user.xml)" != "$ABS_USER" ]; then exit 17; fi
 
           dump_ui ui-current.xml
           coords="$(python3 ui.py edit 2 ui-current.xml)"
@@ -316,28 +285,42 @@ jobs:
           i=0
           while [ "$i" -lt 40 ]; do
             sleep 2
-            dump_ui after-login.xml || true
-            if grep -q 'Chapter Test A' after-login.xml && ! grep -q 'Sign in to your Audiobookshelf server' after-login.xml; then authenticated=1; break; fi
+            dump_ui home.xml || true
+            if grep -q 'Chapter Test A' home.xml && ! grep -q 'Sign in to your Audiobookshelf server' home.xml; then authenticated=1; break; fi
             i=$((i + 1))
           done
-          if [ "$authenticated" -ne 1 ]; then exit 17; fi
-          "$adb_bin" exec-out screencap -p > after-login.png
+          if [ "$authenticated" -ne 1 ]; then exit 18; fi
+          "$adb_bin" exec-out screencap -p > home.png
 
-          tap_desc 'Play' after-login.xml
+          tap_desc 'Chapter Test A' home.xml
+          detail_ready=0
+          i=0
+          while [ "$i" -lt 25 ]; do
+            sleep 1
+            dump_ui detail.xml || true
+            if grep -q 'Runtime Bot' detail.xml && grep -q 'content-desc="Play"' detail.xml; then detail_ready=1; break; fi
+            i=$((i + 1))
+          done
+          "$adb_bin" exec-out screencap -p > detail.png
+          if [ "$detail_ready" -ne 1 ]; then exit 19; fi
+
+          tap_desc 'Play' detail.xml
           play_started_epoch="$(date +%s)"
           echo "PLAY_STARTED_EPOCH=$play_started_epoch" >> "$GITHUB_ENV"
           playing=0
           i=0
-          while [ "$i" -lt 30 ]; do
+          while [ "$i" -lt 20 ]; do
             sleep 1
-            dump_ui playing.xml || true
-            if grep -q 'content-desc="Pause"' playing.xml && grep -q 'More player controls' playing.xml; then playing=1; break; fi
+            dump_ui pre-arm-player.xml || true
+            if grep -q 'content-desc="Pause"' pre-arm-player.xml && grep -q 'More player controls' pre-arm-player.xml && grep -q 'S1' pre-arm-player.xml && ! grep -q 'S2' pre-arm-player.xml && ! grep -q 'content-desc="100%"' pre-arm-player.xml; then playing=1; break; fi
             i=$((i + 1))
           done
-          "$adb_bin" exec-out screencap -p > playing.png
-          if [ "$playing" -ne 1 ]; then exit 18; fi
+          "$adb_bin" exec-out screencap -p > pre-arm-player.png
+          echo '--- PRE-ARM PLAYER UI ---'
+          grep -oE 'text="[^"]*"|content-desc="[^"]*"' pre-arm-player.xml | head -n 180 || true
+          if [ "$playing" -ne 1 ]; then exit 20; fi
 
-          tap_desc 'More player controls' playing.xml
+          tap_desc 'More player controls' pre-arm-player.xml
           actions_ready=0
           i=0
           while [ "$i" -lt 20 ]; do
@@ -346,7 +329,7 @@ jobs:
             if grep -q 'Sleep timer' mini-actions.xml && grep -q 'Stop playback' mini-actions.xml; then actions_ready=1; break; fi
             i=$((i + 1))
           done
-          if [ "$actions_ready" -ne 1 ]; then exit 19; fi
+          if [ "$actions_ready" -ne 1 ]; then exit 21; fi
           "$adb_bin" exec-out screencap -p > mini-actions.png
 
           tap_desc 'Sleep timer' mini-actions.xml || true
@@ -355,33 +338,32 @@ jobs:
           if ! grep -q 'End of chapter' sleep-sheet.xml; then
             coords="$(python3 ui.py above 'Sleep timer' mini-actions.xml)"
             rc=$?
-            if [ "$rc" -ne 0 ]; then exit 20; fi
+            if [ "$rc" -ne 0 ]; then exit 22; fi
             "$adb_bin" shell input tap $coords
             sleep 2
             dump_ui sleep-sheet.xml || true
           fi
-          if ! grep -q 'End of chapter' sleep-sheet.xml; then exit 21; fi
           "$adb_bin" exec-out screencap -p > sleep-sheet.png
+          if ! grep -q 'End of chapter' sleep-sheet.xml; then exit 23; fi
 
           tap_contains 'End of chapter' sleep-sheet.xml
           sleep 2
           "$adb_bin" logcat -d > armed.logcat.txt
-          if ! grep -q 'Chapter sleep timer armed for S1 at 45s' armed.logcat.txt; then
-            echo 'Expected chapter sleep arm log not found'
-            grep -i 'SleepTimer' armed.logcat.txt | tail -n 100 || true
-            exit 22
-          fi
+          echo '--- ARM LOG ---'
+          grep -i 'SleepTimer' armed.logcat.txt | tail -n 100 || true
+          if ! grep -q 'Chapter sleep timer armed for S1 at 45s' armed.logcat.txt; then exit 24; fi
 
-          "$adb_bin" shell input keyevent 4
-          sleep 2
-          dump_ui armed-main.xml
+          dump_ui armed-main.xml || true
+          if grep -q 'End of chapter' armed-main.xml; then
+            "$adb_bin" shell input keyevent 4
+            sleep 1
+            dump_ui armed-main.xml || true
+          fi
           "$adb_bin" exec-out screencap -p > armed-main.png
-          if ! grep -q 'content-desc="Pause"' armed-main.xml; then
-            echo 'Playback was not still running immediately after arming timer'
-            exit 23
-          fi
+          if ! grep -q 'content-desc="Pause"' armed-main.xml; then exit 25; fi
+          if ! grep -q 'S1' armed-main.xml; then exit 26; fi
 
-      - name: Verify expiry at S1 to S2 boundary
+      - name: Verify chapter boundary expiry
         shell: bash
         run: |
           adb_bin="$RUNTIME_SDK_ROOT/platform-tools/adb"
@@ -394,31 +376,36 @@ jobs:
           now="$(date +%s)"
           wait_seconds=$((target_epoch - now))
           if [ "$wait_seconds" -gt 0 ]; then
-            echo "Waiting $wait_seconds seconds to pass the 45 second S1 boundary while total media duration is 90 seconds"
+            echo "Waiting $wait_seconds seconds to pass S1=45s while media continues to 90s"
             sleep "$wait_seconds"
           fi
           sleep 3
           dump_ui after-boundary.xml
           "$adb_bin" exec-out screencap -p > after-boundary.png
           "$adb_bin" logcat -d > final.logcat.txt
+          "$adb_bin" shell dumpsys media_session > media-session-final.txt || true
           "$adb_bin" shell dumpsys activity activities > android-activities-final.txt
 
-          echo '--- SleepTimer log evidence ---'
-          grep -i 'SleepTimer' final.logcat.txt | tail -n 160 || true
-          echo '--- UI after S1 boundary ---'
+          echo '--- FINAL SLEEP TIMER LOG ---'
+          grep -i 'SleepTimer' final.logcat.txt | tail -n 180 || true
+          echo '--- FINAL UI ---'
           grep -oE 'text="[^"]*"|content-desc="[^"]*"' after-boundary.xml | head -n 220 || true
 
-          if ! grep -q 'Chapter sleep timer armed for S1 at 45s' final.logcat.txt; then exit 24; fi
-          if ! grep -q 'Chapter sleep timer reached chapter end; pausing playback first' final.logcat.txt; then exit 25; fi
-          if grep -q 'Chapter sleep timer expiry failed' final.logcat.txt; then exit 26; fi
-          if grep -q 'Chapter sleep timer expiry aborted' final.logcat.txt; then exit 27; fi
-          if grep -q 'Chapter sleep timer disabled fail-closed' final.logcat.txt; then exit 28; fi
+          if ! grep -q 'Chapter sleep timer armed for S1 at 45s' final.logcat.txt; then exit 27; fi
+          if ! grep -q 'Chapter sleep timer reached chapter end; pausing playback first' final.logcat.txt; then exit 28; fi
+          if grep -q 'Chapter sleep timer expiry failed' final.logcat.txt; then exit 29; fi
+          if grep -q 'Chapter sleep timer expiry aborted' final.logcat.txt; then exit 30; fi
+          if grep -q 'Chapter sleep timer disabled fail-closed' final.logcat.txt; then exit 31; fi
+          if grep -q 'FATAL EXCEPTION' final.logcat.txt; then exit 32; fi
           if grep -q 'content-desc="Pause"' after-boundary.xml; then
-            echo 'Playback is still running after the armed S1 boundary'
-            exit 29
+            echo 'Playback still exposes Pause after armed S1 boundary'
+            exit 33
           fi
-          if grep -q 'FATAL EXCEPTION' final.logcat.txt; then exit 30; fi
-          echo 'CHAPTER_SLEEP_E2E_PASS: armed S1, reached 45s boundary, paused before total 90s media end, no fail-closed/abort/fatal path'
+          if grep -q 'state=PLAYING' media-session-final.txt; then
+            echo 'Android media session is still PLAYING after armed S1 boundary'
+            exit 34
+          fi
+          echo 'CHAPTER_SLEEP_E2E_PASS: stable S1 playback -> armed End of chapter -> expiry paused playback at S1 boundary before 90s media end'
 
       - name: Upload functional E2E evidence
         if: always()
@@ -431,15 +418,16 @@ jobs:
             ffprobe.json
             abs-status.json
             abs-init.json
-            abs-login.json
             abs-library.json
             abs-scan.json
             abs-items.json
             abs-server.log
-            after-login.xml
-            after-login.png
-            playing.xml
-            playing.png
+            home.xml
+            home.png
+            detail.xml
+            detail.png
+            pre-arm-player.xml
+            pre-arm-player.png
             mini-actions.xml
             mini-actions.png
             sleep-sheet.xml
@@ -450,6 +438,7 @@ jobs:
             after-boundary.xml
             after-boundary.png
             final.logcat.txt
+            media-session-final.txt
             android-activities-final.txt
             android-start.txt
             emulator.log
