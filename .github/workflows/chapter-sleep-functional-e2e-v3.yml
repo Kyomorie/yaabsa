@@ -249,7 +249,7 @@ jobs:
           )"
           if [ -z "$pre_position_ms" ] || [ "$pre_position_ms" -ge 60000 ]; then echo "Unexpected pre-arm position: $pre_position_ms"; exit 20; fi
 
-          sleep 1
+          sleep 5
           dump player.xml
           "$adb" exec-out screencap -p > player.png
           if ! grep -q 'More player controls' player.xml; then exit 21; fi
