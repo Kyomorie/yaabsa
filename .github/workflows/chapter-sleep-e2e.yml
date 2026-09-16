@@ -18,7 +18,7 @@ jobs:
       ABS_URL: http://127.0.0.1:13378
       ABS_ANDROID_URL: http://10.0.2.2:13378
       ABS_USER: root
-      ABS_PASSWORD: yaabsa-e2e-runtime
+      ABS_PASSWORD: e2e12345
     steps:
       - name: Download exact e04c0e1 Android APK artifact
         shell: bash
@@ -137,7 +137,6 @@ jobs:
           token="$(jq -r '.user.accessToken // .accessToken // .user.token // empty' abs-login.json)"
           if [ -z "$token" ]; then
             echo 'ABS login returned no usable access token'
-            jq 'del(.user.accessToken,.user.refreshToken,.accessToken,.refreshToken,.user.token)' abs-login.json || true
             exit 5
           fi
           echo "ABS_TOKEN=$token" >> "$GITHUB_ENV"
@@ -167,9 +166,8 @@ jobs:
             curl -fsS "$ABS_URL/api/libraries/$library_id/items?limit=0&minified=0" \
               -H "Authorization: Bearer $token" -o abs-items.json || true
             total="$(jq -r '.total // 0' abs-items.json 2>/dev/null || echo 0)"
-            chapters="$(jq -r '[.results[0].media.chapters[]?] | length' abs-items.json 2>/dev/null || echo 0)"
             num_chapters="$(jq -r '.results[0].media.numChapters // 0' abs-items.json 2>/dev/null || echo 0)"
-            if [ "$total" -ge 1 ] && { [ "$chapters" -ge 2 ] || [ "$num_chapters" -ge 2 ]; }; then
+            if [ "$total" -ge 1 ] && [ "$num_chapters" -ge 2 ]; then
               scanned=1
               break
             fi
@@ -177,7 +175,7 @@ jobs:
             i=$((i + 1))
           done
           echo 'ABS scanned item summary:'
-          jq '{total, item: (.results[0] | {id,path,mediaType,media:{duration:.media.duration,numChapters:.media.numChapters,chapters:.media.chapters,metadata:.media.metadata}})}' abs-items.json || cat abs-items.json
+          jq '{total, item: (.results[0] | {id,path,mediaType,media:{duration:.media.duration,numChapters:.media.numChapters,metadata:.media.metadata}})}' abs-items.json || cat abs-items.json
           if [ "$scanned" -ne 1 ]; then
             docker logs abs-e2e > abs-server.log 2>&1 || true
             exit 7
@@ -257,35 +255,116 @@ jobs:
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           "$adb_bin" logcat -c
-          "$adb_bin" shell am start -W -n de.vito0912.yaabsa.dev/de.vito0912.yaabsa.MainActivity | tee android-start.txt
+          "$adb_bin" shell am start -n de.vito0912.yaabsa.dev/de.vito0912.yaabsa.MainActivity | tee android-start.txt
           rc=${PIPESTATUS[0]}
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
-          sleep 4
+          sleep 8
           "$adb_bin" exec-out screencap -p > before-login.png
           "$adb_bin" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 || true
           "$adb_bin" exec-out cat /sdcard/window.xml > before-login.xml || true
 
-      - name: Drive Yaabsa login into isolated ABS
+      - name: Drive Yaabsa login into isolated ABS from live UI bounds
         shell: bash
         run: |
           adb_bin="$RUNTIME_SDK_ROOT/platform-tools/adb"
 
-          # Pixel 7 AVD is 1080x2400. These taps target the three login fields and sign-in button.
-          "$adb_bin" shell input tap 540 950
-          "$adb_bin" shell input text 'http://10.0.2.2:13378'
-          "$adb_bin" shell input tap 540 1150
+          cat > ui_point.py <<'PY'
+          import re
+          import sys
+          import xml.etree.ElementTree as ET
+
+          mode, key, path = sys.argv[1:4]
+          nodes = list(ET.parse(path).getroot().iter('node'))
+          if mode == 'edit':
+              edits = [n for n in nodes if n.attrib.get('class') == 'android.widget.EditText']
+              index = int(key)
+              if index >= len(edits):
+                  raise SystemExit(f'EditText index {index} missing; found {len(edits)}')
+              node = edits[index]
+          elif mode == 'desc':
+              matches = [n for n in nodes if n.attrib.get('content-desc') == key]
+              if not matches:
+                  raise SystemExit(f'content-desc {key!r} missing')
+              node = matches[0]
+          else:
+              raise SystemExit(f'unsupported mode {mode}')
+          nums = [int(x) for x in re.findall(r'-?\d+', node.attrib.get('bounds', ''))]
+          if len(nums) != 4:
+              raise SystemExit(f'bad bounds {node.attrib.get("bounds")!r}')
+          print((nums[0] + nums[2]) // 2, (nums[1] + nums[3]) // 2)
+          PY
+
+          cat > ui_value.py <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          index, path = int(sys.argv[1]), sys.argv[2]
+          edits = [n for n in ET.parse(path).getroot().iter('node') if n.attrib.get('class') == 'android.widget.EditText']
+          if index >= len(edits):
+              raise SystemExit(2)
+          print(edits[index].attrib.get('text', ''))
+          PY
+
+          dump_ui() {
+            out="$1"
+            "$adb_bin" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1
+            rc=$?
+            if [ "$rc" -ne 0 ]; then return "$rc"; fi
+            "$adb_bin" exec-out cat /sdcard/window.xml > "$out"
+          }
+
+          tap_edit() {
+            index="$1"
+            dump_ui ui-current.xml
+            rc=$?
+            if [ "$rc" -ne 0 ]; then exit 16; fi
+            coords="$(python3 ui_point.py edit "$index" ui-current.xml)"
+            rc=$?
+            if [ "$rc" -ne 0 ]; then exit 17; fi
+            "$adb_bin" shell input tap $coords
+            sleep 1
+          }
+
+          tap_edit 0
+          "$adb_bin" shell input text 'h'
+          sleep 1
+          "$adb_bin" shell input text 'ttp://10.0.2.2:13378'
+          sleep 1
+          dump_ui ui-after-server.xml
+          server_value="$(python3 ui_value.py 0 ui-after-server.xml)"
+          echo "server field=$server_value"
+          if [ "$server_value" != "$ABS_ANDROID_URL" ]; then
+            echo 'Server field verification failed'
+            exit 18
+          fi
+
+          tap_edit 1
           "$adb_bin" shell input text "$ABS_USER"
-          "$adb_bin" shell input tap 540 1325
+          sleep 1
+          dump_ui ui-after-user.xml
+          user_value="$(python3 ui_value.py 1 ui-after-user.xml)"
+          echo "user field=$user_value"
+          if [ "$user_value" != "$ABS_USER" ]; then
+            echo 'Username field verification failed'
+            exit 19
+          fi
+
+          tap_edit 2
           "$adb_bin" shell input text "$ABS_PASSWORD"
-          "$adb_bin" shell input tap 540 1490
+          sleep 1
+          "$adb_bin" shell input keyevent 4
+          sleep 1
+          dump_ui ui-before-submit.xml
+          coords="$(python3 ui_point.py desc 'Sign In' ui-before-submit.xml)"
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit 20; fi
+          "$adb_bin" shell input tap $coords
 
           logged_in=0
           i=0
           while [ "$i" -lt 30 ]; do
             sleep 2
-            "$adb_bin" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 || true
-            "$adb_bin" exec-out cat /sdcard/window.xml > after-login.xml || true
-            if grep -E -q 'Chapter Test A|Bookshelf|Library' after-login.xml && ! grep -q 'Sign in to your Audiobookshelf server' after-login.xml; then
+            dump_ui after-login.xml || true
+            if grep -E -q 'Chapter Test A|Bookshelf|Library|Home' after-login.xml && ! grep -q 'Sign in to your Audiobookshelf server' after-login.xml; then
               logged_in=1
               break
             fi
@@ -296,15 +375,15 @@ jobs:
           "$adb_bin" logcat -d > android-e2e.log
           "$adb_bin" shell dumpsys activity activities > android-activities.txt
           echo '--- visible UI after login attempt ---'
-          grep -oE 'text="[^"]*"|content-desc="[^"]*"' after-login.xml | head -n 120 || true
+          grep -oE 'text="[^"]*"|content-desc="[^"]*"' after-login.xml | head -n 160 || true
 
           if grep -q 'FATAL EXCEPTION' android-e2e.log; then
             grep -n -A20 -B5 'FATAL EXCEPTION' android-e2e.log || true
-            exit 14
+            exit 21
           fi
           if [ "$logged_in" -ne 1 ]; then
             echo 'Yaabsa did not reach an authenticated library UI within 60 seconds'
-            exit 15
+            exit 22
           fi
 
       - name: Upload E2E bootstrap evidence
@@ -317,13 +396,16 @@ jobs:
             ffprobe.json
             abs-status.json
             abs-init.json
-            abs-login.json
             abs-library.json
             abs-scan.json
             abs-items.json
             abs-server.log
             before-login.png
             before-login.xml
+            ui-current.xml
+            ui-after-server.xml
+            ui-after-user.xml
+            ui-before-submit.xml
             after-login.png
             after-login.xml
             android-start.txt
