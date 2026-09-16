@@ -26,6 +26,7 @@ InternalMedia _media() {
   final media = InternalMedia(
     libraryId: 'library',
     itemId: 'item-a',
+    episodeId: null,
     sessionId: 'session-a',
     title: 'Harness book',
     tracks: const [
