@@ -1,0 +1,51 @@
+name: Temporary chapter sleep runtime functional
+
+on:
+  push:
+    branches:
+      - ci/chapter-sleep-v4-runtime-functional
+
+permissions:
+  contents: read
+
+jobs:
+  harness-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          flutter pub get
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+      - name: Post Get
+        uses: ./.github/actions/post-get
+        with:
+          flow: pr-build-linux
+
+      - name: Run existing chapter sleep coordination tests
+        shell: bash
+        run: |
+          flutter test test/util/chapter_sleep_timer_coordination_test.dart
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+      - name: Run runtime harnessability probe
+        shell: bash
+        run: |
+          flutter test test/util/chapter_sleep_runtime_harness_probe_test.dart
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
