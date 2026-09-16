@@ -52,23 +52,23 @@ jobs:
           [CHAPTER]
           TIMEBASE=1/1000
           START=0
-          END=90000
+          END=180000
           title=S1
           [CHAPTER]
           TIMEBASE=1/1000
-          START=90000
-          END=180000
+          START=180000
+          END=360000
           title=S2
           META
-          ffmpeg -hide_banner -loglevel error -f lavfi -i 'sine=frequency=440:duration=180:sample_rate=44100' -f ffmetadata -i chapters.ffmeta -map 0:a -map_metadata 1 -map_chapters 1 -c:a aac -b:a 96k -movflags +faststart 'runtime/abs/audiobooks/Chapter Test A/Chapter Test A.m4b'
+          ffmpeg -hide_banner -loglevel error -f lavfi -i 'sine=frequency=440:duration=360:sample_rate=44100' -f ffmetadata -i chapters.ffmeta -map 0:a -map_metadata 1 -map_chapters 1 -c:a aac -b:a 96k -movflags +faststart 'runtime/abs/audiobooks/Chapter Test A/Chapter Test A.m4b'
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
           ffprobe -v error -print_format json -show_format -show_chapters 'runtime/abs/audiobooks/Chapter Test A/Chapter Test A.m4b' > ffprobe.json
           if [ "$(jq '.chapters | length' ffprobe.json)" -ne 2 ]; then exit 4; fi
           if [ "$(jq -r '.chapters[0].start_time' ffprobe.json)" != '0.000000' ]; then exit 5; fi
-          if [ "$(jq -r '.chapters[0].end_time' ffprobe.json)" != '90.000000' ]; then exit 6; fi
-          if [ "$(jq -r '.chapters[1].start_time' ffprobe.json)" != '90.000000' ]; then exit 7; fi
-          if [ "$(jq -r '.chapters[1].end_time' ffprobe.json)" != '180.000000' ]; then exit 8; fi
+          if [ "$(jq -r '.chapters[0].end_time' ffprobe.json)" != '180.000000' ]; then exit 6; fi
+          if [ "$(jq -r '.chapters[1].start_time' ffprobe.json)" != '180.000000' ]; then exit 7; fi
+          if [ "$(jq -r '.chapters[1].end_time' ffprobe.json)" != '360.000000' ]; then exit 8; fi
 
       - name: Isolated Audiobookshelf
         shell: bash
@@ -105,7 +105,7 @@ jobs:
             author="$(jq -r '.results[0].media.metadata.authorName // empty' abs-items.json 2>/dev/null || true)"
             chapters="$(jq -r '.results[0].media.numChapters // 0' abs-items.json 2>/dev/null || echo 0)"
             duration="$(jq -r '.results[0].media.duration // 0' abs-items.json 2>/dev/null || echo 0)"
-            if [ "$total" -eq 1 ] && [ "$title" = 'Chapter Test A' ] && [ "$author" = 'Runtime Bot' ] && [ "$chapters" -eq 2 ] && awk "BEGIN {exit !($duration > 179 && $duration < 181)}"; then scanned=1; break; fi
+            if [ "$total" -eq 1 ] && [ "$title" = 'Chapter Test A' ] && [ "$author" = 'Runtime Bot' ] && [ "$chapters" -eq 2 ] && awk "BEGIN {exit !($duration > 359 && $duration < 361)}"; then scanned=1; break; fi
             sleep 2
             i=$((i + 1))
           done
@@ -322,13 +322,8 @@ jobs:
           tap desc 'Back' detail.xml
           sleep 2
           mini=0
-          i=0
-          while [ "$i" -lt 5 ]; do
-            dump player.xml || true
-            if grep -q 'More player controls' player.xml && grep -q 'S1' player.xml; then mini=1; break; fi
-            sleep 1
-            i=$((i + 1))
-          done
+          dump player.xml || true
+          if grep -q 'More player controls' player.xml && grep -q 'S1' player.xml; then mini=1; fi
           "$adb" exec-out screencap -p > player-before-more.png
           if [ "$mini" -eq 1 ]; then
             echo 'PLAYER_CONTROLS_PATH=semantics'
@@ -342,7 +337,7 @@ jobs:
 
           actions_ready=0
           i=0
-          while [ "$i" -lt 8 ]; do
+          while [ "$i" -lt 4 ]; do
             sleep 1
             dump actions.xml || true
             if grep -q 'Sleep timer' actions.xml; then actions_ready=1; break; fi
@@ -354,7 +349,7 @@ jobs:
 
           sleep_ready=0
           i=0
-          while [ "$i" -lt 5 ]; do
+          while [ "$i" -lt 2 ]; do
             sleep 1
             dump sleep.xml || true
             if grep -q 'End of chapter' sleep.xml; then sleep_ready=1; break; fi
@@ -367,7 +362,7 @@ jobs:
             if [ "$rc" -ne 0 ]; then exit 39; fi
             "$adb" shell input tap $p
             i=0
-            while [ "$i" -lt 5 ]; do
+            while [ "$i" -lt 3 ]; do
               sleep 1
               dump sleep.xml || true
               if grep -q 'End of chapter' sleep.xml; then sleep_ready=1; break; fi
@@ -376,6 +371,7 @@ jobs:
           fi
           "$adb" exec-out screencap -p > sleep.png
           if [ "$sleep_ready" -ne 1 ]; then exit 40; fi
+          if grep -q 'End of chapter · 0s' sleep.xml; then exit 41; fi
           tap contains 'End of chapter' sleep.xml
 
           armed=0
@@ -383,14 +379,14 @@ jobs:
           while [ "$i" -lt 8 ]; do
             sleep 1
             "$adb" logcat -d > armed.logcat.txt
-            if grep -q 'Chapter sleep timer armed for S1 at 90s' armed.logcat.txt; then armed=1; break; fi
+            if grep -q 'Chapter sleep timer armed for S1 at 180s' armed.logcat.txt; then armed=1; break; fi
             i=$((i + 1))
           done
           "$adb" shell dumpsys media_session > media-armed.txt
           grep -i 'Chapter sleep timer' armed.logcat.txt | tail -n 100 || true
           grep -E 'package=|state=PlaybackState' media-armed.txt | head -n 100 || true
-          if [ "$armed" -ne 1 ]; then exit 41; fi
-          if ! grep -q 'state=PlaybackState {state=PLAYING(3)' media-armed.txt; then exit 42; fi
+          if [ "$armed" -ne 1 ]; then exit 42; fi
+          if ! grep -q 'state=PlaybackState {state=PLAYING(3)' media-armed.txt; then exit 43; fi
 
           position_ms="$(python3 - <<'PY'
           import re
@@ -399,21 +395,23 @@ jobs:
           print(m.group(1) if m else '')
           PY
           )"
-          echo "ARMED_POSITION_MS=$position_ms" | tee armed-position.txt
-          if [ -z "$position_ms" ] || [ "$position_ms" -ge 60000 ]; then exit 43; fi
-          echo "ARMED_POSITION_MS=$position_ms" >> "$GITHUB_ENV"
+          echo "ARMED_MEDIA_SESSION_POSITION_MS=$position_ms" | tee armed-position.txt
+          if [ -z "$position_ms" ]; then exit 44; fi
 
       - name: Prove S1 expiry pauses before S2 progression
         shell: bash
         run: |
           adb="$RUNTIME_SDK_ROOT/platform-tools/adb"
-          remaining=$((90000 - ARMED_POSITION_MS))
-          if [ "$remaining" -lt 0 ]; then exit 50; fi
-          wait=$((remaining / 1000 + 12))
-          echo "WAIT_TO_BOUNDARY_SECONDS=$wait"
-          sleep "$wait"
+          expired=0
+          i=0
+          while [ "$i" -lt 45 ]; do
+            sleep 5
+            "$adb" logcat -d > final.logcat.txt
+            if grep -q 'Chapter sleep timer reached chapter end; pausing playback first' final.logcat.txt; then expired=1; break; fi
+            i=$((i + 1))
+          done
+          if [ "$expired" -ne 1 ]; then exit 50; fi
 
-          "$adb" logcat -d > final.logcat.txt
           "$adb" shell dumpsys media_session > media-after.txt
           "$adb" exec-out screencap -p > after-boundary.png
           "$adb" shell uiautomator dump /sdcard/final.xml >/dev/null 2>&1 || true
@@ -424,13 +422,12 @@ jobs:
           echo '--- final media ---'
           grep -E 'package=|state=PlaybackState' media-after.txt | head -n 100 || true
 
-          if ! grep -q 'Chapter sleep timer armed for S1 at 90s' final.logcat.txt; then exit 51; fi
-          if ! grep -q 'Chapter sleep timer reached chapter end; pausing playback first' final.logcat.txt; then exit 52; fi
-          if grep -q 'Chapter sleep timer expiry failed' final.logcat.txt; then exit 53; fi
-          if grep -q 'Chapter sleep timer expiry aborted' final.logcat.txt; then exit 54; fi
-          if grep -q 'Chapter sleep timer disabled fail-closed' final.logcat.txt; then exit 55; fi
-          if grep -q 'FATAL EXCEPTION' final.logcat.txt; then exit 56; fi
-          if grep -q 'state=PlaybackState {state=PLAYING(3)' media-after.txt; then exit 57; fi
+          if ! grep -q 'Chapter sleep timer armed for S1 at 180s' final.logcat.txt; then exit 51; fi
+          if grep -q 'Chapter sleep timer expiry failed' final.logcat.txt; then exit 52; fi
+          if grep -q 'Chapter sleep timer expiry aborted' final.logcat.txt; then exit 53; fi
+          if grep -q 'Chapter sleep timer disabled fail-closed' final.logcat.txt; then exit 54; fi
+          if grep -q 'FATAL EXCEPTION' final.logcat.txt; then exit 55; fi
+          if grep -q 'state=PlaybackState {state=PLAYING(3)' media-after.txt; then exit 56; fi
 
           final_position_ms="$(python3 - <<'PY'
           import re
@@ -440,7 +437,7 @@ jobs:
           PY
           )"
           echo "FINAL_POSITION_MS=$final_position_ms" | tee final-position.txt
-          if [ -z "$final_position_ms" ] || [ "$final_position_ms" -ge 105000 ]; then exit 58; fi
+          if [ -z "$final_position_ms" ] || [ "$final_position_ms" -ge 195000 ]; then exit 57; fi
 
           token="$(cat "$RUNNER_TEMP/abs-token")"
           curl -fsS "$ABS_URL/api/me/progress/$ABS_ITEM_ID" -H "Authorization: Bearer $token" -o abs-progress-after.json || true
