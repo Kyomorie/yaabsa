@@ -1,0 +1,230 @@
+name: Temporary runtime smoke
+
+on:
+  push:
+    branches:
+      - ci/chapter-sleep-v4-runtime-smoke
+
+permissions:
+  contents: read
+
+jobs:
+  linux-startup:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install runtime dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          sudo apt-get install -y \
+            build-essential libgtk-3-dev libgtk-3-0 libblkid1 liblzma5 \
+            libsecret-1-0 libsecret-1-dev libmpv-dev mpv \
+            libayatana-appindicator3-dev xvfb xauth
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Post Get
+        uses: ./.github/actions/post-get
+        with:
+          flow: pr-build-linux
+
+      - name: Build Linux debug bundle
+        run: flutter build linux --debug
+
+      - name: Launch under Xvfb and require process survival
+        shell: bash
+        run: |
+          exe="$PWD/build/linux/x64/debug/bundle/yaabsa"
+          log="$PWD/linux-runtime-smoke.log"
+          if [ ! -x "$exe" ]; then
+            echo "Expected executable is missing: $exe"
+            exit 2
+          fi
+          rm -f "$log"
+          xvfb-run -a sh -c '
+            exe="$1"
+            log="$2"
+            "$exe" >"$log" 2>&1 &
+            pid=$!
+            sleep 20
+            if ! kill -0 "$pid" 2>/dev/null; then
+              wait "$pid"
+              rc=$?
+              echo "yaabsa exited before the 20s survival window (rc=$rc)"
+              exit "$rc"
+            fi
+            echo "yaabsa survived the 20s startup window (pid=$pid)"
+            kill -TERM "$pid" 2>/dev/null || true
+            sleep 2
+            if kill -0 "$pid" 2>/dev/null; then
+              kill -KILL "$pid" 2>/dev/null || true
+            fi
+            wait "$pid" 2>/dev/null || true
+            exit 0
+          ' sh "$exe" "$log"
+          rc=$?
+          echo "--- linux runtime log ---"
+          cat "$log" 2>/dev/null || true
+          exit "$rc"
+
+      - name: Upload Linux runtime log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-runtime-smoke-log
+          path: linux-runtime-smoke.log
+          if-no-files-found: ignore
+          retention-days: 1
+
+  android-startup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Post Get
+        uses: ./.github/actions/post-get
+        with:
+          flow: pr-build-android-auto
+
+      - name: Build Android Auto debug APK
+        run: flutter build apk --flavor auto --debug
+
+      - name: Prepare Android emulator
+        shell: bash
+        run: |
+          image='system-images;android-35;google_apis;x86_64'
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager 'platform-tools' 'emulator' 'platforms;android-35' "$image"
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+          echo no | avdmanager create avd --force --name yaabsa-smoke --package "$image" --device pixel_7
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+      - name: Boot emulator, install and launch yaabsa
+        shell: bash
+        run: |
+          emulator -avd yaabsa-smoke \
+            -no-window -no-audio -no-boot-anim -no-snapshot -wipe-data \
+            -gpu swiftshader_indirect > emulator.log 2>&1 &
+          emulator_pid=$!
+          echo "$emulator_pid" > emulator.pid
+
+          adb wait-for-device
+          rc=$?
+          if [ "$rc" -ne 0 ]; then
+            cat emulator.log || true
+            exit "$rc"
+          fi
+
+          booted=0
+          i=0
+          while [ "$i" -lt 120 ]; do
+            state="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')"
+            if [ "$state" = "1" ]; then
+              booted=1
+              break
+            fi
+            sleep 2
+            i=$((i + 1))
+          done
+          if [ "$booted" -ne 1 ]; then
+            echo "Android emulator did not finish booting"
+            cat emulator.log || true
+            exit 3
+          fi
+
+          apk='build/app/outputs/flutter-apk/app-auto-debug.apk'
+          if [ ! -f "$apk" ]; then
+            echo "APK missing: $apk"
+            exit 4
+          fi
+
+          adb install -r "$apk"
+          rc=$?
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+          adb logcat -c
+          adb shell am start -W -n de.vito0912.yaabsa.dev/de.vito0912.yaabsa.MainActivity | tee android-start.txt
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then exit "$rc"; fi
+
+          sleep 20
+          app_pid="$(adb shell pidof de.vito0912.yaabsa.dev 2>/dev/null | tr -d '\r')"
+          if [ -z "$app_pid" ]; then
+            echo "yaabsa process is not alive after the 20s startup window"
+            adb logcat -d > android-runtime-smoke.log || true
+            cat android-runtime-smoke.log || true
+            exit 5
+          fi
+          echo "yaabsa survived the 20s startup window (pid=$app_pid)"
+
+          adb exec-out screencap -p > android-runtime-smoke.png
+          adb logcat -d > android-runtime-smoke.log
+          adb shell dumpsys activity activities > android-activities.txt
+
+          if grep -q 'FATAL EXCEPTION' android-runtime-smoke.log; then
+            echo "FATAL EXCEPTION found in logcat"
+            grep -n -A20 -B5 'FATAL EXCEPTION' android-runtime-smoke.log || true
+            exit 6
+          fi
+
+      - name: Stop emulator
+        if: always()
+        shell: bash
+        run: |
+          adb emu kill >/dev/null 2>&1 || true
+          if [ -f emulator.pid ]; then
+            pid="$(cat emulator.pid)"
+            kill -TERM "$pid" >/dev/null 2>&1 || true
+          fi
+
+      - name: Upload Android runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-runtime-smoke-evidence
+          path: |
+            android-runtime-smoke.png
+            android-runtime-smoke.log
+            android-start.txt
+            android-activities.txt
+            emulator.log
+          if-no-files-found: ignore
+          retention-days: 1
