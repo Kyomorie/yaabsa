@@ -60,7 +60,7 @@ nohup "$emulator" \
   -no-metrics \
   -memory 2048 \
   -cores 2 \
-  -gpu swangle \
+  -gpu software \
   -accel "$accel" \
   </dev/null > emulator.log 2>&1 &
 emulator_pid=$!
