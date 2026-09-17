@@ -3,7 +3,7 @@ name: Temporary chapter sleep runtime acceptance
 on:
   push:
     branches:
-      - ci/chapter-sleep-v4-runtime-acceptance
+      - ci/chapter-sleep-v4-runtime-acceptance-runner
 
 permissions:
   contents: read
@@ -173,7 +173,12 @@ jobs:
           "$adb" logcat -c
           "$adb" shell am start -n de.vito0912.yaabsa.dev/de.vito0912.yaabsa.MainActivity >/dev/null
 
+      - name: Run current chapter-sleep acceptance scenario
+        shell: bash
+        run: bash ci/chapter_sleep_runtime_acceptance.sh
+
       - name: Login, start S1, and arm End of chapter
+        if: ${{ false }}
         shell: bash
         run: |
           adb="$RUNTIME_SDK_ROOT/platform-tools/adb"
@@ -399,6 +404,7 @@ jobs:
           if [ -z "$position_ms" ]; then exit 44; fi
 
       - name: Prove S1 expiry pauses before S2 progression
+        if: ${{ false }}
         shell: bash
         run: |
           adb="$RUNTIME_SDK_ROOT/platform-tools/adb"
@@ -477,6 +483,12 @@ jobs:
             after-boundary.png
             abs-progress-after.json
             emulator.log
+            retarget.logcat.txt
+            media-retarget.txt
+            retarget-position.txt
+            retarget-before-seek.png
+            retarget-after-seek.png
+            scenario-result.txt
           if-no-files-found: ignore
           retention-days: 2
 
