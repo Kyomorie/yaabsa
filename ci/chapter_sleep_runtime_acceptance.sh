@@ -414,9 +414,32 @@ sleep 2
 # Post-login Flutter semantics/uiautomator is flaky on hosted API35. From here,
 # coordinates are inputs only. State is proven through MediaSession, logs and
 # read-only queue_intent_v2 snapshots.
-# Select Shelf, then start A from its validated Recently Added play overlay.
+# Select Shelf, wait for its library payload to be cached, then start A from its
+# validated Recently Added play overlay. The successful scenario-3 run reached
+# this cache event before the card was tappable; fixed sleeps raced the spinner.
+"$adb" logcat -c
 tap_norm 113 927 || exit 78
-sleep 2
+shelf_ready=0
+i=0
+while [ "$i" -lt 30 ]; do
+  if ! kill -0 "$emulator_pid" 2>/dev/null; then
+    echo 'SCENARIO_EMULATOR_EXITED_DURING_SHELF_LOAD=1' >&2
+    exit 107
+  fi
+  "$adb" logcat -d > shelf-ready.logcat.txt || exit 108
+  if grep -qE '\[CacheInterceptor\].*Caching: http://127\.0\.0\.1:13378/api/libraries/[^? ]+\?include=filterdata' shelf-ready.logcat.txt; then
+    shelf_ready=1
+    echo 'SHELF_DATA_READY=1'
+    break
+  fi
+  sleep 1
+  i=$((i + 1))
+done
+if [ "$shelf_ready" -ne 1 ]; then
+  echo 'SHELF_DATA_READY_TIMEOUT=1' >&2
+  exit 109
+fi
+sleep 1
 tap_norm 846 201 || exit 79
 if ! wait_media_a_playing media-playing.txt 45; then exit 80; fi
 "$adb" exec-out screencap -p > player-before-more.png
