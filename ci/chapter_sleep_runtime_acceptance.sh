@@ -14,6 +14,103 @@ if [ -z "$token" ]; then
   exit 61
 fi
 
+# Keep the emulator in the same workflow step as the runtime scenario. Recent
+# hosted-runner attempts lost the emulator process after the setup step had
+# already completed, without any guest/QEMU crash evidence. Restarting it here
+# removes that cross-step lifecycle dependency and caps resource usage.
+emulator="${RUNTIME_SDK_ROOT}/emulator/emulator"
+if [ ! -x "$emulator" ]; then
+  echo "EMULATOR_NOT_FOUND=$emulator" >&2
+  exit 62
+fi
+if [ ! -f yaabsa.apk ]; then
+  echo 'APK_NOT_FOUND=yaabsa.apk' >&2
+  exit 63
+fi
+
+"$adb" emu kill >/dev/null 2>&1 || true
+i=0
+while [ "$i" -lt 20 ]; do
+  if ! "$adb" devices | awk 'NR>1 && $1 ~ /^emulator-/ && $2=="device" {f=1} END{exit !f}'; then
+    break
+  fi
+  sleep 1
+  i=$((i + 1))
+done
+if "$adb" devices | awk 'NR>1 && $1 ~ /^emulator-/ && $2=="device" {f=1} END{exit !f}'; then
+  echo 'PREVIOUS_EMULATOR_DID_NOT_EXIT=1' >&2
+  exit 64
+fi
+
+"$adb" kill-server >/dev/null 2>&1 || true
+"$adb" start-server >/dev/null
+if [ -e /dev/kvm ]; then
+  accel=on
+else
+  accel=off
+fi
+
+nohup "$emulator" \
+  -avd yaabsa-runtime-acceptance \
+  -no-window \
+  -no-audio \
+  -no-boot-anim \
+  -no-snapshot \
+  -wipe-data \
+  -no-metrics \
+  -memory 2048 \
+  -cores 2 \
+  -gpu swiftshader_indirect \
+  -accel "$accel" \
+  </dev/null > emulator.log 2>&1 &
+emulator_pid=$!
+echo "$emulator_pid" > emulator.pid
+echo "SCENARIO_EMULATOR_PID=$emulator_pid"
+
+seen=0
+i=0
+while [ "$i" -lt 90 ]; do
+  if ! kill -0 "$emulator_pid" 2>/dev/null; then
+    echo 'SCENARIO_EMULATOR_EXITED_DURING_BOOT=1' >&2
+    tail -n 120 emulator.log >&2 || true
+    exit 65
+  fi
+  if "$adb" devices | awk 'NR>1 && $1 ~ /^emulator-/ && $2=="device" {f=1} END{exit !f}'; then
+    seen=1
+    break
+  fi
+  sleep 2
+  i=$((i + 1))
+done
+if [ "$seen" -ne 1 ]; then exit 66; fi
+
+boot=0
+i=0
+while [ "$i" -lt 90 ]; do
+  if ! kill -0 "$emulator_pid" 2>/dev/null; then
+    echo 'SCENARIO_EMULATOR_EXITED_BEFORE_BOOT_COMPLETE=1' >&2
+    tail -n 120 emulator.log >&2 || true
+    exit 67
+  fi
+  if [ "$("$adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
+    boot=1
+    break
+  fi
+  sleep 2
+  i=$((i + 1))
+done
+if [ "$boot" -ne 1 ]; then exit 68; fi
+
+"$adb" reverse tcp:13378 tcp:13378 >/dev/null
+if ! "$adb" reverse --list | grep -q 'tcp:13378 tcp:13378'; then exit 69; fi
+"$adb" install -r yaabsa.apk >/dev/null || exit 70
+"$adb" logcat -c
+"$adb" shell am start -n de.vito0912.yaabsa.dev/de.vito0912.yaabsa.MainActivity >/dev/null || exit 71
+sleep 6
+if ! kill -0 "$emulator_pid" 2>/dev/null; then exit 72; fi
+if ! "$adb" get-state 2>/dev/null | grep -q '^device$'; then exit 73; fi
+echo 'SCENARIO_EMULATOR_READY=1'
+
 cat > ui.py <<'PY'
 import re,sys,xml.etree.ElementTree as ET
 mode,key,path=sys.argv[1:4]
