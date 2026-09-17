@@ -191,6 +191,24 @@ print(m.group(1) if m else '')
 PY
 }
 
+media_state_name() {
+  python3 - "$1" <<'PY'
+import re,sys
+s=open(sys.argv[1],errors='ignore').read()
+m=re.search(r'package=de\.vito0912\.yaabsa\.dev.*?state=PlaybackState \{state=([A-Z_]+)\(',s,re.S)
+print(m.group(1) if m else '')
+PY
+}
+
+media_description() {
+  python3 - "$1" <<'PY'
+import re,sys
+s=open(sys.argv[1],errors='ignore').read()
+m=re.search(r'package=de\.vito0912\.yaabsa\.dev.*?metadata:.*?description=([^,\n]+)',s,re.S)
+print(m.group(1).strip() if m else '')
+PY
+}
+
 copy_app_db_snapshot() {
   label="$1"
   out_dir="$RUNNER_TEMP/app-db-$label"
@@ -485,18 +503,47 @@ while [ "$i" -lt 55 ]; do
 done
 if [ "$expired" -ne 1 ]; then exit 93; fi
 
-"$adb" shell dumpsys media_session > media-after.txt
-"$adb" exec-out screencap -p > after-boundary.png
 if ! grep -q 'Playback completion claimed by chapter sleep timer; suppressing queue/loop auto-advance.' final.logcat.txt; then exit 94; fi
 if grep -q 'Chapter sleep timer expiry failed' final.logcat.txt; then exit 95; fi
 if grep -q 'Chapter sleep timer expiry aborted' final.logcat.txt; then exit 96; fi
 if grep -q 'Chapter sleep timer disabled fail-closed' final.logcat.txt; then exit 97; fi
 if grep -q 'FATAL EXCEPTION' final.logcat.txt; then exit 98; fi
-if grep -q 'state=PlaybackState {state=PLAYING(3)' media-after.txt; then exit 99; fi
-if ! grep -q 'state=PlaybackState {state=PAUSED(2)' media-after.txt; then exit 100; fi
-if ! grep -q 'description=Chapter Test A' media-after.txt; then exit 101; fi
 
-final_position_ms="$(media_position_ms media-after.txt)"
+# A completed player may be exposed by audio_service as Android CONNECTING even
+# though YAABSA has already reached playing=false + ProcessingState.completed.
+# Accept CONNECTING only with that exact runtime completion evidence. Otherwise
+# require an explicit PAUSED/STOPPED terminal MediaSession state. Never accept
+# B becoming current or PLAYING after the chapter-expiry claim.
+terminal_oracle=''
+i=0
+while [ "$i" -lt 12 ]; do
+  "$adb" shell dumpsys media_session > media-after.txt
+  media_state="$(media_state_name media-after.txt)"
+  media_desc="$(media_description media-after.txt)"
+  final_position_ms="$(media_position_ms media-after.txt)"
+  echo "POST_EXPIRY_SAMPLE=${i} state=${media_state} description=${media_desc} position_ms=${final_position_ms}"
+
+  if [ "$media_desc" != 'Chapter Test A' ]; then exit 99; fi
+  if [ "$media_state" = 'PLAYING' ]; then exit 100; fi
+
+  if [ "$media_state" = 'PAUSED' ] || [ "$media_state" = 'STOPPED' ]; then
+    terminal_oracle="MEDIASESSION_${media_state}"
+    break
+  fi
+
+  if [ "$media_state" = 'CONNECTING' ] \
+    && grep -q 'playing=false,processingState=ProcessingState.completed' final.logcat.txt; then
+    terminal_oracle='APP_COMPLETED_MEDIASESSION_CONNECTING'
+    break
+  fi
+
+  sleep 1
+  i=$((i + 1))
+done
+if [ -z "$terminal_oracle" ]; then exit 101; fi
+
+"$adb" exec-out screencap -p > after-boundary.png
+echo "TERMINAL_ORACLE=$terminal_oracle" | tee terminal-oracle.txt
 echo "FINAL_POSITION_MS=$final_position_ms" | tee final-position.txt
 if [ -z "$final_position_ms" ] || [ "$final_position_ms" -lt 355000 ] || [ "$final_position_ms" -gt 365000 ]; then exit 102; fi
 
@@ -511,6 +558,10 @@ after_anchor="$(awk -F= '$1=="ANCHOR_MATCH_A" {print $2}' queue-intent-after.txt
 curl -fsS "$ABS_URL/api/me/progress/$ABS_ITEM_ID" -H "Authorization: Bearer $token" -o abs-progress-after.json
 rc=$?
 if [ "$rc" -ne 0 ]; then exit 104; fi
+abs_current_time="$(jq -r '.currentTime // empty' abs-progress-after.json)"
+abs_finished="$(jq -r '.isFinished // false' abs-progress-after.json)"
+if [ -z "$abs_current_time" ] || ! awk "BEGIN {exit !($abs_current_time >= 355 && $abs_current_time <= 365)}"; then exit 105; fi
+if [ "$abs_finished" != 'true' ]; then exit 106; fi
 
 cat > scenario-result.txt <<EOF2
 SCENARIO=3
@@ -522,6 +573,9 @@ ANCHOR_A_AFTER_DB=$after_anchor
 B_BECAME_CURRENT=NO
 SEEK_LANDED_MS=$landed_ms
 FINAL_MS=$final_position_ms
+TERMINAL_ORACLE=$terminal_oracle
+ABS_CURRENT_TIME=$abs_current_time
+ABS_FINISHED=$abs_finished
 EOF2
 
 cat scenario-result.txt
