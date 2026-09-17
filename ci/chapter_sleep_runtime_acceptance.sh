@@ -60,7 +60,7 @@ nohup "$emulator" \
   -no-metrics \
   -memory 2048 \
   -cores 2 \
-  -gpu software \
+  -gpu swiftshader_indirect \
   -accel "$accel" \
   </dev/null > emulator.log 2>&1 &
 emulator_pid=$!
