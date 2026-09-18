@@ -931,6 +931,11 @@ jobs:
             shelf-ready.adb.devices.txt
             media-session-adb.err.txt
             media-session-adb.devices.txt
+            db-snapshot.err.txt
+            pre-next.logcat.txt
+            a-start.log-evidence.txt
+            seek.log-evidence.txt
+            b-start.log-evidence.txt
             tap-adb.err.txt
             tap-adb.out.txt
             tap-adb.devices.txt

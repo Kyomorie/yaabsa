@@ -503,6 +503,76 @@ wait_media() {
   return 1
 }
 
+pre_next_logcat_pid=''
+start_pre_next_logcat() {
+  rm -f pre-next.logcat.txt
+  "$adb" logcat -v threadtime > pre-next.logcat.txt 2>&1 &
+  pre_next_logcat_pid=$!
+  sleep 1
+  kill -0 "$pre_next_logcat_pid" 2>/dev/null
+}
+
+stop_pre_next_logcat() {
+  if [ -n "${pre_next_logcat_pid:-}" ]; then
+    kill "$pre_next_logcat_pid" >/dev/null 2>&1 || true
+    wait "$pre_next_logcat_pid" 2>/dev/null || true
+    pre_next_logcat_pid=''
+  fi
+}
+
+wait_local_playing_item() {
+  file="$1"
+  item_id="$2"
+  max_seconds="$3"
+  i=0
+  while [ "$i" -lt "$max_seconds" ]; do
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then return 2; fi
+    sync "$file" 2>/dev/null || true
+    if grep -Fq "Starting playback for item: $item_id (item)" "$file" \
+      && grep -q 'playing=true,processingState=ProcessingState.ready' "$file"; then
+      return 0
+    fi
+    sleep 1
+    i=$((i + 1))
+  done
+  return 1
+}
+
+latest_seek_position_ms() {
+  file="$1"
+  python3 - "$file" <<'PY'
+import re,sys
+s=open(sys.argv[1],errors='ignore').read()
+matches=re.findall(r'Seeking to position:\s*(\d+):(\d+):(\d+)\.(\d+)',s)
+if not matches:
+    print('')
+    raise SystemExit
+h,m,sec,frac=matches[-1]
+micros=int((frac+'000000')[:6])
+print((int(h)*3600+int(m)*60+int(sec))*1000 + micros//1000)
+PY
+}
+
+wait_seek_log_position() {
+  file="$1"
+  min_ms="$2"
+  max_ms="$3"
+  max_seconds="$4"
+  i=0
+  while [ "$i" -lt "$max_seconds" ]; do
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then return 2; fi
+    sync "$file" 2>/dev/null || true
+    seek_ms="$(latest_seek_position_ms "$file")"
+    if [ -n "$seek_ms" ] && [ "$seek_ms" -gt "$min_ms" ] && [ "$seek_ms" -lt "$max_ms" ]; then
+      printf '%s\n' "$seek_ms"
+      return 0
+    fi
+    sleep 1
+    i=$((i + 1))
+  done
+  return 1
+}
+
 causal_logcat_pid=''
 start_causal_logcat() {
   rm -f final.logcat.txt
@@ -519,7 +589,7 @@ stop_causal_logcat() {
     causal_logcat_pid=''
   fi
 }
-trap stop_causal_logcat EXIT
+trap 'stop_pre_next_logcat; stop_causal_logcat' EXIT
 
 # Add a second, distinct audiobook to the isolated ABS fixture.
 mkdir -p 'runtime/abs/audiobooks/Chapter Test B'
@@ -698,16 +768,23 @@ echo 'SHELF_LIBRARY_SELECTED_DB=1'
 # MediaSession start oracle prove that A is actually playable.
 sleep 5
 
-# Start A from its validated Recently Added play overlay. Allow one delayed
-# re-tap before declaring a UI harness failure.
+# Start A from its validated Recently Added play overlay. Repeated
+# dumpsys media_session calls destabilize the hosted emulator, so prove the
+# initial A start from Yaabsa's own causal AudioHandler log. MediaSession remains
+# mandatory later at the armed-A integration point.
+if ! timeout 5 "$adb" logcat -c; then exit 157; fi
+if ! start_pre_next_logcat; then exit 158; fi
+
 tap_norm 846 201 || exit 94
-if ! wait_media 'Chapter Test A' media-playing.txt 15; then
+if ! wait_local_playing_item pre-next.logcat.txt "$ABS_ITEM_ID" 25; then
   echo 'START_A_RETRY=1'
-  sleep 2
   tap_norm 846 201 || exit 94
-  if ! wait_media 'Chapter Test A' media-playing.txt 30; then exit 95; fi
+  if ! wait_local_playing_item pre-next.logcat.txt "$ABS_ITEM_ID" 25; then exit 95; fi
 fi
-"$adb" exec-out screencap -p > player-before-more.png
+sync pre-next.logcat.txt 2>/dev/null || true
+grep -F "Starting playback for item: $ABS_ITEM_ID (item)" pre-next.logcat.txt | tail -n 2 > a-start.log-evidence.txt || true
+grep 'playing=true,processingState=ProcessingState.ready' pre-next.logcat.txt | tail -n 3 >> a-start.log-evidence.txt || true
+"$adb" exec-out screencap -p > player-before-more.png 2>/dev/null || true
 
 # Queue B manually while A remains current.
 tap_norm 248 283 || exit 96
@@ -717,35 +794,19 @@ tap_norm 497 483 || exit 97
 sleep 1
 if ! queue_intent_snapshot before retarget.logcat.txt; then exit 98; fi
 
-"$adb" shell input keyevent 4 >/dev/null 2>&1 || true
+timeout 5 "$adb" shell input keyevent 4 >/dev/null 2>&1 || true
 sleep 2
-if ! wait_media 'Chapter Test A' media-before-seek.txt 5; then exit 99; fi
+if ! kill -0 "$emulator_pid" 2>/dev/null; then exit 99; fi
 
-# Seek A into final chapter S2, then arm End of chapter.
+# Seek A into final chapter S2. Use Yaabsa's concrete seek log as the low-impact
+# position oracle; the armed MediaSession dump below independently proves that A
+# is actually PLAYING in the expected final-chapter position.
 tap_norm 880 942 || exit 100
-seek_ok=0
-i=0
-while [ "$i" -lt 20 ]; do
-  sleep 1
-  if ! dump_media_session media-retarget.txt 'seek-final-chapter' 2; then
-    i=$((i + 1))
-    continue
-  fi
-  landed_ms="$(media_position_ms media-retarget.txt)"
-  if [ -n "$landed_ms" ] \
-    && [ "$landed_ms" -gt 310000 ] \
-    && [ "$landed_ms" -lt 340000 ] \
-    && grep -q 'state=PlaybackState {state=PLAYING(3)' media-retarget.txt \
-    && grep -q 'description=Chapter Test A' media-retarget.txt; then
-    seek_ok=1
-    break
-  fi
-  i=$((i + 1))
-done
-landed_ms="$(media_position_ms media-retarget.txt)"
+landed_ms="$(wait_seek_log_position pre-next.logcat.txt 310000 340000 20)"
+if [ -z "$landed_ms" ]; then exit 101; fi
 echo "SCENARIO4_FINAL_CHAPTER_POSITION_MS=$landed_ms" | tee retarget-position.txt
-if [ "$seek_ok" -ne 1 ]; then exit 101; fi
-"$adb" exec-out screencap -p > retarget-after-seek.png
+grep 'Seeking to position:' pre-next.logcat.txt | tail -n 3 > seek.log-evidence.txt || true
+"$adb" exec-out screencap -p > retarget-after-seek.png 2>/dev/null || true
 
 tap_norm 927 897 || exit 102
 sleep 1
@@ -759,15 +820,18 @@ armed=0
 i=0
 while [ "$i" -lt 12 ]; do
   sleep 1
-  "$adb" logcat -d > armed.logcat.txt
-  if grep -q 'Chapter sleep timer armed for S2 at 360s' armed.logcat.txt; then
+  if ! kill -0 "$emulator_pid" 2>/dev/null; then exit 105; fi
+  sync pre-next.logcat.txt 2>/dev/null || true
+  if grep -q 'Chapter sleep timer armed for S2 at 360s' pre-next.logcat.txt; then
     armed=1
     break
   fi
   i=$((i + 1))
 done
+cp pre-next.logcat.txt armed.logcat.txt 2>/dev/null || true
 if [ "$armed" -ne 1 ]; then exit 105; fi
-if ! dump_media_session media-armed.txt 'armed-A' 3; then exit 106; fi
+# First of only three required MediaSession dumps in S4.
+if ! dump_media_session media-armed.txt 'armed-A' 1; then exit 106; fi
 if ! grep -q 'state=PlaybackState {state=PLAYING(3)' media-armed.txt \
   || ! grep -q 'description=Chapter Test A' media-armed.txt; then
   exit 106
@@ -781,7 +845,8 @@ if [ -z "$armed_position_ms" ] || [ "$armed_position_ms" -le 310000 ] || [ "$arm
 # Make the Android command causal: preserve the arm evidence above, then clear
 # logcat and issue an external Android media-button NEXT command. On the pinned
 # audio_service this reaches BGAudioHandler.skipToNext() -> skipToNextInApp().
-"$adb" logcat -c
+stop_pre_next_logcat
+if ! timeout 5 "$adb" logcat -c; then exit 159; fi
 if ! start_causal_logcat; then exit 145; fi
 {
   echo 'ANDROID_MEDIA_NEXT_COMMAND=cmd media_session dispatch next'
@@ -796,18 +861,16 @@ if [ "$rc" -ne 0 ]; then
 fi
 
 # The real Android command must traverse BGAudioHandler.skipToNext(), consume B,
-# and make B the currently playing MediaSession item.
-if ! wait_media 'Chapter Test B' media-b-after-next.tmp.txt 30; then
+# and start B. Prove that causally from Yaabsa's own log first, then take exactly
+# one MediaSession snapshot to prove Android integration state.
+if ! wait_local_playing_item final.logcat.txt "$b_id" 30; then
   stop_causal_logcat
-  cp media-b-after-next.tmp.txt media-after.txt 2>/dev/null || true
   exit 109
 fi
-b_start_ms="$(media_position_ms media-b-after-next.tmp.txt)"
-cp media-b-after-next.tmp.txt media-after.txt
 
 log_ready=0
 i=0
-while [ "$i" -lt 5 ]; do
+while [ "$i" -lt 8 ]; do
   sync final.logcat.txt 2>/dev/null || true
   if grep -q 'No next chapter found, skipping to next item' final.logcat.txt \
     && grep -q 'Chapter sleep timer disabled fail-closed: playback media changed' final.logcat.txt; then
@@ -819,7 +882,22 @@ while [ "$i" -lt 5 ]; do
 done
 if [ "$log_ready" -ne 1 ]; then
   stop_causal_logcat
+  exit 110
 fi
+
+if ! dump_media_session media-b-after-next.tmp.txt 'B-after-next' 1; then
+  stop_causal_logcat
+  exit 109
+fi
+if ! grep -q 'state=PlaybackState {state=PLAYING(3)' media-b-after-next.tmp.txt \
+  || ! grep -q 'description=Chapter Test B' media-b-after-next.tmp.txt; then
+  stop_causal_logcat
+  exit 109
+fi
+b_start_ms="$(media_position_ms media-b-after-next.tmp.txt)"
+cp media-b-after-next.tmp.txt media-after.txt
+grep -F "Starting playback for item: $b_id (item)" final.logcat.txt | tail -n 2 > b-start.log-evidence.txt || true
+grep 'playing=true,processingState=ProcessingState.ready' final.logcat.txt | tail -n 3 >> b-start.log-evidence.txt || true
 
 if ! grep -q 'No next chapter found, skipping to next item' final.logcat.txt; then exit 110; fi
 if ! grep -q 'Chapter sleep timer disabled fail-closed: playback media changed' final.logcat.txt; then exit 111; fi
@@ -888,7 +966,8 @@ while [ "$elapsed" -lt "$wait_seconds" ]; do
   if [ "$sample_abs_finished" != 'false' ]; then exit 148; fi
 done
 
-if ! dump_media_session media-after.txt 'B-final' 3; then exit 121; fi
+# Third and final required MediaSession dump in S4.
+if ! dump_media_session media-after.txt 'B-final' 1; then exit 121; fi
 b_final_state="$(media_state_name media-after.txt)"
 b_final_desc="$(media_description media-after.txt)"
 b_final_ms="$(media_position_ms media-after.txt)"
