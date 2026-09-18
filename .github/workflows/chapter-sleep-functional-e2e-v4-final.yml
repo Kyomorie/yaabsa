@@ -926,6 +926,8 @@ jobs:
             abs-items.json
             adb-reverse.txt
             emulator-version.txt
+            shelf-ready.adb.err.txt
+            shelf-ready.adb.devices.txt
             login-server.xml
             login-user.xml
             submit.xml
