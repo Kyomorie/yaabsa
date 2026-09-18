@@ -48,6 +48,9 @@ else
   accel=off
 fi
 
+# Emulator 37.x retired swiftshader_indirect. Use the current SwiftShader
+# backend and disable Vulkan to avoid the hosted-runner gfxstream/Vulkan
+# crash path seen in the superseded S4 run.
 nohup "$emulator" \
   -avd yaabsa-runtime-acceptance \
   -no-window \
@@ -58,9 +61,6 @@ nohup "$emulator" \
   -no-metrics \
   -memory 2048 \
   -cores 2 \
-  # Emulator 37.x retired swiftshader_indirect. Use the current SwiftShader
-  # backend and disable Vulkan to avoid the hosted-runner gfxstream/Vulkan
-  # crash path seen in the superseded S4 run.
   -gpu swiftshader \
   -feature -Vulkan \
   -accel "$accel" \
