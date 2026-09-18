@@ -513,9 +513,7 @@ if [ -z "$armed_position_ms" ] || [ "$armed_position_ms" -le 310000 ] || [ "$arm
   "$adb" shell cmd media_session dispatch next
   rc=$?
   echo "ANDROID_MEDIA_NEXT_RC=$rc"
-  exit "$rc"
 } > final.xml 2>&1
-rc=$?
 if [ "$rc" -ne 0 ]; then
   cat final.xml >&2
   exit 108
