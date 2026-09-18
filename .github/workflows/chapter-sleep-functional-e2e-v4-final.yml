@@ -215,7 +215,9 @@ jobs:
           if [ -z "$sdkmanager" ]; then exit 20; fi
 
           avdmanager="$(dirname "$sdkmanager")/avdmanager"
-          image='system-images;android-35;google_apis;x86_64'
+          # API35 Automated Test Device image: purpose-built for CI with
+          # reduced background services and no hardware rendering requirements.
+          image='system-images;android-35;aosp_atd;x86_64'
 
           yes | "$sdkmanager" --licenses >/dev/null 2>&1 || true
 
