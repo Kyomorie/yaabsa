@@ -130,6 +130,16 @@ elif mode=='desc':
     n=pick([n for n in nodes if n.attrib.get('content-desc')==key])
 elif mode=='any':
     n=pick([n for n in nodes if n.attrib.get('content-desc')==key or n.attrib.get('text')==key])
+elif mode=='childplay':
+    parents=[n for n in nodes if n.attrib.get('content-desc')==key or n.attrib.get('text')==key]
+    if not parents: raise SystemExit(2)
+    descendants=[]
+    for parent in parents:
+        descendants.extend([
+            n for n in parent.iter('node')
+            if n is not parent and n.attrib.get('content-desc')=='Play' and n.attrib.get('clickable')=='true'
+        ])
+    n=pick(descendants)
 else:
     raise SystemExit(3)
 a=[int(x) for x in re.findall(r'-?\d+',n.attrib.get('bounds',''))]
@@ -822,17 +832,29 @@ echo 'SHELF_LIBRARY_SELECTED_UI=1'
 # own playback logs prove that A is actually playable.
 sleep 5
 
-# Start A from its validated Recently Added play overlay. Repeated
-# dumpsys media_session calls destabilize the hosted emulator, so prove the
-# initial A start from Yaabsa's own causal AudioHandler log. MediaSession remains
-# mandatory later at the armed-A integration point.
+# Start A from its own semantic Play button rather than a raw screen
+# coordinate. The Shelf order can change when B is scanned into the fixture.
+# Prove the resulting playback from Yaabsa's own causal AudioHandler log;
+# MediaSession remains mandatory later at the armed-A integration point.
 if ! timeout 5 "$adb" logcat -c; then exit 157; fi
 if ! start_pre_next_logcat; then exit 158; fi
 
-tap_norm 846 201 || exit 94
+dump_prelogin a-start-ui.xml || exit 166
+a_play_point="$(python3 ui.py childplay 'Chapter Test A' a-start-ui.xml 2>/dev/null || true)"
+if [ -z "$a_play_point" ]; then
+  echo 'A_PLAY_SEMANTIC_TARGET_NOT_FOUND=1' >&2
+  exit 167
+fi
+echo "A_PLAY_SEMANTIC_POINT=$a_play_point"
+timeout 5 "$adb" shell input tap $a_play_point >/dev/null 2>&1 || exit 94
+
 if ! wait_local_playing_item pre-next.logcat.txt "$ABS_ITEM_ID" 25; then
   echo 'START_A_RETRY=1'
-  tap_norm 846 201 || exit 94
+  dump_prelogin a-start-ui-retry.xml || exit 166
+  a_play_point="$(python3 ui.py childplay 'Chapter Test A' a-start-ui-retry.xml 2>/dev/null || true)"
+  if [ -z "$a_play_point" ]; then exit 167; fi
+  echo "A_PLAY_SEMANTIC_POINT_RETRY=$a_play_point"
+  timeout 5 "$adb" shell input tap $a_play_point >/dev/null 2>&1 || exit 94
   if ! wait_local_playing_item pre-next.logcat.txt "$ABS_ITEM_ID" 25; then exit 95; fi
 fi
 sync pre-next.logcat.txt 2>/dev/null || true

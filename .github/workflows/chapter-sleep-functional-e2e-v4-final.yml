@@ -923,6 +923,10 @@ jobs:
             media-session-adb.devices.txt
             db-snapshot.err.txt
             pre-next.logcat.txt
+            a-start-ui.xml
+            a-start-ui.xml.uiautomator.log
+            a-start-ui-retry.xml
+            a-start-ui-retry.xml.uiautomator.log
             a-start.log-evidence.txt
             seek.log-evidence.txt
             b-start.log-evidence.txt
