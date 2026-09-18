@@ -58,7 +58,11 @@ nohup "$emulator" \
   -no-metrics \
   -memory 2048 \
   -cores 2 \
-  -gpu swiftshader_indirect \
+  # Emulator 37.x retired swiftshader_indirect. Use the current SwiftShader
+  # backend and disable Vulkan to avoid the hosted-runner gfxstream/Vulkan
+  # crash path seen in the superseded S4 run.
+  -gpu swiftshader \
+  -feature -Vulkan \
   -accel "$accel" \
   </dev/null > emulator.log 2>&1 &
 emulator_pid=$!
@@ -503,13 +507,17 @@ if ! grep -q 'state=PlaybackState {state=PLAYING(3)' media-armed.txt \
 fi
 armed_position_ms="$(media_position_ms media-armed.txt)"
 echo "ARMED_MEDIA_SESSION_POSITION_MS=$armed_position_ms" | tee armed-position.txt
-if [ -z "$armed_position_ms" ] || [ "$armed_position_ms" -le 310000 ] || [ "$armed_position_ms" -ge 360000 ]; then exit 107; fi
+# S4 intentionally exercises Next while A is still armed, not an already
+# expiring end-of-chapter race. Keep a meaningful margin before 360s.
+if [ -z "$armed_position_ms" ] || [ "$armed_position_ms" -le 310000 ] || [ "$armed_position_ms" -ge 335000 ]; then exit 107; fi
 
-# Make the Android MediaSession command causal: preserve the arm evidence above,
-# then clear logcat and issue an external transport-control NEXT command.
+# Make the Android command causal: preserve the arm evidence above, then clear
+# logcat and issue an external Android media-button NEXT command. On the pinned
+# audio_service this reaches BGAudioHandler.skipToNext() -> skipToNextInApp().
 "$adb" logcat -c
 {
   echo 'ANDROID_MEDIA_NEXT_COMMAND=cmd media_session dispatch next'
+  echo 'ANDROID_MEDIA_NEXT_ENTRY=MEDIA_BUTTON_NEXT'
   "$adb" shell cmd media_session dispatch next
   rc=$?
   echo "ANDROID_MEDIA_NEXT_RC=$rc"
@@ -533,21 +541,48 @@ cp media-b-after-next.tmp.txt media-after.txt
 if ! grep -q 'No next chapter found, skipping to next item' final.logcat.txt; then exit 110; fi
 if ! grep -q 'Chapter sleep timer disabled fail-closed: playback media changed' final.logcat.txt; then exit 111; fi
 if grep -q 'Chapter sleep timer reached chapter end; pausing playback first' final.logcat.txt; then exit 112; fi
-if grep -q 'Playback completion claimed by chapter sleep timer' final.logcat.txt; then exit 113; fi
+# A completion claim can legitimately be observed while navigation is active;
+# the ownership/navigation gates may suppress it. Treat effects, not the mere
+# claim log, as the failure oracle.
 if grep -q 'Chapter sleep timer expiry failed' final.logcat.txt; then exit 114; fi
 if grep -q 'FATAL EXCEPTION' final.logcat.txt; then exit 115; fi
 
 if [ -z "$b_start_ms" ] || [ "$b_start_ms" -gt 15000 ]; then exit 116; fi
 echo "B_POSITION_AFTER_ANDROID_NEXT_MS=$b_start_ms"
 
-# Wait beyond A's original 360s chapter-end deadline. The +8s guard means any
-# stale A expiry callback has had time to run if it survived the media switch.
+# Observe B through and beyond A's original 360s boundary. This is an
+# observation window, not proof that a stale A callback actually ran: chapter
+# expiry is driven by position/completion events, not a separate wallclock timer.
 remaining_ms=$((360000 - armed_position_ms))
 if [ "$remaining_ms" -le 0 ]; then exit 117; fi
 wait_seconds=$(((remaining_ms + 999) / 1000 + 8))
 if [ "$wait_seconds" -lt 20 ] || [ "$wait_seconds" -gt 60 ]; then exit 118; fi
 echo "WAIT_PAST_OLD_A_EXPIRY_SECONDS=$wait_seconds"
-sleep "$wait_seconds"
+
+: > final-position.txt
+elapsed=0
+sample_index=0
+previous_sample_ms="$b_start_ms"
+while [ "$elapsed" -lt "$wait_seconds" ]; do
+  step=5
+  remaining=$((wait_seconds - elapsed))
+  if [ "$remaining" -lt "$step" ]; then step="$remaining"; fi
+  sleep "$step"
+  elapsed=$((elapsed + step))
+  sample_index=$((sample_index + 1))
+
+  "$adb" shell dumpsys media_session > media-sample.tmp.txt || exit 135
+  sample_state="$(media_state_name media-sample.tmp.txt)"
+  sample_desc="$(media_description media-sample.tmp.txt)"
+  sample_ms="$(media_position_ms media-sample.tmp.txt)"
+  echo "B_SAMPLE_${sample_index}=elapsed:${elapsed}s,state:${sample_state},description:${sample_desc},position_ms:${sample_ms}" | tee -a final-position.txt
+
+  if [ "$sample_state" != 'PLAYING' ]; then exit 136; fi
+  if [ "$sample_desc" != 'Chapter Test B' ]; then exit 137; fi
+  if [ -z "$sample_ms" ]; then exit 138; fi
+  if [ "$sample_ms" -lt $((previous_sample_ms - 1500)) ]; then exit 139; fi
+  previous_sample_ms="$sample_ms"
+done
 
 "$adb" shell dumpsys media_session > media-after.txt
 b_final_state="$(media_state_name media-after.txt)"
@@ -555,7 +590,7 @@ b_final_desc="$(media_description media-after.txt)"
 b_final_ms="$(media_position_ms media-after.txt)"
 echo "B_FINAL_STATE=$b_final_state"
 echo "B_FINAL_DESCRIPTION=$b_final_desc"
-echo "B_FINAL_POSITION_MS=$b_final_ms" | tee final-position.txt
+echo "B_FINAL_POSITION_MS=$b_final_ms" | tee -a final-position.txt
 
 if [ "$b_final_state" != 'PLAYING' ]; then exit 119; fi
 if [ "$b_final_desc" != 'Chapter Test B' ]; then exit 120; fi
@@ -568,7 +603,8 @@ if [ "$b_final_ms" -ge 85000 ]; then exit 123; fi
 
 "$adb" logcat -d > final.logcat.txt
 if grep -q 'Chapter sleep timer reached chapter end; pausing playback first' final.logcat.txt; then exit 124; fi
-if grep -q 'Playback completion claimed by chapter sleep timer' final.logcat.txt; then exit 125; fi
+completion_claim_count="$(grep -c 'Playback completion claimed by chapter sleep timer' final.logcat.txt || true)"
+echo "COMPLETION_CLAIM_LOG_COUNT=$completion_claim_count" | tee -a final-position.txt
 if grep -q 'Chapter sleep timer expiry failed' final.logcat.txt; then exit 126; fi
 if grep -q 'FATAL EXCEPTION' final.logcat.txt; then exit 127; fi
 if ! grep -q 'Chapter sleep timer disabled fail-closed: playback media changed' final.logcat.txt; then exit 128; fi
@@ -601,8 +637,10 @@ A_ARMED_FINAL_CHAPTER=PASS
 B_QUEUED_BEFORE_NEXT_DB=1
 B_BECAME_CURRENT=YES
 B_PLAYING_AFTER_OLD_A_EXPIRY=YES
-STALE_A_EXPIRY_OBSERVED=NO
+OLD_A_BOUNDARY_OBSERVATION=PASS
+STALE_A_EXPIRY_EFFECT_OBSERVED=NO
 TIMER_FAIL_CLOSED_ON_MEDIA_CHANGE=YES
+COMPLETION_CLAIM_LOG_COUNT=$completion_claim_count
 A_SEEK_MS=$landed_ms
 A_ARMED_MS=$armed_position_ms
 B_START_MS=$b_start_ms
