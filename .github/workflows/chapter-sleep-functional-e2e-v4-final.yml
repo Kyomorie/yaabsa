@@ -43,7 +43,7 @@ jobs:
           sudo apt-get update >/dev/null
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
-          sudo apt-get install -y ffmpeg jq >/dev/null
+          sudo apt-get install -y ffmpeg jq unzip >/dev/null
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
 
@@ -219,7 +219,7 @@ jobs:
 
           yes | "$sdkmanager" --licenses >/dev/null 2>&1 || true
 
-          "$sdkmanager" platform-tools emulator "$image" >/dev/null
+          "$sdkmanager" platform-tools "$image" >/dev/null
           rc=$?
           if [ "$rc" -ne 0 ]; then exit "$rc"; fi
 
@@ -241,8 +241,22 @@ jobs:
           echo "RUNTIME_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
           echo "ANDROID_AVD_HOME=$avd_home" >> "$GITHUB_ENV"
 
+          pinned_emulator_root="$RUNNER_TEMP/android-emulator-36.3.10"
+          pinned_emulator_zip="$RUNNER_TEMP/emulator-linux_x64-14472402.zip"
+          curl -fsSL \
+            'https://dl.google.com/android/repository/emulator-linux_x64-14472402.zip' \
+            -o "$pinned_emulator_zip"
+          echo 'c8ab9ffbc4c2d11c02e06e81a9d9f81970177dc5ab599e3a30eb08a4a5496a67  '"$pinned_emulator_zip" | sha256sum -c -
+          rm -rf "$pinned_emulator_root"
+          mkdir -p "$pinned_emulator_root"
+          unzip -q "$pinned_emulator_zip" -d "$pinned_emulator_root"
+
           adb="$sdk/platform-tools/adb"
-          emulator="$sdk/emulator/emulator"
+          emulator="$pinned_emulator_root/emulator/emulator"
+          if [ ! -x "$emulator" ]; then exit 25; fi
+          "$emulator" -version 2>&1 | tee emulator-version.txt
+          if ! grep -q 'Android emulator version 36.3.10' emulator-version.txt; then exit 26; fi
+          echo "RUNTIME_EMULATOR_BIN=$emulator" >> "$GITHUB_ENV"
 
           "$adb" kill-server >/dev/null 2>&1 || true
           "$adb" start-server >/dev/null
@@ -254,8 +268,8 @@ jobs:
             accel=off
           fi
 
-          # Emulator 37.x retired swiftshader_indirect. Use current SwiftShader
-          # and disable Vulkan on the hosted runner.
+          # Emulator 36.3.10 predates the 36.4.9 graphics-backend change.
+          # Keep Vulkan disabled and use its stable SwiftShader GLES path.
           "$emulator" \
             -avd yaabsa-runtime-acceptance \
             -no-window \
@@ -263,7 +277,7 @@ jobs:
             -no-boot-anim \
             -no-snapshot \
             -wipe-data \
-            -gpu swiftshader \
+            -gpu swiftshader_indirect \
             -feature -Vulkan \
             -accel "$accel" \
             > emulator.log 2>&1 &
@@ -911,6 +925,7 @@ jobs:
             ffprobe.json
             abs-items.json
             adb-reverse.txt
+            emulator-version.txt
             login-server.xml
             login-user.xml
             submit.xml
