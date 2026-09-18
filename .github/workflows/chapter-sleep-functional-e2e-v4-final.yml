@@ -928,6 +928,8 @@ jobs:
             emulator-version.txt
             shelf-ready.adb.err.txt
             shelf-ready.adb.devices.txt
+            media-session-adb.err.txt
+            media-session-adb.devices.txt
             login-server.xml
             login-user.xml
             submit.xml
