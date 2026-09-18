@@ -48,9 +48,9 @@ else
   accel=off
 fi
 
-# Acceptance pins Emulator 36.3.10. Keep Vulkan disabled and use its
-# pre-36.4.9 SwiftShader indirect GLES path to avoid the recurrent 37.1.11
-# hosted-runner gfxstream host segfault.
+# Acceptance pins Emulator 36.3.10. SwiftShader/gfxstream still segfaulted
+# independently on hosted runners, so this final infra variant disables GPU
+# rendering entirely while keeping Vulkan disabled.
 nohup "$emulator" \
   -avd yaabsa-runtime-acceptance \
   -no-window \
@@ -61,7 +61,7 @@ nohup "$emulator" \
   -no-metrics \
   -memory 2048 \
   -cores 2 \
-  -gpu swiftshader_indirect \
+  -gpu off \
   -feature -Vulkan \
   -accel "$accel" \
   </dev/null > emulator.log 2>&1 &
