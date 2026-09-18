@@ -863,10 +863,11 @@ timeout 5 "$adb" shell input keyevent 4 >/dev/null 2>&1 || true
 sleep 2
 if ! kill -0 "$emulator_pid" 2>/dev/null; then exit 99; fi
 
-# Seek A into final chapter S2. Use Yaabsa's concrete seek log as the low-impact
-# position oracle; the armed MediaSession dump below independently proves that A
-# is actually PLAYING in the expected final-chapter position.
-tap_norm 880 942 || exit 100
+# Seek A into final chapter S2. ATD's system-bar layout places the mini-player
+# progress bar at y≈2341 on the 1080x2400 frame (verified from runtime evidence);
+# the former Google-API normalized y=0.942 lands above it. The Yaabsa seek log is
+# still the oracle, and armed MediaSession independently verifies the result.
+timeout 5 "$adb" shell input tap 950 2342 >/dev/null 2>&1 || exit 100
 landed_ms="$(wait_seek_log_position pre-next.logcat.txt 310000 340000 20)"
 if [ -z "$landed_ms" ]; then exit 101; fi
 echo "SCENARIO4_FINAL_CHAPTER_POSITION_MS=$landed_ms" | tee retarget-position.txt
