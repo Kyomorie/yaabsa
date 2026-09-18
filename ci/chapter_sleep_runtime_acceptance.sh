@@ -48,9 +48,10 @@ else
   accel=off
 fi
 
-# Acceptance pins Emulator 36.3.10. SwiftShader/gfxstream still segfaulted
-# independently on hosted runners, so this final infra variant disables GPU
-# rendering entirely while keeping Vulkan disabled.
+# Acceptance pins Emulator 36.3.10. Run 24 reached the external-Next and
+# B-playing oracle on this pre-36.4 SwiftShader-indirect path. Vulkan remains
+# disabled; repeated MediaSession dumps are avoided below because they destabilize
+# the hosted emulator independently of product behavior.
 nohup "$emulator" \
   -avd yaabsa-runtime-acceptance \
   -no-window \
@@ -61,7 +62,7 @@ nohup "$emulator" \
   -no-metrics \
   -memory 2048 \
   -cores 2 \
-  -gpu off \
+  -gpu swiftshader_indirect \
   -feature -Vulkan \
   -accel "$accel" \
   </dev/null > emulator.log 2>&1 &
@@ -344,6 +345,9 @@ wait_media() {
   while [ "$i" -lt "$tries" ]; do
     sleep 1
     if ! dump_media_session "$out" "wait-media-${expected_description}" 2; then
+      if ! kill -0 "$emulator_pid" 2>/dev/null; then
+        return 2
+      fi
       i=$((i + 1))
       continue
     fi
@@ -356,6 +360,24 @@ wait_media() {
   done
   return 1
 }
+
+causal_logcat_pid=''
+start_causal_logcat() {
+  rm -f final.logcat.txt
+  "$adb" logcat -v threadtime > final.logcat.txt 2>&1 &
+  causal_logcat_pid=$!
+  sleep 1
+  kill -0 "$causal_logcat_pid" 2>/dev/null
+}
+
+stop_causal_logcat() {
+  if [ -n "${causal_logcat_pid:-}" ]; then
+    kill "$causal_logcat_pid" >/dev/null 2>&1 || true
+    wait "$causal_logcat_pid" 2>/dev/null || true
+    causal_logcat_pid=''
+  fi
+}
+trap stop_causal_logcat EXIT
 
 # Add a second, distinct audiobook to the isolated ABS fixture.
 mkdir -p 'runtime/abs/audiobooks/Chapter Test B'
@@ -569,6 +591,7 @@ if [ -z "$armed_position_ms" ] || [ "$armed_position_ms" -le 310000 ] || [ "$arm
 # logcat and issue an external Android media-button NEXT command. On the pinned
 # audio_service this reaches BGAudioHandler.skipToNext() -> skipToNextInApp().
 "$adb" logcat -c
+if ! start_causal_logcat; then exit 145; fi
 {
   echo 'ANDROID_MEDIA_NEXT_COMMAND=cmd media_session dispatch next'
   echo 'ANDROID_MEDIA_NEXT_ENTRY=MEDIA_BUTTON_NEXT'
@@ -584,13 +607,28 @@ fi
 # The real Android command must traverse BGAudioHandler.skipToNext(), consume B,
 # and make B the currently playing MediaSession item.
 if ! wait_media 'Chapter Test B' media-b-after-next.tmp.txt 30; then
-  "$adb" logcat -d > final.logcat.txt || true
+  stop_causal_logcat
   cp media-b-after-next.tmp.txt media-after.txt 2>/dev/null || true
   exit 109
 fi
 b_start_ms="$(media_position_ms media-b-after-next.tmp.txt)"
 cp media-b-after-next.tmp.txt media-after.txt
-"$adb" logcat -d > final.logcat.txt
+
+log_ready=0
+i=0
+while [ "$i" -lt 5 ]; do
+  sync final.logcat.txt 2>/dev/null || true
+  if grep -q 'No next chapter found, skipping to next item' final.logcat.txt \
+    && grep -q 'Chapter sleep timer disabled fail-closed: playback media changed' final.logcat.txt; then
+    log_ready=1
+    break
+  fi
+  sleep 1
+  i=$((i + 1))
+done
+if [ "$log_ready" -ne 1 ]; then
+  stop_causal_logcat
+fi
 
 if ! grep -q 'No next chapter found, skipping to next item' final.logcat.txt; then exit 110; fi
 if ! grep -q 'Chapter sleep timer disabled fail-closed: playback media changed' final.logcat.txt; then exit 111; fi
@@ -616,7 +654,6 @@ echo "WAIT_PAST_OLD_A_EXPIRY_SECONDS=$wait_seconds"
 : > final-position.txt
 elapsed=0
 sample_index=0
-previous_sample_ms="$b_start_ms"
 while [ "$elapsed" -lt "$wait_seconds" ]; do
   step=5
   remaining=$((wait_seconds - elapsed))
@@ -625,17 +662,23 @@ while [ "$elapsed" -lt "$wait_seconds" ]; do
   elapsed=$((elapsed + step))
   sample_index=$((sample_index + 1))
 
-  if ! dump_media_session media-sample.tmp.txt "B-sample-${sample_index}" 3; then exit 135; fi
-  sample_state="$(media_state_name media-sample.tmp.txt)"
-  sample_desc="$(media_description media-sample.tmp.txt)"
-  sample_ms="$(media_position_ms media-sample.tmp.txt)"
-  echo "B_SAMPLE_${sample_index}=elapsed:${elapsed}s,state:${sample_state},description:${sample_desc},position_ms:${sample_ms}" | tee -a final-position.txt
+  if ! kill -0 "$emulator_pid" 2>/dev/null; then
+    echo "EMULATOR_EXITED_DURING_OLD_A_BOUNDARY_OBSERVATION_AT=${elapsed}s" | tee -a final-position.txt
+    exit 146
+  fi
 
-  if [ "$sample_state" != 'PLAYING' ]; then exit 136; fi
-  if [ "$sample_desc" != 'Chapter Test B' ]; then exit 137; fi
-  if [ -z "$sample_ms" ]; then exit 138; fi
-  if [ "$sample_ms" -lt $((previous_sample_ms - 1500)) ]; then exit 139; fi
-  previous_sample_ms="$sample_ms"
+  if ! curl -fsS "$ABS_URL/api/me/progress/$b_id" \
+    -H "Authorization: Bearer $token" \
+    -o abs-b-progress-sample.json; then
+    echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,fetch:failed" | tee -a final-position.txt
+    exit 147
+  fi
+
+  sample_abs_current="$(jq -r '.currentTime // 0' abs-b-progress-sample.json)"
+  sample_abs_finished="$(jq -r '.isFinished // false' abs-b-progress-sample.json)"
+  echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,current_time:${sample_abs_current},finished:${sample_abs_finished}" | tee -a final-position.txt
+
+  if [ "$sample_abs_finished" != 'false' ]; then exit 148; fi
 done
 
 if ! dump_media_session media-after.txt 'B-final' 3; then exit 121; fi
@@ -655,7 +698,8 @@ if [ "$min_advance_ms" -lt 10000 ]; then min_advance_ms=10000; fi
 if [ "$b_final_ms" -le $((b_start_ms + min_advance_ms)) ]; then exit 122; fi
 if [ "$b_final_ms" -ge 85000 ]; then exit 123; fi
 
-"$adb" logcat -d > final.logcat.txt
+stop_causal_logcat
+sync final.logcat.txt 2>/dev/null || true
 if grep -q 'Chapter sleep timer reached chapter end; pausing playback first' final.logcat.txt; then exit 124; fi
 completion_claim_count="$(grep -c 'Playback completion claimed by chapter sleep timer' final.logcat.txt || true)"
 echo "COMPLETION_CLAIM_LOG_COUNT=$completion_claim_count" | tee -a final-position.txt

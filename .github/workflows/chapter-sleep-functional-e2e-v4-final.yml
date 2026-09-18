@@ -269,7 +269,8 @@ jobs:
           fi
 
           # Hosted runners still segfaulted independently in SwiftShader/gfxstream.
-          # Final infra variant disables GPU rendering and keeps Vulkan disabled.
+          # Pinned Emulator 36.3.10 predates the 36.4 graphics-backend change.
+          # Run 24 reached the S4 B-playing oracle on its SwiftShader indirect path.
           "$emulator" \
             -avd yaabsa-runtime-acceptance \
             -no-window \
@@ -277,7 +278,7 @@ jobs:
             -no-boot-anim \
             -no-snapshot \
             -wipe-data \
-            -gpu off \
+            -gpu swiftshader_indirect \
             -feature -Vulkan \
             -accel "$accel" \
             > emulator.log 2>&1 &
