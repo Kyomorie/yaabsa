@@ -289,6 +289,72 @@ PY
   return 1
 }
 
+wait_for_selected_library_db() {
+  max_attempts="$1"
+  label="$2"
+  expected_library_id="$3"
+  attempt=0
+  state_file="selected-library-${label}.txt"
+  : > "$state_file"
+
+  while [ "$attempt" -lt "$max_attempts" ]; do
+    db_path="$(copy_app_db_snapshot "selected-library-${label}" 2>/dev/null)"
+    if [ -n "$db_path" ]; then
+      python3 - "$db_path" "$state_file" "$attempt" "$expected_library_id" <<'PY'
+import sqlite3,sys
+p,out,attempt,expected=sys.argv[1:]
+lines=[f'ATTEMPT={attempt}', 'DB_SNAPSHOT_AVAILABLE=1']
+ok=False
+try:
+    c=sqlite3.connect(f'file:{p}?mode=ro',uri=True)
+    c.execute('PRAGMA query_only=ON')
+    user_row=c.execute("SELECT value FROM global_settings WHERE key='activeUserId'").fetchone()
+    active_user=(user_row[0] if user_row and user_row[0] else '')
+    rows=[]
+    if active_user:
+        rows=c.execute(
+            "SELECT value FROM user_settings WHERE user_id=? AND key='selectedLibraryId'",
+            (active_user,),
+        ).fetchall()
+    c.close()
+    selected=(rows[0][0] if rows and rows[0][0] else '')
+    lines += [
+        f'ACTIVE_USER_ID_PRESENT={int(bool(active_user))}',
+        f'SELECTED_LIBRARY_ID={selected}',
+        f'EXPECTED_LIBRARY_ID={expected}',
+        f'SELECTED_LIBRARY_MATCH={int(selected==expected)}',
+    ]
+    ok=bool(active_user) and selected==expected
+except Exception as e:
+    lines += ['DB_QUERY_OK=0', f'DB_ERROR_TYPE={type(e).__name__}']
+with open(out,'w',encoding='utf-8') as f:
+    f.write('\n'.join(lines)+'\n')
+raise SystemExit(0 if ok else 1)
+PY
+      rc=$?
+      if [ "$rc" -eq 0 ]; then
+        echo "SELECTED_LIBRARY_DB=1 phase=$label library_id=$expected_library_id"
+        return 0
+      fi
+    else
+      {
+        echo "ATTEMPT=$attempt"
+        echo 'DB_SNAPSHOT_AVAILABLE=0'
+        echo "EXPECTED_LIBRARY_ID=$expected_library_id"
+      } > "$state_file"
+    fi
+
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then
+      echo "SELECTED_LIBRARY_EMULATOR_EXITED=1 phase=$label" >> "$state_file"
+      return 2
+    fi
+
+    sleep 1
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
 queue_intent_snapshot() {
   label="$1"
   out="$2"
@@ -527,54 +593,60 @@ fi
 
 "$adb" logcat -d > auth-success.logcat.txt 2>&1 || true
 sleep 2
-"$adb" exec-out screencap -p > home.png
+"$adb" exec-out screencap -p > home-pre-library.png 2>/dev/null || true
+
+# The app normally auto-selects the first available library. Make that state
+# explicit through the read-only app DB instead of relying on a specific
+# CacheInterceptor log line. A transient reverse/network failure can leave
+# userLibrariesProvider empty for this app lifetime; in that case, reassert the
+# reverse tunnel and restart the already-authenticated app exactly once.
+library_ready=0
+if wait_for_selected_library_db 20 first "$library_id"; then
+  library_ready=1
+else
+  "$adb" logcat -d > library-first.logcat.txt 2>&1 || true
+  "$adb" exec-out screencap -p > library-first.png 2>/dev/null || true
+
+  echo 'LIBRARY_SELECTION_RECOVERY=app-restart-after-reverse-reassert'
+  "$adb" reverse tcp:13378 tcp:13378 >/dev/null || exit 150
+  "$adb" reverse --list > library-reverse.txt 2>&1 || exit 151
+  if ! grep -q 'tcp:13378 tcp:13378' library-reverse.txt; then exit 152; fi
+
+  "$adb" shell am force-stop "$package" >/dev/null 2>&1 || exit 153
+  sleep 1
+  "$adb" shell am start -n de.vito0912.yaabsa.dev/de.vito0912.yaabsa.MainActivity >/dev/null || exit 154
+  sleep 5
+
+  if ! wait_for_authenticated_db 15 restart; then
+    "$adb" logcat -d > library-restart-auth.logcat.txt 2>&1 || true
+    exit 155
+  fi
+
+  if wait_for_selected_library_db 30 restart "$library_id"; then
+    library_ready=1
+  fi
+fi
+
+if [ "$library_ready" -ne 1 ]; then
+  "$adb" logcat -d > library-final.logcat.txt 2>&1 || true
+  "$adb" exec-out screencap -p > library-final.png 2>/dev/null || true
+  echo 'SELECTED_LIBRARY_DB_TIMEOUT=1' >&2
+  exit 156
+fi
+
+"$adb" logcat -d > library-success.logcat.txt 2>&1 || true
+"$adb" exec-out screencap -p > home.png 2>/dev/null || true
+echo 'SHELF_LIBRARY_SELECTED_DB=1'
 
 # Post-login coordinates are inputs only. MediaSession, app logs, ABS and
-# read-only DB snapshots are the acceptance oracles.
+# read-only DB snapshots are the acceptance oracles. Re-select the Shelf tab to
+# trigger a normal rebuild after any recovery restart, then let the existing
+# MediaSession start oracle prove that A is actually playable.
 tap_norm 113 927 || exit 90
-shelf_ready=0
-adb_read_failures=0
-i=0
-while [ "$i" -lt 45 ]; do
-  if ! kill -0 "$emulator_pid" 2>/dev/null; then
-    echo 'SCENARIO_EMULATOR_EXITED_DURING_SHELF_LOAD=1' >&2
-    exit 91
-  fi
+sleep 5
 
-  if ! "$adb" logcat -d > shelf-ready.tmp.txt 2>shelf-ready.adb.err.txt; then
-    adb_read_failures=$((adb_read_failures + 1))
-    echo "SHELF_LOGCAT_TRANSIENT_FAILURE=$adb_read_failures" >&2
-    "$adb" devices -l > shelf-ready.adb.devices.txt 2>&1 || true
-    if [ "$adb_read_failures" -ge 5 ]; then
-      echo 'SHELF_LOGCAT_PERSISTENT_FAILURE=1' >&2
-      exit 92
-    fi
-    timeout 8 "$adb" wait-for-device >/dev/null 2>&1 || true
-    sleep 1
-    i=$((i + 1))
-    continue
-  fi
-
-  adb_read_failures=0
-  if grep -qE '\[CacheInterceptor\].*Caching: http://127\.0\.0\.1:13378/api/libraries/[^? ]+\?include=filterdata' shelf-ready.tmp.txt; then
-    shelf_ready=1
-    echo 'SHELF_DATA_READY=1'
-    break
-  fi
-  sleep 1
-  i=$((i + 1))
-done
-if [ "$shelf_ready" -ne 1 ]; then
-  cp shelf-ready.tmp.txt final.logcat.txt 2>/dev/null || true
-  echo 'SHELF_DATA_READY_TIMEOUT=1' >&2
-  exit 93
-fi
-sleep 1
-
-# Start A from its validated Recently Added play overlay. The pinned
-# emulator can render the Shelf a little after the cache-ready signal, so allow
-# one delayed re-tap before declaring a UI harness failure.
-sleep 3
+# Start A from its validated Recently Added play overlay. Allow one delayed
+# re-tap before declaring a UI harness failure.
 tap_norm 846 201 || exit 94
 if ! wait_media 'Chapter Test A' media-playing.txt 15; then
   echo 'START_A_RETRY=1'

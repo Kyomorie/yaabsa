@@ -943,6 +943,16 @@ jobs:
             auth-final.xml
             auth-final.png
             auth-success.logcat.txt
+            selected-library-first.txt
+            selected-library-restart.txt
+            library-first.logcat.txt
+            library-first.png
+            library-reverse.txt
+            library-restart-auth.logcat.txt
+            library-final.logcat.txt
+            library-final.png
+            library-success.logcat.txt
+            home-pre-library.png
             home.xml
             home.png
             detail.xml
