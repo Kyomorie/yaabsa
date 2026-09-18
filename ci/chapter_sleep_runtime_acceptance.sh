@@ -312,6 +312,30 @@ PY
   return 1
 }
 
+dump_media_session() {
+  out="$1"
+  label="$2"
+  max_attempts="${3:-3}"
+  attempt=0
+  while [ "$attempt" -lt "$max_attempts" ]; do
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then
+      echo "MEDIA_DUMP_EMULATOR_EXITED=${label}" >&2
+      return 1
+    fi
+    if timeout 8 "$adb" shell dumpsys media_session > "${out}.tmp" 2>>media-session-adb.err.txt; then
+      mv "${out}.tmp" "$out"
+      return 0
+    fi
+    attempt=$((attempt + 1))
+    echo "MEDIA_DUMP_TRANSIENT_FAILURE=${label}:${attempt}" >&2
+    "$adb" devices -l > media-session-adb.devices.txt 2>&1 || true
+    timeout 8 "$adb" wait-for-device >/dev/null 2>&1 || true
+    sleep 1
+  done
+  rm -f "${out}.tmp"
+  return 1
+}
+
 wait_media() {
   expected_description="$1"
   out="$2"
@@ -319,7 +343,10 @@ wait_media() {
   i=0
   while [ "$i" -lt "$tries" ]; do
     sleep 1
-    "$adb" shell dumpsys media_session > "$out"
+    if ! dump_media_session "$out" "wait-media-${expected_description}" 2; then
+      i=$((i + 1))
+      continue
+    fi
     if grep -q 'package=de.vito0912.yaabsa.dev' "$out" \
       && grep -q 'state=PlaybackState {state=PLAYING(3)' "$out" \
       && grep -q "description=$expected_description" "$out"; then
@@ -456,9 +483,17 @@ if [ "$shelf_ready" -ne 1 ]; then
 fi
 sleep 1
 
-# Start A from its validated Recently Added play overlay.
+# Start A from its validated Recently Added play overlay. The pinned
+# emulator can render the Shelf a little after the cache-ready signal, so allow
+# one delayed re-tap before declaring a UI harness failure.
+sleep 3
 tap_norm 846 201 || exit 94
-if ! wait_media 'Chapter Test A' media-playing.txt 45; then exit 95; fi
+if ! wait_media 'Chapter Test A' media-playing.txt 15; then
+  echo 'START_A_RETRY=1'
+  sleep 2
+  tap_norm 846 201 || exit 94
+  if ! wait_media 'Chapter Test A' media-playing.txt 30; then exit 95; fi
+fi
 "$adb" exec-out screencap -p > player-before-more.png
 
 # Queue B manually while A remains current.
@@ -479,7 +514,10 @@ seek_ok=0
 i=0
 while [ "$i" -lt 20 ]; do
   sleep 1
-  "$adb" shell dumpsys media_session > media-retarget.txt
+  if ! dump_media_session media-retarget.txt 'seek-final-chapter' 2; then
+    i=$((i + 1))
+    continue
+  fi
   landed_ms="$(media_position_ms media-retarget.txt)"
   if [ -n "$landed_ms" ] \
     && [ "$landed_ms" -gt 310000 ] \
@@ -516,7 +554,7 @@ while [ "$i" -lt 12 ]; do
   i=$((i + 1))
 done
 if [ "$armed" -ne 1 ]; then exit 105; fi
-"$adb" shell dumpsys media_session > media-armed.txt
+if ! dump_media_session media-armed.txt 'armed-A' 3; then exit 106; fi
 if ! grep -q 'state=PlaybackState {state=PLAYING(3)' media-armed.txt \
   || ! grep -q 'description=Chapter Test A' media-armed.txt; then
   exit 106
@@ -587,7 +625,7 @@ while [ "$elapsed" -lt "$wait_seconds" ]; do
   elapsed=$((elapsed + step))
   sample_index=$((sample_index + 1))
 
-  "$adb" shell dumpsys media_session > media-sample.tmp.txt || exit 135
+  if ! dump_media_session media-sample.tmp.txt "B-sample-${sample_index}" 3; then exit 135; fi
   sample_state="$(media_state_name media-sample.tmp.txt)"
   sample_desc="$(media_description media-sample.tmp.txt)"
   sample_ms="$(media_position_ms media-sample.tmp.txt)"
@@ -600,7 +638,7 @@ while [ "$elapsed" -lt "$wait_seconds" ]; do
   previous_sample_ms="$sample_ms"
 done
 
-"$adb" shell dumpsys media_session > media-after.txt
+if ! dump_media_session media-after.txt 'B-final' 3; then exit 121; fi
 b_final_state="$(media_state_name media-after.txt)"
 b_final_desc="$(media_description media-after.txt)"
 b_final_ms="$(media_position_ms media-after.txt)"
