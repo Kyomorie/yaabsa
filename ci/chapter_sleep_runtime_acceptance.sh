@@ -168,13 +168,32 @@ tap_semantic() {
 }
 
 screen_size() {
-  "$adb" shell wm size | tr -d '\r' | grep -Eo '[0-9]+x[0-9]+' | tail -n 1
+  attempt=0
+  while [ "$attempt" -lt 5 ]; do
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then
+      return 1
+    fi
+
+    raw_size="$(timeout 5 "$adb" shell wm size 2>>tap-adb.err.txt | tr -d '\r' || true)"
+    size="$(printf '%s\n' "$raw_size" | grep -Eo '[0-9]+x[0-9]+' | tail -n 1)"
+    if [ -n "$size" ]; then
+      printf '%s\n' "$size"
+      return 0
+    fi
+
+    echo "SCREEN_SIZE_TRANSIENT_FAILURE=$((attempt + 1))" >> tap-adb.err.txt
+    "$adb" devices -l > tap-adb.devices.txt 2>&1 || true
+    timeout 8 "$adb" wait-for-device >/dev/null 2>&1 || true
+    sleep 1
+    attempt=$((attempt + 1))
+  done
+  return 1
 }
 
 tap_norm() {
   x_milli="$1"
   y_milli="$2"
-  size="$(screen_size)"
+  size="$(screen_size)" || return 1
   if [ -z "$size" ]; then return 1; fi
   w="${size%x*}"
   h="${size#*x}"
@@ -182,7 +201,19 @@ tap_norm() {
   x=$((w * x_milli / 1000))
   y=$((h * y_milli / 1000))
   echo "TAP_NORM=${x_milli},${y_milli} actual=${x},${y} size=${w}x${h}"
-  "$adb" shell input tap "$x" "$y"
+
+  attempt=0
+  while [ "$attempt" -lt 3 ]; do
+    if timeout 5 "$adb" shell input tap "$x" "$y" >>tap-adb.out.txt 2>>tap-adb.err.txt; then
+      return 0
+    fi
+    echo "INPUT_TAP_TRANSIENT_FAILURE=$((attempt + 1))" >> tap-adb.err.txt
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then return 1; fi
+    timeout 8 "$adb" wait-for-device >/dev/null 2>&1 || true
+    sleep 1
+    attempt=$((attempt + 1))
+  done
+  return 1
 }
 
 media_position_ms() {
@@ -639,10 +670,10 @@ fi
 echo 'SHELF_LIBRARY_SELECTED_DB=1'
 
 # Post-login coordinates are inputs only. MediaSession, app logs, ABS and
-# read-only DB snapshots are the acceptance oracles. Re-select the Shelf tab to
-# trigger a normal rebuild after any recovery restart, then let the existing
+# read-only DB snapshots are the acceptance oracles. The app is already on the
+# Shelf route after login/restart; do not add a redundant navigation tap here.
+# Give the selected-library rebuild a bounded settle interval, then let the
 # MediaSession start oracle prove that A is actually playable.
-tap_norm 113 927 || exit 90
 sleep 5
 
 # Start A from its validated Recently Added play overlay. Allow one delayed

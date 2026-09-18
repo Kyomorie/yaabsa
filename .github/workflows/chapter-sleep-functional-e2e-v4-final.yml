@@ -931,6 +931,9 @@ jobs:
             shelf-ready.adb.devices.txt
             media-session-adb.err.txt
             media-session-adb.devices.txt
+            tap-adb.err.txt
+            tap-adb.out.txt
+            tap-adb.devices.txt
             login-server.xml
             login-user.xml
             submit.xml
