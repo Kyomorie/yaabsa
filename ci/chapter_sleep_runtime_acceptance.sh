@@ -418,13 +418,29 @@ sleep 2
 # read-only DB snapshots are the acceptance oracles.
 tap_norm 113 927 || exit 90
 shelf_ready=0
+adb_read_failures=0
 i=0
-while [ "$i" -lt 30 ]; do
+while [ "$i" -lt 45 ]; do
   if ! kill -0 "$emulator_pid" 2>/dev/null; then
     echo 'SCENARIO_EMULATOR_EXITED_DURING_SHELF_LOAD=1' >&2
     exit 91
   fi
-  "$adb" logcat -d > shelf-ready.tmp.txt || exit 92
+
+  if ! "$adb" logcat -d > shelf-ready.tmp.txt 2>shelf-ready.adb.err.txt; then
+    adb_read_failures=$((adb_read_failures + 1))
+    echo "SHELF_LOGCAT_TRANSIENT_FAILURE=$adb_read_failures" >&2
+    "$adb" devices -l > shelf-ready.adb.devices.txt 2>&1 || true
+    if [ "$adb_read_failures" -ge 5 ]; then
+      echo 'SHELF_LOGCAT_PERSISTENT_FAILURE=1' >&2
+      exit 92
+    fi
+    timeout 8 "$adb" wait-for-device >/dev/null 2>&1 || true
+    sleep 1
+    i=$((i + 1))
+    continue
+  fi
+
+  adb_read_failures=0
   if grep -qE '\[CacheInterceptor\].*Caching: http://127\.0\.0\.1:13378/api/libraries/[^? ]+\?include=filterdata' shelf-ready.tmp.txt; then
     shelf_ready=1
     echo 'SHELF_DATA_READY=1'
