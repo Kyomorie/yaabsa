@@ -259,9 +259,10 @@ jobs:
             accel=off
           fi
 
-          # Reproduce the exact graphics stack from the successful S1/S2/S3
-          # runtime evidence: Emulator 37.1.11 + swiftshader_indirect with the
-          # emulator's normal SwiftShader Vulkan path enabled.
+          # S4-only infrastructure variant: Emulator 37.1.11 + Lavapipe.
+          # S1-S3 already passed runtime acceptance; this avoids the repeatedly
+          # observed hosted-runner SwiftShader/QEMU segfault path without changing
+          # the APK or any S4 product oracle.
           "$emulator" \
             -avd yaabsa-runtime-acceptance \
             -no-window \
@@ -269,7 +270,7 @@ jobs:
             -no-boot-anim \
             -no-snapshot \
             -wipe-data \
-            -gpu swiftshader_indirect \
+            -gpu lavapipe \
             -accel "$accel" \
             > emulator.log 2>&1 &
 

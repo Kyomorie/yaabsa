@@ -48,9 +48,9 @@ else
   accel=off
 fi
 
-# Reproduce the exact Emulator 37.1.11 graphics path used by the successful
-# S1/S2/S3 runtime runs. Keep S4's reduced MediaSession-dump pressure, but do
-# not disable Vulkan: the PASS artifacts show SwiftShader Vulkan active.
+# S4-only infrastructure variant: keep Emulator 37.1.11 but use Lavapipe to
+# avoid the repeatedly observed hosted-runner SwiftShader/QEMU segfault path.
+# APK, product branch and S4 acceptance oracles remain unchanged.
 nohup "$emulator" \
   -avd yaabsa-runtime-acceptance \
   -no-window \
@@ -61,7 +61,7 @@ nohup "$emulator" \
   -no-metrics \
   -memory 2048 \
   -cores 2 \
-  -gpu swiftshader_indirect \
+  -gpu lavapipe \
   -accel "$accel" \
   </dev/null > emulator.log 2>&1 &
 emulator_pid=$!
