@@ -109,7 +109,12 @@ if ! "$adb" reverse --list | grep -q 'tcp:13378 tcp:13378'; then exit 69; fi
 "$adb" shell am start -n de.vito0912.yaabsa.dev/de.vito0912.yaabsa.MainActivity >/dev/null || exit 71
 sleep 6
 if ! kill -0 "$emulator_pid" 2>/dev/null; then exit 72; fi
-if ! "$adb" get-state 2>/dev/null | grep -q '^device
+if ! "$adb" get-state 2>/dev/null | grep -q '^device$'; then exit 73; fi
+timeout 5 "$adb" shell settings put global window_animation_scale 0 >/dev/null 2>&1 || true
+timeout 5 "$adb" shell settings put global transition_animation_scale 0 >/dev/null 2>&1 || true
+timeout 5 "$adb" shell settings put global animator_duration_scale 0 >/dev/null 2>&1 || true
+echo 'SCENARIO_EMULATOR_READY=1'
+
 cat > ui.py <<'PY'
 import re,sys,xml.etree.ElementTree as ET
 mode,key,path=sys.argv[1:4]
