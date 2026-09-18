@@ -415,9 +415,9 @@ sleep 2
 # coordinates are inputs only. State is proven through MediaSession, logs and
 # read-only queue_intent_v2 snapshots.
 # Select Shelf, wait for its library payload to be cached, then start A from its
-# validated Recently Added play overlay. The successful scenario-3 run reached
-# this cache event before the card was tappable; fixed sleeps raced the spinner.
-"$adb" logcat -c
+# validated Recently Added play overlay. Logcat was already cleared immediately
+# before this app launch; keep that launch-scoped history so a cache event that
+# wins the post-login race cannot be erased before the readiness check sees it.
 tap_norm 113 927 || exit 78
 shelf_ready=0
 i=0
