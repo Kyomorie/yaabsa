@@ -844,16 +844,14 @@ grep -F "Starting playback for item: $ABS_ITEM_ID (item)" pre-next.logcat.txt | 
 grep 'playing=true,processingState=ProcessingState.ready' pre-next.logcat.txt | tail -n 3 >> a-start.log-evidence.txt || true
 "$adb" exec-out screencap -p > player-before-more.png 2>/dev/null || true
 
-timeout 5 "$adb" shell input keyevent 4 >/dev/null 2>&1 || exit 170
+# Playback starts on A's Book details route. Use the visible Shelf tab to
+# return deterministically; avoid another uiautomator dump after playback starts.
+tap_norm 113 927 || exit 170
 sleep 2
-dump_prelogin shelf-after-a.xml || exit 171
-b_card_point="$(python3 ui.py any 'Chapter Test B' shelf-after-a.xml 2>/dev/null || true)"
-if [ -z "$b_card_point" ]; then
-  echo 'B_CARD_SEMANTIC_TARGET_NOT_FOUND=1' >&2
-  exit 172
-fi
-echo "B_CARD_SEMANTIC_POINT=$b_card_point"
-timeout 5 "$adb" shell input tap $b_card_point >/dev/null 2>&1 || exit 96
+"$adb" exec-out screencap -p > shelf-after-a.png 2>/dev/null || true
+
+# B is the left Recently Added card on the validated Shelf layout.
+tap_norm 248 283 || exit 96
 sleep 2
 "$adb" exec-out screencap -p > detail.png 2>/dev/null || true
 tap_norm 497 483 || exit 97
