@@ -934,6 +934,15 @@ jobs:
             login-server.xml
             login-user.xml
             submit.xml
+            auth-db-first.txt
+            auth-db-second.txt
+            auth-first.logcat.txt
+            auth-retry.xml
+            auth-retry.png
+            auth-final.logcat.txt
+            auth-final.xml
+            auth-final.png
+            auth-success.logcat.txt
             home.xml
             home.png
             detail.xml

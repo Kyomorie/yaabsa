@@ -237,29 +237,52 @@ copy_app_db_snapshot() {
 }
 
 wait_for_authenticated_db() {
+  max_attempts="$1"
+  label="$2"
   attempt=0
-  while [ "$attempt" -lt 60 ]; do
-    db_path="$(copy_app_db_snapshot auth 2>/dev/null)"
+  state_file="auth-db-${label}.txt"
+  : > "$state_file"
+
+  while [ "$attempt" -lt "$max_attempts" ]; do
+    db_path="$(copy_app_db_snapshot "auth-${label}" 2>/dev/null)"
     if [ -n "$db_path" ]; then
-      python3 - "$db_path" <<'PY' >/dev/null 2>&1
+      python3 - "$db_path" "$state_file" "$attempt" <<'PY'
 import sqlite3,sys
-p=sys.argv[1]
+p,out,attempt=sys.argv[1:]
+lines=[f'ATTEMPT={attempt}', 'DB_SNAPSHOT_AVAILABLE=1']
+ok=False
 try:
     c=sqlite3.connect(f'file:{p}?mode=ro',uri=True)
     c.execute('PRAGMA query_only=ON')
     users=c.execute('SELECT COUNT(*) FROM stored_users').fetchone()[0]
     row=c.execute("SELECT value FROM global_settings WHERE key='activeUserId'").fetchone()
     c.close()
-except Exception:
-    raise SystemExit(1)
-raise SystemExit(0 if users >= 1 and row and row[0] else 1)
+    active=bool(row and row[0])
+    lines += [f'STORED_USERS={users}', f'ACTIVE_USER_ID_PRESENT={int(active)}']
+    ok=users >= 1 and active
+except Exception as e:
+    lines += ['DB_QUERY_OK=0', f'DB_ERROR_TYPE={type(e).__name__}']
+with open(out,'w',encoding='utf-8') as f:
+    f.write('\n'.join(lines)+'\n')
+raise SystemExit(0 if ok else 1)
 PY
       rc=$?
       if [ "$rc" -eq 0 ]; then
-        echo 'AUTHENTICATED_DB=1'
+        echo "AUTHENTICATED_DB=1 phase=$label"
         return 0
       fi
+    else
+      {
+        echo "ATTEMPT=$attempt"
+        echo 'DB_SNAPSHOT_AVAILABLE=0'
+      } > "$state_file"
     fi
+
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then
+      echo "AUTH_EMULATOR_EXITED=1 phase=$label" >> "$state_file"
+      return 2
+    fi
+
     sleep 1
     attempt=$((attempt + 1))
   done
@@ -458,8 +481,51 @@ sleep 1
 sleep 1
 dump_prelogin submit.xml || exit 87
 tap_semantic desc 'Sign In' submit.xml || exit 88
+echo 'LOGIN_SIGN_IN_TAPPED=1'
 
-if ! wait_for_authenticated_db; then exit 89; fi
+auth_ok=0
+if wait_for_authenticated_db 25 first; then
+  auth_ok=1
+else
+  "$adb" logcat -d > auth-first.logcat.txt 2>&1 || true
+  dump_prelogin auth-retry.xml || true
+  "$adb" exec-out screencap -p > auth-retry.png 2>/dev/null || true
+
+  retry_login_ui=0
+  if [ -s auth-retry.xml ]; then
+    retry_count="$(python3 ui.py count 0 auth-retry.xml 2>/dev/null || echo 0)"
+    retry_server="$(python3 ui.py value 0 auth-retry.xml 2>/dev/null || true)"
+    retry_user="$(python3 ui.py value 1 auth-retry.xml 2>/dev/null || true)"
+    if [ "$retry_count" -ge 3 ] \
+      && grep -q 'Sign In' auth-retry.xml \
+      && [ "$retry_server" = 'http://127.0.0.1:13378' ] \
+      && [ "$retry_user" = "$ABS_USER" ]; then
+      retry_login_ui=1
+    fi
+  fi
+
+  if [ "$retry_login_ui" -eq 1 ]; then
+    echo 'LOGIN_RETRY_REASON=login-ui-still-present'
+    tap_semantic desc 'Sign In' auth-retry.xml || exit 88
+    echo 'LOGIN_SIGN_IN_RETAPPED=1'
+  else
+    echo 'LOGIN_SIGN_IN_RETAPPED=0'
+  fi
+
+  if wait_for_authenticated_db 50 second; then
+    auth_ok=1
+  fi
+fi
+
+if [ "$auth_ok" -ne 1 ]; then
+  "$adb" logcat -d > auth-final.logcat.txt 2>&1 || true
+  dump_prelogin auth-final.xml || true
+  "$adb" exec-out screencap -p > auth-final.png 2>/dev/null || true
+  echo 'AUTHENTICATION_DB_TIMEOUT=1' >&2
+  exit 89
+fi
+
+"$adb" logcat -d > auth-success.logcat.txt 2>&1 || true
 sleep 2
 "$adb" exec-out screencap -p > home.png
 
