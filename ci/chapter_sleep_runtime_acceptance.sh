@@ -786,18 +786,17 @@ echo 'SHELF_LIBRARY_SELECTED_DB=1'
 # Avoid a separate post-login UI polling phase. Resolve the concrete A Play
 # target once below; only if A is absent do we invoke the normal LibrarySwitcher.
 
-# Start A from its own semantic Play button rather than a raw screen
-# coordinate. Resolve A with one UI dump. If the in-memory selectedLibrary is
-# still null despite the DB ID, recover through Yaabsa's real LibrarySwitcher
-# and resolve A again. No direct app-DB mutation is used.
+# Avoid the repeatedly crash-prone Shelf overlay Play path. Open A's normal
+# detail route semantically, start playback there, then return to the Shelf.
+# Playback is still proven from Yaabsa's own causal AudioHandler log.
 if ! timeout 5 "$adb" logcat -c; then exit 157; fi
 if ! start_pre_next_logcat; then exit 158; fi
 
 dump_prelogin a-start-ui.xml || exit 166
-a_play_point="$(python3 ui.py childplay 'Chapter Test A' a-start-ui.xml 2>/dev/null || true)"
+a_card_point="$(python3 ui.py any 'Chapter Test A' a-start-ui.xml 2>/dev/null || true)"
 
-if [ -z "$a_play_point" ]; then
-  echo 'A_PLAY_TARGET_MISSING_RECOVER_LIBRARY=1'
+if [ -z "$a_card_point" ]; then
+  echo 'A_CARD_TARGET_MISSING_RECOVER_LIBRARY=1'
   switcher_point="$(python3 ui.py any "$library_name" a-start-ui.xml 2>/dev/null || true)"
   if [ -z "$switcher_point" ]; then
     echo 'LIBRARY_SWITCHER_SEMANTIC_TARGET_NOT_FOUND=1' >&2
@@ -811,35 +810,52 @@ if [ -z "$a_play_point" ]; then
   timeout 5 "$adb" shell input tap $library_point >/dev/null 2>&1 || exit 163
   sleep 2
   dump_prelogin a-start-ui-recovered.xml || exit 166
-  a_play_point="$(python3 ui.py childplay 'Chapter Test A' a-start-ui-recovered.xml 2>/dev/null || true)"
+  a_card_point="$(python3 ui.py any 'Chapter Test A' a-start-ui-recovered.xml 2>/dev/null || true)"
 fi
 
-if [ -z "$a_play_point" ]; then
-  echo 'A_PLAY_SEMANTIC_TARGET_NOT_FOUND=1' >&2
+if [ -z "$a_card_point" ]; then
+  echo 'A_CARD_SEMANTIC_TARGET_NOT_FOUND=1' >&2
   exit 167
 fi
 
-echo "A_PLAY_SEMANTIC_POINT=$a_play_point"
-timeout 5 "$adb" shell input tap $a_play_point >/dev/null 2>&1 || exit 94
+echo "A_CARD_SEMANTIC_POINT=$a_card_point"
+timeout 5 "$adb" shell input tap $a_card_point >/dev/null 2>&1 || exit 94
+sleep 2
+dump_prelogin a-detail-ui.xml || exit 168
+a_detail_play_point="$(python3 ui.py desc 'Play' a-detail-ui.xml 2>/dev/null || true)"
+if [ -z "$a_detail_play_point" ]; then
+  echo 'A_DETAIL_PLAY_TARGET_NOT_FOUND=1' >&2
+  exit 169
+fi
+echo "A_DETAIL_PLAY_POINT=$a_detail_play_point"
+timeout 5 "$adb" shell input tap $a_detail_play_point >/dev/null 2>&1 || exit 94
 
 if ! wait_local_playing_item pre-next.logcat.txt "$ABS_ITEM_ID" 20; then
-  echo 'START_A_RETRY=1'
-  dump_prelogin a-start-ui-retry.xml || exit 166
-  a_play_point="$(python3 ui.py childplay 'Chapter Test A' a-start-ui-retry.xml 2>/dev/null || true)"
-  if [ -z "$a_play_point" ]; then exit 167; fi
-  echo "A_PLAY_SEMANTIC_POINT_RETRY=$a_play_point"
-  timeout 5 "$adb" shell input tap $a_play_point >/dev/null 2>&1 || exit 94
+  echo 'START_A_DETAIL_RETRY=1'
+  dump_prelogin a-detail-ui-retry.xml || exit 168
+  a_detail_play_point="$(python3 ui.py desc 'Play' a-detail-ui-retry.xml 2>/dev/null || true)"
+  if [ -z "$a_detail_play_point" ]; then exit 169; fi
+  timeout 5 "$adb" shell input tap $a_detail_play_point >/dev/null 2>&1 || exit 94
   if ! wait_local_playing_item pre-next.logcat.txt "$ABS_ITEM_ID" 20; then exit 95; fi
 fi
+
 sync pre-next.logcat.txt 2>/dev/null || true
 grep -F "Starting playback for item: $ABS_ITEM_ID (item)" pre-next.logcat.txt | tail -n 2 > a-start.log-evidence.txt || true
 grep 'playing=true,processingState=ProcessingState.ready' pre-next.logcat.txt | tail -n 3 >> a-start.log-evidence.txt || true
 "$adb" exec-out screencap -p > player-before-more.png 2>/dev/null || true
 
-# Queue B manually while A remains current.
-tap_norm 248 283 || exit 96
+timeout 5 "$adb" shell input keyevent 4 >/dev/null 2>&1 || exit 170
 sleep 2
-"$adb" exec-out screencap -p > detail.png
+dump_prelogin shelf-after-a.xml || exit 171
+b_card_point="$(python3 ui.py any 'Chapter Test B' shelf-after-a.xml 2>/dev/null || true)"
+if [ -z "$b_card_point" ]; then
+  echo 'B_CARD_SEMANTIC_TARGET_NOT_FOUND=1' >&2
+  exit 172
+fi
+echo "B_CARD_SEMANTIC_POINT=$b_card_point"
+timeout 5 "$adb" shell input tap $b_card_point >/dev/null 2>&1 || exit 96
+sleep 2
+"$adb" exec-out screencap -p > detail.png 2>/dev/null || true
 tap_norm 497 483 || exit 97
 sleep 1
 if ! queue_intent_snapshot before retarget.logcat.txt; then exit 98; fi

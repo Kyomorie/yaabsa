@@ -935,6 +935,12 @@ jobs:
             library-menu.xml.uiautomator.log
             a-start-ui-retry.xml
             a-start-ui-retry.xml.uiautomator.log
+            a-detail-ui.xml
+            a-detail-ui.xml.uiautomator.log
+            a-detail-ui-retry.xml
+            a-detail-ui-retry.xml.uiautomator.log
+            shelf-after-a.xml
+            shelf-after-a.xml.uiautomator.log
             a-start.log-evidence.txt
             seek.log-evidence.txt
             b-start.log-evidence.txt
