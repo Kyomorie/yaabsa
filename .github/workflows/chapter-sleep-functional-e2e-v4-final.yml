@@ -925,6 +925,10 @@ jobs:
             pre-next.logcat.txt
             a-start-ui.xml
             a-start-ui.xml.uiautomator.log
+            a-start-ui-recovered.xml
+            a-start-ui-recovered.xml.uiautomator.log
+            library-menu.xml
+            library-menu.xml.uiautomator.log
             a-start-ui-retry.xml
             a-start-ui-retry.xml.uiautomator.log
             a-start.log-evidence.txt
@@ -954,14 +958,6 @@ jobs:
             library-final.logcat.txt
             library-final.png
             library-success.logcat.txt
-            library-ui-before.xml
-            library-ui-before.xml.uiautomator.log
-            library-menu.xml
-            library-menu.xml.uiautomator.log
-            library-ui-after.xml
-            library-ui-after.xml.uiautomator.log
-            library-ui-failed.png
-            home-before-ui-library.png
             home-pre-library.png
             home.xml
             home.png
