@@ -48,9 +48,9 @@ else
   accel=off
 fi
 
-# S4-only infrastructure variant: keep Emulator 37.1.11 but use Lavapipe to
-# avoid the repeatedly observed hosted-runner SwiftShader/QEMU segfault path.
-# APK, product branch and S4 acceptance oracles remain unchanged.
+# S4-only infrastructure variant: Emulator 37.1.11 + current SwiftShader
+# backend with Vulkan disabled. This modern renderer path previously never
+# reached runtime because the pinned APK artifact had expired.
 nohup "$emulator" \
   -avd yaabsa-runtime-acceptance \
   -no-window \
@@ -61,7 +61,8 @@ nohup "$emulator" \
   -no-metrics \
   -memory 2048 \
   -cores 2 \
-  -gpu lavapipe \
+  -gpu swiftshader \
+  -feature -Vulkan \
   -accel "$accel" \
   </dev/null > emulator.log 2>&1 &
 emulator_pid=$!
@@ -156,10 +157,15 @@ dump_prelogin() {
   attempt=0
   rm -f "$out" "$tmp"
   while [ "$attempt" -lt 5 ]; do
-    "$adb" shell uiautomator dump /sdcard/u.xml >"${out}.uiautomator.log" 2>&1
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then
+      echo "UI_DUMP_EMULATOR_EXITED=$out" >> "${out}.uiautomator.log"
+      return 2
+    fi
+
+    timeout 8 "$adb" shell uiautomator dump /sdcard/u.xml >"${out}.uiautomator.log" 2>&1
     rc=$?
     if [ "$rc" -eq 0 ]; then
-      "$adb" exec-out cat /sdcard/u.xml > "$tmp" 2>/dev/null
+      timeout 5 "$adb" exec-out cat /sdcard/u.xml > "$tmp" 2>/dev/null
       rc=$?
       if [ "$rc" -eq 0 ] && python3 -c 'import sys,xml.etree.ElementTree as ET; ET.parse(sys.argv[1])' "$tmp" >/dev/null 2>&1; then
         mv "$tmp" "$out"
@@ -167,6 +173,7 @@ dump_prelogin() {
       fi
     fi
     rm -f "$tmp"
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then return 2; fi
     sleep 1
     attempt=$((attempt + 1))
   done

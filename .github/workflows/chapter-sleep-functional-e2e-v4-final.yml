@@ -259,10 +259,10 @@ jobs:
             accel=off
           fi
 
-          # S4-only infrastructure variant: Emulator 37.1.11 + Lavapipe.
-          # S1-S3 already passed runtime acceptance; this avoids the repeatedly
-          # observed hosted-runner SwiftShader/QEMU segfault path without changing
-          # the APK or any S4 product oracle.
+          # S4-only infrastructure variant: Emulator 37.1.11 + current
+          # SwiftShader backend with Vulkan disabled. This exact modern renderer
+          # path was previously prepared but never reached runtime because the
+          # pinned APK artifact had expired.
           "$emulator" \
             -avd yaabsa-runtime-acceptance \
             -no-window \
@@ -270,7 +270,8 @@ jobs:
             -no-boot-anim \
             -no-snapshot \
             -wipe-data \
-            -gpu lavapipe \
+            -gpu swiftshader \
+            -feature -Vulkan \
             -accel "$accel" \
             > emulator.log 2>&1 &
 
