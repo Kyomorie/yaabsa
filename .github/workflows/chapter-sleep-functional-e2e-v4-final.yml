@@ -241,21 +241,12 @@ jobs:
           echo "RUNTIME_SDK_ROOT=$sdk" >> "$GITHUB_ENV"
           echo "ANDROID_AVD_HOME=$avd_home" >> "$GITHUB_ENV"
 
-          pinned_emulator_root="$RUNNER_TEMP/android-emulator-36.3.10"
-          pinned_emulator_zip="$RUNNER_TEMP/emulator-linux_x64-14472402.zip"
-          curl -fsSL \
-            'https://dl.google.com/android/repository/emulator-linux_x64-14472402.zip' \
-            -o "$pinned_emulator_zip"
-          echo 'c8ab9ffbc4c2d11c02e06e81a9d9f81970177dc5ab599e3a30eb08a4a5496a67  '"$pinned_emulator_zip" | sha256sum -c -
-          rm -rf "$pinned_emulator_root"
-          mkdir -p "$pinned_emulator_root"
-          unzip -q "$pinned_emulator_zip" -d "$pinned_emulator_root"
-
           adb="$sdk/platform-tools/adb"
-          emulator="$pinned_emulator_root/emulator/emulator"
+          emulator="$sdk/emulator/emulator"
           if [ ! -x "$emulator" ]; then exit 25; fi
           "$emulator" -version 2>&1 | tee emulator-version.txt
-          if ! grep -q 'Android emulator version 36.3.10' emulator-version.txt; then exit 26; fi
+          # S1/S2/S3 runtime PASS artifacts all used this exact emulator build.
+          if ! grep -q 'Android emulator version 37.1.11' emulator-version.txt; then exit 26; fi
           echo "RUNTIME_EMULATOR_BIN=$emulator" >> "$GITHUB_ENV"
 
           "$adb" kill-server >/dev/null 2>&1 || true
@@ -268,9 +259,9 @@ jobs:
             accel=off
           fi
 
-          # Hosted runners still segfaulted independently in SwiftShader/gfxstream.
-          # Pinned Emulator 36.3.10 predates the 36.4 graphics-backend change.
-          # Run 24 reached the S4 B-playing oracle on its SwiftShader indirect path.
+          # Reproduce the exact graphics stack from the successful S1/S2/S3
+          # runtime evidence: Emulator 37.1.11 + swiftshader_indirect with the
+          # emulator's normal SwiftShader Vulkan path enabled.
           "$emulator" \
             -avd yaabsa-runtime-acceptance \
             -no-window \
@@ -279,7 +270,6 @@ jobs:
             -no-snapshot \
             -wipe-data \
             -gpu swiftshader_indirect \
-            -feature -Vulkan \
             -accel "$accel" \
             > emulator.log 2>&1 &
 

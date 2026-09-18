@@ -48,10 +48,9 @@ else
   accel=off
 fi
 
-# Acceptance pins Emulator 36.3.10. Run 24 reached the external-Next and
-# B-playing oracle on this pre-36.4 SwiftShader-indirect path. Vulkan remains
-# disabled; repeated MediaSession dumps are avoided below because they destabilize
-# the hosted emulator independently of product behavior.
+# Reproduce the exact Emulator 37.1.11 graphics path used by the successful
+# S1/S2/S3 runtime runs. Keep S4's reduced MediaSession-dump pressure, but do
+# not disable Vulkan: the PASS artifacts show SwiftShader Vulkan active.
 nohup "$emulator" \
   -avd yaabsa-runtime-acceptance \
   -no-window \
@@ -63,7 +62,6 @@ nohup "$emulator" \
   -memory 2048 \
   -cores 2 \
   -gpu swiftshader_indirect \
-  -feature -Vulkan \
   -accel "$accel" \
   </dev/null > emulator.log 2>&1 &
 emulator_pid=$!
