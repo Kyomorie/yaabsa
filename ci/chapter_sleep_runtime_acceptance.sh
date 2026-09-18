@@ -733,16 +733,32 @@ while [ "$elapsed" -lt "$wait_seconds" ]; do
     exit 146
   fi
 
-  if ! curl -fsS "$ABS_URL/api/me/progress/$b_id" \
-    -H "Authorization: Bearer $token" \
-    -o abs-b-progress-sample.json; then
-    echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,fetch:failed" | tee -a final-position.txt
+  sample_http_code="$(curl -sS \
+    -o abs-b-progress-sample.json \
+    -w '%{http_code}' \
+    "$ABS_URL/api/me/progress/$b_id" \
+    -H "Authorization: Bearer $token")"
+  sample_curl_rc=$?
+  if [ "$sample_curl_rc" -ne 0 ]; then
+    echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,transport_rc:${sample_curl_rc}" | tee -a final-position.txt
     exit 147
+  fi
+
+  if [ "$sample_http_code" = '404' ]; then
+    # A new playback session has no progress record until Yaabsa's periodic
+    # playback sync creates one (the app logs a 10s sync cadence).
+    echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,http:404,progress:not-yet-created" | tee -a final-position.txt
+    continue
+  fi
+
+  if [ "$sample_http_code" != '200' ]; then
+    echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,http:${sample_http_code}" | tee -a final-position.txt
+    exit 149
   fi
 
   sample_abs_current="$(jq -r '.currentTime // 0' abs-b-progress-sample.json)"
   sample_abs_finished="$(jq -r '.isFinished // false' abs-b-progress-sample.json)"
-  echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,current_time:${sample_abs_current},finished:${sample_abs_finished}" | tee -a final-position.txt
+  echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,http:200,current_time:${sample_abs_current},finished:${sample_abs_finished}" | tee -a final-position.txt
 
   if [ "$sample_abs_finished" != 'false' ]; then exit 148; fi
 done
