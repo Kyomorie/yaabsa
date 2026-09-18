@@ -249,18 +249,40 @@ copy_app_db_snapshot() {
   rm -rf "$out_dir"
   mkdir -p "$out_dir"
 
-  db_rel="$("$adb" shell run-as "$package" find . -type f -name app_db.sqlite -print -quit 2>/dev/null | tr -d '\r' | head -n 1)"
-  if [ -z "$db_rel" ]; then
+  if ! kill -0 "$emulator_pid" 2>/dev/null; then
+    echo "DB_SNAPSHOT_EMULATOR_EXITED=$label" >> db-snapshot.err.txt
     return 1
   fi
 
-  "$adb" exec-out run-as "$package" cat "$db_rel" > "$out_dir/app_db.sqlite" 2>/dev/null
+  db_rel="$(timeout 8 "$adb" shell run-as "$package" find . -type f -name app_db.sqlite -print -quit 2>>db-snapshot.err.txt | tr -d '\r' | head -n 1)"
+  if [ -z "$db_rel" ]; then
+    echo "DB_SNAPSHOT_DB_PATH_UNAVAILABLE=$label" >> db-snapshot.err.txt
+    return 1
+  fi
+
+  if ! kill -0 "$emulator_pid" 2>/dev/null; then
+    echo "DB_SNAPSHOT_EMULATOR_EXITED_BEFORE_CAT=$label" >> db-snapshot.err.txt
+    return 1
+  fi
+
+  timeout 8 "$adb" exec-out run-as "$package" cat "$db_rel" > "$out_dir/app_db.sqlite" 2>>db-snapshot.err.txt
   rc=$?
-  if [ "$rc" -ne 0 ]; then return 1; fi
+  if [ "$rc" -ne 0 ]; then
+    echo "DB_SNAPSHOT_MAIN_CAT_FAILED=$label:$rc" >> db-snapshot.err.txt
+    rm -f "$out_dir/app_db.sqlite"
+    return 1
+  fi
 
   for suffix in -wal -shm; do
-    if "$adb" shell run-as "$package" ls "${db_rel}${suffix}" >/dev/null 2>&1; then
-      "$adb" exec-out run-as "$package" cat "${db_rel}${suffix}" > "$out_dir/app_db.sqlite${suffix}" 2>/dev/null || rm -f "$out_dir/app_db.sqlite${suffix}"
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then
+      echo "DB_SNAPSHOT_EMULATOR_EXITED_DURING_SIDECARS=$label" >> db-snapshot.err.txt
+      return 1
+    fi
+
+    if timeout 5 "$adb" shell run-as "$package" ls "${db_rel}${suffix}" >/dev/null 2>>db-snapshot.err.txt; then
+      if ! timeout 8 "$adb" exec-out run-as "$package" cat "${db_rel}${suffix}" > "$out_dir/app_db.sqlite${suffix}" 2>>db-snapshot.err.txt; then
+        rm -f "$out_dir/app_db.sqlite${suffix}"
+      fi
     fi
   done
 
