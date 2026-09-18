@@ -16,7 +16,7 @@ fi
 
 # Keep the emulator in the scenario step to avoid cross-step hosted-runner
 # lifecycle loss. This is acceptance-harness behavior only.
-emulator="${RUNTIME_SDK_ROOT}/emulator/emulator"
+emulator="${RUNTIME_EMULATOR_BIN:-${RUNTIME_SDK_ROOT}/emulator/emulator}"
 if [ ! -x "$emulator" ]; then
   echo "EMULATOR_NOT_FOUND=$emulator" >&2
   exit 62
@@ -48,9 +48,9 @@ else
   accel=off
 fi
 
-# Emulator 37.x retired swiftshader_indirect. Use the current SwiftShader
-# backend and disable Vulkan to avoid the hosted-runner gfxstream/Vulkan
-# crash path seen in the superseded S4 run.
+# Acceptance pins Emulator 36.3.10. Keep Vulkan disabled and use its
+# pre-36.4.9 SwiftShader indirect GLES path to avoid the recurrent 37.1.11
+# hosted-runner gfxstream host segfault.
 nohup "$emulator" \
   -avd yaabsa-runtime-acceptance \
   -no-window \
@@ -61,7 +61,7 @@ nohup "$emulator" \
   -no-metrics \
   -memory 2048 \
   -cores 2 \
-  -gpu swiftshader \
+  -gpu swiftshader_indirect \
   -feature -Vulkan \
   -accel "$accel" \
   </dev/null > emulator.log 2>&1 &
