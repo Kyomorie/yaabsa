@@ -844,9 +844,10 @@ grep -F "Starting playback for item: $ABS_ITEM_ID (item)" pre-next.logcat.txt | 
 grep 'playing=true,processingState=ProcessingState.ready' pre-next.logcat.txt | tail -n 3 >> a-start.log-evidence.txt || true
 "$adb" exec-out screencap -p > player-before-more.png 2>/dev/null || true
 
-# Playback starts on A's Book details route. Use the visible Shelf tab to
-# return deterministically; avoid another uiautomator dump after playback starts.
-tap_norm 113 927 || exit 170
+# Playback starts on A's Book details route. The bottom navigation shifts when
+# the mini-player appears, so use the stable top-left Back button from the detail
+# route instead of a bottom-nav coordinate. Avoid any post-play uiautomator dump.
+timeout 5 "$adb" shell input tap 126 414 >/dev/null 2>&1 || exit 170
 sleep 2
 "$adb" exec-out screencap -p > shelf-after-a.png 2>/dev/null || true
 
