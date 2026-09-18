@@ -268,8 +268,8 @@ jobs:
             accel=off
           fi
 
-          # Emulator 36.3.10 predates the 36.4.9 graphics-backend change.
-          # Keep Vulkan disabled and use its stable SwiftShader GLES path.
+          # Hosted runners still segfaulted independently in SwiftShader/gfxstream.
+          # Final infra variant disables GPU rendering and keeps Vulkan disabled.
           "$emulator" \
             -avd yaabsa-runtime-acceptance \
             -no-window \
@@ -277,7 +277,7 @@ jobs:
             -no-boot-anim \
             -no-snapshot \
             -wipe-data \
-            -gpu swiftshader_indirect \
+            -gpu off \
             -feature -Vulkan \
             -accel "$accel" \
             > emulator.log 2>&1 &
