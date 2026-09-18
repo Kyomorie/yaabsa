@@ -950,6 +950,14 @@ jobs:
             library-final.logcat.txt
             library-final.png
             library-success.logcat.txt
+            library-ui-before.xml
+            library-ui-before.xml.uiautomator.log
+            library-menu.xml
+            library-menu.xml.uiautomator.log
+            library-ui-after.xml
+            library-ui-after.xml.uiautomator.log
+            library-ui-failed.png
+            home-before-ui-library.png
             home-pre-library.png
             home.xml
             home.png

@@ -128,6 +128,8 @@ elif mode=='value':
     print([n for n in nodes if n.attrib.get('class')=='android.widget.EditText'][int(key)].attrib.get('text','')); raise SystemExit
 elif mode=='desc':
     n=pick([n for n in nodes if n.attrib.get('content-desc')==key])
+elif mode=='any':
+    n=pick([n for n in nodes if n.attrib.get('content-desc')==key or n.attrib.get('text')==key])
 else:
     raise SystemExit(3)
 a=[int(x) for x in re.findall(r'-?\d+',n.attrib.get('bounds',''))]
@@ -602,7 +604,9 @@ curl -fsS "$ABS_URL/api/libraries" -H "Authorization: Bearer $token" -o abs-libr
 rc=$?
 if [ "$rc" -ne 0 ]; then exit 75; fi
 library_id="$(jq -r '.libraries[0].id // .[0].id // empty' abs-libraries-s4.json)"
-if [ -z "$library_id" ]; then exit 76; fi
+library_name="$(jq -r '.libraries[0].name // .[0].name // empty' abs-libraries-s4.json)"
+if [ -z "$library_id" ] || [ -z "$library_name" ]; then exit 76; fi
+echo "SCENARIO4_LIBRARY_NAME=$library_name"
 
 curl -fsS -X POST "$ABS_URL/api/libraries/$library_id/scan?force=1" \
   -H "Authorization: Bearer $token" -o abs-scan-s4.json
@@ -756,14 +760,66 @@ if [ "$library_ready" -ne 1 ]; then
 fi
 
 "$adb" logcat -d > library-success.logcat.txt 2>&1 || true
-"$adb" exec-out screencap -p > home.png 2>/dev/null || true
+"$adb" exec-out screencap -p > home-before-ui-library.png 2>/dev/null || true
 echo 'SHELF_LIBRARY_SELECTED_DB=1'
 
-# Post-login coordinates are inputs only. MediaSession, app logs, ABS and
-# read-only DB snapshots are the acceptance oracles. The app is already on the
-# Shelf route after login/restart; do not add a redundant navigation tap here.
-# Give the selected-library rebuild a bounded settle interval, then let the
-# MediaSession start oracle prove that A is actually playable.
+# DB selection is necessary but not sufficient: Riverpod can still have a null
+# in-memory selectedLibrary during a transient libraries fetch. Prove the actual
+# post-login UI state. If it still says "No library selected", use Yaabsa's own
+# LibrarySwitcher and select the isolated fixture library exactly once. This is
+# a normal app UI action, not an app-DB mutation.
+ui_library_ready=0
+dump_prelogin library-ui-before.xml || true
+if [ -s library-ui-before.xml ] \
+  && ! grep -Fq 'No library selected' library-ui-before.xml; then
+  ui_library_ready=1
+fi
+
+if [ "$ui_library_ready" -ne 1 ]; then
+  echo 'LIBRARY_UI_RECOVERY=select-via-app-switcher'
+  switcher_point="$(python3 ui.py desc 'Select library' library-ui-before.xml 2>/dev/null || true)"
+  if [ -n "$switcher_point" ]; then
+    timeout 5 "$adb" shell input tap $switcher_point >/dev/null 2>&1 || exit 160
+  else
+    # Stable Pixel 7 app-bar location; only used if Android semantics omit the
+    # PopupMenuButton tooltip.
+    tap_norm 536 69 || exit 160
+  fi
+
+  sleep 1
+  dump_prelogin library-menu.xml || exit 161
+  library_point="$(python3 ui.py any "$library_name" library-menu.xml 2>/dev/null || true)"
+  if [ -z "$library_point" ]; then
+    echo 'LIBRARY_UI_MENU_ITEM_NOT_FOUND=1' >&2
+    exit 162
+  fi
+  timeout 5 "$adb" shell input tap $library_point >/dev/null 2>&1 || exit 163
+
+  i=0
+  while [ "$i" -lt 20 ]; do
+    sleep 1
+    if ! kill -0 "$emulator_pid" 2>/dev/null; then exit 164; fi
+    dump_prelogin library-ui-after.xml || true
+    if [ -s library-ui-after.xml ] \
+      && ! grep -Fq 'No library selected' library-ui-after.xml; then
+      ui_library_ready=1
+      break
+    fi
+    i=$((i + 1))
+  done
+fi
+
+if [ "$ui_library_ready" -ne 1 ]; then
+  "$adb" exec-out screencap -p > library-ui-failed.png 2>/dev/null || true
+  echo 'LIBRARY_UI_READY_TIMEOUT=1' >&2
+  exit 165
+fi
+
+"$adb" exec-out screencap -p > home.png 2>/dev/null || true
+echo 'SHELF_LIBRARY_SELECTED_UI=1'
+
+# Give the selected-library rebuild a short settle interval, then let Yaabsa's
+# own playback logs prove that A is actually playable.
 sleep 5
 
 # Start A from its validated Recently Added play overlay. Repeated
