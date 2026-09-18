@@ -25,7 +25,7 @@ jobs:
       - name: Download exact validated APK artifact
         uses: actions/download-artifact@v5
         with:
-          artifact-ids: 10489843320
+          artifact-ids: 10541269902
           path: apkdir
           github-token: ${{ github.token }}
           repository: Kyomorie/yaabsa
@@ -38,7 +38,7 @@ jobs:
           if [ -z "$apk" ]; then exit 2; fi
           cp "$apk" yaabsa.apk
           sha256sum yaabsa.apk | tee apk.sha256
-          if ! grep -q '^56f57cffa7960977b1cb06f738678d188e0e03a427f01b49d962e61771fb317a ' apk.sha256; then exit 3; fi
+          if ! grep -q '^6a1308d4ad249e85f5b2553f092b94f0dc110fb25858e903c012dbb098630ff6 ' apk.sha256; then exit 3; fi
 
           sudo apt-get update >/dev/null
           rc=$?
@@ -254,6 +254,8 @@ jobs:
             accel=off
           fi
 
+          # Emulator 37.x retired swiftshader_indirect. Use current SwiftShader
+          # and disable Vulkan on the hosted runner.
           "$emulator" \
             -avd yaabsa-runtime-acceptance \
             -no-window \
@@ -261,7 +263,8 @@ jobs:
             -no-boot-anim \
             -no-snapshot \
             -wipe-data \
-            -gpu swiftshader_indirect \
+            -gpu swiftshader \
+            -feature -Vulkan \
             -accel "$accel" \
             > emulator.log 2>&1 &
 
