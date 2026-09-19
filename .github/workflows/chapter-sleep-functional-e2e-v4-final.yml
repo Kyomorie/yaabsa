@@ -988,6 +988,7 @@ jobs:
             final.xml
             after-boundary.png
             abs-progress-after.json
+            post-oracle-pause.txt
             emulator.log
             retarget.logcat.txt
             media-retarget.txt
