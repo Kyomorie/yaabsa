@@ -975,7 +975,7 @@ if ! kill -0 "$emulator_pid" 2>/dev/null; then exit 99; fi
 # Runtime calibration: x=950 landed at 323.650s on this ATD. Move A
 # later, but still below the frozen 335s arm ceiling, to shorten only the
 # observation window (not the S4 semantics).
-timeout 5 "$adb" shell input tap 965 2342 >/dev/null 2>&1 || exit 100
+tap_norm 894 976 || exit 100
 landed_ms="$(wait_seek_log_position pre-next.logcat.txt 310000 340000 20)"
 if [ -z "$landed_ms" ]; then exit 101; fi
 echo "SCENARIO4_FINAL_CHAPTER_POSITION_MS=$landed_ms" | tee retarget-position.txt
