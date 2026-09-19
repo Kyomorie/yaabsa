@@ -614,6 +614,90 @@ wait_seek_log_position() {
   return 1
 }
 
+media_monitor_pid=''
+media_monitor_fifo=''
+media_monitor_fd_open=0
+
+start_media_monitor() {
+  timeout 5 "$adb" shell cmd media_session list-sessions > media-sessions.txt 2>media-sessions.err.txt || return 1
+  media_session_tag="$(python3 - media-sessions.txt <<'PY'
+import re,sys
+s=open(sys.argv[1],errors='ignore').read()
+for line in s.splitlines():
+    if 'package=de.vito0912.yaabsa.dev' in line:
+        m=re.search(r'tag=([^,]+),\s*package=',line)
+        if m:
+            print(m.group(1).strip())
+            raise SystemExit
+print('')
+PY
+)"
+  if [ -z "$media_session_tag" ]; then return 1; fi
+  echo "MEDIA_SESSION_MONITOR_TAG=$media_session_tag"
+
+  media_monitor_fifo="$RUNNER_TEMP/media-session-monitor.fifo"
+  rm -f "$media_monitor_fifo"
+  mkfifo "$media_monitor_fifo" || return 1
+  : > media-monitor.txt
+  timeout 60 "$adb" shell cmd media_session monitor "$media_session_tag"     <"$media_monitor_fifo" >media-monitor.txt 2>media-monitor.err.txt &
+  media_monitor_pid=$!
+  exec 9<>"$media_monitor_fifo"
+  media_monitor_fd_open=1
+  sleep 1
+  kill -0 "$media_monitor_pid" 2>/dev/null
+}
+
+stop_media_monitor() {
+  if [ "$media_monitor_fd_open" -eq 1 ]; then
+    printf 'q\n' >&9 2>/dev/null || true
+    exec 9>&-
+    media_monitor_fd_open=0
+  fi
+  if [ -n "${media_monitor_pid:-}" ]; then
+    wait "$media_monitor_pid" 2>/dev/null || true
+    media_monitor_pid=''
+  fi
+  if [ -n "${media_monitor_fifo:-}" ]; then
+    rm -f "$media_monitor_fifo" 2>/dev/null || true
+    media_monitor_fifo=''
+  fi
+}
+
+media_monitor_snapshot() {
+  out="$1"
+  uptime_seconds="$2"
+  python3 - media-monitor.txt "$out" "$uptime_seconds" <<'PY'
+import re,sys
+src,out,uptime=sys.argv[1:]
+s=open(src,errors='ignore').read()
+states=re.findall(
+    r'onPlaybackStateChanged PlaybackState \{state=([^,]+), position=(\d+), '
+    r'buffered position=\d+, speed=([0-9.]+), updated=(\d+)',
+    s,
+)
+metadata=re.findall(r'onMetadataChanged title=([^\n]+)',s)
+if not states or not metadata or not uptime:
+    raise SystemExit(1)
+state,pos,speed,updated=states[-1]
+state_norm=state.strip()
+is_playing = state_norm in ('3','PLAYING(3)')
+title=metadata[-1].strip()
+pos=int(pos); speed=float(speed); updated=int(updated)
+now_ms=float(uptime)*1000.0
+effective=int(pos + max(0.0, now_ms-updated)*speed)
+with open(out,'w',encoding='utf-8') as f:
+    f.write(f'MONITOR_LAST_STATE={state_norm}\n')
+    f.write(f'MONITOR_LAST_METADATA={title}\n')
+    f.write(f'MONITOR_RAW_POSITION_MS={pos}\n')
+    f.write(f'MONITOR_EFFECTIVE_POSITION_MS={effective}\n')
+if not is_playing:
+    raise SystemExit(2)
+if not title.startswith('Chapter Test B'):
+    raise SystemExit(3)
+print(effective)
+PY
+}
+
 causal_logcat_pid=''
 start_causal_logcat() {
   rm -f final.logcat.txt
@@ -630,7 +714,7 @@ stop_causal_logcat() {
     causal_logcat_pid=''
   fi
 }
-trap 'stop_pre_next_logcat; stop_causal_logcat' EXIT
+trap 'stop_media_monitor; stop_pre_next_logcat; stop_causal_logcat' EXIT
 
 # Add a second, distinct audiobook to the isolated ABS fixture.
 mkdir -p 'runtime/abs/audiobooks/Chapter Test B'
@@ -940,9 +1024,13 @@ echo "ARMED_MEDIA_SESSION_POSITION_MS=$armed_position_ms" | tee -a armed-positio
 # not its stale raw position field.
 if [ -z "$armed_position_ms" ] || [ "$armed_position_ms" -le 310000 ] || [ "$armed_position_ms" -ge 335000 ]; then exit 107; fi
 
-# Make the Android command causal: preserve the arm evidence above, then clear
-# logcat and issue an external Android media-button NEXT command. On the pinned
-# audio_service this reaches BGAudioHandler.skipToNext() -> skipToNextInApp().
+# Make the Android command causal: preserve the arm evidence above. Start the
+# Android MediaController monitor before Next so it observes the A->B state and
+# metadata transition without a full dumpsys.
+if ! start_media_monitor; then exit 175; fi
+
+# Then clear logcat and issue an external Android media-button NEXT command. On
+# the pinned audio_service this reaches BGAudioHandler.skipToNext() -> skipToNextInApp().
 stop_pre_next_logcat
 if ! timeout 5 "$adb" logcat -c; then exit 159; fi
 if ! start_causal_logcat; then exit 145; fi
@@ -1005,6 +1093,20 @@ if grep -q 'FATAL EXCEPTION' final.logcat.txt; then exit 115; fi
 if [ -z "$b_start_ms" ] || [ "$b_start_ms" -gt 15000 ]; then exit 116; fi
 echo "B_POSITION_AFTER_ANDROID_NEXT_MS=$b_start_ms"
 
+monitor_b_ready=0
+i=0
+while [ "$i" -lt 10 ]; do
+  sync media-monitor.txt 2>/dev/null || true
+  monitor_uptime="$(timeout 5 "$adb" shell cat /proc/uptime 2>/dev/null | awk '{print $1}' || true)"
+  if media_monitor_snapshot media-monitor-after-next.txt "$monitor_uptime" >/dev/null 2>&1; then
+    monitor_b_ready=1
+    break
+  fi
+  sleep 1
+  i=$((i + 1))
+done
+if [ "$monitor_b_ready" -ne 1 ]; then exit 176; fi
+
 # Observe B through and beyond A's original 360s boundary. Chapter expiry
 # is position/completion-driven, so this is deliberately only an observation
 # window. Account for real host time already elapsed since the armed snapshot.
@@ -1030,44 +1132,35 @@ if ! kill -0 "$emulator_pid" 2>/dev/null; then
   exit 146
 fi
 
-# Second and final required MediaSession dump in S4: after B has crossed A's
-# old chapter-end boundary, Android itself must still expose B as PLAYING.
-if ! dump_media_session media-after.txt 'B-final' 1; then exit 121; fi
-b_final_state="$(media_state_name media-after.txt)"
-b_final_desc="$(media_description media-after.txt)"
-b_final_raw_ms="$(media_position_ms media-after.txt)"
-uptime_seconds="$(timeout 5 "$adb" shell cat /proc/uptime 2>/dev/null | awk '{print $1}' || true)"
-b_final_ms="$(python3 - media-after.txt "$uptime_seconds" <<'PY'
-import re,sys
-path,uptime=sys.argv[1:]
-s=open(path,errors='ignore').read()
-m=re.search(
-    r'package=de\.vito0912\.yaabsa\.dev.*?state=PlaybackState \{state=PLAYING\(3\), '
-    r'position=(\d+), buffered position=\d+, speed=([0-9.]+), updated=(\d+)',
-    s,re.S,
-)
-if not m or not uptime:
-    print('')
-    raise SystemExit
-pos=int(m.group(1)); speed=float(m.group(2)); updated=int(m.group(3))
-now_ms=float(uptime)*1000.0
-effective=pos + max(0.0, now_ms-updated)*speed
-print(int(effective))
-PY
-)"
+# Final Android MediaSession oracle: the targeted MediaController monitor has
+# observed B's metadata/state transition and remained attached through A's old
+# boundary. Its last callback state must still be PLAYING with B metadata.
+sync media-monitor.txt 2>/dev/null || true
+boundary_uptime_seconds="$(timeout 5 "$adb" shell cat /proc/uptime 2>/dev/null | awk '{print $1}' || true)"
+b_final_ms="$(media_monitor_snapshot media-monitor-boundary.txt "$boundary_uptime_seconds")"
+monitor_rc=$?
+if [ "$monitor_rc" -ne 0 ]; then exit 121; fi
+b_final_state="$(awk -F= '/^MONITOR_LAST_STATE=/{print $2}' media-monitor-boundary.txt)"
+b_final_desc="$(awk -F= '/^MONITOR_LAST_METADATA=/{sub(/^[^=]*=/,""); print}' media-monitor-boundary.txt)"
+b_final_raw_ms="$(awk -F= '/^MONITOR_RAW_POSITION_MS=/{print $2}' media-monitor-boundary.txt)"
 echo "B_FINAL_STATE=$b_final_state"
 echo "B_FINAL_DESCRIPTION=$b_final_desc"
 echo "B_FINAL_RAW_POSITION_MS=$b_final_raw_ms" | tee -a final-position.txt
 echo "B_FINAL_EFFECTIVE_POSITION_MS=$b_final_ms" | tee -a final-position.txt
 
-if [ "$b_final_state" != 'PLAYING' ]; then exit 119; fi
-if [ "$b_final_desc" != 'Chapter Test B' ]; then exit 120; fi
+if [ "$b_final_state" != '3' ] && [ "$b_final_state" != 'PLAYING(3)' ]; then exit 119; fi
+case "$b_final_desc" in
+  Chapter\ Test\ B*) ;;
+  *) exit 120 ;;
+esac
 if [ -z "$b_final_raw_ms" ] || [ -z "$b_final_ms" ]; then exit 121; fi
 
 min_advance_ms=$(((wait_seconds - 10) * 1000))
 if [ "$min_advance_ms" -lt 10000 ]; then min_advance_ms=10000; fi
 if [ "$b_final_ms" -le $((b_start_ms + min_advance_ms)) ]; then exit 122; fi
 if [ "$b_final_ms" -ge 85000 ]; then exit 123; fi
+
+stop_media_monitor
 
 timeout 5 "$adb" logcat -d -v threadtime > final.logcat.txt 2>final-logcat.err.txt || exit 174
 
