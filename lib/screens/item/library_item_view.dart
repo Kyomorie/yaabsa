@@ -7,6 +7,7 @@ import 'package:yaabsa/components/app/item/editor/library_item_edit_overlay.dart
 import 'package:yaabsa/components/app/item/editor/open_library_item_editor_dialog.dart';
 import 'package:yaabsa/components/common/connection_issue_view.dart';
 import 'package:yaabsa/provider/common/library_item_provider.dart';
+import 'package:yaabsa/provider/common/media_progress_provider.dart';
 import 'package:yaabsa/provider/core/user_providers.dart';
 import 'package:yaabsa/screens/item/library_item_book_view.dart';
 import 'package:yaabsa/screens/item/library_item_podcast_view.dart';
@@ -41,9 +42,14 @@ class _LibraryItemViewState extends ConsumerState<LibraryItemView> {
       data: (item) {
         final isPodcast = item.mediaType == 'podcast' || item.media?.podcastMedia != null;
         _scheduleInitialEditor(item, isPodcast: isPodcast);
-        return isPodcast
-            ? LibraryItemPodcastView(item: item, canDownload: canDownload, initialEpisodeId: widget.initialEpisodeId)
-            : LibraryItemBookView(item: item, canDownload: canDownload);
+        return RefreshIndicator(
+          onRefresh: () => isPodcast
+              ? ref.read(mediaProgressProvider.notifier).refreshAllProgress(clearBefore: false)
+              : ref.read(mediaProgressProvider.notifier).fetchOrRefreshIndividualProgress(item.id),
+          child: isPodcast
+              ? LibraryItemPodcastView(item: item, canDownload: canDownload, initialEpisodeId: widget.initialEpisodeId)
+              : LibraryItemBookView(item: item, canDownload: canDownload),
+        );
       },
       error: (error, stackTrace) {
         final isNotFound = _isNotFoundError(error);

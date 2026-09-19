@@ -7,7 +7,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:yaabsa/components/app/item/item_delete_actions.dart';
 import 'package:yaabsa/components/app/item/item_progress_actions.dart';
 import 'package:yaabsa/api/library_items/library_item.dart';
-import 'package:yaabsa/api/me/media_progress.dart';
 import 'package:yaabsa/components/app/library/library_multi_select_actions.dart';
 import 'package:yaabsa/provider/common/media_progress_provider.dart';
 import 'package:yaabsa/provider/common/download_task_provider.dart';
@@ -215,8 +214,11 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
     final selectedItems = visibleItems
         .where((item) => effectiveSelectedItemIds.contains(libraryItemSelectionKey(item)))
         .toList(growable: false);
-    final progressByKey = ref.watch(mediaProgressProvider).asData?.value ?? const <String, MediaProgress>{};
-    final allSelectedFinished = areAllSupportedLibraryItemsFinished(selectedItems, progressByKey);
+    final allSelectedFinished = ref.watch(
+      mediaProgressProvider.select(
+        (progress) => areAllSupportedLibraryItemsFinished(selectedItems, progress.asData?.value ?? const {}),
+      ),
+    );
     final hasDeletableSelectedItems = selectedItems.any(isAudiobookLibraryItem);
 
     final downloadedItemIds = <String>{};

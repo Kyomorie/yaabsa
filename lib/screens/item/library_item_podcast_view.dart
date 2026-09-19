@@ -398,6 +398,7 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
 
                         return CustomScrollView(
                           controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
                           slivers: [
                             SliverToBoxAdapter(
                               child: Padding(
@@ -567,7 +568,7 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                                   (episode) => isPodcastEpisodeFinished(
                                                     item: widget.item,
                                                     episode: episode,
-                                                    progressByKey: ref.watch(mediaProgressProvider).value ?? {},
+                                                    progressByKey: progressMap,
                                                   ),
                                                 ),
                                             onToggleSelectedFinished: _selectedEpisodeIds.isEmpty

@@ -39,6 +39,11 @@ bool _isKeepSocketConnectedInBackground(String? settingValue) {
   return SettingsParser.decodeValue<bool>(settingValue, defaultEnabled);
 }
 
+bool _isRefreshProgressOnAppResumeEnabled(String? settingValue) {
+  final defaultEnabled = defaultSettings[SettingKeys.refreshProgressOnAppResume] as bool? ?? false;
+  return SettingsParser.decodeValue<bool>(settingValue, defaultEnabled);
+}
+
 String _socketConnectionFingerprint({required String serverUrl, required String token, Map<String, String>? headers}) {
   final normalizedHeaders = headers == null
       ? ''
@@ -225,6 +230,11 @@ ABSSocketClient absSocketClient(Ref ref) {
       .read(globalSettingByKeyProvider(SettingKeys.keepWebsocketConnectionInBackground))
       .value;
   bool keepSocketConnectedInBackground = _isKeepSocketConnectedInBackground(initialKeepSocketSetting);
+  final initialRefreshProgressSetting = ref
+      .read(globalSettingByKeyProvider(SettingKeys.refreshProgressOnAppResume))
+      .value;
+  bool refreshProgressOnAppResume = _isRefreshProgressOnAppResumeEnabled(initialRefreshProgressSetting);
+  bool isRefreshingProgressOnResume = false;
   bool socketSuppressedForBackground = false;
   String? activeSocketFingerprint;
   AppLifecycleState appLifecycleState = WidgetsBinding.instance.lifecycleState ?? AppLifecycleState.resumed;
@@ -363,12 +373,30 @@ ABSSocketClient absSocketClient(Ref ref) {
     syncSocketConnection();
   });
 
+  ref.listen<AsyncValue<String?>>(globalSettingByKeyProvider(SettingKeys.refreshProgressOnAppResume), (previous, next) {
+    refreshProgressOnAppResume = _isRefreshProgressOnAppResumeEnabled(next.value);
+  });
+
+  Future<void> refreshProgressAfterResume() async {
+    if (!refreshProgressOnAppResume || isRefreshingProgressOnResume || currentUser == null || !canReachServer) {
+      return;
+    }
+
+    isRefreshingProgressOnResume = true;
+    try {
+      await ref.read(mediaProgressProvider.notifier).refreshAllProgress(clearBefore: false);
+    } finally {
+      isRefreshingProgressOnResume = false;
+    }
+  }
+
   final lifecycleListener = AppLifecycleListener(
     onStateChange: (state) {
       appLifecycleState = state;
       syncSocketConnection();
       if (state == AppLifecycleState.resumed) {
         smartDownloadNotifier.requestReconcile(reason: 'app foreground');
+        unawaited(refreshProgressAfterResume());
       }
     },
   );

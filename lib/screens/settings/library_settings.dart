@@ -79,7 +79,12 @@ class _LibrarySettingsState extends ConsumerState<LibrarySettings> {
                       settingKey: SettingKeys.collapseSeries,
                       userId: user.id,
                     ),
-
+                    const SettingSwitchTile(
+                      label: 'Refresh Progress on Resume',
+                      settingKey: SettingKeys.refreshProgressOnAppResume,
+                      subtitle:
+                          'Updates book and episode progress from the server when the app returns to the foreground',
+                    ),
                     const SettingSwitchTile(
                       label: 'Show Shelf Play Button',
                       settingKey: SettingKeys.personalizedShelfShowPlayVisibleButton,

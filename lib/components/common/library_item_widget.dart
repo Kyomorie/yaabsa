@@ -82,12 +82,23 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final progressMap = widget.showProgress
-        ? (ref.watch(mediaProgressProvider).asData?.value ?? const <String, MediaProgress>{})
-        : null;
     final shelfEpisode = _podcastShelfEpisode();
+    final progressState = widget.showProgress
+        ? ref.watch(
+            mediaProgressProvider.select((progress) {
+              final progressMap = progress.asData?.value ?? const <String, MediaProgress>{};
+              final resolvedProgress = _resolveProgress(progressMap);
+              final finishedEpisodeCount = widget.libraryItem.mediaType == 'podcast'
+                  ? progressMap.values
+                        .where((progress) => progress.libraryItemId == widget.libraryItem.id && progress.isFinished)
+                        .length
+                  : 0;
+              return (progress: resolvedProgress, finishedEpisodeCount: finishedEpisodeCount);
+            }),
+          )
+        : (progress: null, finishedEpisodeCount: 0);
     final displayTitle = _resolvedDisplayTitle(shelfEpisode);
-    final progress = widget.showProgress ? _resolveProgress(progressMap!) : null;
+    final progress = progressState.progress;
     final isDownloaded = ref.watch(
       completedDownloadForItemProvider(widget.libraryItem.id, episodeId: shelfEpisode?.id),
     );
@@ -96,12 +107,7 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
     final isCollapsedSeriesCard = widget.libraryItem.collapsedSeries != null;
     final isPodcast = !(widget.libraryItem.media?.hasAudio ?? widget.libraryItem.media?.hasBook ?? true);
     final unplayedEpisodes = isPodcast
-        ? ((widget.libraryItem.media?.podcastMedia?.numEpisodes ?? 0) -
-              ref
-                  .read(mediaProgressProvider.notifier)
-                  .getAllProgressForLibraryItem(widget.libraryItem.id)
-                  .where((progress) => progress.isFinished)
-                  .length)
+        ? ((widget.libraryItem.media?.podcastMedia?.numEpisodes ?? 0) - progressState.finishedEpisodeCount)
         : 0;
 
     final sequenceBadgeLabel = unplayedEpisodes > 0 ? unplayedEpisodes.toString() : widget.sequenceBadge?.trim();

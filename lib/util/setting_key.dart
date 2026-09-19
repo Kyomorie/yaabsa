@@ -42,6 +42,7 @@ class SettingKeys {
   static const String smartRewindMediumRewindSeconds = 'smart_rewind_medium_rewind_seconds';
   static const String smartRewindLongRewindSeconds = 'smart_rewind_long_rewind_seconds';
   static const String libraryGridScale = 'library_grid_scale';
+  static const String refreshProgressOnAppResume = 'refresh_progress_on_app_resume';
   static const String autoResumeOnBluetoothConnection = 'auto_resume_on_bluetooth_connection';
   static const String audioAnnouncementMode = 'audio_announcement_mode';
   static const String restrictAutoResumeToSelectedBluetoothDevices =
@@ -214,6 +215,7 @@ final defaultSettings = {
   SettingKeys.smartRewindMediumRewindSeconds: 30,
   SettingKeys.smartRewindLongRewindSeconds: 60,
   SettingKeys.libraryGridScale: 1.0,
+  SettingKeys.refreshProgressOnAppResume: false,
   SettingKeys.autoResumeOnBluetoothConnection: false,
   SettingKeys.audioAnnouncementMode: 'duck',
   SettingKeys.restrictAutoResumeToSelectedBluetoothDevices: false,
