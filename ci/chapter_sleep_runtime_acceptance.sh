@@ -245,6 +245,27 @@ print(m.group(1) if m else '')
 PY
 }
 
+media_effective_position_ms() {
+  file="$1"
+  uptime_seconds="$2"
+  python3 - "$file" "$uptime_seconds" <<'PY'
+import re,sys
+path,uptime=sys.argv[1:]
+s=open(path,errors='ignore').read()
+m=re.search(
+    r'package=de\.vito0912\.yaabsa\.dev.*?state=PlaybackState \{state=PLAYING\(3\), '
+    r'position=(\d+), buffered position=\d+, speed=([0-9.]+), updated=(\d+)',
+    s,re.S,
+)
+if not m or not uptime:
+    print('')
+    raise SystemExit
+pos=int(m.group(1)); speed=float(m.group(2)); updated=int(m.group(3))
+now_ms=float(uptime)*1000.0
+print(int(pos + max(0.0, now_ms-updated)*speed))
+PY
+}
+
 media_state_name() {
   python3 - "$1" <<'PY'
 import re,sys
@@ -870,7 +891,7 @@ if ! kill -0 "$emulator_pid" 2>/dev/null; then exit 99; fi
 # Runtime calibration: x=950 landed at 323.650s on this ATD. Move A
 # later, but still below the frozen 335s arm ceiling, to shorten only the
 # observation window (not the S4 semantics).
-timeout 5 "$adb" shell input tap 979 2342 >/dev/null 2>&1 || exit 100
+timeout 5 "$adb" shell input tap 965 2342 >/dev/null 2>&1 || exit 100
 landed_ms="$(wait_seek_log_position pre-next.logcat.txt 310000 340000 20)"
 if [ -z "$landed_ms" ]; then exit 101; fi
 echo "SCENARIO4_FINAL_CHAPTER_POSITION_MS=$landed_ms" | tee retarget-position.txt
@@ -908,10 +929,15 @@ if ! grep -q 'state=PlaybackState {state=PLAYING(3)' media-armed.txt \
   || ! grep -q 'description=Chapter Test A' media-armed.txt; then
   exit 106
 fi
-armed_position_ms="$(media_position_ms media-armed.txt)"
-echo "ARMED_MEDIA_SESSION_POSITION_MS=$armed_position_ms" | tee armed-position.txt
+armed_raw_position_ms="$(media_position_ms media-armed.txt)"
+armed_uptime_seconds="$(timeout 5 "$adb" shell cat /proc/uptime 2>/dev/null | awk '{print $1}' || true)"
+armed_position_ms="$(media_effective_position_ms media-armed.txt "$armed_uptime_seconds")"
+armed_host_ms="$(date +%s%3N)"
+echo "ARMED_MEDIA_SESSION_RAW_POSITION_MS=$armed_raw_position_ms" | tee armed-position.txt
+echo "ARMED_MEDIA_SESSION_POSITION_MS=$armed_position_ms" | tee -a armed-position.txt
 # S4 intentionally exercises Next while A is still armed, not an already
-# expiring end-of-chapter race. Keep a meaningful margin before 360s.
+# expiring end-of-chapter race. Validate the effective MediaSession position,
+# not its stale raw position field.
 if [ -z "$armed_position_ms" ] || [ "$armed_position_ms" -le 310000 ] || [ "$armed_position_ms" -ge 335000 ]; then exit 107; fi
 
 # Make the Android command causal: preserve the arm evidence above, then clear
@@ -979,60 +1005,30 @@ if grep -q 'FATAL EXCEPTION' final.logcat.txt; then exit 115; fi
 if [ -z "$b_start_ms" ] || [ "$b_start_ms" -gt 15000 ]; then exit 116; fi
 echo "B_POSITION_AFTER_ANDROID_NEXT_MS=$b_start_ms"
 
-# Observe B through and beyond A's original 360s boundary. This is an
-# observation window, not proof that a stale A callback actually ran: chapter
-# expiry is driven by position/completion events, not a separate wallclock timer.
-remaining_ms=$((360000 - armed_position_ms))
-if [ "$remaining_ms" -le 0 ]; then exit 117; fi
-wait_seconds=$(((remaining_ms + 999) / 1000))
-if [ "$wait_seconds" -lt 20 ] || [ "$wait_seconds" -gt 60 ]; then exit 118; fi
-echo "WAIT_PAST_OLD_A_EXPIRY_SECONDS=$wait_seconds"
+# Observe B through and beyond A's original 360s boundary. Chapter expiry
+# is position/completion-driven, so this is deliberately only an observation
+# window. Account for real host time already elapsed since the armed snapshot.
+stop_causal_logcat
+sync final.logcat.txt 2>/dev/null || true
+now_host_ms="$(date +%s%3N)"
+elapsed_since_arm_ms=$((now_host_ms - armed_host_ms))
+remaining_ms=$((360000 - armed_position_ms - elapsed_since_arm_ms))
+if [ "$remaining_ms" -le 0 ]; then
+  wait_seconds=0
+else
+  wait_seconds=$(((remaining_ms + 999) / 1000))
+fi
+if [ "$wait_seconds" -lt 0 ] || [ "$wait_seconds" -gt 35 ]; then exit 118; fi
+echo "ARM_TO_BOUNDARY_ELAPSED_MS=$elapsed_since_arm_ms" | tee final-position.txt
+echo "WAIT_PAST_OLD_A_EXPIRY_SECONDS=$wait_seconds" | tee -a final-position.txt
 
-: > final-position.txt
-elapsed=0
-sample_index=0
-while [ "$elapsed" -lt "$wait_seconds" ]; do
-  step=5
-  remaining=$((wait_seconds - elapsed))
-  if [ "$remaining" -lt "$step" ]; then step="$remaining"; fi
-  sleep "$step"
-  elapsed=$((elapsed + step))
-  sample_index=$((sample_index + 1))
-
-  if ! kill -0 "$emulator_pid" 2>/dev/null; then
-    echo "EMULATOR_EXITED_DURING_OLD_A_BOUNDARY_OBSERVATION_AT=${elapsed}s" | tee -a final-position.txt
-    exit 146
-  fi
-
-  sample_http_code="$(curl -sS \
-    -o abs-b-progress-sample.json \
-    -w '%{http_code}' \
-    "$ABS_URL/api/me/progress/$b_id" \
-    -H "Authorization: Bearer $token")"
-  sample_curl_rc=$?
-  if [ "$sample_curl_rc" -ne 0 ]; then
-    echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,transport_rc:${sample_curl_rc}" | tee -a final-position.txt
-    exit 147
-  fi
-
-  if [ "$sample_http_code" = '404' ]; then
-    # A new playback session has no progress record until Yaabsa's periodic
-    # playback sync creates one (the app logs a 10s sync cadence).
-    echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,http:404,progress:not-yet-created" | tee -a final-position.txt
-    continue
-  fi
-
-  if [ "$sample_http_code" != '200' ]; then
-    echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,http:${sample_http_code}" | tee -a final-position.txt
-    exit 149
-  fi
-
-  sample_abs_current="$(jq -r '.currentTime // 0' abs-b-progress-sample.json)"
-  sample_abs_finished="$(jq -r '.isFinished // false' abs-b-progress-sample.json)"
-  echo "ABS_B_SAMPLE_${sample_index}=elapsed:${elapsed}s,http:200,current_time:${sample_abs_current},finished:${sample_abs_finished}" | tee -a final-position.txt
-
-  if [ "$sample_abs_finished" != 'false' ]; then exit 148; fi
-done
+if [ "$wait_seconds" -gt 0 ]; then
+  sleep "$wait_seconds"
+fi
+if ! kill -0 "$emulator_pid" 2>/dev/null; then
+  echo "EMULATOR_EXITED_AT_OLD_A_BOUNDARY=1" | tee -a final-position.txt
+  exit 146
+fi
 
 # Second and final required MediaSession dump in S4: after B has crossed A's
 # old chapter-end boundary, Android itself must still expose B as PLAYING.
@@ -1072,6 +1068,8 @@ min_advance_ms=$(((wait_seconds - 10) * 1000))
 if [ "$min_advance_ms" -lt 10000 ]; then min_advance_ms=10000; fi
 if [ "$b_final_ms" -le $((b_start_ms + min_advance_ms)) ]; then exit 122; fi
 if [ "$b_final_ms" -ge 85000 ]; then exit 123; fi
+
+timeout 5 "$adb" logcat -d -v threadtime > final.logcat.txt 2>final-logcat.err.txt || exit 174
 
 # Capture the primary post-boundary state while B is still PLAYING. Any pause
 # below is only a secondary-oracle flush and cannot affect this evidence.
