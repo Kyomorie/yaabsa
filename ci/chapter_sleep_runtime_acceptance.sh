@@ -877,7 +877,7 @@ grep 'Seeking to position:' pre-next.logcat.txt | tail -n 3 > seek.log-evidence.
 # ATD places the mini-player overflow lower than the Google-API image. The
 # former normalized y=0.897 opens the mini-player itself; runtime evidence puts
 # the visible three-dot overflow at approximately (1000,2230) on 1080x2400.
-timeout 5 "$adb" shell input tap 1000 2230 >/dev/null 2>&1 || exit 102
+tap_norm 926 929 || exit 102
 sleep 1
 "$adb" exec-out screencap -p > actions.png
 tap_norm 611 873 || exit 103
