@@ -874,7 +874,10 @@ echo "SCENARIO4_FINAL_CHAPTER_POSITION_MS=$landed_ms" | tee retarget-position.tx
 grep 'Seeking to position:' pre-next.logcat.txt | tail -n 3 > seek.log-evidence.txt || true
 "$adb" exec-out screencap -p > retarget-after-seek.png 2>/dev/null || true
 
-tap_norm 927 897 || exit 102
+# ATD places the mini-player overflow lower than the Google-API image. The
+# former normalized y=0.897 opens the mini-player itself; runtime evidence puts
+# the visible three-dot overflow at approximately (1000,2230) on 1080x2400.
+timeout 5 "$adb" shell input tap 1000 2230 >/dev/null 2>&1 || exit 102
 sleep 1
 "$adb" exec-out screencap -p > actions.png
 tap_norm 611 873 || exit 103
