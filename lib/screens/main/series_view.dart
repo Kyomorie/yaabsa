@@ -245,25 +245,18 @@ class _SeriesProgressEntry extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final seriesProgress = ref.watch(
-      mediaProgressProvider.select((progress) {
-        final progressMap = progress.asData?.value ?? const {};
-        var totalProgress = 0.0;
-        var booksWithProgress = 0;
-        for (final bookId in entry.bookItemIds) {
-          final bookProgress = progressMap[bookId];
-          if (bookProgress != null) {
-            totalProgress += bookProgress.isFinished ? 1.0 : bookProgress.progress;
-            booksWithProgress++;
-          }
-        }
-
-        if (booksWithProgress == 0 || entry.totalBookCount <= 0) {
-          return null;
-        }
-        return (totalProgress / entry.totalBookCount).clamp(0.0, 1.0);
-      }),
-    );
+    var totalProgress = 0.0;
+    var booksWithProgress = 0;
+    for (final bookId in entry.bookItemIds) {
+      final bookProgress = ref.watch(mediaProgressByKeyProvider(bookId));
+      if (bookProgress != null) {
+        totalProgress += bookProgress.isFinished ? 1.0 : bookProgress.progress;
+        booksWithProgress++;
+      }
+    }
+    final seriesProgress = booksWithProgress == 0 || entry.totalBookCount <= 0
+        ? null
+        : (totalProgress / entry.totalBookCount).clamp(0.0, 1.0);
 
     return MultiBookEntryWidget(
       api: api,

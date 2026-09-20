@@ -808,12 +808,16 @@ class _SectionRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scrollController = ScrollController();
-    final progressSnapshot = ref.watch(
-      mediaProgressProvider.select(
-        (progress) => _ShelfSectionProgressSnapshot.from(progress.asData?.value, section.entities),
-      ),
-    );
-    final playableEntries = _collectPlayableEntries(progressSnapshot.progressMap);
+    final relevantProgress = <MediaProgress>[];
+    for (final entity in section.entities) {
+      if (entity is LibraryItem) {
+        relevantProgress.addAll(ref.watch(mediaProgressForLibraryItemProvider(entity.id)));
+      }
+    }
+    final progressMap = <String, MediaProgress>{
+      for (final progress in relevantProgress) mediaProgressKey(progress.libraryItemId, progress.episodeId): progress,
+    };
+    final playableEntries = _collectPlayableEntries(progressMap);
     final canShowPlayVisibleButton =
         !selectionMode && showPlayVisibleButton && _supportsPlayVisibleButton && playableEntries.isNotEmpty;
 
@@ -907,51 +911,6 @@ class _SectionPlayableEntry {
 
   final LibraryItem item;
   final Episode? episode;
-}
-
-class _ShelfSectionProgressSnapshot {
-  const _ShelfSectionProgressSnapshot({required this.progressMap, required this.relevantProgress});
-
-  factory _ShelfSectionProgressSnapshot.from(Map<String, MediaProgress>? progressMap, List<Object> entities) {
-    final resolvedMap = progressMap ?? const <String, MediaProgress>{};
-    final relevantProgress = <MediaProgress?>[];
-
-    for (final entity in entities) {
-      if (entity is! LibraryItem) {
-        continue;
-      }
-
-      relevantProgress.add(resolvedMap[entity.id]);
-      for (final episode in entity.media?.podcastMedia?.episodes ?? const <Episode>[]) {
-        relevantProgress.add(resolvedMap[mediaProgressKey(entity.id, episode.id)]);
-      }
-    }
-
-    return _ShelfSectionProgressSnapshot(progressMap: resolvedMap, relevantProgress: relevantProgress);
-  }
-
-  final Map<String, MediaProgress> progressMap;
-  final List<MediaProgress?> relevantProgress;
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) {
-      return true;
-    }
-    if (other is! _ShelfSectionProgressSnapshot || relevantProgress.length != other.relevantProgress.length) {
-      return false;
-    }
-
-    for (var index = 0; index < relevantProgress.length; index++) {
-      if (relevantProgress[index] != other.relevantProgress[index]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @override
-  int get hashCode => Object.hashAll(relevantProgress);
 }
 
 class _SectionList extends StatelessWidget {

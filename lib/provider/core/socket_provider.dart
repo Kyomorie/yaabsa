@@ -111,7 +111,7 @@ ABSSocketClient absSocketClient(Ref ref) {
     onUserItemProgressUpdated: (event) {
       final progress = event.data;
       final key = mediaProgressKey(progress.libraryItemId, progress.episodeId);
-      final existingProgress = ref.read(mediaProgressProvider).value?[key];
+      final existingProgress = ref.read(mediaProgressProvider.notifier).progressForKey(key);
       final becameFinished = progress.isFinished && existingProgress?.isFinished != true;
 
       ref.read(mediaProgressProvider.notifier).applyRemoteProgressUpdate(progress);

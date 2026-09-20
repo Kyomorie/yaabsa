@@ -210,11 +210,7 @@ class _LatestEpisodeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final progress = ref.watch(
-      mediaProgressProvider.select(
-        (progress) => progress.asData?.value[mediaProgressKey(episode.libraryItemId, episode.id)],
-      ),
-    );
+    final progress = ref.watch(mediaProgressByKeyProvider(mediaProgressKey(episode.libraryItemId, episode.id)));
     final colorScheme = Theme.of(context).colorScheme;
     final podcastTitle = episode.podcast?.metadata.title?.trim();
     final podcastAuthor = episode.podcast?.metadata.author?.trim();

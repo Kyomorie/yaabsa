@@ -21,8 +21,157 @@ String mediaProgressKey(String libraryItemId, [String? episodeId]) {
   return '$libraryItemId::$episodeId';
 }
 
+@riverpod
+MediaProgress? mediaProgressByKey(Ref ref, String key) {
+  ref.read(mediaProgressProvider);
+  return ref.read(mediaProgressStoreProvider).progressByKey[key];
+}
+
+@riverpod
+List<MediaProgress> mediaProgressForLibraryItem(Ref ref, String libraryItemId) {
+  ref.read(mediaProgressProvider);
+  return List<MediaProgress>.unmodifiable(
+    ref.read(mediaProgressStoreProvider).progressByLibraryItemId[libraryItemId]?.values ?? const <MediaProgress>[],
+  );
+}
+
+class MediaProgressStore {
+  Map<String, MediaProgress> progressByKey = <String, MediaProgress>{};
+  Map<String, Map<String, MediaProgress>> progressByLibraryItemId = <String, Map<String, MediaProgress>>{};
+  bool isInitialized = false;
+}
+
+@Riverpod(keepAlive: true)
+MediaProgressStore mediaProgressStore(Ref ref) {
+  return MediaProgressStore();
+}
+
+@Riverpod(keepAlive: true)
+class MediaProgressRevision extends _$MediaProgressRevision {
+  @override
+  int build() => 0;
+
+  void advance() {
+    state++;
+  }
+}
+
 @Riverpod(keepAlive: true)
 class MediaProgressNotifier extends _$MediaProgressNotifier {
+  MediaProgressStore get _store => ref.read(mediaProgressStoreProvider);
+
+  Map<String, MediaProgress> get _progressByKey => _store.progressByKey;
+
+  set _progressByKey(Map<String, MediaProgress> value) {
+    _store.progressByKey = value;
+  }
+
+  Map<String, Map<String, MediaProgress>> get _progressByLibraryItemId => _store.progressByLibraryItemId;
+
+  set _progressByLibraryItemId(Map<String, Map<String, MediaProgress>> value) {
+    _store.progressByLibraryItemId = value;
+  }
+
+  bool get isInitialized => _store.isInitialized;
+
+  int get progressCount => _progressByKey.length;
+
+  Map<String, MediaProgress> get snapshot => Map<String, MediaProgress>.unmodifiable(_progressByKey);
+
+  MediaProgress? progressForKey(String key) => _progressByKey[key];
+
+  List<MediaProgress> progressForLibraryItem(String libraryItemId) {
+    return List<MediaProgress>.unmodifiable(_progressByLibraryItemId[libraryItemId]?.values ?? const <MediaProgress>[]);
+  }
+
+  bool _isMeaningfulGlobalChange(MediaProgress? previous, MediaProgress? next) {
+    if (previous == null || next == null) {
+      return previous != next;
+    }
+    return previous.isFinished != next.isFinished ||
+        previous.hideFromContinueListening != next.hideFromContinueListening ||
+        (previous.progress - next.progress).abs() >= 0.01;
+  }
+
+  void _notifyChangedKeys(Iterable<String> keys, {required bool notifyGlobalListeners}) {
+    final changedKeys = keys.toSet();
+    if (changedKeys.isEmpty) {
+      return;
+    }
+
+    final changedLibraryItemIds = <String>{};
+    for (final key in changedKeys) {
+      ref.invalidate(mediaProgressByKeyProvider(key));
+      final progress = _progressByKey[key];
+      final separatorIndex = key.indexOf('::');
+      final libraryItemId = progress?.libraryItemId ?? (separatorIndex < 0 ? key : key.substring(0, separatorIndex));
+      changedLibraryItemIds.add(libraryItemId);
+    }
+    for (final libraryItemId in changedLibraryItemIds) {
+      ref.invalidate(mediaProgressForLibraryItemProvider(libraryItemId));
+    }
+    if (notifyGlobalListeners) {
+      ref.read(mediaProgressRevisionProvider.notifier).advance();
+    }
+  }
+
+  void _replaceProgressMap(Map<String, MediaProgress> next) {
+    final changedKeys = <String>{};
+    var notifyGlobalListeners = false;
+    for (final key in _progressByKey.keys) {
+      if (!next.containsKey(key)) {
+        changedKeys.add(key);
+        notifyGlobalListeners = true;
+      }
+    }
+    for (final entry in next.entries) {
+      if (_progressByKey[entry.key] != entry.value) {
+        changedKeys.add(entry.key);
+        notifyGlobalListeners =
+            notifyGlobalListeners || _isMeaningfulGlobalChange(_progressByKey[entry.key], entry.value);
+      }
+    }
+
+    _progressByKey = Map<String, MediaProgress>.of(next);
+    _progressByLibraryItemId = <String, Map<String, MediaProgress>>{};
+    for (final entry in _progressByKey.entries) {
+      _progressByLibraryItemId.putIfAbsent(entry.value.libraryItemId, () => <String, MediaProgress>{})[entry.key] =
+          entry.value;
+    }
+    _notifyChangedKeys(changedKeys, notifyGlobalListeners: notifyGlobalListeners);
+  }
+
+  void _setProgress(String key, MediaProgress progress) {
+    final existing = _progressByKey[key];
+    if (existing == progress) {
+      return;
+    }
+    if (existing != null && existing.libraryItemId != progress.libraryItemId) {
+      final previousItemProgress = _progressByLibraryItemId[existing.libraryItemId];
+      previousItemProgress?.remove(key);
+      if (previousItemProgress?.isEmpty ?? false) {
+        _progressByLibraryItemId.remove(existing.libraryItemId);
+      }
+    }
+    _progressByKey[key] = progress;
+    _progressByLibraryItemId.putIfAbsent(progress.libraryItemId, () => <String, MediaProgress>{})[key] = progress;
+    _notifyChangedKeys(<String>[key], notifyGlobalListeners: _isMeaningfulGlobalChange(existing, progress));
+  }
+
+  bool _removeProgress(String key) {
+    final removed = _progressByKey.remove(key);
+    if (removed == null) {
+      return false;
+    }
+    final itemProgress = _progressByLibraryItemId[removed.libraryItemId];
+    itemProgress?.remove(key);
+    if (itemProgress?.isEmpty ?? false) {
+      _progressByLibraryItemId.remove(removed.libraryItemId);
+    }
+    _notifyChangedKeys(<String>[key], notifyGlobalListeners: true);
+    return true;
+  }
+
   String _progressKey(String libraryItemId, [String? episodeId]) {
     return mediaProgressKey(libraryItemId, episodeId);
   }
@@ -202,6 +351,9 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
 
   Future<void> _persistProgressList(Iterable<MediaProgress> progressList) async {
     for (final progress in progressList) {
+      if (!ref.mounted) {
+        return;
+      }
       await _persistProgress(progress);
     }
   }
@@ -234,14 +386,21 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
   }
 
   @override
-  Future<Map<String, MediaProgress>> build() async {
-    final userId = _activeUserId();
-    final localMap = await _loadLocalProgressMap(userId: userId);
-    state = AsyncData(localMap);
+  Future<void> build() async {
+    _store.isInitialized = false;
+    _replaceProgressMap(const <String, MediaProgress>{});
 
     ref.listen(absApiProvider, (previous, next) {
       Future.microtask(() => ref.invalidateSelf());
     });
+
+    final userId = _activeUserId();
+    final localMap = await _loadLocalProgressMap(userId: userId);
+    if (!ref.mounted) {
+      return;
+    }
+    _replaceProgressMap(_mergeProgressMaps(localMap, _progressByKey));
+    _store.isInitialized = true;
 
     final absApi = ref.read(absApiProvider);
     if (absApi == null) {
@@ -250,16 +409,18 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
         tag: 'MediaProgressProvider',
         level: InfoLevel.debug,
       );
-      return localMap;
+      return;
     }
 
     try {
       final remoteProgress = await _fetchAllRemoteProgress(absApi);
+      if (!ref.mounted) {
+        return;
+      }
       final remoteMap = _listToMap(remoteProgress);
-      final mergedMap = _mergeProgressMaps(localMap, remoteMap);
-      state = AsyncData(mergedMap);
+      final mergedMap = _mergeProgressMaps(_progressByKey, remoteMap);
+      _replaceProgressMap(mergedMap);
       await _persistProgressList(remoteMap.values);
-      return mergedMap;
     } catch (e, s) {
       logger(
         'Error fetching remote media progress in build: $e\n$s',
@@ -267,18 +428,23 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
         level: InfoLevel.error,
       );
       if (localMap.isEmpty) {
-        state = AsyncError<Map<String, MediaProgress>>(e, s);
+        _store.isInitialized = false;
+        rethrow;
       }
-      return localMap;
     }
   }
 
   Future<void> refreshAllProgress({bool clearBefore = true}) async {
-    final previousMap = state.asData?.value ?? <String, MediaProgress>{};
-    if (clearBefore) state = const AsyncLoading<Map<String, MediaProgress>>();
+    final previousMap = Map<String, MediaProgress>.of(_progressByKey);
+    if (clearBefore) {
+      _replaceProgressMap(const <String, MediaProgress>{});
+    }
 
     final userId = _activeUserId();
     final localMap = await _loadLocalProgressMap(userId: userId);
+    if (!ref.mounted) {
+      return;
+    }
     final baseMap = _mergeProgressMaps(previousMap, localMap);
 
     final absApi = ref.read(absApiProvider);
@@ -288,24 +454,26 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
         tag: 'MediaProgressProvider',
         level: InfoLevel.debug,
       );
-      state = AsyncData(baseMap);
+      _replaceProgressMap(_mergeProgressMaps(baseMap, _progressByKey));
       return;
     }
 
     try {
       final remoteProgress = await _fetchAllRemoteProgress(absApi);
+      if (!ref.mounted) {
+        return;
+      }
       final remoteMap = _listToMap(remoteProgress);
-      final mergedMap = _mergeProgressMaps(baseMap, remoteMap);
-      state = AsyncData(mergedMap);
+      final mergedMap = _mergeProgressMaps(_progressByKey, remoteMap);
+      _replaceProgressMap(mergedMap);
       await _persistProgressList(remoteMap.values);
     } catch (e, s) {
       logger('Error refreshing all media progress: $e\n$s', tag: 'MediaProgressProvider', level: InfoLevel.error);
 
-      if (baseMap.isEmpty) {
-        state = AsyncError<Map<String, MediaProgress>>(e, s);
-      } else {
-        state = AsyncData(baseMap);
+      if (!ref.mounted) {
+        return;
       }
+      _replaceProgressMap(_mergeProgressMaps(baseMap, _progressByKey));
     }
   }
 
@@ -315,15 +483,18 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
     String? userId,
   }) async {
     final key = _progressKey(libraryItemId, episodeId);
-    final existingMap = state.asData?.value ?? <String, MediaProgress>{};
+    final existingMap = _progressByKey;
     MediaProgress? localProgress = existingMap[key];
     final effectiveUserId = userId ?? _activeUserId();
 
     if (localProgress == null) {
       final localMap = await _loadLocalProgressMap(userId: effectiveUserId);
+      if (!ref.mounted) {
+        return localProgress;
+      }
       if (localMap.isNotEmpty) {
         final mergedMap = _mergeProgressMaps(existingMap, localMap);
-        state = AsyncData(mergedMap);
+        _replaceProgressMap(mergedMap);
         localProgress = mergedMap[key];
       }
     }
@@ -341,6 +512,10 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
     try {
       final meApi = absApi.getMeApi();
       final response = await meApi.getProgress(libraryItemId, episodeId: episodeId);
+      if (!ref.mounted) {
+        return localProgress;
+      }
+      localProgress = _progressByKey[key] ?? localProgress;
       final remoteProgress = response.data;
 
       if (remoteProgress == null) {
@@ -353,11 +528,7 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
           return localProgress;
         }
 
-        final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
-        final Map<String, MediaProgress> updatedMap = {...currentMap};
-        if (updatedMap.remove(key) != null) {
-          state = AsyncData(updatedMap);
-        }
+        _removeProgress(key);
 
         if (effectiveUserId != null && effectiveUserId.isNotEmpty) {
           await _deleteCachedProgress(userId: effectiveUserId, libraryItemId: libraryItemId, episodeId: episodeId);
@@ -367,6 +538,9 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
       }
 
       await _persistProgress(remoteProgress);
+      if (!ref.mounted) {
+        return localProgress;
+      }
 
       late final MediaProgress resolvedProgress;
       if (localProgress == null) {
@@ -383,9 +557,7 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
         resolvedProgress = _preferMostRecentProgress(localProgress, remoteProgress, preferIncomingOnTie: true);
       }
 
-      final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
-      final Map<String, MediaProgress> updatedMap = {...currentMap, key: resolvedProgress};
-      state = AsyncData(updatedMap);
+      _setProgress(key, resolvedProgress);
 
       if (!identical(resolvedProgress, remoteProgress)) {
         logger(
@@ -408,11 +580,7 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
           return localProgress;
         }
 
-        final currentMap = state.asData?.value ?? <String, MediaProgress>{};
-        final updatedMap = {...currentMap};
-        if (updatedMap.remove(key) != null) {
-          state = AsyncData(updatedMap);
-        }
+        _removeProgress(key);
 
         if (effectiveUserId != null && effectiveUserId.isNotEmpty) {
           await _deleteCachedProgress(userId: effectiveUserId, libraryItemId: libraryItemId, episodeId: episodeId);
@@ -439,10 +607,9 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
 
   Future<MediaProgress?> updateMediaProgress(String libraryItemId, double currentTime, PlaybackSession session) async {
     try {
-      final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
       final key = _progressKey(libraryItemId, session.episodeId);
 
-      MediaProgress? updatedProgress = currentMap[key];
+      MediaProgress? updatedProgress = _progressByKey[key];
 
       final String effectiveUserId = (updatedProgress?.userId.isNotEmpty ?? false)
           ? updatedProgress!.userId
@@ -469,7 +636,7 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
             currentTime: currentTime,
             lastUpdate: nextLastUpdate,
           );
-          state = AsyncData({...currentMap, key: updatedProgress});
+          _setProgress(key, updatedProgress);
           unawaited(_persistProgress(updatedProgress));
           return updatedProgress;
         }
@@ -498,8 +665,7 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
         lastUpdate: nextLastUpdate,
       );
 
-      final Map<String, MediaProgress> updatedMap = {...currentMap, key: updatedProgress};
-      state = AsyncData(updatedMap);
+      _setProgress(key, updatedProgress);
       await _persistProgress(updatedProgress);
       return updatedProgress;
     } catch (e, s) {
@@ -508,15 +674,13 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
         tag: 'MediaProgressProvider',
         level: InfoLevel.error,
       );
-      state = AsyncError<Map<String, MediaProgress>>(e, s);
     }
     return null;
   }
 
   void applyRemoteProgressUpdate(MediaProgress progress) {
     final key = _progressKeyFromMediaProgress(progress);
-    final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
-    final existingProgress = currentMap[key];
+    final existingProgress = _progressByKey[key];
 
     final incomingLastUpdated = _lastUpdatedMillis(progress);
     final existingLastUpdated = _lastUpdatedMillis(existingProgress);
@@ -543,7 +707,7 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
       );
     }
 
-    state = AsyncData({...currentMap, key: progress});
+    _setProgress(key, progress);
     unawaited(_persistProgress(progress));
   }
 
@@ -554,8 +718,7 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
     String? episodeId,
   }) {
     final key = _progressKey(libraryItemId, episodeId);
-    final Map<String, MediaProgress> currentMap = state.asData?.value ?? <String, MediaProgress>{};
-    final existingProgress = currentMap[key];
+    final existingProgress = _progressByKey[key];
     if (existingProgress == null) {
       return;
     }
@@ -572,12 +735,11 @@ class MediaProgressNotifier extends _$MediaProgressNotifier {
       lastUpdate: nextLastUpdate,
     );
 
-    state = AsyncData({...currentMap, key: updatedProgress});
+    _setProgress(key, updatedProgress);
     unawaited(_persistProgress(updatedProgress));
   }
 
   List<MediaProgress> getAllProgressForLibraryItem(String libraryItemId) {
-    final currentMap = state.asData?.value ?? <String, MediaProgress>{};
-    return currentMap.values.where((progress) => progress.libraryItemId == libraryItemId).toList(growable: false);
+    return progressForLibraryItem(libraryItemId);
   }
 }

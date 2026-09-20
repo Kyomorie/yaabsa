@@ -214,11 +214,11 @@ class LibraryMultiSelectHost extends HookConsumerWidget {
     final selectedItems = visibleItems
         .where((item) => effectiveSelectedItemIds.contains(libraryItemSelectionKey(item)))
         .toList(growable: false);
-    final allSelectedFinished = ref.watch(
-      mediaProgressProvider.select(
-        (progress) => areAllSupportedLibraryItemsFinished(selectedItems, progress.asData?.value ?? const {}),
-      ),
-    );
+    final allSelectedFinished =
+        selectedItems.isNotEmpty &&
+        selectedItems.every(
+          (item) => ref.watch(mediaProgressByKeyProvider(libraryItemSelectionKey(item)))?.isFinished ?? false,
+        );
     final hasDeletableSelectedItems = selectedItems.any(isAudiobookLibraryItem);
 
     final downloadedItemIds = <String>{};

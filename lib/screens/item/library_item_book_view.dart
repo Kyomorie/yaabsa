@@ -51,7 +51,7 @@ class LibraryItemBookView extends ConsumerWidget {
     final coverHeaders = normalizeImageRequestHeaders(api.dio.options.headers);
     Widget coverWidget = libraryItemApi.getLibraryItemCover(item.id, item: item);
 
-    final itemProgress = ref.watch(mediaProgressProvider.select((progress) => progress.asData?.value[item.id]));
+    final itemProgress = ref.watch(mediaProgressByKeyProvider(item.id));
     final progressValue = (itemProgress?.progress ?? 0).clamp(0.0, 1.0).toDouble();
     if (progressValue > 0) {
       coverWidget = Stack(

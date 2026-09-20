@@ -21,7 +21,6 @@ import 'package:yaabsa/api/library/search_library.dart';
 import 'package:yaabsa/api/library_items/episode.dart';
 import 'package:yaabsa/api/library_items/library_item.dart';
 import 'package:yaabsa/api/library_items/series.dart';
-import 'package:yaabsa/api/me/media_progress.dart';
 import 'package:yaabsa/api/routes/abs_api.dart';
 import 'package:yaabsa/api/me/user.dart';
 import 'package:yaabsa/api/list/collection.dart';
@@ -110,7 +109,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   late final StreamSubscription<String?> _desktopSkipControlsSeekSubscription;
   late final ProviderSubscription<ABSApi?> _androidAutoApiSubscription;
   late final ProviderSubscription<bool> _androidAutoServerReachabilitySubscription;
-  late final ProviderSubscription<AsyncValue<Map<String, MediaProgress>>> _androidAutoMediaProgressSubscription;
+  late final ProviderSubscription<int> _androidAutoMediaProgressSubscription;
   int _currentNotificationPageIndex = 0;
   List<List<String>> _notificationPages = const [
     ['rewind', 'fastForward', 'speed', 'stop'],
@@ -1576,11 +1575,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       unawaited(_androidAutoHandleServerReachabilityChanged(this));
     });
 
-    _androidAutoMediaProgressSubscription = _ref.listen<AsyncValue<Map<String, MediaProgress>>>(mediaProgressProvider, (
-      previous,
-      next,
-    ) {
-      if (_isDisposing || !_androidAutoProgressMeaningfullyChanged(previous, next)) {
+    _androidAutoMediaProgressSubscription = _ref.listen<int>(mediaProgressRevisionProvider, (previous, next) {
+      if (_isDisposing || previous == next) {
         return;
       }
 

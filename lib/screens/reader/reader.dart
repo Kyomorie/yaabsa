@@ -669,11 +669,7 @@ class _ReaderState extends ConsumerState<Reader> with WidgetsBindingObserver {
       }
     });
 
-    final currentProgress = ref.watch(
-      mediaProgressProvider.select((asyncValue) {
-        return asyncValue.value?[widget.itemId];
-      }),
-    );
+    final currentProgress = ref.watch(mediaProgressByKeyProvider(widget.itemId));
     _currentAudioTime = currentProgress?.currentTime ?? 0.0;
 
     _canReachServer = ref.watch(serverReachabilityProvider);

@@ -366,8 +366,7 @@ extension _BGAudioHandlerAndroidAutoMedia on BGAudioHandler {
   }
 
   Map<String, dynamic> _androidAutoCompletionExtras({required String itemId, String? episodeId}) {
-    final progressMap = _ref.read(mediaProgressProvider).value ?? const <String, MediaProgress>{};
-    final progress = progressMap[mediaProgressKey(itemId, episodeId)];
+    final progress = _ref.read(mediaProgressProvider.notifier).progressForKey(mediaProgressKey(itemId, episodeId));
     if (progress == null) {
       return <String, dynamic>{
         _androidAutoCompletionStatusExtrasKey: _androidAutoCompletionStatusNotPlayed,

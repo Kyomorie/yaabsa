@@ -2,16 +2,16 @@ part of '../bg_audio_handler.dart';
 
 extension _BGAudioHandlerAndroidAutoData on BGAudioHandler {
   Future<void> _androidAutoEnsureMediaProgress() async {
-    final hadData = _ref.read(mediaProgressProvider).asData != null;
+    final progressNotifier = _ref.read(mediaProgressProvider.notifier);
+    final hadData = progressNotifier.isInitialized;
     try {
-      final progress = await _ref
-          .read(mediaProgressProvider.future)
-          .timeout(
-            const Duration(seconds: 5),
-            onTimeout: () => _ref.read(mediaProgressProvider).asData?.value ?? const <String, MediaProgress>{},
-          );
+      await _ref.read(mediaProgressProvider.future).timeout(const Duration(seconds: 5), onTimeout: () {});
       if (!hadData) {
-        logger('media progress ready: entries=${progress.length}', tag: 'AAOSBrowse', level: InfoLevel.info);
+        logger(
+          'media progress ready: entries=${_ref.read(mediaProgressProvider.notifier).progressCount}',
+          tag: 'AAOSBrowse',
+          level: InfoLevel.info,
+        );
       }
     } catch (e, s) {
       logger('media progress unavailable: $e\n$s', tag: 'AAOSBrowse', level: InfoLevel.warning);

@@ -229,13 +229,10 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
     }
 
     final allEpisodes = podcastMedia.episodes ?? const <Episode>[];
-    final progressSnapshot = ref.watch(
-      mediaProgressProvider.select(
-        (progress) =>
-            _PodcastProgressSnapshot.from(progress.asData?.value, libraryItemId: widget.item.id, episodes: allEpisodes),
-      ),
-    );
-    final progressMap = progressSnapshot.progressMap;
+    final itemProgress = ref.watch(mediaProgressForLibraryItemProvider(widget.item.id));
+    final progressMap = <String, MediaProgress>{
+      for (final progress in itemProgress) mediaProgressKey(progress.libraryItemId, progress.episodeId): progress,
+    };
     final visibleEpisodes = _buildVisibleEpisodes(allEpisodes, progressMap);
     final targetEpisodeIndex = _pendingEpisodeId == null
         ? -1
@@ -580,7 +577,7 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                                         .toList(growable: false);
                                                     final allFinished = areAllSupportedLibraryItemsFinished(
                                                       items,
-                                                      ref.read(mediaProgressProvider).value ?? {},
+                                                      progressMap,
                                                     );
                                                     unawaited(
                                                       (allFinished
@@ -1240,45 +1237,4 @@ bool _samePodcastTaskState(List<TaskRecord> previous, List<TaskRecord> next) {
     }
   }
   return true;
-}
-
-class _PodcastProgressSnapshot {
-  const _PodcastProgressSnapshot({required this.progressMap, required this.episodeProgress});
-
-  factory _PodcastProgressSnapshot.from(
-    Map<String, MediaProgress>? progressMap, {
-    required String libraryItemId,
-    required List<Episode> episodes,
-  }) {
-    final resolvedMap = progressMap ?? const <String, MediaProgress>{};
-    return _PodcastProgressSnapshot(
-      progressMap: resolvedMap,
-      episodeProgress: <MediaProgress?>[
-        for (final episode in episodes) resolvedMap[mediaProgressKey(libraryItemId, episode.id)],
-      ],
-    );
-  }
-
-  final Map<String, MediaProgress> progressMap;
-  final List<MediaProgress?> episodeProgress;
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) {
-      return true;
-    }
-    if (other is! _PodcastProgressSnapshot || episodeProgress.length != other.episodeProgress.length) {
-      return false;
-    }
-
-    for (var index = 0; index < episodeProgress.length; index++) {
-      if (episodeProgress[index] != other.episodeProgress[index]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @override
-  int get hashCode => Object.hashAll(episodeProgress);
 }

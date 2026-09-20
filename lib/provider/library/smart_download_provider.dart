@@ -178,7 +178,7 @@ class SmartDownloadManager extends _$SmartDownloadManager {
     }
 
     final db = ref.read(appDatabaseProvider);
-    var progress = ref.read(mediaProgressProvider).asData?.value ?? const {};
+    var progress = ref.read(mediaProgressProvider.notifier).snapshot;
     if (progress.isEmpty) {
       final cachedEntries = await db.getStoredMediaProgressByUser(userId);
       final cachedProgress = <String, MediaProgress>{};
@@ -693,7 +693,8 @@ class SmartDownloadManager extends _$SmartDownloadManager {
 
     Map<String, MediaProgress> progress;
     try {
-      progress = ref.read(mediaProgressProvider).asData?.value ?? await ref.read(mediaProgressProvider.future);
+      await ref.read(mediaProgressProvider.future);
+      progress = ref.read(mediaProgressProvider.notifier).snapshot;
     } catch (_) {
       progress = const <String, MediaProgress>{};
     }
