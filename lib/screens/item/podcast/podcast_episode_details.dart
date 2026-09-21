@@ -91,9 +91,7 @@ class _PodcastEpisodeDetailsContentState extends ConsumerState<PodcastEpisodeDet
   Widget build(BuildContext context) {
     final item = widget.item;
     final episode = widget.episode;
-    final progress = ref.watch(
-      mediaProgressProvider.select((asyncValue) => asyncValue.value?[mediaProgressKey(item.id, episode.id)]),
-    );
+    final progress = ref.watch(mediaProgressByKeyProvider(mediaProgressKey(item.id, episode.id)));
 
     final progressStatus = podcastEpisodeCompleted(progress)
         ? 'Complete'

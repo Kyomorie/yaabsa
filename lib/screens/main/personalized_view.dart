@@ -1,3 +1,5 @@
+import 'package:yaabsa/components/app/item/item_progress_actions.dart';
+
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
@@ -110,7 +112,6 @@ class PersonalizedView extends HookConsumerWidget {
         ? ref.watch(libraryFilterDataProvider(selectedLibrary.id))
         : const AsyncData<LibraryFilterData?>(null);
     final managementPreferences = readServerManagementPreferences(ref, currentUser?.id);
-    final mediaProgressMap = ref.watch(mediaProgressProvider).asData?.value ?? const <String, MediaProgress>{};
     final personalizedLibraryForWidgets = personalizedLibraryAsyncValue.asData?.value;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final appLifecycleState = useAppLifecycleState();
@@ -157,8 +158,11 @@ class PersonalizedView extends HookConsumerWidget {
       ],
     );
 
-    Future<void> refreshPersonalizedLibrary({bool withLoading = false}) {
-      return _retryPersonalizedLibrary(ref: ref, libraryId: selectedLibrary.id, withLoading: withLoading);
+    Future<void> refreshPersonalizedLibrary({bool withLoading = false}) async {
+      await Future.wait<void>([
+        _retryPersonalizedLibrary(ref: ref, libraryId: selectedLibrary.id, withLoading: withLoading),
+        ref.read(mediaProgressProvider.notifier).refreshAllProgress(clearBefore: false),
+      ]);
     }
 
     final personalizedLibrary = personalizedLibraryAsyncValue.value;
@@ -304,7 +308,7 @@ class PersonalizedView extends HookConsumerWidget {
           scopeKey: 'shelf:${selectedLibrary.id}',
           libraryId: selectedLibrary.id,
           visibleItems: visibleLibraryItems,
-          canAddToPlaylist: canManageBooks && currentUser != null,
+          canAddToPlaylist: currentUser != null,
           canAddToCollection: canManageBooks && hasUpdatePermission && managementPreferences.collectionsEnabled,
           canQuickMatchItems: canQuickMatchItems,
           canDeleteItems: canManageBooks && hasDeletePermission && managementPreferences.deleteItemsEnabled,
@@ -347,7 +351,6 @@ class PersonalizedView extends HookConsumerWidget {
                                 libraryTileWidth: libraryTileWidth,
                                 viewportWidth: width,
                                 showPlayVisibleButton: showShelfPlayButton,
-                                mediaProgressMap: mediaProgressMap,
                                 selectionMode: selection.selectionMode,
                                 selectedItemIds: selection.selectedItemIds,
                                 onToggleSelection: selection.toggleSelectionById,
@@ -671,7 +674,7 @@ List<LibraryItem> _collectVisibleShelfLibraryItems(List<_SectionData> sections) 
         continue;
       }
 
-      if (!seenIds.add(entity.id)) {
+      if (!seenIds.add(libraryItemSelectionKey(entity))) {
         continue;
       }
 
@@ -682,14 +685,13 @@ List<LibraryItem> _collectVisibleShelfLibraryItems(List<_SectionData> sections) 
   return items;
 }
 
-class _SectionRow extends StatelessWidget {
+class _SectionRow extends ConsumerWidget {
   const _SectionRow({
     required this.section,
     required this.api,
     required this.libraryTileWidth,
     required this.viewportWidth,
     required this.showPlayVisibleButton,
-    required this.mediaProgressMap,
     required this.selectionMode,
     required this.selectedItemIds,
     required this.onToggleSelection,
@@ -703,7 +705,6 @@ class _SectionRow extends StatelessWidget {
   final double libraryTileWidth;
   final double viewportWidth;
   final bool showPlayVisibleButton;
-  final Map<String, MediaProgress> mediaProgressMap;
   final bool selectionMode;
   final Set<String> selectedItemIds;
   final ValueChanged<String> onToggleSelection;
@@ -715,7 +716,7 @@ class _SectionRow extends StatelessWidget {
     return section.id == _continueListeningShelfId || section.id == _newestEpisodesShelfId;
   }
 
-  List<_SectionPlayableEntry> _collectPlayableEntries() {
+  List<_SectionPlayableEntry> _collectPlayableEntries(Map<String, MediaProgress> mediaProgressMap) {
     final playableEntries = <_SectionPlayableEntry>[];
 
     for (final entity in section.entities) {
@@ -724,7 +725,7 @@ class _SectionRow extends StatelessWidget {
       }
 
       if (entity.mediaType == 'podcast') {
-        final playableEpisode = _playablePodcastEpisode(entity);
+        final playableEpisode = _playablePodcastEpisode(entity, mediaProgressMap);
         if (playableEpisode != null) {
           playableEntries.add(_SectionPlayableEntry.podcastEpisode(entity, playableEpisode));
         }
@@ -745,7 +746,7 @@ class _SectionRow extends StatelessWidget {
     return playableEntries;
   }
 
-  Episode? _playablePodcastEpisode(LibraryItem item) {
+  Episode? _playablePodcastEpisode(LibraryItem item, Map<String, MediaProgress> mediaProgressMap) {
     if (item.mediaType != 'podcast') {
       return null;
     }
@@ -805,9 +806,18 @@ class _SectionRow extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final scrollController = ScrollController();
-    final playableEntries = _collectPlayableEntries();
+    final relevantProgress = <MediaProgress>[];
+    for (final entity in section.entities) {
+      if (entity is LibraryItem) {
+        relevantProgress.addAll(ref.watch(mediaProgressForLibraryItemProvider(entity.id)));
+      }
+    }
+    final progressMap = <String, MediaProgress>{
+      for (final progress in relevantProgress) mediaProgressKey(progress.libraryItemId, progress.episodeId): progress,
+    };
+    final playableEntries = _collectPlayableEntries(progressMap);
     final canShowPlayVisibleButton =
         !selectionMode && showPlayVisibleButton && _supportsPlayVisibleButton && playableEntries.isNotEmpty;
 
@@ -967,12 +977,12 @@ class _SectionList extends StatelessWidget {
         squareCover: true,
         enableHoverSelection: true,
         selectionMode: selectionMode,
-        isSelected: selectedItemIds.contains(item.id),
+        isSelected: selectedItemIds.contains(libraryItemSelectionKey(item)),
         canEdit: canEditItems && !isPodcastEpisodeCard,
         onEdit: isPodcastEpisodeCard ? null : () => onEditItem(item),
         episodeIdToReveal: episodeIdToReveal,
-        onToggleSelection: () => onToggleSelection(item.id),
-        onEnterSelectionMode: () => onEnterSelectionMode(item.id),
+        onToggleSelection: () => onToggleSelection(libraryItemSelectionKey(item)),
+        onEnterSelectionMode: () => onEnterSelectionMode(libraryItemSelectionKey(item)),
       ),
     );
   }

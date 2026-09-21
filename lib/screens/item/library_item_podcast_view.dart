@@ -14,6 +14,7 @@ import 'package:yaabsa/components/app/item/editor/open_library_item_editor_dialo
 import 'package:yaabsa/components/app/item/item_more_actions_button.dart';
 import 'package:yaabsa/components/app/item/item_progress_actions.dart';
 import 'package:yaabsa/components/app/item/pinned_shelf_snackbar.dart';
+import 'package:yaabsa/components/app/library/library_multi_select_actions.dart';
 import 'package:yaabsa/components/common/connection_issue_view.dart';
 import 'package:yaabsa/components/common/loading_snackbar.dart';
 import 'package:yaabsa/database/app_database.dart';
@@ -228,13 +229,10 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
     }
 
     final allEpisodes = podcastMedia.episodes ?? const <Episode>[];
-    final progressSnapshot = ref.watch(
-      mediaProgressProvider.select(
-        (progress) =>
-            _PodcastProgressSnapshot.from(progress.asData?.value, libraryItemId: widget.item.id, episodes: allEpisodes),
-      ),
-    );
-    final progressMap = progressSnapshot.progressMap;
+    final itemProgress = ref.watch(mediaProgressForLibraryItemProvider(widget.item.id));
+    final progressMap = <String, MediaProgress>{
+      for (final progress in itemProgress) mediaProgressKey(progress.libraryItemId, progress.episodeId): progress,
+    };
     final visibleEpisodes = _buildVisibleEpisodes(allEpisodes, progressMap);
     final targetEpisodeIndex = _pendingEpisodeId == null
         ? -1
@@ -397,6 +395,7 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
 
                         return CustomScrollView(
                           controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
                           slivers: [
                             SliverToBoxAdapter(
                               child: Padding(
@@ -551,9 +550,79 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                                 _selectedEpisodeIds.addAll(visibleEpisodes.map((e) => e.id));
                                               });
                                             },
-                                            onDownloadSelected: () {
-                                              _downloadSelectedEpisodes(visibleEpisodes, storedDownloads, activeTasks);
-                                            },
+                                            onDownloadSelected: (currentUser?.permissions.download ?? false)
+                                                ? () {
+                                                    _downloadSelectedEpisodes(
+                                                      visibleEpisodes,
+                                                      storedDownloads,
+                                                      activeTasks,
+                                                    );
+                                                  }
+                                                : null,
+                                            allSelectedFinished: visibleEpisodes
+                                                .where((episode) => _selectedEpisodeIds.contains(episode.id))
+                                                .every(
+                                                  (episode) => isPodcastEpisodeFinished(
+                                                    item: widget.item,
+                                                    episode: episode,
+                                                    progressByKey: progressMap,
+                                                  ),
+                                                ),
+                                            onToggleSelectedFinished: _selectedEpisodeIds.isEmpty
+                                                ? null
+                                                : () {
+                                                    final items = visibleEpisodes
+                                                        .where((episode) => _selectedEpisodeIds.contains(episode.id))
+                                                        .map((episode) => widget.item.copyWith(recentEpisode: episode))
+                                                        .toList(growable: false);
+                                                    final allFinished = areAllSupportedLibraryItemsFinished(
+                                                      items,
+                                                      progressMap,
+                                                    );
+                                                    unawaited(
+                                                      (allFinished
+                                                          ? markLibraryItemsAsUnfinished
+                                                          : markLibraryItemsAsFinished)(
+                                                        context: context,
+                                                        ref: ref,
+                                                        items: items,
+                                                        onSuccess: () {
+                                                          if (!mounted) return;
+                                                          setState(() {
+                                                            _selectionMode = false;
+                                                            _selectedEpisodeIds.clear();
+                                                          });
+                                                        },
+                                                      ),
+                                                    );
+                                                  },
+                                            onAddSelectedToPlaylist: currentUser == null || libraryId == null
+                                                ? null
+                                                : () {
+                                                    final selectedEpisodeIds = visibleEpisodes
+                                                        .where((episode) => _selectedEpisodeIds.contains(episode.id))
+                                                        .map((episode) => episode.id)
+                                                        .toList(growable: false);
+                                                    unawaited(
+                                                      addSelectedPodcastEpisodesToPlaylist(
+                                                        context: context,
+                                                        ref: ref,
+                                                        libraryId: libraryId,
+                                                        currentUserId: currentUser.id,
+                                                        podcastItemId: widget.item.id,
+                                                        selectedEpisodeIds: selectedEpisodeIds,
+                                                        onSuccess: () {
+                                                          if (!mounted) {
+                                                            return;
+                                                          }
+                                                          setState(() {
+                                                            _selectionMode = false;
+                                                            _selectedEpisodeIds.clear();
+                                                          });
+                                                        },
+                                                      ),
+                                                    );
+                                                  },
                                           ),
                                           if (visibleEpisodes.isEmpty) ...[
                                             const Divider(height: 1),
@@ -615,8 +684,10 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                     isCurrentEpisode: isCurrentEpisode,
                                     isPlayingCurrentEpisode: isPlayingCurrentEpisode,
                                     showPinAction: currentUser != null && libraryId != null,
+                                    showAddToPlaylist: currentUser != null && libraryId != null,
                                     isPinned: isPinned,
                                     isHighlighted: episode.id == _highlightedEpisodeId,
+                                    allowSelection: true,
                                     selectionMode: _selectionMode,
                                     isSelected: _selectedEpisodeIds.contains(episode.id),
                                     onSelectedChanged: (selected) {
@@ -686,6 +757,19 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
                                           );
                                           return;
                                         case ItemMoreAction.addToPlaylist:
+                                          if (currentUser == null || libraryId == null) {
+                                            return;
+                                          }
+                                          await addSelectedPodcastEpisodesToPlaylist(
+                                            context: context,
+                                            ref: ref,
+                                            libraryId: libraryId,
+                                            currentUserId: currentUser.id,
+                                            podcastItemId: widget.item.id,
+                                            selectedEpisodeIds: <String>[episode.id],
+                                            onSuccess: () {},
+                                          );
+                                          return;
                                         case ItemMoreAction.addToCollection:
                                         case ItemMoreAction.deleteItem:
                                           return;
@@ -1107,6 +1191,9 @@ class _LibraryItemPodcastViewState extends ConsumerState<LibraryItemPodcastView>
     List<InternalDownload> storedDownloads,
     List<TaskRecord> activeTasks,
   ) async {
+    if (!(ref.read(currentUserProvider).value?.permissions.download ?? false)) {
+      return;
+    }
     final episodesToDownload = visibleEpisodes.where((e) {
       if (!_selectedEpisodeIds.contains(e.id)) return false;
       final isDownloaded = storedDownloads.any((d) => d.episode?.id == e.id && d.isComplete);
@@ -1150,45 +1237,4 @@ bool _samePodcastTaskState(List<TaskRecord> previous, List<TaskRecord> next) {
     }
   }
   return true;
-}
-
-class _PodcastProgressSnapshot {
-  const _PodcastProgressSnapshot({required this.progressMap, required this.episodeProgress});
-
-  factory _PodcastProgressSnapshot.from(
-    Map<String, MediaProgress>? progressMap, {
-    required String libraryItemId,
-    required List<Episode> episodes,
-  }) {
-    final resolvedMap = progressMap ?? const <String, MediaProgress>{};
-    return _PodcastProgressSnapshot(
-      progressMap: resolvedMap,
-      episodeProgress: <MediaProgress?>[
-        for (final episode in episodes) resolvedMap[mediaProgressKey(libraryItemId, episode.id)],
-      ],
-    );
-  }
-
-  final Map<String, MediaProgress> progressMap;
-  final List<MediaProgress?> episodeProgress;
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) {
-      return true;
-    }
-    if (other is! _PodcastProgressSnapshot || episodeProgress.length != other.episodeProgress.length) {
-      return false;
-    }
-
-    for (var index = 0; index < episodeProgress.length; index++) {
-      if (episodeProgress[index] != other.episodeProgress[index]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @override
-  int get hashCode => Object.hashAll(episodeProgress);
 }

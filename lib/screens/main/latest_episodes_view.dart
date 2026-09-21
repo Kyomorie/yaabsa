@@ -5,7 +5,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:yaabsa/api/library_items/episode.dart';
-import 'package:yaabsa/api/me/media_progress.dart';
 import 'package:yaabsa/components/common/connection_issue_view.dart';
 import 'package:yaabsa/components/common/library_item_overlay_play_button.dart';
 import 'package:yaabsa/components/common/loading_view.dart';
@@ -40,7 +39,6 @@ class LatestEpisodesView extends HookConsumerWidget {
 
     final provider = latestEpisodesProvider(selectedLibrary.id);
     final latestEpisodes = ref.watch(provider);
-    final progressByKey = ref.watch(mediaProgressProvider).value ?? const <String, MediaProgress>{};
     final scrollController = useScrollController();
     final pendingEpisodeIds = useState(<String>{});
     final playbackState = useStream(audioHandler.playbackState);
@@ -157,7 +155,6 @@ class LatestEpisodesView extends HookConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _LatestEpisodeCard(
                       episode: episode,
-                      progress: progressByKey[mediaProgressKey(episode.libraryItemId, episode.id)],
                       cover: api.getLibraryItemApi().getLibraryItemCover(
                         episode.libraryItemId,
                         width: context.isMobile ? 72 : 88,
@@ -192,10 +189,9 @@ class LatestEpisodesView extends HookConsumerWidget {
   }
 }
 
-class _LatestEpisodeCard extends StatelessWidget {
+class _LatestEpisodeCard extends ConsumerWidget {
   const _LatestEpisodeCard({
     required this.episode,
-    required this.progress,
     required this.cover,
     required this.isCurrent,
     required this.isPlaying,
@@ -205,7 +201,6 @@ class _LatestEpisodeCard extends StatelessWidget {
   });
 
   final Episode episode;
-  final MediaProgress? progress;
   final Widget cover;
   final bool isCurrent;
   final bool isPlaying;
@@ -214,7 +209,8 @@ class _LatestEpisodeCard extends StatelessWidget {
   final VoidCallback onPlay;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progress = ref.watch(mediaProgressByKeyProvider(mediaProgressKey(episode.libraryItemId, episode.id)));
     final colorScheme = Theme.of(context).colorScheme;
     final podcastTitle = episode.podcast?.metadata.title?.trim();
     final podcastAuthor = episode.podcast?.metadata.author?.trim();

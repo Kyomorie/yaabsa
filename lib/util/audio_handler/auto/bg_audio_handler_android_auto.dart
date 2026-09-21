@@ -492,41 +492,6 @@ void _androidAutoInvalidateBrowseState(BGAudioHandler handler, {bool notify = tr
   }
 }
 
-bool _androidAutoProgressMeaningfullyChanged(
-  AsyncValue<Map<String, MediaProgress>>? previous,
-  AsyncValue<Map<String, MediaProgress>> next,
-) {
-  final previousMap = previous?.asData?.value;
-  final nextMap = next.asData?.value;
-  if (previousMap == null || nextMap == null) {
-    if (previousMap == null && nextMap != null) {
-      return nextMap.isNotEmpty;
-    }
-    return false;
-  }
-  if (previousMap.length != nextMap.length) {
-    return true;
-  }
-
-  if (!previousMap.keys.toSet().containsAll(nextMap.keys) || !nextMap.keys.toSet().containsAll(previousMap.keys)) {
-    return true;
-  }
-
-  for (final entry in nextMap.entries) {
-    final previousProgress = previousMap[entry.key];
-    final nextProgress = entry.value;
-    if (previousProgress == null ||
-        previousProgress.isFinished != nextProgress.isFinished ||
-        previousProgress.hideFromContinueListening != nextProgress.hideFromContinueListening) {
-      return true;
-    }
-    if ((previousProgress.progress - nextProgress.progress).abs() >= 0.01) {
-      return true;
-    }
-  }
-  return false;
-}
-
 void _androidAutoScheduleContinueRefresh(BGAudioHandler handler) {
   handler._androidAutoContinueRefreshDebounce?.cancel();
   handler._androidAutoContinueRefreshDebounce = Timer(const Duration(seconds: 2), () async {

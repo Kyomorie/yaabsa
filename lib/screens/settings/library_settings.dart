@@ -9,6 +9,7 @@ import 'package:yaabsa/screens/settings/library_shelf_settings.dart';
 import 'package:yaabsa/screens/settings/library_order_settings.dart';
 import 'package:yaabsa/screens/settings/library_view_subtitle_settings.dart';
 import 'package:yaabsa/screens/settings/settings_page_scaffold.dart';
+import 'package:yaabsa/util/app_update_checker.dart';
 import 'package:yaabsa/util/layout_sizes.dart';
 import 'package:yaabsa/util/setting_key.dart';
 
@@ -78,7 +79,12 @@ class _LibrarySettingsState extends ConsumerState<LibrarySettings> {
                       settingKey: SettingKeys.collapseSeries,
                       userId: user.id,
                     ),
-
+                    const SettingSwitchTile(
+                      label: 'Refresh Progress on Resume',
+                      settingKey: SettingKeys.refreshProgressOnAppResume,
+                      subtitle:
+                          'Updates book and episode progress from the server when the app returns to the foreground',
+                    ),
                     const SettingSwitchTile(
                       label: 'Show Shelf Play Button',
                       settingKey: SettingKeys.personalizedShelfShowPlayVisibleButton,
@@ -90,6 +96,13 @@ class _LibrarySettingsState extends ConsumerState<LibrarySettings> {
                       userId: user.id,
                       subtitle: 'Adds a shuffle button to collections, playlists, and podcasts',
                     ),
+                    if (isAppUpdateCheckEligible)
+                      const SettingSwitchTile(
+                        label: 'Check for app updates',
+                        settingKey: appUpdateSettingKey,
+                        defaultValue: false,
+                        subtitle: 'Check GitHub for newer YAABSA releases on app start. Enabling this contacts GitHub.',
+                      ),
                     const SettingSwitchTile(
                       label: 'Check Server Updates',
                       settingKey: SettingKeys.checkForServerUpdates,

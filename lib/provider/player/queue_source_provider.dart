@@ -134,7 +134,7 @@ class QueueSourceRepository {
 
   List<QueueCandidate> _podcastCandidates(LibraryItem item, MediaSourceDescriptor source) {
     final episodes = item.media?.podcastMedia?.episodes ?? const <Episode>[];
-    final progress = _ref.read(mediaProgressProvider).asData?.value ?? const {};
+    final progressNotifier = _ref.read(mediaProgressProvider.notifier);
     final candidates = <QueueCandidate>[];
 
     final orderedEpisodes = episodes.toList(growable: true)
@@ -156,7 +156,7 @@ class QueueSourceRepository {
         continue;
       }
 
-      final episodeProgress = progress[mediaProgressKey(item.id, episode.id)];
+      final episodeProgress = progressNotifier.progressForKey(mediaProgressKey(item.id, episode.id));
       candidates.add(
         QueueCandidate(
           ref: PlayableRef(itemId: item.id, episodeId: episode.id),
@@ -182,7 +182,7 @@ class QueueSourceRepository {
 
     final seen = <String>{};
     final candidates = <QueueCandidate>[];
-    final progress = _ref.read(mediaProgressProvider).asData?.value ?? const {};
+    final progressNotifier = _ref.read(mediaProgressProvider.notifier);
     for (var index = 0; index < items.length; index++) {
       final item = items[index];
       if (item.id.isEmpty || !seen.add(item.id)) {
@@ -197,7 +197,7 @@ class QueueSourceRepository {
           order: index,
           addedAt: item.addedAt,
           estimatedBytes: item.size,
-          isFinished: progress[mediaProgressKey(item.id)]?.isFinished ?? false,
+          isFinished: progressNotifier.progressForKey(mediaProgressKey(item.id))?.isFinished ?? false,
         ),
       );
     }
@@ -211,7 +211,7 @@ class QueueSourceRepository {
 
     final seen = <String>{};
     final candidates = <QueueCandidate>[];
-    final progress = _ref.read(mediaProgressProvider).asData?.value ?? const {};
+    final progressNotifier = _ref.read(mediaProgressProvider.notifier);
     for (var index = 0; index < items.length; index++) {
       final playlistItem = items[index];
       final itemId = playlistItem.itemId.trim();
@@ -236,7 +236,7 @@ class QueueSourceRepository {
           addedAt: episode?.addedAt ?? item?.addedAt,
           publishedAt: episode?.publishedAt,
           estimatedBytes: episode?.size ?? item?.size,
-          isFinished: progress[mediaProgressKey(itemId, episodeId)]?.isFinished ?? false,
+          isFinished: progressNotifier.progressForKey(mediaProgressKey(itemId, episodeId))?.isFinished ?? false,
         ),
       );
     }

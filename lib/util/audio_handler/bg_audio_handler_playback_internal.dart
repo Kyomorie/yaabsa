@@ -6,10 +6,11 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
     Episode episode, {
     int? episodeIndex,
     List<Episode>? orderedEpisodes,
+    AutoQueueStart autoQueueStart = const AutoQueueStart.none(),
   }) async {
     _activeMusicLibraryId = null;
     final libraryId = item.libraryId;
-    final autoQueueContext = libraryId != null && episodeIndex != null
+    var autoQueueContext = libraryId != null && episodeIndex != null
         ? _AutoQueueRequestContext.podcast(
             libraryId: libraryId,
             podcastItemId: item.id,
@@ -24,6 +25,10 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
     if (!_isAutoQueueEnabled) {
       return;
+    }
+
+    if (autoQueueStart.type != AutoQueueStartType.none) {
+      autoQueueContext = await _buildAutoQueueContextFromStart(item, autoQueueStart);
     }
 
     if (!_queueItemsMatch(
@@ -273,6 +278,8 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       );
     }
 
+    await _audioSessionConfigurationFuture;
+    if (_isDisposing) return;
     unawaited(
       _player.play().catchError((error, stackTrace) {
         logger('Failed to start player playback: $error\\n$stackTrace', tag: 'AudioHandler', level: InfoLevel.error);

@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
@@ -20,7 +21,6 @@ import 'package:yaabsa/api/library/search_library.dart';
 import 'package:yaabsa/api/library_items/episode.dart';
 import 'package:yaabsa/api/library_items/library_item.dart';
 import 'package:yaabsa/api/library_items/series.dart';
-import 'package:yaabsa/api/me/media_progress.dart';
 import 'package:yaabsa/api/routes/abs_api.dart';
 import 'package:yaabsa/api/me/user.dart';
 import 'package:yaabsa/api/list/collection.dart';
@@ -63,6 +63,7 @@ part 'bg_audio_handler_chapter_sleep.dart';
 part 'bg_audio_handler_resume.dart';
 part 'bg_audio_handler_queue.dart';
 part 'bg_audio_handler_preferences.dart';
+part 'bg_audio_handler_audio_session.dart';
 part 'bg_audio_handler_state.dart';
 part 'bg_audio_handler_playback_internal.dart';
 part 'bg_audio_handler_source.dart';
@@ -110,7 +111,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   late final StreamSubscription<String?> _desktopSkipControlsSeekSubscription;
   late final ProviderSubscription<ABSApi?> _androidAutoApiSubscription;
   late final ProviderSubscription<bool> _androidAutoServerReachabilitySubscription;
-  late final ProviderSubscription<AsyncValue<Map<String, MediaProgress>>> _androidAutoMediaProgressSubscription;
+  late final ProviderSubscription<int> _androidAutoMediaProgressSubscription;
   int _currentNotificationPageIndex = 0;
   List<List<String>> _notificationPages = const [
     ['rewind', 'fastForward', 'speed', 'stop'],
@@ -122,6 +123,9 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   StreamSubscription<String?>? _equalizerBandGainsSubscription;
   StreamSubscription<int?>? _equalizerSessionSubscription;
   StreamSubscription<String?>? _autoResumeOnBluetoothSubscription;
+  StreamSubscription<String?>? _audioAnnouncementModeSubscription;
+  Future<void> _audioSessionConfigurationFuture = Future<void>.value();
+  bool? _configuredPauseForAnnouncements;
   StreamSubscription<String?>? _autoResumeBluetoothRestrictionSubscription;
   StreamSubscription<String?>? _autoResumeBluetoothDeviceAddressesSubscription;
   AndroidLoudnessEnhancer? _loudnessEnhancer;
@@ -881,8 +885,15 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     Episode episode, {
     int? episodeIndex,
     List<Episode>? orderedEpisodes,
+    AutoQueueStart autoQueueStart = const AutoQueueStart.none(),
   }) async {
-    return _playPodcastEpisodeInternal(item, episode, episodeIndex: episodeIndex, orderedEpisodes: orderedEpisodes);
+    return _playPodcastEpisodeInternal(
+      item,
+      episode,
+      episodeIndex: episodeIndex,
+      orderedEpisodes: orderedEpisodes,
+      autoQueueStart: autoQueueStart,
+    );
   }
 
   @override
@@ -1542,11 +1553,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       unawaited(_androidAutoHandleServerReachabilityChanged(this));
     });
 
-    _androidAutoMediaProgressSubscription = _ref.listen<AsyncValue<Map<String, MediaProgress>>>(mediaProgressProvider, (
-      previous,
-      next,
-    ) {
-      if (_isDisposing || !_androidAutoProgressMeaningfullyChanged(previous, next)) {
+    _androidAutoMediaProgressSubscription = _ref.listen<int>(mediaProgressRevisionProvider, (previous, next) {
+      if (_isDisposing || previous == next) {
         return;
       }
 
@@ -1652,6 +1660,7 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     }
     _playerControlStateSubject = BehaviorSubject<PlayerState>.seeded(_player.playerState);
     _volumeSubject = BehaviorSubject<double>.seeded(_readLastVolumeSetting());
+    _initializeAudioSession();
 
     if (!kIsWeb && Platform.isAndroid) {
       _volumeBoostAvailabilitySubscription = _loudnessEnhancer!.statusStream.listen((status) {
@@ -2221,6 +2230,8 @@ class BGAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     await _equalizerSessionSubscription?.cancel();
     _equalizerSessionSubscription = null;
     await _autoResumeOnBluetoothSubscription?.cancel();
+    await _audioAnnouncementModeSubscription?.cancel();
+    await _audioSessionConfigurationFuture;
     _autoResumeOnBluetoothSubscription = null;
     await _autoResumeBluetoothRestrictionSubscription?.cancel();
     _autoResumeBluetoothRestrictionSubscription = null;

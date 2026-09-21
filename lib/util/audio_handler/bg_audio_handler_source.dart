@@ -17,11 +17,9 @@ extension _BGAudioHandlerSource on BGAudioHandler {
       if (sessionStartTimeSeconds != null && sessionStartTimeSeconds > 0) {
         initialPosition = Duration(microseconds: (sessionStartTimeSeconds * Duration.microsecondsPerSecond).round());
       } else {
-        final currentProgress = _ref.read(
-          mediaProgressProvider.select((asyncValue) {
-            return asyncValue.value?[mediaProgressKey(_currentMediaItem!.itemId, _currentMediaItem!.episodeId)];
-          }),
-        );
+        final currentProgress = _ref
+            .read(mediaProgressProvider.notifier)
+            .progressForKey(mediaProgressKey(_currentMediaItem!.itemId, _currentMediaItem!.episodeId));
 
         if (currentProgress != null) {
           if (currentProgress.isFinished == true) {

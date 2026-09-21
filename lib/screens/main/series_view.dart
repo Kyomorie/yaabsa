@@ -12,6 +12,7 @@ import 'package:yaabsa/components/app/library/library_filter_sheet.dart';
 import 'package:yaabsa/components/app/library/library_filter_toolbar.dart';
 import 'package:yaabsa/components/app/library/library_series_sort_sheet.dart';
 import 'package:yaabsa/api/library/request/library_series_sort.dart';
+import 'package:yaabsa/api/routes/abs_api.dart';
 import 'package:yaabsa/provider/common/library_filter_data_provider.dart';
 import 'package:yaabsa/provider/common/library_provider.dart';
 import 'package:yaabsa/provider/common/series_provider.dart';
@@ -34,7 +35,6 @@ class SeriesView extends HookConsumerWidget {
     final scrollController = useScrollController();
     final selectedLibrary = ref.watch(selectedLibraryProvider);
     final serverReachable = ref.watch(serverStatusProvider).value ?? false;
-    final progressMap = ref.watch(mediaProgressProvider).asData?.value ?? {};
     final currentUser = ref.watch(currentUserProvider).value;
     ref.watch(userSettingsWatcherProvider);
 
@@ -190,30 +190,10 @@ class SeriesView extends HookConsumerWidget {
                                       totalBooks: baseEntry.totalBooks,
                                     );
 
-                                    double totalProgress = 0.0;
-                                    int booksWithProgress = 0;
-                                    for (final bookId in baseEntry.bookItemIds) {
-                                      final p = progressMap[bookId];
-                                      if (p != null) {
-                                        totalProgress += p.isFinished ? 1.0 : p.progress;
-                                        booksWithProgress++;
-                                      }
-                                    }
-
-                                    double? seriesProgress;
-                                    if (booksWithProgress > 0 && baseEntry.totalBookCount > 0) {
-                                      seriesProgress = (totalProgress / baseEntry.totalBookCount).clamp(0.0, 1.0);
-                                    }
-
-                                    return MultiBookEntryWidget(
+                                    return _SeriesProgressEntry(
                                       api: api,
                                       entry: seriesEntry,
                                       compact: constraints.maxWidth < 700,
-                                      squareCover: true,
-                                      coverHeight: appGridTileWidth,
-                                      showSubtitle: true,
-                                      progress: seriesProgress,
-                                      maxBooksToShow: defaultMultiBookPreviewLimit,
                                       onTap: () {
                                         context.push('/series/${series.id}', extra: seriesEntry);
                                       },
@@ -251,6 +231,43 @@ class SeriesView extends HookConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _SeriesProgressEntry extends ConsumerWidget {
+  const _SeriesProgressEntry({required this.api, required this.entry, required this.compact, required this.onTap});
+
+  final ABSApi api;
+  final MultiBookEntryData entry;
+  final bool compact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    var totalProgress = 0.0;
+    var booksWithProgress = 0;
+    for (final bookId in entry.bookItemIds) {
+      final bookProgress = ref.watch(mediaProgressByKeyProvider(bookId));
+      if (bookProgress != null) {
+        totalProgress += bookProgress.isFinished ? 1.0 : bookProgress.progress;
+        booksWithProgress++;
+      }
+    }
+    final seriesProgress = booksWithProgress == 0 || entry.totalBookCount <= 0
+        ? null
+        : (totalProgress / entry.totalBookCount).clamp(0.0, 1.0);
+
+    return MultiBookEntryWidget(
+      api: api,
+      entry: entry,
+      compact: compact,
+      squareCover: true,
+      coverHeight: appGridTileWidth,
+      showSubtitle: true,
+      progress: seriesProgress,
+      maxBooksToShow: defaultMultiBookPreviewLimit,
+      onTap: onTap,
     );
   }
 }

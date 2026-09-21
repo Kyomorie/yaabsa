@@ -51,8 +51,7 @@ class LibraryItemBookView extends ConsumerWidget {
     final coverHeaders = normalizeImageRequestHeaders(api.dio.options.headers);
     Widget coverWidget = libraryItemApi.getLibraryItemCover(item.id, item: item);
 
-    final progressByKey = ref.watch(mediaProgressProvider).asData?.value;
-    final itemProgress = progressByKey?[item.id];
+    final itemProgress = ref.watch(mediaProgressByKeyProvider(item.id));
     final progressValue = (itemProgress?.progress ?? 0).clamp(0.0, 1.0).toDouble();
     if (progressValue > 0) {
       coverWidget = Stack(
@@ -118,7 +117,7 @@ class LibraryItemBookView extends ConsumerWidget {
       sizeBytes: sizeBytes,
       onFilterTap: (filter) => openLibraryWithFilter(context, ref, filter: filter),
     );
-    final isItemFinished = progressByKey != null && isLibraryItemFinished(item, progressByKey);
+    final isItemFinished = itemProgress?.isFinished ?? false;
 
     final currentUser = ref.watch(currentUserProvider).value;
     final libraryId = item.libraryId;
@@ -182,6 +181,7 @@ class LibraryItemBookView extends ConsumerWidget {
                             isQueueTransitionLoading && audioHandler.isQueueTransitionForItem(item.id);
 
                         return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
                           padding: EdgeInsets.fromLTRB(horizontalPadding, 8, horizontalPadding, 16),
                           child: Center(
                             child: ConstrainedBox(

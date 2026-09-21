@@ -1,3 +1,4 @@
+import 'package:yaabsa/components/app/item/item_progress_actions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:yaabsa/api/library_items/library_item.dart';
 import 'package:yaabsa/api/library_items/episode.dart';
@@ -69,7 +70,7 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
         defaultTargetPlatform == TargetPlatform.windows;
   }
 
-  bool get _isSelectableCard => widget.libraryItem.collapsedSeries == null && widget.libraryItem.mediaType != 'podcast';
+  bool get _isSelectableCard => isBulkSelectableLibraryItem(widget.libraryItem);
 
   bool get _showHoverSelectionDot {
     return _isDesktopPlatform &&
@@ -81,12 +82,17 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final progressMap = widget.showProgress
-        ? (ref.watch(mediaProgressProvider).asData?.value ?? const <String, MediaProgress>{})
-        : null;
     final shelfEpisode = _podcastShelfEpisode();
+    final isPodcastItem = widget.libraryItem.mediaType == 'podcast';
+    final itemProgress = widget.showProgress && !isPodcastItem
+        ? ref.watch(mediaProgressByKeyProvider(widget.libraryItem.id))
+        : null;
+    final podcastProgress = widget.showProgress && isPodcastItem
+        ? ref.watch(mediaProgressForLibraryItemProvider(widget.libraryItem.id))
+        : const <MediaProgress>[];
+    final progress = isPodcastItem ? _resolvePodcastProgress(podcastProgress) : itemProgress;
+    final finishedEpisodeCount = isPodcastItem ? podcastProgress.where((progress) => progress.isFinished).length : 0;
     final displayTitle = _resolvedDisplayTitle(shelfEpisode);
-    final progress = widget.showProgress ? _resolveProgress(progressMap!) : null;
     final isDownloaded = ref.watch(
       completedDownloadForItemProvider(widget.libraryItem.id, episodeId: shelfEpisode?.id),
     );
@@ -95,12 +101,7 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
     final isCollapsedSeriesCard = widget.libraryItem.collapsedSeries != null;
     final isPodcast = !(widget.libraryItem.media?.hasAudio ?? widget.libraryItem.media?.hasBook ?? true);
     final unplayedEpisodes = isPodcast
-        ? ((widget.libraryItem.media?.podcastMedia?.numEpisodes ?? 0) -
-              ref
-                  .read(mediaProgressProvider.notifier)
-                  .getAllProgressForLibraryItem(widget.libraryItem.id)
-                  .where((progress) => progress.isFinished)
-                  .length)
+        ? ((widget.libraryItem.media?.podcastMedia?.numEpisodes ?? 0) - finishedEpisodeCount)
         : 0;
 
     final sequenceBadgeLabel = unplayedEpisodes > 0 ? unplayedEpisodes.toString() : widget.sequenceBadge?.trim();
@@ -181,7 +182,7 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
           widget.onToggleSelection?.call();
         }
 
-        final showSelectionDot = (widget.selectionMode || _showHoverSelectionDot) && !isCollapsedSeriesCard;
+        final showSelectionDot = (widget.selectionMode || _showHoverSelectionDot) && _isSelectableCard;
         final selectionOverlayAlpha = widget.isSelected ? 0.15 : 0.5;
         final downloadBadgeTop = showSelectionDot ? 34.0 : 4.0;
         final sequenceBadgeTop = isDownloaded ? downloadBadgeTop + 30.0 : (showSelectionDot ? 34.0 : 4.0);
@@ -450,15 +451,17 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
     return episodes.first;
   }
 
-  MediaProgress? _resolveProgress(Map<String, MediaProgress> progressMap) {
+  MediaProgress? _resolvePodcastProgress(List<MediaProgress> progressList) {
+    final progressByEpisodeId = <String, MediaProgress>{};
+    for (final progress in progressList) {
+      final episodeId = progress.episodeId;
+      if (episodeId != null && episodeId.isNotEmpty) {
+        progressByEpisodeId[episodeId] = progress;
+      }
+    }
     final shelfEpisode = _podcastShelfEpisode();
     if (shelfEpisode != null) {
-      return progressMap[mediaProgressKey(widget.libraryItem.id, shelfEpisode.id)];
-    }
-
-    final itemProgress = progressMap[widget.libraryItem.id];
-    if (itemProgress != null && widget.libraryItem.mediaType != 'podcast') {
-      return itemProgress;
+      return progressByEpisodeId[shelfEpisode.id];
     }
 
     final podcastEpisodes = widget.libraryItem.media?.podcastMedia?.episodes;
@@ -467,7 +470,7 @@ class _LibraryItemWidgetState extends ConsumerState<LibraryItemWidget> {
     }
 
     for (final episode in podcastEpisodes) {
-      final episodeProgress = progressMap[mediaProgressKey(widget.libraryItem.id, episode.id)];
+      final episodeProgress = progressByEpisodeId[episode.id];
       if (episodeProgress != null) {
         return episodeProgress;
       }

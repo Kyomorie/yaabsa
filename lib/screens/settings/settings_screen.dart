@@ -47,6 +47,12 @@ class SettingsSearchItem {
 }
 
 final List<SettingsSearchItem> searchableSettings = [
+  const SettingsSearchItem(
+    title: 'Refresh Progress on Resume',
+    description: 'Update book and episode progress when the app returns to the foreground',
+    categoryPath: 'Settings > Library',
+    route: LibrarySettings.routeName,
+  ),
   if (PlayerSettingsCompatibility.isSupported)
     const SettingsSearchItem(
       title: 'Disable FDK AAC decoder',
