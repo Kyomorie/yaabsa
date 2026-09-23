@@ -19,12 +19,15 @@ Future<List<String>?> showBookEditorSheet({
     builder: (sheetContext) {
       return FractionallySizedBox(
         heightFactor: 0.95,
-        child: _BookEditorSheet(
-          title: title,
-          confirmLabel: confirmLabel,
-          selectionRequired: selectionRequired,
-          initialBooks: initialBooks,
-          skipLabel: skipLabel,
+        child: SafeArea(
+          top: false,
+          child: _BookEditorSheet(
+            title: title,
+            confirmLabel: confirmLabel,
+            selectionRequired: selectionRequired,
+            initialBooks: initialBooks,
+            skipLabel: skipLabel,
+          ),
         ),
       );
     },

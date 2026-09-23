@@ -49,7 +49,10 @@ Future<bool> _showLibraryItemManualMatchDialogMobile({
     builder: (context) {
       return FractionallySizedBox(
         heightFactor: 0.97,
-        child: LibraryItemManualMatchDialog(item: item, filterData: filterData, isFullScreen: true),
+        child: SafeArea(
+          top: false,
+          child: LibraryItemManualMatchDialog(item: item, filterData: filterData, isFullScreen: true),
+        ),
       );
     },
   );

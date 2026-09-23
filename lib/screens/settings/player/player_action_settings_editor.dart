@@ -53,7 +53,10 @@ class PlayerActionSettingsEditor extends ConsumerWidget {
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) => _PlayerActionEditorSheet(title: title, selected: selected),
+      builder: (context) => SafeArea(
+        top: false,
+        child: _PlayerActionEditorSheet(title: title, selected: selected),
+      ),
     );
 
     if (result == null) {

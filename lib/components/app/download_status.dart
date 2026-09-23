@@ -69,99 +69,102 @@ class DownloadStatus extends StatelessWidget {
       builder: (context) {
         return FractionallySizedBox(
           heightFactor: 0.72,
-          child: StreamBuilder<List<TaskRecord>>(
-            stream: downloadHandler.taskQueueStream,
-            initialData: const <TaskRecord>[],
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text('Could not load active downloads: ${snapshot.error}'),
+          child: SafeArea(
+            top: false,
+            child: StreamBuilder<List<TaskRecord>>(
+              stream: downloadHandler.taskQueueStream,
+              initialData: const <TaskRecord>[],
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text('Could not load active downloads: ${snapshot.error}'),
+                    ),
+                  );
+                }
+
+                final tasks = _activeTasks(snapshot.data ?? const <TaskRecord>[]);
+                if (tasks.isEmpty) {
+                  return const Center(
+                    child: Padding(padding: EdgeInsets.all(24), child: Text('No active downloads.')),
+                  );
+                }
+
+                final overallProgress = _calculateOverallProgress(tasks);
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Downloads in progress', style: Theme.of(context).textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${tasks.length} file${tasks.length == 1 ? '' : 's'} remaining',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(value: overallProgress, minHeight: 6),
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: tasks.length,
+                          separatorBuilder: (_, _) => const Divider(height: 12),
+                          itemBuilder: (context, index) {
+                            final task = tasks[index];
+                            final progress = _normalizeProgress(task.progress);
+                            final fileName = task.task.filename.trim().isEmpty ? task.task.taskId : task.task.filename;
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(_taskTitle(task), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              trailing: IconButton(
+                                tooltip: 'Cancel download',
+                                icon: const Icon(Icons.close_rounded),
+                                onPressed: () async {
+                                  try {
+                                    final canceled = await downloadHandler.cancelTask(task.taskId);
+                                    if (!context.mounted) {
+                                      return;
+                                    }
+                                    final message = canceled
+                                        ? 'Canceled ${_taskTitle(task)}.'
+                                        : 'Could not cancel ${_taskTitle(task)}.';
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+                                  } catch (e) {
+                                    if (!context.mounted) {
+                                      return;
+                                    }
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(SnackBar(content: Text('Could not cancel download: $e')));
+                                  }
+                                },
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 2),
+                                  Text(fileName, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  const SizedBox(height: 6),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(999),
+                                    child: LinearProgressIndicator(value: progress, minHeight: 5),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text('${_statusLabel(task.status)} | ${(progress * 100).toStringAsFixed(0)}%'),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 );
-              }
-
-              final tasks = _activeTasks(snapshot.data ?? const <TaskRecord>[]);
-              if (tasks.isEmpty) {
-                return const Center(
-                  child: Padding(padding: EdgeInsets.all(24), child: Text('No active downloads.')),
-                );
-              }
-
-              final overallProgress = _calculateOverallProgress(tasks);
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Downloads in progress', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${tasks.length} file${tasks.length == 1 ? '' : 's'} remaining',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(value: overallProgress, minHeight: 6),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: ListView.separated(
-                        itemCount: tasks.length,
-                        separatorBuilder: (_, _) => const Divider(height: 12),
-                        itemBuilder: (context, index) {
-                          final task = tasks[index];
-                          final progress = _normalizeProgress(task.progress);
-                          final fileName = task.task.filename.trim().isEmpty ? task.task.taskId : task.task.filename;
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(_taskTitle(task), maxLines: 1, overflow: TextOverflow.ellipsis),
-                            trailing: IconButton(
-                              tooltip: 'Cancel download',
-                              icon: const Icon(Icons.close_rounded),
-                              onPressed: () async {
-                                try {
-                                  final canceled = await downloadHandler.cancelTask(task.taskId);
-                                  if (!context.mounted) {
-                                    return;
-                                  }
-                                  final message = canceled
-                                      ? 'Canceled ${_taskTitle(task)}.'
-                                      : 'Could not cancel ${_taskTitle(task)}.';
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-                                } catch (e) {
-                                  if (!context.mounted) {
-                                    return;
-                                  }
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(SnackBar(content: Text('Could not cancel download: $e')));
-                                }
-                              },
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 2),
-                                Text(fileName, maxLines: 1, overflow: TextOverflow.ellipsis),
-                                const SizedBox(height: 6),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(999),
-                                  child: LinearProgressIndicator(value: progress, minHeight: 5),
-                                ),
-                                const SizedBox(height: 4),
-                                Text('${_statusLabel(task.status)} | ${(progress * 100).toStringAsFixed(0)}%'),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+              },
+            ),
           ),
         );
       },

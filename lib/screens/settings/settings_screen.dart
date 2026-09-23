@@ -892,88 +892,94 @@ class _MainSettingsScreenState extends ConsumerState<MainSettingsScreen> {
                 color: Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text('Manage Accounts', style: Theme.of(context).textTheme.titleLarge),
-                  ),
-                  Expanded(
-                    child: ListView(
-                      controller: scrollController,
-                      children: [
-                        if (currentUser != null)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                            child: Text('Current Account', style: Theme.of(context).textTheme.labelLarge),
-                          ),
-                        if (currentUser != null)
-                          ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                              child: Text(currentUser.username.substring(0, 1).toUpperCase()),
-                            ),
-                            title: Text(currentUser.username),
-                            subtitle: Text(currentUser.server?.url ?? 'No server'),
-                            trailing: IconButton(
-                              icon: Icon(Icons.logout_rounded, color: Theme.of(context).colorScheme.error),
-                              tooltip: 'Sign out this account',
-                              onPressed: () {
-                                Navigator.pop(bottomSheetContext);
-                                _showSignOutCurrentUserConfirmationDialog(context, currentUser, ref);
-                              },
-                            ),
-                          ),
-                        if (currentUser != null) const Divider(height: 1),
-                        if (otherUsers.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                            child: Text('Other Accounts', style: Theme.of(context).textTheme.labelLarge),
-                          ),
-                        if (otherUsers.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Text(
-                              'No other accounts available.',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        ...otherUsers.map((user) {
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-                              child: Text(user.username.substring(0, 1).toUpperCase()),
-                            ),
-                            title: Text(user.username),
-                            subtitle: Text(user.server?.url ?? 'No server'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.swap_horiz_rounded, color: Theme.of(context).colorScheme.primary),
-                                  tooltip: 'Switch to this user',
-                                  onPressed: () async {
-                                    Navigator.pop(bottomSheetContext);
-                                    await _switchActiveUser(context, ref, user);
-                                  },
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
-                                  tooltip: 'Delete this user',
-                                  onPressed: () {
-                                    Navigator.pop(bottomSheetContext);
-                                    _showDeleteUserConfirmationDialog(context, user, ref);
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text('Manage Accounts', style: Theme.of(context).textTheme.titleLarge),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        children: [
+                          if (currentUser != null)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                              child: Text('Current Account', style: Theme.of(context).textTheme.labelLarge),
+                            ),
+                          if (currentUser != null)
+                            ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                child: Text(currentUser.username.substring(0, 1).toUpperCase()),
+                              ),
+                              title: Text(currentUser.username),
+                              subtitle: Text(currentUser.server?.url ?? 'No server'),
+                              trailing: IconButton(
+                                icon: Icon(Icons.logout_rounded, color: Theme.of(context).colorScheme.error),
+                                tooltip: 'Sign out this account',
+                                onPressed: () {
+                                  Navigator.pop(bottomSheetContext);
+                                  _showSignOutCurrentUserConfirmationDialog(context, currentUser, ref);
+                                },
+                              ),
+                            ),
+                          if (currentUser != null) const Divider(height: 1),
+                          if (otherUsers.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                              child: Text('Other Accounts', style: Theme.of(context).textTheme.labelLarge),
+                            ),
+                          if (otherUsers.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Text(
+                                'No other accounts available.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                          ...otherUsers.map((user) {
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                                child: Text(user.username.substring(0, 1).toUpperCase()),
+                              ),
+                              title: Text(user.username),
+                              subtitle: Text(user.server?.url ?? 'No server'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.swap_horiz_rounded, color: Theme.of(context).colorScheme.primary),
+                                    tooltip: 'Switch to this user',
+                                    onPressed: () async {
+                                      Navigator.pop(bottomSheetContext);
+                                      await _switchActiveUser(context, ref, user);
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.delete_outline_rounded,
+                                      color: Theme.of(context).colorScheme.error,
+                                    ),
+                                    tooltip: 'Delete this user',
+                                    onPressed: () {
+                                      Navigator.pop(bottomSheetContext);
+                                      _showDeleteUserConfirmationDialog(context, user, ref);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },

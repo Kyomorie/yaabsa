@@ -9,7 +9,7 @@ Future<void> showPlaybackSpeedSheet(BuildContext context, {double? currentSpeed}
     isScrollControlled: true,
     showDragHandle: true,
     builder: (sheetContext) {
-      return _SpeedSheet(initialSpeed: currentSpeed ?? audioHandler.player.speed);
+      return SafeArea(top: false, child: _SpeedSheet(initialSpeed: currentSpeed ?? audioHandler.player.speed));
     },
   );
 }

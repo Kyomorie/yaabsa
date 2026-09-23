@@ -12,7 +12,7 @@ void showSleepTimerSheet(BuildContext context, WidgetRef ref) {
     useSafeArea: true,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (context) => SleepTimerModal(ref: ref),
+    builder: (context) => SafeArea(top: false, child: SleepTimerModal(ref: ref)),
   );
 }
 

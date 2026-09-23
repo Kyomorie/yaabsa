@@ -88,7 +88,10 @@ Future<Set<String>?> _showProviderSelector({
       builder: (context) {
         return FractionallySizedBox(
           heightFactor: 0.7,
-          child: _ProviderSelectionSheet(providers: providers, selectedProviderValues: selectedProviderValues),
+          child: SafeArea(
+            top: false,
+            child: _ProviderSelectionSheet(providers: providers, selectedProviderValues: selectedProviderValues),
+          ),
         );
       },
     );
