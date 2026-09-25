@@ -102,17 +102,20 @@ class MobilePlayerActionDock extends ConsumerWidget {
                 color: colors.surfaceContainer.withValues(alpha: 0.45),
                 border: Border(top: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.7))),
               ),
-              child: _MobilePlayerActionsSheet(
-                actions: sheetActions,
-                hasChapters: hasChapters,
-                onSelected: (action) {
-                  Navigator.of(sheetContext).pop();
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (context.mounted) {
-                      _showAction(context, ref, action);
-                    }
-                  });
-                },
+              child: SafeArea(
+                top: false,
+                child: _MobilePlayerActionsSheet(
+                  actions: sheetActions,
+                  hasChapters: hasChapters,
+                  onSelected: (action) {
+                    Navigator.of(sheetContext).pop();
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (context.mounted) {
+                        _showAction(context, ref, action);
+                      }
+                    });
+                  },
+                ),
               ),
             ),
           ),

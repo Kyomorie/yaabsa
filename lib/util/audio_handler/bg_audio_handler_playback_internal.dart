@@ -94,21 +94,9 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       }
     }
 
-    final userNavigationOperation = isCurrentItem
-        ? _beginChapterSleepPositionMutation(SleepTimerPositionMutationKind.userNavigation)
-        : null;
     try {
       _clearSmartRewindPauseMarker();
-      if (isCurrentItem) {
-        await _seekForChapterSleepCoordination(
-          position,
-          kind: SleepTimerPositionMutationKind.userNavigation,
-          applyChapterNotificationOffset: false,
-          registerMutation: false,
-        );
-      } else {
-        await _seekInternal(position);
-      }
+      await _seekInternal(position);
       _setQueueTransitionLoading(false);
       if (isCastControlActive) {
         await play();
@@ -130,10 +118,6 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       PlayerUtils.disableWakelock(_ref);
       _setQueueTransitionLoading(false, emitMediaWhenEmpty: true);
       return false;
-    } finally {
-      if (userNavigationOperation != null) {
-        _settleChapterSleepPositionMutation(userNavigationOperation, SleepTimerPositionMutationKind.userNavigation);
-      }
     }
   }
 
@@ -230,7 +214,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       logger(
         'Fallback series auto queue context could not be resolved for item ${item.id}.',
         tag: 'AudioHandler',
-        level: InfoLevel.warning,
+        level: InfoLevel.debug,
       );
     }
   }
@@ -306,20 +290,17 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
       return;
     }
 
-    final requestMedia = SleepTimerMediaIdentity.fromMedia(resumeItem);
-    final requestSessionId = resumeItem.sessionId;
-    final requestNavigationGeneration = sleepTimerNavigationGeneration;
-    final requestPlaybackActionGeneration = sleepTimerPlaybackActionGeneration;
+    final binding = _ref.read(sessionRepositoryProvider).currentSessionBinding;
+    final navigationGeneration = sleepTimerNavigationGeneration;
+    final playbackGeneration = sleepTimerPlaybackGeneration;
+    if (binding == null || binding.sessionId != resumeItem.sessionId) return;
 
-    bool requestIsCurrent() {
-      return !isCastControlActive &&
-          isChapterSleepOwnershipCurrent(
-            media: requestMedia,
-            sessionId: requestSessionId,
-            navigationGeneration: requestNavigationGeneration,
-            playbackActionGeneration: requestPlaybackActionGeneration,
-          );
-    }
+    bool requestIsCurrent() => isSleepTimerOwnerCurrent(
+      media: resumeItem,
+      binding: binding,
+      navigationGeneration: navigationGeneration,
+      playbackGeneration: playbackGeneration,
+    );
 
     const driftThreshold = Duration(seconds: 10);
 
@@ -330,7 +311,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
 
       if (!requestIsCurrent()) {
         logger(
-          'Background resume reconcile aborted because playback ownership changed while progress was loading.',
+          'Background resume reconcile aborted because playback ownership changed.',
           tag: 'AudioHandler',
           level: InfoLevel.debug,
         );
@@ -362,9 +343,7 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         return;
       }
 
-      if (!requestIsCurrent()) {
-        return;
-      }
+      if (!requestIsCurrent()) return;
 
       logger(
         'Background resume reconcile detected position drift of $positionDrift. '
@@ -373,11 +352,8 @@ extension _BGAudioHandlerPlaybackInternal on BGAudioHandler {
         level: InfoLevel.info,
       );
 
-      await _seekForChapterSleepCoordination(
-        remotePosition,
-        kind: SleepTimerPositionMutationKind.resumeProgressReconcile,
-        applyChapterNotificationOffset: false,
-        continuationIsCurrent: requestIsCurrent,
+      await _seekWithoutPausedManualMarker(
+        () => _queueSleepTimerAwareSeek(remotePosition, internal: true, continuationIsCurrent: requestIsCurrent),
       );
     } catch (e) {
       logger('Background resume reconcile failed: $e', tag: 'AudioHandler', level: InfoLevel.warning);

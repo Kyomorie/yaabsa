@@ -169,29 +169,32 @@ class _PlayBarState extends ConsumerState<PlayBar> {
       useSafeArea: true,
       showDragHandle: true,
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              if (actions.isNotEmpty) ...<Widget>[
-                PlayerActionBar(actions: actions, hasChapters: hasChapters, showLabels: true, spacing: 8),
-                const SizedBox(height: 12),
-              ],
-              Material(
-                color: Colors.transparent,
-                child: ListTile(
-                  leading: const Icon(Icons.stop_circle_rounded),
-                  title: const Text('Stop playback'),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  tileColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    audioHandler.stop();
-                  },
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                if (actions.isNotEmpty) ...<Widget>[
+                  PlayerActionBar(actions: actions, hasChapters: hasChapters, showLabels: true, spacing: 8),
+                  const SizedBox(height: 12),
+                ],
+                Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    leading: const Icon(Icons.stop_circle_rounded),
+                    title: const Text('Stop playback'),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    tileColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      audioHandler.stop();
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

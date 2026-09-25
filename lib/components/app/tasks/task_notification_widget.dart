@@ -63,15 +63,18 @@ class _TaskNotificationWidgetState extends ConsumerState<TaskNotificationWidget>
       builder: (sheetContext) {
         return ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.72),
-          child: TaskNotificationPanel(
-            maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.72,
-            onClearActivity: () => Navigator.of(sheetContext).pop(),
-            onTaskSelected: (taskRoute) {
-              Navigator.of(sheetContext).pop();
-              if (mounted) {
-                unawaited(context.push(taskRoute));
-              }
-            },
+          child: SafeArea(
+            top: false,
+            child: TaskNotificationPanel(
+              maxHeight: MediaQuery.sizeOf(sheetContext).height * 0.72,
+              onClearActivity: () => Navigator.of(sheetContext).pop(),
+              onTaskSelected: (taskRoute) {
+                Navigator.of(sheetContext).pop();
+                if (mounted) {
+                  unawaited(context.push(taskRoute));
+                }
+              },
+            ),
           ),
         );
       },

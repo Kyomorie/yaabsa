@@ -8,6 +8,7 @@ const String _newestEpisodesSectionId = 'newest-episodes';
 
 enum PersonalizedShelfSection {
   continueListening,
+  continueReading,
   newestEpisodes,
   pinned,
   downloads,
@@ -22,6 +23,8 @@ enum PersonalizedShelfSection {
     switch (this) {
       case PersonalizedShelfSection.continueListening:
         return 'continue-listening';
+      case PersonalizedShelfSection.continueReading:
+        return 'continue-reading';
       case PersonalizedShelfSection.newestEpisodes:
         return _newestEpisodesSectionId;
       case PersonalizedShelfSection.pinned:
@@ -47,6 +50,8 @@ enum PersonalizedShelfSection {
     switch (this) {
       case PersonalizedShelfSection.continueListening:
         return 'Continue Listening';
+      case PersonalizedShelfSection.continueReading:
+        return 'Continue Reading';
       case PersonalizedShelfSection.newestEpisodes:
         return 'Newest Episodes';
       case PersonalizedShelfSection.pinned:
@@ -72,6 +77,8 @@ enum PersonalizedShelfSection {
     switch (this) {
       case PersonalizedShelfSection.continueListening:
         return Icons.play_circle_outline_rounded;
+      case PersonalizedShelfSection.continueReading:
+        return Icons.menu_book_outlined;
       case PersonalizedShelfSection.newestEpisodes:
         return Icons.podcasts_outlined;
       case PersonalizedShelfSection.pinned:
@@ -171,6 +178,7 @@ class PersonalizedShelfPreferencesCodec {
         return const [
           PersonalizedShelfSection.pinned,
           PersonalizedShelfSection.continueListening,
+          PersonalizedShelfSection.continueReading,
           PersonalizedShelfSection.continueSeries,
           PersonalizedShelfSection.downloads,
           PersonalizedShelfSection.recentlyAdded,

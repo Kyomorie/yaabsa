@@ -164,22 +164,25 @@ extension _ReaderBuilders on _ReaderState {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.7,
-            child: Navigator(
-              initialRoute: '/',
-              onGenerateRoute: (RouteSettings settings) {
-                WidgetBuilder builder;
-                switch (settings.name) {
-                  case '/':
-                    builder = (BuildContext context) => const ReaderSettings();
-                    break;
-                  case ReaderTtsSettings.routeName:
-                    builder = (BuildContext context) => const ReaderTtsSettings();
-                    break;
-                  default:
-                    throw Exception('Invalid route: ${settings.name}');
-                }
-                return MaterialPageRoute<void>(builder: builder, settings: settings);
-              },
+            child: SafeArea(
+              top: false,
+              child: Navigator(
+                initialRoute: '/',
+                onGenerateRoute: (RouteSettings settings) {
+                  WidgetBuilder builder;
+                  switch (settings.name) {
+                    case '/':
+                      builder = (BuildContext context) => const ReaderSettings();
+                      break;
+                    case ReaderTtsSettings.routeName:
+                      builder = (BuildContext context) => const ReaderTtsSettings();
+                      break;
+                    default:
+                      throw Exception('Invalid route: ${settings.name}');
+                  }
+                  return MaterialPageRoute<void>(builder: builder, settings: settings);
+                },
+              ),
             ),
           ),
         );

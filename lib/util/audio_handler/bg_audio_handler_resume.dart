@@ -21,11 +21,7 @@ extension _BGAudioHandlerResume on BGAudioHandler {
       return;
     }
 
-    await _seekForChapterSleepCoordination(
-      targetPosition,
-      kind: SleepTimerPositionMutationKind.otherInternal,
-      applyChapterNotificationOffset: false,
-    );
+    await _seekInternal(targetPosition);
 
     final currentPositionSeconds = targetPosition.inMicroseconds / Duration.microsecondsPerSecond;
     final canReachServer = _ref.read(serverReachabilityProvider);
@@ -395,6 +391,15 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     return hasMarker;
   }
 
+  Future<void> _seekWithoutPausedManualMarker(Future<void> Function() action) async {
+    _internalSeekGuardDepth += 1;
+    try {
+      await action();
+    } finally {
+      _internalSeekGuardDepth -= 1;
+    }
+  }
+
   void _recordPausedPlaybackMarker() {
     if (_currentMediaItem == null) {
       _clearSmartRewindPauseMarker();
@@ -486,11 +491,7 @@ extension _BGAudioHandlerResume on BGAudioHandler {
     final targetPosition = _rewindPosition(currentPosition, rewindBy);
 
     if (targetPosition < currentPosition) {
-      await _seekForChapterSleepCoordination(
-        targetPosition,
-        kind: SleepTimerPositionMutationKind.smartRewind,
-        applyChapterNotificationOffset: false,
-      );
+      await _seekWithoutPausedManualMarker(() => _seekInternal(targetPosition));
       logger(
         'Applied smart rewind (${rewindBy.inSeconds}s) after pause (${pausedFor.inSeconds}s).',
         tag: 'AudioHandler',

@@ -42,7 +42,7 @@ Future<bool> showQuickMatchPreviewDialog({
       isScrollControlled: true,
       useSafeArea: true,
       builder: (context) {
-        return FractionallySizedBox(heightFactor: 0.94, child: preview);
+        return FractionallySizedBox(heightFactor: 0.94, child: SafeArea(top: false, child: preview));
       },
     );
     return result ?? false;

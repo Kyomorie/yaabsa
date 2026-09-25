@@ -32,7 +32,7 @@ Future<ReaderAnnotationSheetAction?> showReaderEpubAnnotationSheet(
     context: context,
     showDragHandle: true,
     useSafeArea: true,
-    builder: (context) => _AnnotationDetailsSheet(annotation: annotation),
+    builder: (context) => SafeArea(top: false, child: _AnnotationDetailsSheet(annotation: annotation)),
   );
   if (!context.mounted || detailsAction == null) return null;
 
@@ -44,7 +44,7 @@ Future<ReaderAnnotationSheetAction?> showReaderEpubAnnotationSheet(
     isScrollControlled: true,
     showDragHandle: true,
     useSafeArea: true,
-    builder: (context) => _AnnotationEditorSheet(annotation: annotation),
+    builder: (context) => SafeArea(top: false, child: _AnnotationEditorSheet(annotation: annotation)),
   );
 }
 

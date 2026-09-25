@@ -6,7 +6,6 @@ import 'package:yaabsa/components/player/common/seek_bar_slider.dart';
 import 'package:yaabsa/database/settings_manager.dart';
 import 'package:yaabsa/models/internal_media.dart';
 import 'package:yaabsa/provider/player/user_bookmarks_provider.dart';
-import 'package:yaabsa/util/audio_handler/bg_audio_handler.dart';
 import 'package:yaabsa/util/extensions.dart';
 import 'package:yaabsa/util/globals.dart';
 import 'package:yaabsa/util/handler/sleep_timer_handler.dart';
@@ -245,7 +244,7 @@ class SeekBar extends ConsumerWidget {
                         rightTime: chapterDuration,
                         showRemaining: showRemaining,
                         onToggleRemaining: toggleRemaining,
-                        onSeek: (seekPosition) => audioHandler.seekAbsoluteForUserNavigation(seekPosition),
+                        onSeek: (seekPosition) => audioHandler.seekAbsolute(seekPosition),
                         markers: const <SeekTimelineMarker>[],
                         markerMode: SeekBarMarkerMode.none,
                         buildPreviewLabel: (position) => _buildSeekPreviewTooltip(position, chapters),
@@ -277,7 +276,7 @@ class SeekBar extends ConsumerWidget {
                         rightTime: totalDuration,
                         showRemaining: showRemaining,
                         onToggleRemaining: toggleRemaining,
-                        onSeek: (seekPosition) => audioHandler.seekAbsoluteForUserNavigation(seekPosition),
+                        onSeek: (seekPosition) => audioHandler.seekAbsolute(seekPosition),
                         markers: fullTimelineMarkers,
                         markerMode: markerMode,
                         buildPreviewLabel: (position) => _buildSeekPreviewTooltip(position, chapters),
@@ -289,7 +288,7 @@ class SeekBar extends ConsumerWidget {
                             ? null
                             : () async {
                                 ref.read(sleepTimerHandlerProvider.notifier).dismissMarkerPin();
-                                await audioHandler.seekAbsoluteForUserNavigation(visibleSleepTimerMarker.startPosition);
+                                await audioHandler.seekAbsolute(visibleSleepTimerMarker.startPosition);
                               },
                         centerLabel: showCurrentChapterBetweenTimeLabels ? currentChapter?.title.trim() : null,
                       ),

@@ -424,8 +424,7 @@ final globalRouter = GoRouter(
                     ),
                     GoRoute(
                       path: '/narrator/:name',
-                      builder: (context, state) =>
-                          NarratorDetailView(narratorName: Uri.decodeComponent(state.pathParameters['name']!)),
+                      builder: (context, state) => NarratorDetailView(narratorName: state.pathParameters['name']!),
                     ),
                     GoRoute(
                       path: '/collection/:id',
