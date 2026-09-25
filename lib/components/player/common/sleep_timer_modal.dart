@@ -88,39 +88,39 @@ class _SleepTimerModalState extends ConsumerState<SleepTimerModal> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _customController,
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.done,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        onChanged: (_) {
-                          if (!chapterMode) setState(() => _selectedMinutes = null);
-                        },
-                        onSubmitted: (_) => _handleCustomInput(chapterMode),
-                        decoration: InputDecoration(
-                          labelText: chapterMode ? 'Number of chapters' : 'Minutes',
-                          hintText: chapterMode ? '1' : 'Minutes',
-                          suffixText: chapterMode ? 'chapters' : 'min',
-                          border: const OutlineInputBorder(),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _customController,
+                          keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          onChanged: (_) {
+                            if (!chapterMode) setState(() => _selectedMinutes = null);
+                          },
+                          onSubmitted: (_) => _handleCustomInput(chapterMode),
+                          decoration: InputDecoration(
+                            labelText: chapterMode ? 'Number of chapters' : 'Minutes',
+                            hintText: chapterMode ? '1' : 'Minutes',
+                            suffixText: chapterMode ? 'chapters' : 'min',
+                            border: const OutlineInputBorder(),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      height: 56,
-                      child: FilledButton.icon(
+                      const SizedBox(width: 12),
+                      FilledButton.icon(
                         onPressed: () => _handleCustomInput(chapterMode),
                         style: FilledButton.styleFrom(
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                         ),
                         icon: const Icon(Icons.bedtime),
-                        label: const Text('Start'),
+                        label: const Text('Set'),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 if (sleepTimer.isActive) ...[
                   const SizedBox(height: 20),
@@ -247,7 +247,6 @@ class _ActiveTimerCard extends StatelessWidget {
     final description = sleepTimer.isChapterTimer
         ? '${sleepTimer.remainingChapters} chapter${sleepTimer.remainingChapters == 1 ? '' : 's'} remaining'
               ' • ${sleepTimer.remainingTime.toCompactRemainingString()} remaining'
-              ' • stops at item end'
         : '${sleepTimer.remainingTime.toCompactRemainingString()} remaining';
 
     return Container(
